@@ -28,6 +28,12 @@ struct Queues {
     VkQueue presentQueue;
 };
 
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
+
 class DirkEngine {
 
 public:
@@ -50,11 +56,20 @@ private:
 
     void createSurface();
 
+    // selecting the physical device
     void getPhysicalDevice();
     int getDeviceSuitability(VkPhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+    bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
     void createLogicalDevice();
+
+    // swap chain
+    void createSwapChain();
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
     void tick();
     void cleanup();
@@ -63,6 +78,8 @@ public:
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
     const std::string NAME = "Dirk Engine";
+
+    const std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 #ifdef ENABLE_VALIDATION_LAYERS
 public:
@@ -88,6 +105,11 @@ private:
     VkDevice device;
 
     VkSurfaceKHR surface;
+
+    VkSwapchainKHR swapChain;
+    std::vector<VkImage> swapChainImages;
+    VkFormat swapChainImageFormat;
+    VkExtent2D swapChainExtent;
 
     Queues queues;
 
