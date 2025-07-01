@@ -37,16 +37,24 @@ add_custom_target(shaders)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 
 foreach(SHADER_FILE ${SHADER_FILES})
-    get_filename_component(SHADER_NAME ${SHADER_FILE} NAME)
-    set(SHADER_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER_NAME}.spv)
+    file(RELATIVE_PATH SHADER_RELATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${SHADER_FILE})
+    set(SHADER_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER_RELATIVE_PATH}.spv)
+
+    get_filename_component(SHADER_OUTPUT_DIR ${SHADER_OUTPUT} DIRECTORY)
+
     add_custom_command(
         OUTPUT ${SHADER_OUTPUT}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_DIR}
         COMMAND ${GLSLC} -o ${SHADER_OUTPUT} ${SHADER_FILE}
         DEPENDS ${SHADER_FILE}
         VERBATIM
     )
-    add_custom_target(shader_${SHADER_NAME} DEPENDS ${SHADER_OUTPUT})
-    add_dependencies(shaders shader_${SHADER_NAME})
+
+    string(REPLACE "/" "_" SHADER_TARGET_NAME ${SHADER_RELATIVE_PATH})
+    string(REPLACE "." "_" SHADER_TARGET_NAME ${SHADER_TARGET_NAME})
+
+    add_custom_target(shader_${SHADER_TARGET_NAME} DEPENDS ${SHADER_OUTPUT})
+    add_dependencies(shaders shader_${SHADER_TARGET_NAME})
 endforeach()
 
 add_dependencies(${PROJECT_NAME} shaders)
