@@ -16,10 +16,16 @@
 
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
 
     bool isComplete() {
-        return graphicsFamily.has_value();
+        return graphicsFamily.has_value() && presentFamily.has_value();
     }
+};
+
+struct Queues {
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
 };
 
 class DirkEngine {
@@ -42,10 +48,12 @@ private:
     void createVulkanInstance();
     std::vector<const char*> getRequiredInstanceExtensions();
 
+    void createSurface();
+
     void getPhysicalDevice();
     int getDeviceSuitability(VkPhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-    
+
     void createLogicalDevice();
 
     void tick();
@@ -75,9 +83,13 @@ private:
 private:
     GLFWwindow* window = nullptr;
     VkInstance instance = nullptr;
+
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device;
-    VkQueue graphicsQueue;
+
+    VkSurfaceKHR surface;
+
+    Queues queues;
 
     Logger* logger = nullptr;
 

@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 #include <map>
+#include <set>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -62,6 +63,7 @@ void DirkEngine::initVulkan() {
 #ifdef ENABLE_VALIDATION_LAYERS
     setupDebugMessenger();
 #endif
+    createSurface();
     getPhysicalDevice();
     createLogicalDevice();
 }
@@ -112,6 +114,10 @@ std::vector<const char*> DirkEngine::getRequiredInstanceExtensions() {
     return extensions;
 }
 
+void DirkEngine::createSurface() {
+    assert(glfwCreateWindowSurface(instance, window, nullptr, &surface) == VK_SUCCESS);
+}
+
 void DirkEngine::getPhysicalDevice() {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -141,6 +147,15 @@ int DirkEngine::getDeviceSuitability(VkPhysicalDevice device) {
     vkGetPhysicalDeviceProperties(device, &deviceProperties);
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
+    // prereturn required stuff
+    if (!deviceFeatures.geometryShader)
+        return 0;
+
+    QueueFamilyIndices indices = findQueueFamilies(device);
+    if (!indices.isComplete())
+        return 0;
+
+    // calculate a score to create preference based on device
     int score = 0;
 
     if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
@@ -148,11 +163,8 @@ int DirkEngine::getDeviceSuitability(VkPhysicalDevice device) {
 
     score += deviceProperties.limits.maxImageDimension2D;
 
-    if (!deviceFeatures.geometryShader)
-        return 0;
-
-    if (!findQueueFamilies(device).isComplete())
-        return 0;
+    if (indices.presentFamily == indices.graphicsFamily)
+        score += 10;
 
     return score;
 }
@@ -168,9 +180,18 @@ QueueFamilyIndices DirkEngine::findQueueFamilies(VkPhysicalDevice device) {
 
     int i = 0;
     for (const auto& queueFamily : queueFamilies) {
+        // graphics queue
         if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             indices.graphicsFamily = i;
 
+        // present queue
+        VkBool32 presentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
+        if (presentSupport)
+            indices.presentFamily = i;
+
+        // dont loop over every possible queue if we have the required ones already
         if (indices.isComplete())
             break;
 
@@ -183,25 +204,33 @@ QueueFamilyIndices DirkEngine::findQueueFamilies(VkPhysicalDevice device) {
 void DirkEngine::createLogicalDevice() {
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
-    VkDeviceQueueCreateInfo queueCreateInfo{};
-    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-    queueCreateInfo.queueCount = 1;
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+
     float queuePriority = 1.f;
-    queueCreateInfo.pQueuePriorities = &queuePriority;
+    for (uint32_t queueFamily : uniqueQueueFamilies) {
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamily;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(queueCreateInfo);
+    }
 
     VkPhysicalDeviceFeatures deviceFeatures{};
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.pQueueCreateInfos = &queueCreateInfo;
-    createInfo.queueCreateInfoCount = 1;
     createInfo.pEnabledFeatures = &deviceFeatures;
     createInfo.enabledExtensionCount = 0;
+    // queues
+    createInfo.queueCreateInfoCount = queueCreateInfos.size();
+    createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
     assert(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) == VK_SUCCESS);
 
-    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &queues.graphicsQueue);
+    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &queues.presentQueue);
 }
 
 void DirkEngine::tick() {
@@ -217,6 +246,7 @@ void DirkEngine::cleanup() {
     func(instance, debugMessenger, nullptr);
 #endif
 
+    vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
 
     glfwDestroyWindow(window);
