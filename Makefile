@@ -11,6 +11,10 @@ run: config
 build: config
 	@cmake --build $(BUILD) --config=Debug
 
+.PHONY: shaders
+shaders: config
+	@cmake --build $(BUILD) --config=Debug --target=shaders
+
 .PHONY: release
 release: config
 	@cmake --build $(BUILD) --config=Release
@@ -18,7 +22,8 @@ release: config
 	@rm -rf $(RELEASE)
 	@mkdir $(RELEASE)
 	@cp $(BUILD)/DirkEngine $(RELEASE)
-	@cp -r ressources $(RELEASE)
+	@cp -r resources $(RELEASE)
+	@cp -r $(BUILD)/shaders $(RELEASE)
 	@echo Release created!
 
 .PHONY: config

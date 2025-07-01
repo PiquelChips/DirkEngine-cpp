@@ -11,6 +11,9 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
+# Try to embed dependency
+find_program(GLSLC glslc REQUIRED)
+
 add_subdirectory(thirdparty/glfw-3.4)
 add_subdirectory(thirdparty/glm)
 add_subdirectory(thirdparty/vulkan)
@@ -19,12 +22,41 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+file(GLOB_RECURSE SHADER_FILES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert"
+    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.frag"
+    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.comp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.geom"
+    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.tesc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.tese"
+)
+
+# Shader compilation target
+add_custom_target(shaders)
+
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/shaders)
+
+foreach(SHADER_FILE ${SHADER_FILES})
+    get_filename_component(SHADER_NAME ${SHADER_FILE} NAME)
+    set(SHADER_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER_NAME}.spv)
+    add_custom_command(
+        OUTPUT ${SHADER_OUTPUT}
+        COMMAND ${GLSLC} -o ${SHADER_OUTPUT} ${SHADER_FILE}
+        DEPENDS ${SHADER_FILE}
+        VERBATIM
+    )
+    add_custom_target(shader_${SHADER_NAME} DEPENDS ${SHADER_OUTPUT})
+    add_dependencies(shaders shader_${SHADER_NAME})
+endforeach()
+
+add_dependencies(${PROJECT_NAME} shaders)
+
 # Preprocessor macros
 target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC
     GLFW_INCLUDE_NONE=1
     GLFW_INCLUDE_VULKAN=1
 
-    RESSOURCE_PATH=$<IF:$<CONFIG:Release>,"./ressources","${CMAKE_CURRENT_SOURCE_DIR}/resources">
+    RESSOURCE_PATH=$<IF:$<CONFIG:Release>,"./resources","${CMAKE_CURRENT_SOURCE_DIR}/resources">
     LOG_PATH=$<IF:$<CONFIG:Release>,"./logs","${CMAKE_CURRENT_SOURCE_DIR}/logs">
 
     DEBUG_BUILD=$<CONFIG:Debug>
