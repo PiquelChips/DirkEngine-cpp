@@ -2,3 +2,5 @@ IndentWidth: 4
 AccessModifierOffset: -4
 PointerAlignment: Left
 ColumnLimit: 0
+SpaceAfterCStyleCast: true
+Cpp11BracedListStyle: false

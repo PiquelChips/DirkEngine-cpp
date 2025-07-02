@@ -83,7 +83,7 @@ public:
     const uint32_t HEIGHT = 600;
     const std::string NAME = "Dirk Engine";
 
-    const std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 #ifdef ENABLE_VALIDATION_LAYERS
 public:
@@ -97,7 +97,7 @@ private:
     bool checkValidationLayerSupport();
     void setupDebugMessenger();
 
-    std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+    std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
     VkDebugUtilsMessengerEXT debugMessenger;
 #endif
 

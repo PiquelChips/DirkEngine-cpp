@@ -240,7 +240,6 @@ bool DirkEngine::checkDeviceExtensionSupport(VkPhysicalDevice device) {
 
 SwapChainSupportDetails DirkEngine::querySwapChainSupport(VkPhysicalDevice device) {
     SwapChainSupportDetails details;
-
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
     // formats
@@ -269,7 +268,7 @@ void DirkEngine::createLogicalDevice() {
 
     // queues
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
     float queuePriority = 1.f;
     for (uint32_t queueFamily : uniqueQueueFamilies) {
         VkDeviceQueueCreateInfo queueCreateInfo{};
@@ -332,7 +331,7 @@ void DirkEngine::createSwapChain() {
 
     // image sharing if multiple queues
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-    uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+    uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
     if (indices.graphicsFamily != indices.presentFamily) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
@@ -381,9 +380,7 @@ VkExtent2D DirkEngine::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabili
 
     glfwGetFramebufferSize(window, &width, &height);
 
-    VkExtent2D actualExent = {
-        static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height)};
+    VkExtent2D actualExent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 
     actualExent.width = std::clamp(actualExent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
     actualExent.height = std::clamp(actualExent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
@@ -464,7 +461,7 @@ void DirkEngine::createGraphicsPipeline() {
     fragShaderStageInfo.module = frag;
     fragShaderStageInfo.pName = "main";
 
-    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+    VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
     // vertex input
     // hardcoded in vert shader for now
@@ -482,9 +479,7 @@ void DirkEngine::createGraphicsPipeline() {
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     // viewport & scissor
-    std::vector<VkDynamicState> dynamicStates = {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR};
+    std::vector<VkDynamicState> dynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
     VkPipelineDynamicStateCreateInfo dynamicState{};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -579,7 +574,7 @@ void DirkEngine::cleanup() {
     vkDestroyDevice(device, nullptr);
 
 #ifdef ENABLE_VALIDATION_LAYERS
-    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
     assert(func);
     func(instance, debugMessenger, nullptr);
 #endif
@@ -652,7 +647,7 @@ void DirkEngine::setupDebugMessenger() {
     createInfo.pfnUserCallback = debugCallback;
     createInfo.pUserData = this;
 
-    auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
     assert(func);
     assert(func(instance, &createInfo, nullptr, &debugMessenger) == VK_SUCCESS);
 }
