@@ -4,5 +4,5 @@
 
 int main() {
     auto engine = std::make_unique<DirkEngine>();
-    return engine->start();
+    return engine->main();
 }

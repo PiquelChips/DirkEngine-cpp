@@ -26,7 +26,7 @@ std::vector<char> ShaderManager::readFile(const std::string& filename) {
 
     assert(file.is_open());
 
-    size_t fileSize = (size_t)file.tellg();
+    size_t fileSize = (size_t) file.tellg();
     std::vector<char> buffer(fileSize);
 
     file.seekg(0);
