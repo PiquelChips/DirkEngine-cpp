@@ -106,14 +106,17 @@ private:
 #endif
 
 private:
+    // base required objects
     GLFWwindow* window = nullptr;
     VkInstance instance = nullptr;
+    Queues queues;
+    VkSurfaceKHR surface;
 
+    // devices
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device;
 
-    VkSurfaceKHR surface;
-
+    // swap chain
     VkSwapchainKHR swapChain;
     std::vector<VkImage> swapChainImages;
     VkFormat swapChainImageFormat;
@@ -122,13 +125,13 @@ private:
     std::vector<VkImageView> swapChainImageViews;
     std::vector<VkFramebuffer> swapChainFrameBuffers;
 
+    // rendering
     VkRenderPass renderPass;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
     VkCommandPool commandPool;
     VkCommandBuffer commandBuffer;
 
-    Queues queues;
 
     Logger* logger = nullptr;
 
