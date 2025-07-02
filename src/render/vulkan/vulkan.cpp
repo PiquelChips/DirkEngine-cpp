@@ -16,15 +16,18 @@
 VulkanRenderer::VulkanRenderer(RendererConfig rendererConfig, Logger* logger) : rendererConfig(rendererConfig), logger(logger) {}
 
 int VulkanRenderer::init() {
-    if (initWindow() == EXIT_FAILURE)
-        return EXIT_FAILURE;
+    int result = EXIT_SUCCESS;
 
-    if (initVulkan() == EXIT_FAILURE)
-        return EXIT_FAILURE;
+    result = initWindow();
+    if (result != EXIT_SUCCESS)
+        return result;
+
+    result = initVulkan();
+    if (result != EXIT_SUCCESS)
+        return result;
 
     getLogger()->Get(INFO) << "engine initialization successful";
-
-    return EXIT_SUCCESS;
+    return result;
 }
 
 void VulkanRenderer::tick(DirkEngine* engine) {
@@ -38,9 +41,10 @@ int VulkanRenderer::draw() {
 }
 
 void VulkanRenderer::cleanup() {
+    // make sure all device ops are finished
     vkDeviceWaitIdle(device);
+    getLogger()->Get(INFO) << "cleaning up renderer";
 
-    getLogger()->Get(INFO) << "cleaning up";
     vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
     vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
     vkDestroyFence(device, inFlightFence, nullptr);

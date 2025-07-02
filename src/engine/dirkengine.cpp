@@ -13,10 +13,16 @@ DirkEngine::DirkEngine() {
 
 int DirkEngine::main() {
     int result = EXIT_SUCCESS;
-    int initResult = init();
+    result = init();
+
+    if (result != EXIT_SUCCESS)
+        return result;
 
     while (true) {
+        // mainly check if GLFW close event is called
+        // place before isRequestingExit as this could call DirkEngine::exit()
         renderer->tick(this);
+
         if (isRequestingExit())
             break;
 
@@ -40,7 +46,9 @@ int DirkEngine::init() {
 
     // for now we only use Vulkan
     renderer = std::make_unique<VulkanRenderer>(RENDER_CONFIG, logger.get());
-    result += renderer->init();
+    result = renderer->init();
+    if (result != EXIT_SUCCESS)
+        return result;
 
     // TODO: init audio
     // TODO: init network
