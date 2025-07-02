@@ -3,6 +3,7 @@
 #include "GLFW/glfw3.h"
 #include "logger.hpp"
 #include "render/render.hpp"
+#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -29,6 +30,19 @@ struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
+};
+
+struct SwapChainImage {
+    VkImageView imageView;
+    VkFramebuffer frameBuffer;
+};
+
+struct InFlightImage {
+    VkCommandBuffer commandBuffer;
+    // syncing
+    VkSemaphore imageAvailableSemaphore;
+    VkSemaphore renderFinishedSemaphore;
+    VkFence inFlightFence;
 };
 
 /**
@@ -69,17 +83,17 @@ public:
     void createLogicalDevice();
 
     // swap chain
-    void createSwapChain();
+    std::vector<VkImage> createSwapChain();
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-    void createImageViews();
+    void createSwapChainImages(std::vector<VkImage> images);
 
     void createRenderPass();
+    void createCommandPool();
     void createGraphicsPipeline();
-    void createFrameBuffers();
-    void createCommandBuffer();
-    void createSyncObjects();
+
+    void createInFlightImages(const int imageCount);
 
     const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
@@ -114,31 +128,29 @@ private:
 
     // swap chain
     VkSwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
-
-    std::vector<VkImageView> swapChainImageViews;
-    std::vector<VkFramebuffer> swapChainFrameBuffers;
 
     // rendering
     VkRenderPass renderPass;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
     VkCommandPool commandPool;
-    VkCommandBuffer commandBuffer;
 
-    // syncing
-    VkSemaphore imageAvailableSemaphore;
-    VkSemaphore renderFinishedSemaphore;
-    VkFence inFlightFence;
+    std::vector<SwapChainImage> swapChainImages;
+    std::vector<InFlightImage> inFlightImages;
+
+    uint32_t currentFrame = 1;
 
 private:
     // drawing, should be removed and improved later on
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
 
-private:
     // shader utilities
     VkShaderModule loadShaderModule(const std::string& shaderName);
+
+private:
+    // dont make this too high or CPU will go faster than GPU, causing latency
+    const int MAX_FRAMES_IN_FLIGHT = 2;
 };
