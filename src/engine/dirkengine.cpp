@@ -42,12 +42,17 @@ void DirkEngine::main() {
         tick();
     }
 
+    getLogger()->Get(INFO) << "exiting...";
+
     vkDeviceWaitIdle(device);
 
     cleanup();
 }
 
-void DirkEngine::exit() { requestingExit = true; }
+void DirkEngine::exit() {
+    requestingExit = true;
+    getLogger()->Get(INFO) << "engine exit has been requested";
+}
 
 void DirkEngine::initWindow() {
     assert(glfwInit());
@@ -99,7 +104,7 @@ void DirkEngine::createVulkanInstance() {
 
 #ifdef ENABLE_VALIDATION_LAYERS
     assert(checkValidationLayerSupport());
-    logger->Get(INFO) << "Using validation layers";
+    logger->Get(INFO) << "using validation layers";
 
     createInfo.enabledLayerCount = validationLayers.size();
     createInfo.ppEnabledLayerNames = validationLayers.data();
@@ -108,6 +113,8 @@ void DirkEngine::createVulkanInstance() {
 #endif
 
     assert(vkCreateInstance(&createInfo, nullptr, &instance) == VK_SUCCESS);
+
+    logger->Get(INFO) << "instance creation successful";
 }
 
 std::vector<const char*> DirkEngine::getRequiredInstanceExtensions() {
@@ -128,6 +135,7 @@ std::vector<const char*> DirkEngine::getRequiredInstanceExtensions() {
 
 void DirkEngine::createSurface() {
     assert(glfwCreateWindowSurface(instance, window, nullptr, &surface) == VK_SUCCESS);
+    logger->Get(INFO) << "surface creation successful";
 }
 
 void DirkEngine::getPhysicalDevice() {
@@ -151,6 +159,18 @@ void DirkEngine::getPhysicalDevice() {
     } else {
         throw std::runtime_error("failed to find a suitable GPU!");
     }
+
+    VkPhysicalDeviceProperties deviceProperties;
+    vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+
+    logger->Get(INFO)
+        << "physical device selected: "
+        << "\n\tvendor id: " << deviceProperties.vendorID
+        << "\n\tdevice id: " << deviceProperties.deviceID
+        << "\n\tdevice name: " << deviceProperties.deviceName
+        << "\n\tdevice type: " << deviceProperties.deviceType
+        << "\n\tapi version: " << deviceProperties.apiVersion
+        << "\n\tdriver version: " << deviceProperties.driverVersion;
 }
 
 int DirkEngine::getDeviceSuitability(VkPhysicalDevice device) {
@@ -159,6 +179,8 @@ int DirkEngine::getDeviceSuitability(VkPhysicalDevice device) {
 
     vkGetPhysicalDeviceProperties(device, &deviceProperties);
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+    getLogger()->Get(INFO) << "found device: " << deviceProperties.deviceName;
 
     // prereturn required stuff
     if (!deviceFeatures.geometryShader)
@@ -294,6 +316,8 @@ void DirkEngine::createLogicalDevice() {
 
     assert(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) == VK_SUCCESS);
 
+    getLogger()->Get(INFO) << "logical Vulkan device creation successful";
+
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &queues.graphicsQueue);
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &queues.presentQueue);
 }
@@ -352,6 +376,11 @@ void DirkEngine::createSwapChain() {
 
     swapChainImageFormat = surfaceFormat.format;
     swapChainExtent = extent;
+
+    getLogger()->Get(INFO) << "created swap chain: "
+                           << "\n\timage count: " << imageCount
+                           << "\n\timage width: " << swapChainExtent.width
+                           << "\n\timage height: " << swapChainExtent.height;
 };
 
 VkSurfaceFormatKHR DirkEngine::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
@@ -714,11 +743,12 @@ void DirkEngine::drawFrame() {
 }
 
 void DirkEngine::tick() {
-    // logger->Get(DEBUG) << "Tick";
     drawFrame();
+    getLogger()->Get(DEBUG) << "tick";
 }
 
 void DirkEngine::cleanup() {
+    getLogger()->Get(INFO) << "cleaning up";
     vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
     vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
     vkDestroyFence(device, inFlightFence, nullptr);
@@ -776,7 +806,7 @@ VkBool32 DirkEngine::debugCallback(
         return VK_FALSE;
     }
 
-    engine->logger->Get(level) << pCallbackData->pMessage;
+    engine->getLogger()->Get(level) << pCallbackData->pMessage;
 
     return VK_FALSE;
 }
@@ -796,7 +826,7 @@ bool DirkEngine::checkValidationLayerSupport() {
                 layerFound = true;
 
         if (!layerFound) {
-            logger->Get(ERROR) << "Validation layer \"" << layerName << "\" not found";
+            logger->Get(ERROR) << "validation layer \"" << layerName << "\" not found";
             return false;
         }
     }
