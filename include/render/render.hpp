@@ -17,8 +17,8 @@ struct RendererConfig {
  */
 class Renderer {
 public:
-    virtual int init() { return 0; };
-    virtual void tick(DirkEngine* engine) {};
-    virtual int draw() { return 0; };
-    virtual void cleanup() {};
+    virtual int init() = 0;
+    virtual void tick(DirkEngine* engine) = 0;
+    virtual int draw() = 0;
+    virtual void cleanup() = 0;
 };
