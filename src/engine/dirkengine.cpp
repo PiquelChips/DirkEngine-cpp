@@ -28,7 +28,7 @@ bool DirkEngine::init() {
     return initSuccessful;
 }
 
-void DirkEngine::start() {
+void DirkEngine::main() {
     assert(initSuccessful);
 
     while (true) {

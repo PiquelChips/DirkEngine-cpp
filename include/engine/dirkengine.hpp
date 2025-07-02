@@ -40,7 +40,7 @@ public:
     DirkEngine(Logger* logger);
 
     bool init();
-    void start();
+    void main();
     void exit();
 
     bool isRequestingExit() const noexcept;
