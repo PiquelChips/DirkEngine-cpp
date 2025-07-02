@@ -1,8 +1,8 @@
 #include "render/vulkan/vulkan.hpp"
 #include "engine/dirkengine.hpp"
-#include "engine/shaders.hpp"
 #include "logger.hpp"
 #include "render/render.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <algorithm>
 #include <cassert>
@@ -11,6 +11,7 @@
 #include <limits>
 #include <map>
 #include <set>
+#include <vector>
 
 VulkanRenderer::VulkanRenderer(RendererConfig rendererConfig, Logger* logger) : rendererConfig(rendererConfig), logger(logger) {}
 
@@ -512,8 +513,8 @@ void VulkanRenderer::createRenderPass() {
 }
 
 void VulkanRenderer::createGraphicsPipeline() {
-    VkShaderModule vert = ShaderManager::loadShaderModule(device, "shader.vert");
-    VkShaderModule frag = ShaderManager::loadShaderModule(device, "shader.frag");
+    VkShaderModule vert = loadShaderModule("shader.vert");
+    VkShaderModule frag = loadShaderModule("shader.frag");
 
     // vert shader
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
@@ -835,4 +836,27 @@ void VulkanRenderer::drawFrame() {
     presentInfo.pResults = nullptr; // only have one swap chain
 
     vkQueuePresentKHR(queues.presentQueue, &presentInfo);
+}
+
+VkShaderModule VulkanRenderer::loadShaderModule(const std::string& shaderName) {
+    std::ifstream file(std::string(SHADER_PATH) + "/" + shaderName + ".spv", std::ios::ate | std::ios::binary);
+
+    assert(file.is_open());
+
+    size_t fileSize = (size_t) file.tellg();
+    std::vector<char> shader(fileSize);
+
+    file.seekg(0);
+    file.read(shader.data(), fileSize);
+
+    file.close();
+
+    VkShaderModuleCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = shader.size();
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(shader.data());
+
+    VkShaderModule shaderModule;
+    assert(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) == VK_SUCCESS);
+    return shaderModule;
 }

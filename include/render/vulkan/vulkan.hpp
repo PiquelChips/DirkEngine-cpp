@@ -137,4 +137,8 @@ private:
     // drawing, should be removed and improved later on
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
+
+private:
+    // shader utilities
+    VkShaderModule loadShaderModule(const std::string& shaderName);
 };
