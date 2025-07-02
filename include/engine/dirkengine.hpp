@@ -75,6 +75,9 @@ private:
     void createRenderPass();
     void createGraphicsPipeline();
     void createFrameBuffers();
+    void createCommandBuffer();
+
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
     void tick();
     void cleanup();
@@ -122,6 +125,8 @@ private:
     VkRenderPass renderPass;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
+    VkCommandPool commandPool;
+    VkCommandBuffer commandBuffer;
 
     Queues queues;
 
