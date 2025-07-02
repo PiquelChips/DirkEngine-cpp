@@ -76,8 +76,11 @@ private:
     void createGraphicsPipeline();
     void createFrameBuffers();
     void createCommandBuffer();
+    void createSyncObjects();
 
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+
+    void drawFrame();
 
     void tick();
     void cleanup();
@@ -132,6 +135,10 @@ private:
     VkCommandPool commandPool;
     VkCommandBuffer commandBuffer;
 
+    // syncing
+    VkSemaphore imageAvailableSemaphore;
+    VkSemaphore renderFinishedSemaphore;
+    VkFence inFlightFence;
 
     Logger* logger = nullptr;
 
