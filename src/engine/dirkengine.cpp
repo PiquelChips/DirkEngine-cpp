@@ -49,9 +49,6 @@ void DirkEngine::main() {
 
 void DirkEngine::exit() { requestingExit = true; }
 
-bool DirkEngine::isRequestingExit() const noexcept { return requestingExit; }
-Logger* DirkEngine::getLogger() const noexcept { return logger; }
-
 void DirkEngine::initWindow() {
     assert(glfwInit());
 

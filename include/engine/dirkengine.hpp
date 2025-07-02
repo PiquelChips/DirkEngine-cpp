@@ -43,9 +43,8 @@ public:
     void main();
     void exit();
 
-    bool isRequestingExit() const noexcept;
-
-    Logger* getLogger() const noexcept;
+    bool isRequestingExit() const noexcept { return requestingExit; }
+    Logger* getLogger() const noexcept { return logger; }
 
 private:
     void initWindow();
