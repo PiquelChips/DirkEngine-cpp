@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <map>
@@ -17,9 +18,19 @@
 #include <utility>
 #include <vector>
 
-DirkEngine::DirkEngine(Logger* logger) : logger(logger) {}
+DirkEngine::DirkEngine() {
+    logger = std::make_unique<Logger>();
+    assert(logger);
+}
 
-bool DirkEngine::init() {
+int DirkEngine::start() {
+    init();
+    main();
+
+    return EXIT_SUCCESS;
+}
+
+int DirkEngine::init() {
     initWindow();
     initVulkan();
 

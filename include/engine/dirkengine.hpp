@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -37,16 +38,18 @@ struct SwapChainSupportDetails {
 class DirkEngine {
 
 public:
-    DirkEngine(Logger* logger);
+    DirkEngine();
 
-    bool init();
+    int start();
+
+    bool isRequestingExit() const noexcept { return requestingExit; }
+    Logger* getLogger() const noexcept { return logger.get(); }
+
+private:
+    int init();
     void main();
     void exit();
 
-    bool isRequestingExit() const noexcept { return requestingExit; }
-    Logger* getLogger() const noexcept { return logger; }
-
-private:
     void initWindow();
     void initVulkan();
 
@@ -139,7 +142,7 @@ private:
     VkSemaphore renderFinishedSemaphore;
     VkFence inFlightFence;
 
-    Logger* logger = nullptr;
+    std::unique_ptr<Logger> logger = nullptr;
 
     bool initSuccessful = false;
     bool requestingExit = false;
