@@ -10,7 +10,7 @@
 Logger::Log::Log(LogLevel level, const std::string& filename) {
     file.open(filename);
 
-    std::string levelString{GetLevelString(level)};
+    std::string levelString{ GetLevelString(level) };
 
     char timestamp[25];
 
@@ -21,7 +21,7 @@ Logger::Log::Log(LogLevel level, const std::string& filename) {
     std::ostringstream out;
     out << timestamp << levelString << ": ";
 
-    std::string outString{out.str()};
+    std::string outString{ out.str() };
 
     std::cout << outString;
 
@@ -65,11 +65,11 @@ Logger::Logger() {
         return;
     }
 
-    std::filesystem::create_directory(std::filesystem::path{logPath});
+    std::filesystem::create_directory(std::filesystem::path{ logPath });
 }
 
 Logger::Log Logger::Get(LogLevel level) {
-    std::string filepath{""};
+    std::string filepath{ "" };
 
     if (logPath != "") {
         filepath = logPath + "/latest.log";
