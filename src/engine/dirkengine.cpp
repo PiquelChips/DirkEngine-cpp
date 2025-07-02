@@ -75,6 +75,7 @@ void DirkEngine::initVulkan() {
     createImageViews();
     createRenderPass();
     createGraphicsPipeline();
+    createFrameBuffers();
 }
 
 void DirkEngine::createVulkanInstance() {
@@ -558,11 +559,31 @@ void DirkEngine::createGraphicsPipeline() {
     vkDestroyShaderModule(device, frag, nullptr);
 }
 
+void DirkEngine::createFrameBuffers() {
+    swapChainFrameBuffers.resize(swapChainImageViews.size());
+
+    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.attachmentCount = 1;
+        framebufferInfo.pAttachments = &swapChainImageViews[i];
+        framebufferInfo.width = swapChainExtent.width;
+        framebufferInfo.height = swapChainExtent.height;
+        framebufferInfo.layers = 1;
+
+        assert(vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFrameBuffers[i]) == VK_SUCCESS);
+    }
+}
+
 void DirkEngine::tick() {
     // logger->Get(DEBUG) << "Tick";
 }
 
 void DirkEngine::cleanup() {
+    for (auto framebuffer : swapChainFrameBuffers)
+        vkDestroyFramebuffer(device, framebuffer, nullptr);
+
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
