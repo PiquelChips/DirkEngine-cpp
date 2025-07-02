@@ -33,10 +33,10 @@ void DirkEngine::main() {
 
     while (true) {
         if (glfwWindowShouldClose(window))
-            return;
+            break;
 
         if (isRequestingExit())
-            return;
+            break;
 
         glfwPollEvents();
         tick();
