@@ -3,6 +3,9 @@
 #include "GLFW/glfw3.h"
 #include "logger.hpp"
 #include "render/render.hpp"
+#include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_handles.hpp"
+#include "vulkan/vulkan_structs.hpp"
 #include <cstdint>
 #include <optional>
 #include <vector>
@@ -22,27 +25,27 @@ struct QueueFamilyIndices {
 };
 
 struct Queues {
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
+    vk::Queue graphicsQueue;
+    vk::Queue presentQueue;
 };
 
 struct SwapChainSupportDetails {
-    VkSurfaceCapabilitiesKHR capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> presentModes;
+    vk::SurfaceCapabilitiesKHR capabilities;
+    std::vector<vk::SurfaceFormatKHR> formats;
+    std::vector<vk::PresentModeKHR> presentModes;
 };
 
 struct SwapChainImage {
-    VkImageView imageView;
-    VkFramebuffer frameBuffer;
+    vk::ImageView imageView;
+    vk::Framebuffer frameBuffer;
 };
 
 struct InFlightImage {
-    VkCommandBuffer commandBuffer;
+    vk::CommandBuffer commandBuffer;
     // syncing
-    VkSemaphore imageAvailableSemaphore;
-    VkSemaphore renderFinishedSemaphore;
-    VkFence inFlightFence;
+    vk::Semaphore imageAvailableSemaphore;
+    vk::Semaphore renderFinishedSemaphore;
+    vk::Fence inFlightFence;
 };
 
 /**
@@ -75,19 +78,19 @@ public:
 
     // selecting the physical device
     void getPhysicalDevice();
-    int getDeviceSuitability(VkPhysicalDevice device);
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-    bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+    int getDeviceSuitability(vk::PhysicalDevice device);
+    QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
+    bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
+    SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
 
     void createLogicalDevice();
 
     // swap chain
-    std::vector<VkImage> createSwapChain();
-    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-    void createSwapChainImages(std::vector<VkImage> images);
+    std::vector<vk::Image> createSwapChain();
+    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+    vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+    vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
+    void createSwapChainImages(std::vector<vk::Image> images);
 
     void createRenderPass();
     void createCommandPool();
@@ -95,14 +98,14 @@ public:
 
     void createInFlightImages(const int imageCount);
 
-    const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
 
 #ifdef ENABLE_VALIDATION_LAYERS
 public:
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        VkDebugUtilsMessageTypeFlagsEXT messageType,
-        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
+        vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        vk::DebugUtilsMessageTypeFlagsEXT messageType,
+        const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData);
 
 private:
@@ -110,7 +113,7 @@ private:
     void setupDebugMessenger();
 
     std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-    VkDebugUtilsMessengerEXT debugMessenger;
+    vk::DebugUtilsMessengerEXT debugMessenger;
 #endif
 
 private:
@@ -118,24 +121,25 @@ private:
 
     // base required objects
     GLFWwindow* window = nullptr;
-    VkInstance instance = nullptr;
+    vk::Instance instance;
+
     Queues queues;
-    VkSurfaceKHR surface;
+    vk::SurfaceKHR surface;
 
     // devices
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkDevice device;
+    vk::PhysicalDevice physicalDevice;
+    vk::Device device;
 
     // swap chain
-    VkSwapchainKHR swapChain;
-    VkFormat swapChainImageFormat;
-    VkExtent2D swapChainExtent;
+    vk::SwapchainKHR swapChain;
+    vk::Format swapChainImageFormat;
+    vk::Extent2D swapChainExtent;
 
     // rendering
-    VkRenderPass renderPass;
-    VkPipelineLayout pipelineLayout;
-    VkPipeline graphicsPipeline;
-    VkCommandPool commandPool;
+    vk::RenderPass renderPass;
+    vk::PipelineLayout pipelineLayout;
+    vk::Pipeline graphicsPipeline;
+    vk::CommandPool commandPool;
 
     std::vector<SwapChainImage> swapChainImages;
     std::vector<InFlightImage> inFlightImages;
@@ -144,11 +148,11 @@ private:
 
 private:
     // drawing, should be removed and improved later on
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
 
     // shader utilities
-    VkShaderModule loadShaderModule(const std::string& shaderName);
+    vk::ShaderModule loadShaderModule(const std::string& shaderName);
 
 private:
     // dont make this too high or CPU will go faster than GPU, causing latency
