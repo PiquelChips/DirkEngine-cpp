@@ -606,7 +606,6 @@ void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
         createInfo.subresourceRange.layerCount = 1;
 
         image.imageView = device.createImageView(createInfo);
-        assert(image.imageView);
 
         // frame buffers
 
@@ -620,7 +619,8 @@ void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
         framebufferInfo.layers = 1;
 
         image.frameBuffer = device.createFramebuffer(framebufferInfo);
-        assert(image.frameBuffer);
+
+        assert(image);
     }
 }
 
@@ -640,7 +640,6 @@ void VulkanRenderer::createInFlightImages(const int imageCount) {
 
         // command buffers
         image.commandBuffer = commandBuffers[i];
-        assert(image.commandBuffer);
 
         // sync objects
         vk::SemaphoreCreateInfo semaphoreInfo{};
@@ -651,11 +650,10 @@ void VulkanRenderer::createInFlightImages(const int imageCount) {
         fenceInfo.flags = vk::FenceCreateFlagBits::eSignaled; // create the fence as signaled to avoid stalling at first draw call
 
         image.imageAvailableSemaphore = device.createSemaphore(semaphoreInfo);
-        assert(image.imageAvailableSemaphore);
         image.renderFinishedSemaphore = device.createSemaphore(semaphoreInfo);
-        assert(image.renderFinishedSemaphore);
         image.inFlightFence = device.createFence(fenceInfo);
-        assert(image.inFlightFence);
+
+        assert(image);
     }
 }
 
@@ -777,6 +775,7 @@ void VulkanRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 
 void VulkanRenderer::drawFrame() {
     InFlightImage image = inFlightImages[currentFrame];
+    assert(image);
 
     // wait for previous frame
     assert(device.waitForFences(1, &image.inFlightFence, vk::True, UINT64_MAX) == vk::Result::eSuccess);

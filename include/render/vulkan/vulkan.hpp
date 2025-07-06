@@ -38,6 +38,8 @@ struct SwapChainSupportDetails {
 struct SwapChainImage {
     vk::ImageView imageView;
     vk::Framebuffer frameBuffer;
+
+    operator bool() const { return imageView && frameBuffer; }
 };
 
 struct InFlightImage {
@@ -46,6 +48,8 @@ struct InFlightImage {
     vk::Semaphore imageAvailableSemaphore;
     vk::Semaphore renderFinishedSemaphore;
     vk::Fence inFlightFence;
+
+    operator bool() const { return commandBuffer && imageAvailableSemaphore && renderFinishedSemaphore && inFlightFence; }
 };
 
 /**
