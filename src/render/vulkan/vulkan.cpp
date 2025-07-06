@@ -614,7 +614,7 @@ void VulkanRenderer::createInFlightImages(const int imageCount) {
     allocInfo.level = vk::CommandBufferLevel::ePrimary;
     allocInfo.commandBufferCount = imageCount;
 
-    std::vector<vk::CommandBuffer> commandBuffers = device.allocateCommandBuffers(allocInfo, imageCount);
+    std::vector<vk::CommandBuffer> commandBuffers = device.allocateCommandBuffers(allocInfo);
 
     for (int i = 0; i < imageCount; i++) {
         InFlightImage image = inFlightImages[i];
