@@ -44,6 +44,8 @@ Logger::Log::~Log() {
 
 std::string Logger::GetLevelString(LogLevel level) {
     switch (level) {
+    case TRACE:
+        return "TRACE";
     case DEBUG:
         return "DEBUG";
     case INFO:
