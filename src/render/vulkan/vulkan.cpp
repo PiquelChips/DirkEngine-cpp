@@ -274,13 +274,20 @@ void VulkanRenderer::createLogicalDevice() {
     std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
     std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos(uniqueQueueFamilies.size());
     float queuePriority = 1.f;
-    for (uint32_t queueFamily : uniqueQueueFamilies) {
+    for (int i = 0; i < uniqueQueueFamilies.size(); i++) {
+        std::set<uint32_t>::iterator iter = uniqueQueueFamilies.find(i);
+        if (iter == uniqueQueueFamilies.end())
+            return;
+
+        uint32_t queueFamily = *iter;
+
         vk::DeviceQueueCreateInfo queueCreateInfo;
         queueCreateInfo.sType = vk::StructureType::eDeviceQueueCreateInfo;
         queueCreateInfo.queueFamilyIndex = queueFamily;
         queueCreateInfo.queueCount = 1;
         queueCreateInfo.pQueuePriorities = &queuePriority;
-        queueCreateInfos.push_back(queueCreateInfo);
+
+        queueCreateInfos[i] = queueCreateInfo;
     }
 
     vk::PhysicalDeviceFeatures deviceFeatures{};
@@ -651,12 +658,16 @@ vk::Bool32 VulkanRenderer::debugCallback(
     switch (messageSeverity) {
     case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
         level = ERROR;
+        break;
     case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
         level = WARNING;
+        break;
     case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
         level = INFO;
+        break;
     case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
         level = DEBUG;
+        break;
     }
 
     renderer->getLogger()->Get(level) << "[Vulkan] " << pCallbackData->pMessage;
@@ -693,7 +704,10 @@ void VulkanRenderer::setupDebugMessenger() {
     debugUtilsMessengerCreateInfoEXT.pfnUserCallback = &debugCallback;
     debugUtilsMessengerCreateInfoEXT.pUserData = this;
 
-    debugMessenger = instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
+    vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
+    debugMessenger = instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT, nullptr, dispatcher);
+    assert(debugMessenger);
+    getLogger()->Get(INFO) << "debug messenger created";
 }
 #endif
 
