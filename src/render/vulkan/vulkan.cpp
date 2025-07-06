@@ -124,7 +124,7 @@ void VulkanRenderer::createVulkanInstance() {
     createInfo.enabledLayerCount = 0;
 #endif
 
-    assert(vk::createInstance(&createInfo, nullptr, &instance) == vk::Result::eSuccess);
+    instance = vk::createInstance(createInfo);
 
     getLogger()->Get(INFO) << "instance creation successful";
 }
@@ -145,9 +145,9 @@ std::vector<const char*> VulkanRenderer::getRequiredInstanceExtensions() {
 }
 
 void VulkanRenderer::createSurface() {
-    VkSurfaceKHR vkSurf;
-    assert(glfwCreateWindowSurface(instance, window, nullptr, &vkSurf) == VK_SUCCESS);
-    surface = vk::SurfaceKHR(vkSurf);
+    VkSurfaceKHR surfaceTmp;
+    assert(glfwCreateWindowSurface(instance, window, nullptr, &surfaceTmp) == VK_SUCCESS);
+    surface = vk::SurfaceKHR(surfaceTmp);
     getLogger()->Get(INFO) << "surface creation successful";
 }
 
@@ -232,8 +232,7 @@ QueueFamilyIndices VulkanRenderer::findQueueFamilies(vk::PhysicalDevice device) 
             indices.graphicsFamily = i;
 
         // present queue
-        vk::Bool32 presentSupport = false;
-        assert(device.getSurfaceSupportKHR(i, surface, &presentSupport) == vk::Result::eSuccess);
+        vk::Bool32 presentSupport = device.getSurfaceSupportKHR(i, surface);
 
         if (presentSupport)
             indices.presentFamily = i;
@@ -433,7 +432,7 @@ void VulkanRenderer::createRenderPass() {
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    assert(device.createRenderPass(&renderPassInfo, nullptr, &renderPass) == vk::Result::eSuccess);
+    renderPass = device.createRenderPass(renderPassInfo);
 }
 
 void VulkanRenderer::createCommandPool() {
@@ -444,7 +443,7 @@ void VulkanRenderer::createCommandPool() {
     poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value(),
 
-    assert(device.createCommandPool(&poolInfo, nullptr, &commandPool) == vk::Result::eSuccess);
+    commandPool = device.createCommandPool(poolInfo);
 }
 
 void VulkanRenderer::createGraphicsPipeline() {
@@ -530,7 +529,7 @@ void VulkanRenderer::createGraphicsPipeline() {
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
-    assert(device.createPipelineLayout(&pipelineLayoutInfo, nullptr, &pipelineLayout) == vk::Result::eSuccess);
+    pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo);
 
     // actually create the graphics pipeline
 
@@ -556,10 +555,10 @@ void VulkanRenderer::createGraphicsPipeline() {
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
-    assert(device.createGraphicsPipelines(VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) == vk::Result::eSuccess);
+    graphicsPipeline = device.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo).value;
 
-    vkDestroyShaderModule(device, vert, nullptr);
-    vkDestroyShaderModule(device, frag, nullptr);
+    device.destroyShaderModule(vert);
+    device.destroyShaderModule(frag);
 }
 
 void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
@@ -589,7 +588,7 @@ void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        assert(device.createImageView(&createInfo, nullptr, &image.imageView) == vk::Result::eSuccess);
+        image.imageView = device.createImageView(createInfo);
 
         // frame buffers
 
@@ -602,21 +601,20 @@ void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
         framebufferInfo.height = swapChainExtent.height;
         framebufferInfo.layers = 1;
 
-        assert(device.createFramebuffer(&framebufferInfo, nullptr, &image.frameBuffer) == vk::Result::eSuccess);
+        image.frameBuffer = device.createFramebuffer(framebufferInfo);
     }
 }
 
 void VulkanRenderer::createInFlightImages(const int imageCount) {
     inFlightImages.resize(imageCount);
 
-    std::vector<vk::CommandBuffer> commandBuffers(imageCount);
     vk::CommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = vk::StructureType::eCommandBufferAllocateInfo;
     allocInfo.commandPool = commandPool;
     allocInfo.level = vk::CommandBufferLevel::ePrimary;
-    allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
+    allocInfo.commandBufferCount = imageCount;
 
-    assert(device.allocateCommandBuffers(&allocInfo, commandBuffers.data()) == vk::Result::eSuccess);
+    std::vector<vk::CommandBuffer> commandBuffers = device.allocateCommandBuffers(allocInfo, imageCount);
 
     for (int i = 0; i < imageCount; i++) {
         InFlightImage image = inFlightImages[i];
@@ -632,9 +630,9 @@ void VulkanRenderer::createInFlightImages(const int imageCount) {
         fenceInfo.sType = vk::StructureType::eFenceCreateInfo;
         fenceInfo.flags = vk::FenceCreateFlagBits::eSignaled; // create the fence as signaled to avoid stalling at first draw call
 
-        assert(device.createSemaphore(&semaphoreInfo, nullptr, &image.imageAvailableSemaphore) == vk::Result::eSuccess);
-        assert(device.createSemaphore(&semaphoreInfo, nullptr, &image.renderFinishedSemaphore) == vk::Result::eSuccess);
-        assert(device.createFence(&fenceInfo, nullptr, &image.inFlightFence) == vk::Result::eSuccess);
+        image.imageAvailableSemaphore = device.createSemaphore(semaphoreInfo);
+        image.renderFinishedSemaphore = device.createSemaphore(semaphoreInfo);
+        image.inFlightFence = device.createFence(fenceInfo);
     }
 }
 
@@ -667,11 +665,7 @@ vk::Bool32 VulkanRenderer::debugCallback(
 }
 
 bool VulkanRenderer::checkValidationLayerSupport() {
-    uint32_t layerCount = 0;
-    assert(vk::enumerateInstanceLayerProperties(&layerCount, nullptr) == vk::Result::eSuccess);
-
-    std::vector<vk::LayerProperties> availableLayers(layerCount);
-    assert(vk::enumerateInstanceLayerProperties(&layerCount, availableLayers.data()) == vk::Result::eSuccess);
+    auto availableLayers = vk::enumerateInstanceLayerProperties();
 
     for (const char* layerName : validationLayers) {
         bool layerFound = false;
@@ -699,7 +693,7 @@ void VulkanRenderer::setupDebugMessenger() {
     debugUtilsMessengerCreateInfoEXT.pfnUserCallback = &debugCallback;
     debugUtilsMessengerCreateInfoEXT.pUserData = this;
 
-    assert(instance.createDebugUtilsMessengerEXT(&debugUtilsMessengerCreateInfoEXT, nullptr, &debugMessenger) == vk::Result::eSuccess);
+    debugMessenger = instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
 }
 #endif
 
@@ -821,7 +815,5 @@ vk::ShaderModule VulkanRenderer::loadShaderModule(const std::string& shaderName)
     createInfo.codeSize = shader.size();
     createInfo.pCode = reinterpret_cast<const uint32_t*>(shader.data());
 
-    vk::ShaderModule shaderModule;
-    assert(device.createShaderModule(&createInfo, nullptr, &shaderModule) == vk::Result::eSuccess);
-    return shaderModule;
+    return device.createShaderModule(createInfo);
 }
