@@ -784,11 +784,10 @@ void VulkanRenderer::drawFrame() {
     assert(device.resetFences(1, &image.inFlightFence) == vk::Result::eSuccess);
 
     // acquire image from swapChain
-    uint32_t imageIndex;
-    vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, image.imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+    uint32_t imageIndex = device.acquireNextImageKHR(swapChain, UINT64_MAX, image.imageAvailableSemaphore, VK_NULL_HANDLE).value;
 
     // record the command buffer
-    vkResetCommandBuffer(image.commandBuffer, 0);
+    image.commandBuffer.reset();
     recordCommandBuffer(image.commandBuffer, imageIndex);
 
     // submit the command buffer
@@ -796,11 +795,10 @@ void VulkanRenderer::drawFrame() {
     submitInfo.sType = vk::StructureType::eSubmitInfo;
 
     // wait semaphores
-    vk::Semaphore waitSemaphores[] = { image.imageAvailableSemaphore }; // index has to match with stage in `waitStages`
-    vk::PipelineStageFlags waitStages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    vk::PipelineStageFlags waitStage{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
     submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = waitSemaphores;
-    submitInfo.pWaitDstStageMask = waitStages;
+    submitInfo.pWaitSemaphores = &image.imageAvailableSemaphore;
+    submitInfo.pWaitDstStageMask = &waitStage;
     // signal semaphores
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &image.renderFinishedSemaphore;

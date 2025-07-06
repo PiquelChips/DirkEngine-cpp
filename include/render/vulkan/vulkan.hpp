@@ -148,7 +148,7 @@ private:
     std::vector<SwapChainImage> swapChainImages;
     std::vector<InFlightImage> inFlightImages;
 
-    uint32_t currentFrame = 1;
+    uint32_t currentFrame = 0;
 
 private:
     // drawing, should be removed and improved later on
