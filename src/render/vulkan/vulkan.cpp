@@ -125,7 +125,7 @@ void VulkanRenderer::createVulkanInstance() {
 #endif
 
     instance = vk::createInstance(createInfo);
-
+    assert(instance);
     getLogger()->Get(INFO) << "instance creation successful";
 }
 
@@ -148,6 +148,7 @@ void VulkanRenderer::createSurface() {
     VkSurfaceKHR surfaceTmp;
     assert(glfwCreateWindowSurface(instance, window, nullptr, &surfaceTmp) == VK_SUCCESS);
     surface = vk::SurfaceKHR(surfaceTmp);
+    assert(surface);
     getLogger()->Get(INFO) << "surface creation successful";
 }
 
@@ -164,6 +165,7 @@ void VulkanRenderer::getPhysicalDevice() {
 
     if (candidates.rbegin()->first > 0) {
         physicalDevice = candidates.rbegin()->second;
+        assert(physicalDevice);
     } else {
         throw std::runtime_error("failed to find a suitable GPU!");
     }
@@ -181,6 +183,8 @@ void VulkanRenderer::getPhysicalDevice() {
 }
 
 int VulkanRenderer::getDeviceSuitability(vk::PhysicalDevice device) {
+    assert(device);
+
     vk::PhysicalDeviceProperties deviceProperties = device.getProperties();
     vk::PhysicalDeviceFeatures deviceFeatures = device.getFeatures();
 
@@ -303,6 +307,7 @@ void VulkanRenderer::createLogicalDevice() {
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
     device = physicalDevice.createDevice(createInfo);
+    assert(device);
 
     getLogger()->Get(INFO) << "logical Vulkan device creation successful";
 
@@ -360,6 +365,7 @@ std::vector<vk::Image> VulkanRenderer::createSwapChain() {
     }
 
     swapChain = device.createSwapchainKHR(createInfo);
+    assert(swapChain);
     std::vector<vk::Image> swapChainImages = device.getSwapchainImagesKHR(swapChain);
 
     getLogger()->Get(INFO) << "created swap chain: "
@@ -440,6 +446,7 @@ void VulkanRenderer::createRenderPass() {
     renderPassInfo.pDependencies = &dependency;
 
     renderPass = device.createRenderPass(renderPassInfo);
+    assert(renderPass);
 }
 
 void VulkanRenderer::createCommandPool() {
@@ -451,6 +458,7 @@ void VulkanRenderer::createCommandPool() {
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value(),
 
     commandPool = device.createCommandPool(poolInfo);
+    assert(commandPool);
 }
 
 void VulkanRenderer::createGraphicsPipeline() {
@@ -537,6 +545,7 @@ void VulkanRenderer::createGraphicsPipeline() {
     pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
     pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo);
+    assert(pipelineLayout);
 
     // actually create the graphics pipeline
 
@@ -563,6 +572,7 @@ void VulkanRenderer::createGraphicsPipeline() {
     pipelineInfo.basePipelineIndex = -1;
 
     graphicsPipeline = device.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo).value;
+    assert(graphicsPipeline);
 
     device.destroyShaderModule(vert);
     device.destroyShaderModule(frag);
@@ -596,6 +606,7 @@ void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
         createInfo.subresourceRange.layerCount = 1;
 
         image.imageView = device.createImageView(createInfo);
+        assert(image.imageView);
 
         // frame buffers
 
@@ -609,6 +620,7 @@ void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
         framebufferInfo.layers = 1;
 
         image.frameBuffer = device.createFramebuffer(framebufferInfo);
+        assert(image.frameBuffer);
     }
 }
 
@@ -628,6 +640,7 @@ void VulkanRenderer::createInFlightImages(const int imageCount) {
 
         // command buffers
         image.commandBuffer = commandBuffers[i];
+        assert(image.commandBuffer);
 
         // sync objects
         vk::SemaphoreCreateInfo semaphoreInfo{};
@@ -638,8 +651,11 @@ void VulkanRenderer::createInFlightImages(const int imageCount) {
         fenceInfo.flags = vk::FenceCreateFlagBits::eSignaled; // create the fence as signaled to avoid stalling at first draw call
 
         image.imageAvailableSemaphore = device.createSemaphore(semaphoreInfo);
+        assert(image.imageAvailableSemaphore);
         image.renderFinishedSemaphore = device.createSemaphore(semaphoreInfo);
+        assert(image.renderFinishedSemaphore);
         image.inFlightFence = device.createFence(fenceInfo);
+        assert(image.inFlightFence);
     }
 }
 
@@ -829,5 +845,7 @@ vk::ShaderModule VulkanRenderer::loadShaderModule(const std::string& shaderName)
     createInfo.codeSize = shader.size();
     createInfo.pCode = reinterpret_cast<const uint32_t*>(shader.data());
 
-    return device.createShaderModule(createInfo);
+    vk::ShaderModule module = device.createShaderModule(createInfo);
+    assert(module);
+    return module;
 }
