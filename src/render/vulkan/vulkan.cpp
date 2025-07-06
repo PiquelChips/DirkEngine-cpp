@@ -582,7 +582,7 @@ void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
     swapChainImages.resize(images.size());
 
     for (int i = 0; i < images.size(); i++) {
-        SwapChainImage image = swapChainImages[i];
+        SwapChainImage image;
 
         // image view
 
@@ -621,6 +621,7 @@ void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
         image.frameBuffer = device.createFramebuffer(framebufferInfo);
 
         assert(image);
+        swapChainImages[i] = image;
     }
 }
 
@@ -636,7 +637,7 @@ void VulkanRenderer::createInFlightImages(const int imageCount) {
     std::vector<vk::CommandBuffer> commandBuffers = device.allocateCommandBuffers(allocInfo);
 
     for (int i = 0; i < imageCount; i++) {
-        InFlightImage image = inFlightImages[i];
+        InFlightImage image;
 
         // command buffers
         image.commandBuffer = commandBuffers[i];
@@ -654,6 +655,7 @@ void VulkanRenderer::createInFlightImages(const int imageCount) {
         image.inFlightFence = device.createFence(fenceInfo);
 
         assert(image);
+        inFlightImages[i] = image;
     }
 }
 
