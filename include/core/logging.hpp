@@ -16,6 +16,8 @@ struct LogCategory {
     bool show = true;
 };
 
+const std::string logPath{ LOG_PATH };
+
 /**
  * will log the log category, the log level and return a stream for the rest of the message
  * this will not actually output anything

@@ -1,9 +1,12 @@
 #include "core/logging.hpp"
+#include "core/asserts.hpp"
 
 #include <cstdarg>
 #include <cstdlib>
 #include <ctime>
+#include <filesystem>
 #include <format>
+#include <fstream>
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -26,10 +29,20 @@ std::stringstream beginLogEntry(LogCategory category, LogLevel level) {
 
 void endLogEntry(std::stringstream stream) {
     stream << colorEnd << "\n";
+    std::string out = stream.str();
 
-    std::cout << stream.str();
+    std::cout << out;
 
-    // TODO: log to file
+    if (logPath == "")
+        return;
+
+    std::filesystem::create_directory(std::filesystem::path{ logPath });
+    std::ofstream file(logPath + "/latest.log");
+    check(file.is_open());
+
+    file << out;
+
+    file.close();
 }
 
 bool shouldLog(LogCategory category, LogLevel level) {
