@@ -10,11 +10,6 @@
 
 Log::Log(bool shouldLog) : shouldLog(shouldLog), buffer(std::cout) {}
 
-int initializeLogger(const std::string& filename) {
-    // TODO: actually initialize logger (so open file and stuff)
-    return EXIT_SUCCESS;
-}
-
 constexpr std::string colorEnd{ "\033[0m" };
 
 Log log(LogCategory category, LogLevel level) {
