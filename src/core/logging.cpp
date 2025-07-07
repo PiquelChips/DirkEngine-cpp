@@ -17,12 +17,12 @@ constexpr std::string colorEnd{ "\033[0m" };
 std::stringstream beginLogEntry(LogCategory category, LogLevel level) {
     std::stringstream stream{};
 
-    std::string levelString = std::format("[{}{}{}]", getLevelColor(level), getLevelString(level), colorEnd);
+    std::string levelString = std::format("[{}{}{}] ", getLevelColor(level), getLevelString(level), colorEnd);
     char timestamp[25];
     time_t now = std::time(0);
     strftime(timestamp, sizeof(timestamp), "[%Y-%m-%d %H:%M:%S] ", localtime(&now));
 
-    stream << timestamp << levelString << ": ";
+    stream << timestamp << levelString << category.name << ": ";
 
     return stream;
 }
@@ -73,7 +73,7 @@ std::string getLevelString(LogLevel level) {
     case INFO:
         return "INFO";
     case WARNING:
-        return "WARNING";
+        return "WARN";
     case ERROR:
         return "ERROR";
     case FATAL:
