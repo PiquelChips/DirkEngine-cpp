@@ -14,18 +14,12 @@ constexpr std::string colorEnd{ "\033[0m" };
 std::stringstream beginLogEntry(LogCategory category, LogLevel level) {
     std::stringstream stream{};
 
-    // TODO: log to file
-    // file.open(filename);
-
     std::string levelString = std::format("[{}{}{}]", getLevelColor(level), getLevelString(level), colorEnd);
     char timestamp[25];
     time_t now = std::time(0);
     strftime(timestamp, sizeof(timestamp), "[%Y-%m-%d %H:%M:%S] ", localtime(&now));
 
     stream << timestamp << levelString << ": ";
-
-    // if (file.is_open())
-    //     file << outString;
 
     return stream;
 }
@@ -34,6 +28,8 @@ void endLogEntry(std::stringstream stream) {
     stream << colorEnd << "\n";
 
     std::cout << stream.str();
+
+    // TODO: log to file
 }
 
 bool shouldLog(LogCategory category, LogLevel level) {
