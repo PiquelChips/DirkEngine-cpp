@@ -1,8 +1,9 @@
 #pragma once
 
-#include "GLFW/glfw3.h"
-#include "core/logger.hpp"
+#include "core/globals.hpp"
 #include "render/render.hpp"
+
+#include "GLFW/glfw3.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
@@ -14,6 +15,9 @@
 #ifdef DEBUG_BUILD
 #define ENABLE_VALIDATION_LAYERS
 #endif
+
+DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
+DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
@@ -58,16 +62,13 @@ struct InFlightImage {
 class VulkanRenderer : public Renderer {
 
 public:
-    VulkanRenderer(RendererConfig rendererConfig, Logger* logger);
+    VulkanRenderer(RendererConfig rendererConfig);
 
     int init() override;
     void draw(float deltaTime) override;
     void cleanup() override;
 
 private:
-    Logger* getLogger() const noexcept { return logger; };
-    Logger* logger = nullptr;
-
     RendererConfig rendererConfig;
 
 public:

@@ -5,7 +5,7 @@
 
 class DirkEngine;
 
-DEFINE_LOG_CATEGORY(LogDirkTemp)
+DECLARE_LOG_CATEGORY_EXTERN(LogTemp)
 
 namespace dirk {
 

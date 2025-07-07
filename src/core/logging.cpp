@@ -1,5 +1,6 @@
 #include "core/logging.hpp"
 #include <cstdlib>
+#include <iostream>
 #include <string>
 
 int initializeLogger(const std::string& filename) {
@@ -7,24 +8,26 @@ int initializeLogger(const std::string& filename) {
     return EXIT_SUCCESS;
 }
 
-void log(LogCategory category, LogLevel level, const std::string& message) {
+std::ostream& log(LogCategory category, LogLevel level) {
     if (!category.show)
-        return;
+        return std::cout;
 
     switch (level) {
 #ifndef DEBUG_BUILD
     case DEBUG:
-        return;
+        return std::cout;
     case TRACE:
-        return;
+        return std::cout;
 #endif
     default:
 #ifdef NO_LOGGING
-        return;
+        return std::cout;
 #else
         break;
 #endif
     }
 
     // TODO: actually log the stuff
+
+    return std::cout;
 }

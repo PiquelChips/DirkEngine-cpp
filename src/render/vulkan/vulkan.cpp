@@ -11,12 +11,16 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <limits>
 #include <map>
 #include <set>
 #include <vector>
 
-VulkanRenderer::VulkanRenderer(RendererConfig rendererConfig, Logger* logger) : rendererConfig(rendererConfig), logger(logger) {}
+DEFINE_LOG_CATEGORY(LogVulkan)
+DEFINE_LOG_CATEGORY(LogVulkanValidation)
+
+VulkanRenderer::VulkanRenderer(RendererConfig rendererConfig) : rendererConfig(rendererConfig) {}
 
 int VulkanRenderer::init() {
     int result = EXIT_SUCCESS;
@@ -29,7 +33,7 @@ int VulkanRenderer::init() {
     if (result != EXIT_SUCCESS)
         return result;
 
-    getLogger()->Get(INFO) << "engine initialization successful";
+    DIRK_LOG(LogVulkan, INFO) << "engine initialization successful";
     return result;
 }
 
@@ -44,7 +48,7 @@ void VulkanRenderer::draw(float deltaTime) {
 void VulkanRenderer::cleanup() {
     // make sure all device ops are finished
     device.waitIdle();
-    getLogger()->Get(INFO) << "cleaning up renderer";
+    DIRK_LOG(LogVulkan, INFO) << "cleaning up renderer";
 
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -52,7 +56,7 @@ void VulkanRenderer::cleanup() {
 
 int VulkanRenderer::initWindow() {
     if (glfwInit() == GLFW_FALSE) {
-        getLogger()->Get(FATAL) << "unable to initialize GLFW";
+        DIRK_LOG(LogVulkan, FATAL) << "unable to initialize GLFW";
         return EXIT_FAILURE;
     }
 
@@ -61,7 +65,7 @@ int VulkanRenderer::initWindow() {
 
     window = glfwCreateWindow(rendererConfig.width, rendererConfig.height, rendererConfig.name.c_str(), nullptr, nullptr);
     if (window == nullptr) {
-        getLogger()->Get(FATAL) << "error creating GLFW window";
+        DIRK_LOG(LogVulkan, FATAL) << "error creating GLFW window";
         return EXIT_FAILURE;
     }
 
@@ -69,7 +73,7 @@ int VulkanRenderer::initWindow() {
 }
 
 int VulkanRenderer::initVulkan() {
-    getLogger()->Get(INFO) << "Initlializing Vulkan...";
+    DIRK_LOG(LogVulkan, INFO) << "Initlializing Vulkan...";
 
     // TODO: surround with try/catch as in vulkan tutorial
 
@@ -89,7 +93,7 @@ int VulkanRenderer::initVulkan() {
     createSwapChainImages(swapChainImages);
     createInFlightImages(MAX_FRAMES_IN_FLIGHT);
 
-    getLogger()->Get(INFO) << "vulkan initialized successfully";
+    DIRK_LOG(LogVulkan, INFO) << "vulkan initialized successfully";
 
     return EXIT_SUCCESS;
 }
@@ -114,7 +118,7 @@ void VulkanRenderer::createVulkanInstance() {
 
 #ifdef ENABLE_VALIDATION_LAYERS
     check(checkValidationLayerSupport());
-    getLogger()->Get(INFO) << "using validation layers";
+    DIRK_LOG(LogVulkan, INFO) << "using validation layers";
     createInfo.enabledLayerCount = validationLayers.size();
     createInfo.ppEnabledLayerNames = validationLayers.data();
 #else
@@ -123,7 +127,7 @@ void VulkanRenderer::createVulkanInstance() {
 
     instance = vk::createInstance(createInfo);
     check(instance);
-    getLogger()->Get(INFO) << "instance creation successful";
+    DIRK_LOG(LogVulkan, INFO) << "instance creation successful";
 }
 
 std::vector<const char*> VulkanRenderer::getRequiredInstanceExtensions() {
@@ -146,7 +150,7 @@ void VulkanRenderer::createSurface() {
     check(glfwCreateWindowSurface(instance, window, nullptr, &surfaceTmp) == VK_SUCCESS);
     surface = vk::SurfaceKHR(surfaceTmp);
     check(surface);
-    getLogger()->Get(INFO) << "surface creation successful";
+    DIRK_LOG(LogVulkan, INFO) << "surface creation successful";
 }
 
 void VulkanRenderer::getPhysicalDevice() {
@@ -169,7 +173,7 @@ void VulkanRenderer::getPhysicalDevice() {
 
     vk::PhysicalDeviceProperties deviceProperties = physicalDevice.getProperties();
     // TODO: get more human readable data (like enum values)
-    getLogger()->Get(INFO)
+    DIRK_LOG(LogVulkan, INFO)
         << "physical device selected: "
         << "\n\tvendor id: " << deviceProperties.vendorID
         << "\n\tdevice id: " << deviceProperties.deviceID
@@ -187,7 +191,7 @@ int VulkanRenderer::getDeviceSuitability(vk::PhysicalDevice device) {
 
     // TODO: update with vulkan tutorial checks
 
-    getLogger()->Get(INFO) << "found device: " << deviceProperties.deviceName;
+    DIRK_LOG(LogVulkan, INFO) << "found device: " << deviceProperties.deviceName;
 
     // prereturn required stuff
     if (!deviceFeatures.geometryShader)
@@ -306,7 +310,7 @@ void VulkanRenderer::createLogicalDevice() {
     device = physicalDevice.createDevice(createInfo);
     check(device);
 
-    getLogger()->Get(INFO) << "logical Vulkan device creation successful";
+    DIRK_LOG(LogVulkan, INFO) << "logical Vulkan device creation successful";
 
     device.getQueue(indices.graphicsFamily.value(), 0, &queues.graphicsQueue);
     device.getQueue(indices.presentFamily.value(), 0, &queues.presentQueue);
@@ -365,10 +369,11 @@ std::vector<vk::Image> VulkanRenderer::createSwapChain() {
     check(swapChain);
     std::vector<vk::Image> swapChainImages = device.getSwapchainImagesKHR(swapChain);
 
-    getLogger()->Get(INFO) << "created swap chain: "
-                           << "\n\timage count: " << swapChainImages.size()
-                           << "\n\timage width: " << swapChainExtent.width
-                           << "\n\timage height: " << swapChainExtent.height;
+    DIRK_LOG(LogVulkan, INFO)
+        << "created swap chain: "
+        << "\n\timage count: " << swapChainImages.size()
+        << "\n\timage width: " << swapChainExtent.width
+        << "\n\timage height: " << swapChainExtent.height;
 
     return swapChainImages;
 };
@@ -663,9 +668,6 @@ vk::Bool32 VulkanRenderer::debugCallback(
     const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
 
-    VulkanRenderer* renderer = static_cast<VulkanRenderer*>(pUserData);
-    check(renderer);
-
     LogLevel level;
 
     switch (messageSeverity) {
@@ -683,7 +685,7 @@ vk::Bool32 VulkanRenderer::debugCallback(
         break;
     }
 
-    renderer->getLogger()->Get(level) << "[Vulkan] " << pCallbackData->pMessage;
+    DIRK_LOG(LogVulkanValidation, level) << pCallbackData->pMessage;
 
     return vk::False;
 }
@@ -699,7 +701,7 @@ bool VulkanRenderer::checkValidationLayerSupport() {
                 layerFound = true;
 
         if (!layerFound) {
-            getLogger()->Get(ERROR) << "validation layer \"" << layerName << "\" not found";
+            DIRK_LOG(LogVulkan, ERROR) << "validation layer \"" << layerName << "\" not found";
             return false;
         }
     }
@@ -715,12 +717,11 @@ void VulkanRenderer::setupDebugMessenger() {
     debugUtilsMessengerCreateInfoEXT.messageSeverity = severityFlags;
     debugUtilsMessengerCreateInfoEXT.messageType = messageTypeFlags;
     debugUtilsMessengerCreateInfoEXT.pfnUserCallback = &debugCallback;
-    debugUtilsMessengerCreateInfoEXT.pUserData = this;
 
     vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
     debugMessenger = instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT, nullptr, dispatcher);
     check(debugMessenger);
-    getLogger()->Get(INFO) << "debug messenger created";
+    DIRK_LOG(LogVulkan, INFO) << "debug messenger created";
 }
 #endif
 
