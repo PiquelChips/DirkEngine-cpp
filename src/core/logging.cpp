@@ -2,12 +2,12 @@
 #include <cstdlib>
 #include <string>
 
-int dirk::initializeLogger(const std::string& filename) {
+int initializeLogger(const std::string& filename) {
     // TODO: actually initialize logger (so open file and stuff)
     return EXIT_SUCCESS;
 }
 
-void dirk::log(LogCategory category, LogLevel level, const std::string& message) {
+void log(LogCategory category, LogLevel level, const std::string& message) {
     if (!category.show)
         return;
 
