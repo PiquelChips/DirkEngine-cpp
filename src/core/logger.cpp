@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 
-#include "logger.hpp"
+#include "core/logger.hpp"
 
 Logger::Log::Log(LogLevel level, const std::string& filename) {
     file.open(filename);

@@ -1,7 +1,6 @@
 #include "render/vulkan/vulkan.hpp"
+#include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
-#include "globals.hpp"
-#include "logger.hpp"
 #include "render/render.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"

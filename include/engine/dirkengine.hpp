@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 
-#include "logger.hpp"
+#include "core/globals.hpp"
 #include "render/render.hpp"
 
 class DirkEngine {

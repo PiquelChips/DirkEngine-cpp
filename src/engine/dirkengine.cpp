@@ -1,5 +1,5 @@
 #include "engine/dirkengine.hpp"
-#include "globals.hpp"
+#include "core/globals.hpp"
 #include "render/vulkan/vulkan.hpp"
 
 #include <GLFW/glfw3.h>

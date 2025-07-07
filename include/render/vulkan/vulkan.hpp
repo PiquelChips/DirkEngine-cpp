@@ -1,14 +1,13 @@
 #pragma once
 
 #include "GLFW/glfw3.h"
-#include "logger.hpp"
+#include "core/logger.hpp"
 #include "render/render.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
 #include <cstdint>
 #include <optional>
-#include <vector>
 
 // fix this somehow to allow ppl to disable them even in debug builds
 #ifdef DEBUG_BUILD

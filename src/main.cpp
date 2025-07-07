@@ -1,5 +1,5 @@
+#include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
-#include "globals.hpp"
 
 #include <cstdlib>
 #include <exception>
