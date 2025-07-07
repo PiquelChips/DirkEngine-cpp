@@ -1,4 +1,5 @@
 #include "engine/dirkengine.hpp"
+#include "globals.hpp"
 #include "render/vulkan/vulkan.hpp"
 
 #include <GLFW/glfw3.h>
@@ -6,6 +7,8 @@
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
+
+DirkEngine* GEngine = nullptr;
 
 DirkEngine::DirkEngine() {
     logger = std::make_unique<Logger>();

@@ -2,4 +2,4 @@
 
 class DirkEngine;
 
-DirkEngine* GEngine = nullptr;
+extern DirkEngine* GEngine;
