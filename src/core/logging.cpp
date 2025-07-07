@@ -37,9 +37,6 @@ void endLogEntry(std::stringstream stream) {
 }
 
 bool shouldLog(LogCategory category, LogLevel level) {
-    if (!category.show)
-        return false;
-
     switch (level) {
 #ifndef DEBUG_BUILD
     case DEBUG:
@@ -55,7 +52,7 @@ bool shouldLog(LogCategory category, LogLevel level) {
 #endif
     }
 
-    return true;
+    return category.show;
 }
 
 std::string getLevelString(LogLevel level) {
