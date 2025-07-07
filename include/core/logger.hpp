@@ -3,7 +3,14 @@
 #include <fstream>
 #include <sstream>
 
-enum LogLevel { TRACE, DEBUG, INFO, WARNING, ERROR, FATAL };
+enum LogLevel {
+    TRACE,
+    DEBUG,
+    INFO,
+    WARNING,
+    ERROR,
+    FATAL
+};
 
 /**
  *

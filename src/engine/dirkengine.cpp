@@ -3,7 +3,6 @@
 #include "render/vulkan/vulkan.hpp"
 
 #include <GLFW/glfw3.h>
-#include <cassert>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
