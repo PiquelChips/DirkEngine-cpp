@@ -33,7 +33,7 @@ int DirkEngine::main() {
         tick(deltaTime);
     }
 
-    DIRK_LOG(LogEngine, INFO) << "exiting";
+    DIRK_LOG(LogEngine, INFO, "exiting");
     cleanup();
 
     return result;
@@ -41,7 +41,7 @@ int DirkEngine::main() {
 
 void DirkEngine::exit(const std::string& reason) {
     requestingExit = true;
-    DIRK_LOG(LogEngine, INFO) << "engine exit has been requested with reason: " << reason;
+    DIRK_LOG(LogEngine, INFO, "engine exit has been requested with reason: " << reason);
 }
 
 int DirkEngine::init() {

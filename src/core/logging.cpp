@@ -1,56 +1,60 @@
 #include "core/logging.hpp"
 
+#include <cstdarg>
 #include <cstdlib>
 #include <ctime>
 #include <format>
 #include <iostream>
+#include <ostream>
+#include <sstream>
 #include <string>
-
-#define NO_LOG Log(false);
-
-Log::Log(bool shouldLog) : shouldLog(shouldLog), buffer(std::cout) {}
 
 constexpr std::string colorEnd{ "\033[0m" };
 
-Log log(LogCategory category, LogLevel level) {
+std::stringstream beginLogEntry(LogCategory category, LogLevel level) {
     if (!category.show)
-        return NO_LOG;
+        return std::stringstream{} << "TODO: don't log this";
 
     switch (level) {
 #ifndef DEBUG_BUILD
     case DEBUG:
-        return NO_LOG;
+        return;
     case TRACE:
-        return NO_LOG;
+        return;
 #endif
     default:
 #ifdef NO_LOGGING
-        return NO_LOG;
+        return;
 #else
         break;
 #endif
     }
 
-    Log log(true);
+    std::stringstream stream{};
 
     // TODO: log to file
     // file.open(filename);
 
-    std::string levelString = std::format("[{}{}{}]", GetLevelColor(level), GetLevelString(level), colorEnd);
+    std::string levelString = std::format("[{}{}{}]", getLevelColor(level), getLevelString(level), colorEnd);
     char timestamp[25];
     time_t now = std::time(0);
     strftime(timestamp, sizeof(timestamp), "[%Y-%m-%d %H:%M:%S] ", localtime(&now));
 
-    log << colorEnd << "\n"
-        << timestamp << levelString << ": ";
+    stream << timestamp << levelString << ": ";
 
     // if (file.is_open())
     //     file << outString;
 
-    return log;
+    return stream;
 }
 
-std::string GetLevelString(LogLevel level) {
+void endLogEntry(std::stringstream stream) {
+    stream << colorEnd << "\n";
+
+    std::cout << stream.str();
+}
+
+std::string getLevelString(LogLevel level) {
     switch (level) {
     case TRACE:
         return "TRACE";
@@ -64,12 +68,11 @@ std::string GetLevelString(LogLevel level) {
         return "ERROR";
     case FATAL:
         return "FATAL";
-    default:
-        return "";
     }
+    return "";
 }
 
-std::string GetLevelColor(LogLevel level) {
+std::string getLevelColor(LogLevel level) {
     std::string color{ "\033[" };
 
     switch (level) {
