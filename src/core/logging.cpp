@@ -12,24 +12,6 @@
 constexpr std::string colorEnd{ "\033[0m" };
 
 std::stringstream beginLogEntry(LogCategory category, LogLevel level) {
-    if (!category.show)
-        return std::stringstream{} << "TODO: don't log this";
-
-    switch (level) {
-#ifndef DEBUG_BUILD
-    case DEBUG:
-        return;
-    case TRACE:
-        return;
-#endif
-    default:
-#ifdef NO_LOGGING
-        return;
-#else
-        break;
-#endif
-    }
-
     std::stringstream stream{};
 
     // TODO: log to file
@@ -52,6 +34,28 @@ void endLogEntry(std::stringstream stream) {
     stream << colorEnd << "\n";
 
     std::cout << stream.str();
+}
+
+bool shouldLog(LogCategory category, LogLevel level) {
+    if (!category.show)
+        return false;
+
+    switch (level) {
+#ifndef DEBUG_BUILD
+    case DEBUG:
+        return false;
+    case TRACE:
+        return false;
+#endif
+    default:
+#ifdef NO_LOGGING
+        return false;
+#else
+        break;
+#endif
+    }
+
+    return true;
 }
 
 std::string getLevelString(LogLevel level) {

@@ -18,13 +18,16 @@ struct LogCategory {
 
 std::stringstream beginLogEntry(LogCategory category, LogLevel level);
 void endLogEntry(std::stringstream stream);
+bool shouldLog(LogCategory category, LogLevel level);
 
 #define DECLARE_LOG_CATEGORY_EXTERN(categoryName) extern LogCategory categoryName;
 #define DEFINE_LOG_CATEGORY(categoryName) LogCategory categoryName{ .name = #categoryName };
 
 // #define DIRK_LOG(category, level) log(category, level)
-#define DIRK_LOG(category, level, messages) \
-    endLogEntry(beginLogEntry(category, level) << messages);
+#define DIRK_LOG(category, level, messages)                      \
+    if (shouldLog(category, level)) {                            \
+        endLogEntry(beginLogEntry(category, level) << messages); \
+    }
 
 std::string getLevelString(LogLevel level);
 std::string getLevelColor(LogLevel level);
