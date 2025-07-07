@@ -17,7 +17,7 @@ struct LogCategory {
 };
 
 #define DEFINE_LOG_CATEGORY(categoryName) LogCategory categoryName{ .name = #categoryName };
-#define DIRK_LOG(category, level, message) log(category, level, message);
+#define DIRK_LOG(category, level) log(category, level)
 
 int initializeLogger(const std::string& filename);
-void log(LogCategory category, LogLevel level, const std::string& message);
+std::ostream& log(LogCategory category, LogLevel level);
