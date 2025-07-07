@@ -61,8 +61,7 @@ public:
     VulkanRenderer(RendererConfig rendererConfig, Logger* logger);
 
     int init() override;
-    void tick(DirkEngine* engine) override;
-    int draw() override;
+    int draw(float deltaTime) override;
     void cleanup() override;
 
 private:

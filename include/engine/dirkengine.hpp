@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
+#include <chrono>
 #include <memory>
 #include <string>
 
@@ -22,7 +23,7 @@ public:
 
 private:
     int init();
-    void tick();
+    void tick(float deltaTime);
 
     void cleanup();
 
@@ -31,4 +32,9 @@ private:
     std::unique_ptr<Renderer> renderer = nullptr;
 
     bool requestingExit = false;
+
+private:
+    float captureDeltaTime();
+
+    std::chrono::high_resolution_clock::time_point lastTick;
 };

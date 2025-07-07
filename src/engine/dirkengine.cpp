@@ -3,6 +3,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cassert>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 
@@ -18,16 +19,17 @@ int DirkEngine::main() {
     if (result != EXIT_SUCCESS)
         return result;
 
+    lastTick = std::chrono::high_resolution_clock::now();
+
     while (true) {
-        // mainly check if GLFW close event is called
-        // place before isRequestingExit as this could call DirkEngine::exit()
-        renderer->tick(this);
+        float deltaTime = captureDeltaTime();
 
         if (isRequestingExit())
             break;
 
         glfwPollEvents();
-        tick();
+
+        tick(deltaTime);
     }
 
     getLogger()->Get(INFO) << "exiting";
@@ -57,10 +59,23 @@ int DirkEngine::init() {
     return result;
 }
 
-void DirkEngine::tick() {
-    renderer->draw();
+void DirkEngine::tick(float deltaTime) {
+    renderer->draw(deltaTime);
 }
 
 void DirkEngine::cleanup() {
     renderer->cleanup();
+}
+
+float DirkEngine::captureDeltaTime() {
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    auto duration = currentTime - lastTick;
+    float deltaTime = std::chrono::duration<float>(duration).count();
+
+    lastTick = currentTime;
+
+    // getLogger()->Get(INFO) << "delta time: " << deltaTime;
+    // getLogger()->Get(INFO) << "fps: " << 1.0 / deltaTime;
+
+    return deltaTime;
 }
