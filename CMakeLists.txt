@@ -11,7 +11,7 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-# Try to embed dependency
+# TODO: embed
 find_program(GLSLC glslc REQUIRED)
 
 add_subdirectory(thirdparty/glfw-3.4)

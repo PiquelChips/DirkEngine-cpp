@@ -5,19 +5,18 @@
 #include <memory>
 #include <string>
 
-#include "logger.hpp"
+#include "core/globals.hpp"
 #include "render/render.hpp"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 
 class DirkEngine {
 
 public:
-    DirkEngine();
-
     int main();
     void exit(const std::string& reason);
 
     bool isRequestingExit() const noexcept { return requestingExit; }
-    Logger* getLogger() const noexcept { return logger.get(); }
 
     RendererConfig RENDER_CONFIG{ 800, 600, "DirkEngine" };
 
@@ -28,7 +27,6 @@ private:
     void cleanup();
 
 private:
-    std::unique_ptr<Logger> logger = nullptr;
     std::unique_ptr<Renderer> renderer = nullptr;
 
     bool requestingExit = false;

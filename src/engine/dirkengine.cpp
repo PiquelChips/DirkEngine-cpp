@@ -1,16 +1,17 @@
 #include "engine/dirkengine.hpp"
+#include "core/globals.hpp"
 #include "render/vulkan/vulkan.hpp"
 
 #include <GLFW/glfw3.h>
-#include <cassert>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
 
-DirkEngine::DirkEngine() {
-    logger = std::make_unique<Logger>();
-    assert(logger);
+namespace dirk {
+DirkEngine* gEngine = nullptr;
 }
+
+DEFINE_LOG_CATEGORY(LogEngine)
 
 int DirkEngine::main() {
     int result = EXIT_SUCCESS;
@@ -32,7 +33,7 @@ int DirkEngine::main() {
         tick(deltaTime);
     }
 
-    getLogger()->Get(INFO) << "exiting";
+    DIRK_LOG(LogEngine, INFO, "exiting");
     cleanup();
 
     return result;
@@ -40,14 +41,14 @@ int DirkEngine::main() {
 
 void DirkEngine::exit(const std::string& reason) {
     requestingExit = true;
-    getLogger()->Get(INFO) << "engine exit has been requested with reason: " << reason;
+    DIRK_LOG(LogEngine, INFO, "engine exit has been requested with reason: " << reason);
 }
 
 int DirkEngine::init() {
     int result = EXIT_SUCCESS;
 
     // for now we only use Vulkan
-    renderer = std::make_unique<VulkanRenderer>(RENDER_CONFIG, logger.get());
+    renderer = std::make_unique<VulkanRenderer>(RENDER_CONFIG);
     result = renderer->init();
     if (result != EXIT_SUCCESS)
         return result;
@@ -74,8 +75,8 @@ float DirkEngine::captureDeltaTime() {
 
     lastTick = currentTime;
 
-    // getLogger()->Get(INFO) << "delta time: " << deltaTime;
-    // getLogger()->Get(INFO) << "fps: " << 1.0 / deltaTime;
+    // DIRK_LOG(LogDirkEngine, INFO) << "delta time: " << deltaTime;
+    // DIRK_LOG(LogDirkEngine, INFO) << "fps: " << 1.0 / deltaTime;
 
     return deltaTime;
 }
