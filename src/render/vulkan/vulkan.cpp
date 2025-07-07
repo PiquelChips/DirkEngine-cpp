@@ -1,4 +1,6 @@
 #include "render/vulkan/vulkan.hpp"
+#include "engine/dirkengine.hpp"
+#include "globals.hpp"
 #include "logger.hpp"
 #include "render/render.hpp"
 #include "vulkan/vulkan.hpp"
@@ -33,14 +35,12 @@ int VulkanRenderer::init() {
     return result;
 }
 
-int VulkanRenderer::draw(float deltaTime) {
-    if (glfwWindowShouldClose(window))
-        // TODO: exit the engine when glfw says so
-        // engine->exit("GLFW close event");
-        exit(0);
+void VulkanRenderer::draw(float deltaTime) {
+    if (glfwWindowShouldClose(window)) {
+        GEngine->exit("GLFW close event");
+    }
 
     drawFrame();
-    return EXIT_SUCCESS;
 }
 
 void VulkanRenderer::cleanup() {

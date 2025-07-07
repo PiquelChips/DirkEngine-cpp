@@ -18,6 +18,6 @@ struct RendererConfig {
 class Renderer {
 public:
     virtual int init() = 0;
-    virtual int draw(float deltaTime) = 0;
+    virtual void draw(float deltaTime) = 0;
     virtual void cleanup() = 0;
 };

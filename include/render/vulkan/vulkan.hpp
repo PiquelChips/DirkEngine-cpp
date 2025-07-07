@@ -61,7 +61,7 @@ public:
     VulkanRenderer(RendererConfig rendererConfig, Logger* logger);
 
     int init() override;
-    int draw(float deltaTime) override;
+    void draw(float deltaTime) override;
     void cleanup() override;
 
 private:

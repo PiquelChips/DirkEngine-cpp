@@ -1,4 +1,5 @@
 #include "engine/dirkengine.hpp"
+#include "globals.hpp"
 
 #include <cstdlib>
 #include <exception>
@@ -7,6 +8,9 @@
 int main() {
     try {
         auto engine = std::make_unique<DirkEngine>();
+
+        GEngine = engine.get();
+
         return engine->main();
     } catch (std::exception e) {
         std::cerr << e.what();
