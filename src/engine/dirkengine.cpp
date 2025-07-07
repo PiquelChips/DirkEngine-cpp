@@ -7,11 +7,12 @@
 #include <cstdlib>
 #include <cstring>
 
-DirkEngine* GEngine = nullptr;
+namespace dirk {
+DirkEngine* gEngine = nullptr;
+}
 
 DirkEngine::DirkEngine() {
     logger = std::make_unique<Logger>();
-    assert(logger);
 }
 
 int DirkEngine::main() {

@@ -1,8 +1,12 @@
 #pragma once
 
-#include "core/globals.hpp"
+#include "asserts.hpp"
 #include "logger.hpp"
 
 class DirkEngine;
 
-extern DirkEngine* GEngine;
+namespace dirk {
+
+extern DirkEngine* gEngine;
+
+} // namespace dirk
