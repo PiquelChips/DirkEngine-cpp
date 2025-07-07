@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <format>
 #include <iostream>
 #include <string>
 
@@ -13,6 +14,8 @@ int initializeLogger(const std::string& filename) {
     // TODO: actually initialize logger (so open file and stuff)
     return EXIT_SUCCESS;
 }
+
+constexpr std::string colorEnd{ "\033[0m" };
 
 Log log(LogCategory category, LogLevel level) {
     if (!category.show)
@@ -38,13 +41,12 @@ Log log(LogCategory category, LogLevel level) {
     // TODO: log to file
     // file.open(filename);
 
-    std::string levelString{ GetLevelString(level) };
+    std::string levelString = std::format("[{}{}{}]", GetLevelColor(level), GetLevelString(level), colorEnd);
     char timestamp[25];
     time_t now = std::time(0);
-    strftime(timestamp, sizeof(timestamp), "[%Y-%m-%d %H:%M:%S] ",
-             localtime(&now));
+    strftime(timestamp, sizeof(timestamp), "[%Y-%m-%d %H:%M:%S] ", localtime(&now));
 
-    log << "\n"
+    log << colorEnd << "\n"
         << timestamp << levelString << ": ";
 
     // if (file.is_open())
@@ -70,4 +72,34 @@ std::string GetLevelString(LogLevel level) {
     default:
         return "";
     }
+}
+
+std::string GetLevelColor(LogLevel level) {
+    std::string color{ "\033[" };
+
+    switch (level) {
+    case TRACE:
+        color += "36"; // cyan
+        break;
+    case DEBUG:
+        color += "34"; // blue
+        break;
+    case INFO:
+        color += "32"; // green
+        break;
+    case WARNING:
+        color += "33"; // yellow
+        break;
+    case ERROR:
+        color += "31"; // red
+        break;
+    case FATAL:
+        color += "35"; // magenta
+        break;
+    default:
+        return "";
+    }
+
+    color += "m";
+    return color;
 }

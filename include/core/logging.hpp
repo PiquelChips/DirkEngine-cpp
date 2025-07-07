@@ -44,3 +44,4 @@ private:
 
 Log log(LogCategory category, LogLevel level);
 std::string GetLevelString(LogLevel level);
+std::string GetLevelColor(LogLevel level);
