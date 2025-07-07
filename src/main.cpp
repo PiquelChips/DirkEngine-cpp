@@ -5,6 +5,8 @@
 #include <exception>
 #include <iostream>
 
+DEFINE_LOG_CATEGORY(LogTemp)
+
 int main() {
     try {
         auto engine = std::make_unique<DirkEngine>();
