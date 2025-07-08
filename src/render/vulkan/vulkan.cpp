@@ -2,6 +2,8 @@
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
 #include "render/render.hpp"
+#include "render/render_types.hpp"
+#include "render/vulkan/vulkan_types.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
@@ -90,6 +92,12 @@ int VulkanRenderer::init() {
     this->graphicsPipeline = createGraphicsPipeline();
     if (!this->graphicsPipeline) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create graphics pipeline");
+        return EXIT_FAILURE;
+    }
+
+    this->vertexBuffer = createVertexBuffer();
+    if (!this->vertexBuffer) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create vertex buffer");
         return EXIT_FAILURE;
     }
 
@@ -538,14 +546,16 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
 
     vk::PipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
+    auto bindingDescription = VulkanVertex::getBindingDescription();
+    auto attributeDescriptons = VulkanVertex::getAttributeDescriptions();
     // vertex input
     // hardcoded in vert shader for now
     vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = vk::StructureType::ePipelineVertexInputStateCreateInfo;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.pVertexBindingDescriptions = nullptr;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
-    vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.vertexAttributeDescriptionCount = attributeDescriptons.size();
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptons.data();
 
     // input assembly
     vk::PipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -635,6 +645,51 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     device.destroyShaderModule(frag);
 
     return pipeline;
+}
+
+const std::vector<Vertex> vertices = {
+    { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+    { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+    { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }
+};
+
+vk::Buffer VulkanRenderer::createVertexBuffer() {
+    vk::BufferCreateInfo bufferInfo{};
+    bufferInfo.sType = vk::StructureType::eBufferCreateInfo;
+    bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+    bufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
+    bufferInfo.sharingMode = vk::SharingMode::eExclusive;
+
+    vk::Buffer buffer = device.createBuffer(bufferInfo);
+
+    vk::MemoryRequirements memRequirements = device.getBufferMemoryRequirements(buffer);
+
+    vk::MemoryAllocateInfo memoryAllocateInfo{};
+    memoryAllocateInfo.sType = vk::StructureType::eMemoryAllocateInfo;
+    memoryAllocateInfo.allocationSize = memRequirements.size;
+    memoryAllocateInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    vk::DeviceMemory bufferMemory = device.allocateMemory(memoryAllocateInfo);
+    device.bindBufferMemory(buffer, bufferMemory, 0);
+
+    void* data = device.mapMemory(bufferMemory, 0, bufferInfo.size);
+    memcpy(data, vertices.data(), bufferInfo.size);
+    device.unmapMemory(bufferMemory);
+
+    return buffer;
+}
+
+uint32_t VulkanRenderer::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
+    vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    DIRK_LOG(LogVulkan, FATAL, "failed to find suitable memory type");
+    return -1;
 }
 
 std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
@@ -811,6 +866,7 @@ void VulkanRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 
     commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+    commandBuffer.bindVertexBuffers(0, vertexBuffer, { 0 });
 
     // viewport is dynamic
     vk::Viewport viewport{};

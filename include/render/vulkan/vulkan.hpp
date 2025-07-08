@@ -5,6 +5,7 @@
 
 #include "GLFW/glfw3.h"
 #include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
@@ -103,6 +104,9 @@ private:
     vk::CommandPool createCommandPool();
     vk::Pipeline createGraphicsPipeline();
 
+    vk::Buffer createVertexBuffer();
+    uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+
     std::vector<InFlightImage> createInFlightImages(const int imageCount);
 
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
@@ -148,6 +152,8 @@ private:
     vk::PipelineLayout pipelineLayout;
     vk::Pipeline graphicsPipeline;
     vk::CommandPool commandPool;
+
+    vk::Buffer vertexBuffer;
 
     std::vector<SwapChainImage> swapChainImages;
     std::vector<InFlightImage> inFlightImages;
