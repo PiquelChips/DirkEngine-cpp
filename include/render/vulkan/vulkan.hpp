@@ -72,35 +72,33 @@ private:
     RendererConfig rendererConfig;
 
 public:
-    int initWindow();
-    int initVulkan();
-
-    void createVulkanInstance();
+    vk::Instance createVulkanInstance();
     std::vector<const char*> getRequiredInstanceExtensions();
 
-    void createSurface();
+    vk::SurfaceKHR createSurface();
 
     // selecting the physical device
-    void getPhysicalDevice();
+    vk::PhysicalDevice getPhysicalDevice();
     int getDeviceSuitability(vk::PhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
 
-    void createLogicalDevice();
+    vk::Device createLogicalDevice();
+    Queues createQueues();
 
     // swap chain
     std::vector<vk::Image> createSwapChain();
     vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
     vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
-    void createSwapChainImages(std::vector<vk::Image> images);
+    std::vector<SwapChainImage> createSwapChainImages(std::vector<vk::Image> images);
 
-    void createRenderPass();
-    void createCommandPool();
-    void createGraphicsPipeline();
+    vk::RenderPass createRenderPass();
+    vk::CommandPool createCommandPool();
+    vk::Pipeline createGraphicsPipeline();
 
-    void createInFlightImages(const int imageCount);
+    std::vector<InFlightImage> createInFlightImages(const int imageCount);
 
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
 
@@ -114,7 +112,7 @@ public:
 
 private:
     bool checkValidationLayerSupport();
-    void setupDebugMessenger();
+    vk::DebugUtilsMessengerEXT setupDebugMessenger();
 
     std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
     vk::DebugUtilsMessengerEXT debugMessenger;

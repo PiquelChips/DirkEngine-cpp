@@ -57,6 +57,8 @@ int DirkEngine::init() {
     // TODO: init network
     // TODO: init input
 
+    DIRK_LOG(LogVulkan, INFO, "engine initialization successful");
+
     return result;
 }
 
