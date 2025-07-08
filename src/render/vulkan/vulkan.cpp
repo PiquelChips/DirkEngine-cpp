@@ -70,7 +70,7 @@ int VulkanRenderer::init() {
 
     this->queues = createQueues();
 
-    std::vector<vk::Image> swapChainImages = createSwapChain();
+    std::vector<vk::Image> swapChainImages = createSwapChain(VK_NULL_HANDLE);
 
     this->renderPass = createRenderPass();
     if (!this->renderPass) {
@@ -352,7 +352,7 @@ Queues VulkanRenderer::createQueues() {
     return queues;
 }
 
-std::vector<vk::Image> VulkanRenderer::createSwapChain() {
+std::vector<vk::Image> VulkanRenderer::createSwapChain(vk::SwapchainKHR oldSwapChain) {
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
     vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -385,7 +385,7 @@ std::vector<vk::Image> VulkanRenderer::createSwapChain() {
     createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
     createInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque; // ignore alpha
     createInfo.clipped = vk::True;                                      // ingore hidden pixels (behind other windows for ex)
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
+    createInfo.oldSwapchain = oldSwapChain;
 
     // image sharing if multiple queues
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
@@ -456,7 +456,7 @@ void VulkanRenderer::recreateSwapChain() {
     this->swapChainImages.clear();
     this->swapChain = nullptr;
 
-    std::vector<vk::Image> swapChainImages = createSwapChain();
+    std::vector<vk::Image> swapChainImages = createSwapChain(this->swapChain);
     this->swapChainImages = createSwapChainImages(swapChainImages);
 }
 
