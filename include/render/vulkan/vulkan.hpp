@@ -97,6 +97,8 @@ private:
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
     std::vector<SwapChainImage> createSwapChainImages(std::vector<vk::Image> images);
 
+    void recreateSwapChain();
+
     vk::RenderPass createRenderPass();
     vk::CommandPool createCommandPool();
     vk::Pipeline createGraphicsPipeline();

@@ -449,6 +449,17 @@ vk::Extent2D VulkanRenderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& 
     return actualExent;
 }
 
+void VulkanRenderer::recreateSwapChain() {
+    device.waitIdle();
+
+    // cleanup swap chain
+    this->swapChainImages.clear();
+    this->swapChain = nullptr;
+
+    std::vector<vk::Image> swapChainImages = createSwapChain();
+    this->swapChainImages = createSwapChainImages(swapChainImages);
+}
+
 vk::RenderPass VulkanRenderer::createRenderPass() {
     vk::AttachmentDescription colorAttachment{};
     colorAttachment.format = swapChainImageFormat;
