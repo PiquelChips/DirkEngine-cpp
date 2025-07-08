@@ -1,9 +1,12 @@
 #pragma once
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
+
 #include "asserts.hpp"
 #include "logging.hpp"
 
-#define GLM_FORCE_RADIANS
+#include_next "glm/glm.hpp"
 
 class DirkEngine;
 
