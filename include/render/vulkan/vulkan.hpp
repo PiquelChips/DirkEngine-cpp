@@ -74,6 +74,7 @@ private:
 public:
     vk::Instance createVulkanInstance();
     std::vector<const char*> getRequiredInstanceExtensions();
+    bool checkRequiredInstanceExtensions(std::vector<const char*> extensions);
 
     vk::SurfaceKHR createSurface();
 

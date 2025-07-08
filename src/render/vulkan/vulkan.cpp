@@ -125,6 +125,9 @@ vk::Instance VulkanRenderer::createVulkanInstance() {
     appInfo.apiVersion = vk::ApiVersion14;
 
     auto instanceExtensions = getRequiredInstanceExtensions();
+    if (!checkRequiredInstanceExtensions(instanceExtensions)) {
+        return nullptr;
+    }
 
     vk::InstanceCreateInfo createInfo{};
     createInfo.sType = vk::StructureType::eInstanceCreateInfo;
@@ -157,6 +160,24 @@ std::vector<const char*> VulkanRenderer::getRequiredInstanceExtensions() {
     // TODO: make sure all extensions are supported by the driver
 
     return extensions;
+}
+
+bool VulkanRenderer::checkRequiredInstanceExtensions(std::vector<const char*> extensions) {
+    auto availableExtensions = vk::enumerateInstanceExtensionProperties();
+    for (const char* extensionName : extensions) {
+        bool layerFound = false;
+
+        for (const auto& extensionProperties : availableExtensions)
+            if (strcmp(extensionName, extensionProperties.extensionName) == 0)
+                layerFound = true;
+
+        if (!layerFound) {
+            DIRK_LOG(LogVulkan, FATAL, "instance extension \"" << extensionName << "\" not found");
+            return false;
+        }
+    }
+
+    return true;
 }
 
 vk::SurfaceKHR VulkanRenderer::createSurface() {
