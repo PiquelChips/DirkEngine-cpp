@@ -56,8 +56,16 @@ struct InFlightImage {
     vk::Semaphore imageAvailableSemaphore;
     vk::Semaphore renderFinishedSemaphore;
     vk::Fence inFlightFence;
+    // ubo for the mvp
+    vk::Buffer uniformBuffer;
+    vk::DeviceMemory uniformBufferMemory;
+    void* uniformBufferMapped;
+    // descriptor set for the ubo
+    vk::DescriptorSet descriptorSet;
 
-    operator bool() const { return commandBuffer && imageAvailableSemaphore && renderFinishedSemaphore && inFlightFence; }
+    operator bool() const { return commandBuffer &&
+                                   imageAvailableSemaphore && renderFinishedSemaphore && inFlightFence &&
+                                   uniformBuffer && uniformBufferMapped && uniformBufferMemory; }
 };
 
 /**
@@ -104,6 +112,8 @@ private:
     vk::RenderPass createRenderPass();
     vk::CommandPool createCommandPool();
     vk::Pipeline createGraphicsPipeline();
+    vk::DescriptorSetLayout createDescriptorSetLayout();
+    vk::DescriptorPool createDescriptorPool();
 
     vk::Buffer createVertexBuffer();
     vk::Buffer createIndexBuffer();
@@ -156,6 +166,8 @@ private:
     vk::PipelineLayout pipelineLayout;
     vk::Pipeline graphicsPipeline;
     vk::CommandPool commandPool;
+    vk::DescriptorSetLayout descriptorSetLayout;
+    vk::DescriptorPool descriptorPool;
 
     vk::Buffer vertexBuffer;
     vk::Buffer indexBuffer;
@@ -170,6 +182,7 @@ private:
     // drawing, should be removed and improved later on
     void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
+    void updateMVP(float deltaTime);
 
     // shader utilities
     vk::ShaderModule loadShaderModule(const std::string& shaderName);

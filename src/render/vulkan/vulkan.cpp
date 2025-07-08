@@ -4,6 +4,9 @@
 #include "render/render.hpp"
 #include "render/render_types.hpp"
 #include "render/vulkan/vulkan_types.hpp"
+
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
@@ -91,9 +94,21 @@ int VulkanRenderer::init() {
         return EXIT_FAILURE;
     }
 
+    this->descriptorSetLayout = createDescriptorSetLayout();
+    if (!this->descriptorSetLayout) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create descriptor set layout");
+        return EXIT_FAILURE;
+    }
+
     this->graphicsPipeline = createGraphicsPipeline();
     if (!this->graphicsPipeline) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create graphics pipeline");
+        return EXIT_FAILURE;
+    }
+
+    this->descriptorPool = createDescriptorPool();
+    if (!this->descriptorPool) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create descriptor pool");
         return EXIT_FAILURE;
     }
 
@@ -121,6 +136,7 @@ void VulkanRenderer::draw(float deltaTime) {
         dirk::gEngine->exit("GLFW close event");
     }
 
+    updateMVP(deltaTime);
     drawFrame();
 }
 
@@ -534,6 +550,14 @@ vk::CommandPool VulkanRenderer::createCommandPool() {
     return device.createCommandPool(poolInfo);
 }
 
+vk::DescriptorSetLayout VulkanRenderer::createDescriptorSetLayout() {
+    vk::DescriptorSetLayoutBinding mvpLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr);
+    vk::DescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &mvpLayoutBinding;
+    return device.createDescriptorSetLayout(layoutInfo);
+}
+
 vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     vk::ShaderModule vert = loadShaderModule("shader.vert");
     vk::ShaderModule frag = loadShaderModule("shader.frag");
@@ -592,7 +616,7 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     rasterizer.polygonMode = vk::PolygonMode::eFill; // fill the polygons with fragments
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = vk::CullModeFlagBits::eBack;
-    rasterizer.frontFace = vk::FrontFace::eClockwise;
+    rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
     rasterizer.depthBiasEnable = vk::False;
 
     // disabled for now
@@ -614,10 +638,9 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
 
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = vk::StructureType::ePipelineLayoutCreateInfo;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pSetLayouts = nullptr;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
     pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo);
     if (!pipelineLayout)
@@ -655,6 +678,17 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     return pipeline;
 }
 
+vk::DescriptorPool VulkanRenderer::createDescriptorPool() {
+    vk::DescriptorPoolSize poolSize(vk::DescriptorType::eUniformBuffer, MAX_FRAMES_IN_FLIGHT);
+    vk::DescriptorPoolCreateInfo poolInfo{};
+    poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+    poolInfo.maxSets = MAX_FRAMES_IN_FLIGHT;
+    poolInfo.poolSizeCount = 1;
+    poolInfo.pPoolSizes = &poolSize;
+
+    return device.createDescriptorPool(poolInfo);
+}
+
 const std::vector<Vertex> vertices = {
     { { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
     { { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
@@ -690,7 +724,6 @@ vk::Buffer VulkanRenderer::createVertexBuffer() {
 
 vk::Buffer VulkanRenderer::createIndexBuffer() {
     vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
-    DIRK_LOG(LogVulkan, DEBUG, bufferSize);
 
     auto [stagingBuffer, stagingBufferMemory] = createBuffer(
         bufferSize,
@@ -822,13 +855,21 @@ std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk
 std::vector<InFlightImage> VulkanRenderer::createInFlightImages(const int imageCount) {
     std::vector<InFlightImage> images(imageCount);
 
-    vk::CommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = vk::StructureType::eCommandBufferAllocateInfo;
-    allocInfo.commandPool = commandPool;
-    allocInfo.level = vk::CommandBufferLevel::ePrimary;
-    allocInfo.commandBufferCount = imageCount;
+    // mass command buffer allocation
+    vk::CommandBufferAllocateInfo cmdAllocInfo{};
+    cmdAllocInfo.sType = vk::StructureType::eCommandBufferAllocateInfo;
+    cmdAllocInfo.commandPool = commandPool;
+    cmdAllocInfo.level = vk::CommandBufferLevel::ePrimary;
+    cmdAllocInfo.commandBufferCount = imageCount;
+    std::vector<vk::CommandBuffer> commandBuffers = device.allocateCommandBuffers(cmdAllocInfo);
 
-    std::vector<vk::CommandBuffer> commandBuffers = device.allocateCommandBuffers(allocInfo);
+    // mass descriptor set layout allocation
+    std::vector<vk::DescriptorSetLayout> layouts(imageCount, descriptorSetLayout);
+    vk::DescriptorSetAllocateInfo descAllocInfo{};
+    descAllocInfo.descriptorPool = descriptorPool;
+    descAllocInfo.descriptorSetCount = layouts.size();
+    descAllocInfo.pSetLayouts = layouts.data();
+    std::vector<vk::DescriptorSet> descriptorSets = device.allocateDescriptorSets(descAllocInfo);
 
     for (int i = 0; i < imageCount; i++) {
         InFlightImage image;
@@ -847,6 +888,33 @@ std::vector<InFlightImage> VulkanRenderer::createInFlightImages(const int imageC
         image.imageAvailableSemaphore = device.createSemaphore(semaphoreInfo);
         image.renderFinishedSemaphore = device.createSemaphore(semaphoreInfo);
         image.inFlightFence = device.createFence(fenceInfo);
+
+        // ubo buffers for mvp
+        vk::DeviceSize bufferSize = sizeof(ModelViewProjection);
+        auto [uniformBuffer, uniformBufferMemory] = createBuffer(
+            bufferSize,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+
+        image.uniformBuffer = uniformBuffer;
+        image.uniformBufferMemory = uniformBufferMemory;
+        image.uniformBufferMapped = device.mapMemory(uniformBufferMemory, 0, bufferSize);
+
+        // set descriptors for ubo
+        vk::DescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = image.uniformBuffer;
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(ModelViewProjection);
+
+        vk::WriteDescriptorSet descriptorWrite{};
+        descriptorWrite.dstSet = descriptorSets[i];
+        descriptorWrite.dstBinding = 0;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.descriptorType = vk::DescriptorType::eUniformBuffer;
+        descriptorWrite.pBufferInfo = &bufferInfo;
+        device.updateDescriptorSets(descriptorWrite, {});
+        image.descriptorSet = descriptorSets[i];
 
         check(image);
         images[i] = image;
@@ -948,6 +1016,7 @@ void VulkanRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
     commandBuffer.bindVertexBuffers(0, vertexBuffer, { 0 });
     commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint16);
+    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, inFlightImages[currentFrame].descriptorSet, nullptr);
 
     // viewport is dynamic
     vk::Viewport viewport{};
@@ -1033,6 +1102,18 @@ void VulkanRenderer::drawFrame() {
     }
 
     currentFrame = (++currentFrame) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void VulkanRenderer::updateMVP(float deltaTime) {
+    ModelViewProjection mvp{
+        .model = glm::rotate(glm::mat4(1.f), deltaTime * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f)),
+        .view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f)),
+        .proj = glm::perspective(glm::radians(45.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .1f, 10.f),
+    };
+
+    mvp.proj[1][1] *= -1; // glm was originally designed for OpenGL. We must thus flip the y axis of the projection matrix
+
+    memcpy(inFlightImages[currentFrame].uniformBufferMapped, &mvp, sizeof(mvp));
 }
 
 vk::ShaderModule VulkanRenderer::loadShaderModule(const std::string& shaderName) {
