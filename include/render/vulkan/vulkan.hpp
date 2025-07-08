@@ -73,7 +73,7 @@ public:
 private:
     RendererConfig rendererConfig;
 
-public:
+private:
     vk::Instance createVulkanInstance();
     std::vector<const char*> getRequiredInstanceExtensions();
     bool checkRequiredInstanceExtensions(std::vector<const char*> extensions);
@@ -106,14 +106,13 @@ public:
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
 
 #ifdef ENABLE_VALIDATION_LAYERS
-public:
+private:
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
         vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         vk::DebugUtilsMessageTypeFlagsEXT messageType,
         const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData);
 
-private:
     bool checkValidationLayerSupport();
     vk::DebugUtilsMessengerEXT setupDebugMessenger();
 
