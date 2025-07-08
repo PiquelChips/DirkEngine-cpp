@@ -13,7 +13,9 @@
 
 // fix this somehow to allow ppl to disable them even in debug builds
 #ifdef DEBUG_BUILD
+#ifndef DISABLE_VALIDATION_LAYERS
 #define ENABLE_VALIDATION_LAYERS
+#endif
 #endif
 
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
