@@ -122,6 +122,8 @@ private:
     vk::DebugUtilsMessengerEXT debugMessenger;
 #endif
 
+    static void frameBufferResizeCallback(GLFWwindow* window, int width, int height);
+
 private:
     // vulkan stuff
 
@@ -151,6 +153,7 @@ private:
     std::vector<InFlightImage> inFlightImages;
 
     uint32_t currentFrame = 0;
+    bool framebufferResized = false;
 
 private:
     // drawing, should be removed and improved later on

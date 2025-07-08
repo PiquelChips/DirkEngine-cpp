@@ -36,6 +36,9 @@ int VulkanRenderer::init() {
         DIRK_LOG(LogVulkan, FATAL, "error creating GLFW window")
         return EXIT_FAILURE;
     }
+
+    glfwSetWindowUserPointer(window, this);
+    glfwSetFramebufferSizeCallback(window, VulkanRenderer::frameBufferResizeCallback);
     DIRK_LOG(LogVulkan, DEBUG, "successfully setup GLFW window")
 
     DIRK_LOG(LogVulkan, INFO, "initlializing Vulkan...");
@@ -450,6 +453,13 @@ vk::Extent2D VulkanRenderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& 
 }
 
 void VulkanRenderer::recreateSwapChain() {
+    // wait if window has been minimized
+    int width = 0, height = 0;
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(window, &width, &height);
+        glfwWaitEvents();
+    }
+
     device.waitIdle();
 
     // cleanup swap chain
@@ -772,6 +782,12 @@ vk::DebugUtilsMessengerEXT VulkanRenderer::setupDebugMessenger() {
 }
 #endif
 
+void VulkanRenderer::frameBufferResizeCallback(GLFWwindow* window, int width, int height) {
+    // TODO: reinterpret_cast stops the program with no error?????????
+    // VulkanRenderer* renderer = reinterpret_cast<VulkanRenderer*>(glfwGetWindowUserPointer(window));
+    // renderer->framebufferResized = true;
+}
+
 void VulkanRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) {
     vk::CommandBufferBeginInfo beginInfo{};
     beginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
@@ -826,10 +842,16 @@ void VulkanRenderer::drawFrame() {
 
     // wait for previous frame
     checkVulkan(device.waitForFences(1, &image.inFlightFence, vk::True, UINT64_MAX));
-    checkVulkan(device.resetFences(1, &image.inFlightFence));
 
     // acquire image from swapChain
-    uint32_t imageIndex = device.acquireNextImageKHR(swapChain, UINT64_MAX, image.imageAvailableSemaphore, VK_NULL_HANDLE).value;
+    auto [result, imageIndex] = device.acquireNextImageKHR(swapChain, UINT64_MAX, image.imageAvailableSemaphore, VK_NULL_HANDLE);
+    if (result == vk::Result::eErrorOutOfDateKHR) {
+        recreateSwapChain();
+        return;
+    }
+
+    // only reset after or we risk blocking with an unsignalled fence
+    checkVulkan(device.resetFences(1, &image.inFlightFence));
 
     // record the command buffer
     image.commandBuffer.reset();
@@ -866,7 +888,12 @@ void VulkanRenderer::drawFrame() {
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr; // only have one swap chain
 
-    checkVulkan(queues.presentQueue.presentKHR(&presentInfo));
+    result = queues.presentQueue.presentKHR(&presentInfo);
+    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || framebufferResized) {
+        framebufferResized = false;
+        recreateSwapChain();
+        return;
+    }
 
     currentFrame = (++currentFrame) % MAX_FRAMES_IN_FLIGHT;
 }

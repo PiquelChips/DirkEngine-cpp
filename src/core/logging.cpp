@@ -28,10 +28,10 @@ std::stringstream beginLogEntry(LogCategory category, LogLevel level) {
 }
 
 void endLogEntry(std::stringstream stream) {
-    stream << colorEnd << "\n";
+    stream << colorEnd;
     std::string out = stream.str();
 
-    std::cout << out;
+    std::cout << out << std::endl;
 
     if (logPath == "")
         return;
@@ -40,8 +40,9 @@ void endLogEntry(std::stringstream stream) {
     std::ofstream file(logPath + "/latest.log");
     check(file.is_open());
 
-    file << out;
+    file << out << std::endl;
 
+    file.flush();
     file.close();
 
     // TODO: if fatal error, request engine exit
