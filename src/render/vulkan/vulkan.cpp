@@ -18,6 +18,7 @@
 #include <map>
 #include <set>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 DEFINE_LOG_CATEGORY(LogVulkan)
@@ -99,6 +100,12 @@ int VulkanRenderer::init() {
     this->vertexBuffer = createVertexBuffer();
     if (!this->vertexBuffer) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create vertex buffer");
+        return EXIT_FAILURE;
+    }
+
+    this->indexBuffer = createIndexBuffer();
+    if (!this->indexBuffer) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create index buffer");
         return EXIT_FAILURE;
     }
 
@@ -649,23 +656,57 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
 }
 
 const std::vector<Vertex> vertices = {
-    { { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
-    { { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-    { { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }
+    { { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+    { { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } },
+    { { 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+    { { -0.5f, 0.5f }, { 1.0f, 1.0f, 1.0f } }
+};
+
+const std::vector<uint16_t> indices = {
+    0, 1, 2, 2, 3, 0
 };
 
 vk::Buffer VulkanRenderer::createVertexBuffer() {
     vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-    auto [buffer, bufferMemory] = createBuffer(
+
+    auto [stagingBuffer, stagingBufferMemory] = createBuffer(
         bufferSize,
-        vk::BufferUsageFlagBits::eVertexBuffer,
+        vk::BufferUsageFlagBits::eTransferSrc,
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-    device.bindBufferMemory(buffer, bufferMemory, 0);
+    void* dataStaging = device.mapMemory(stagingBufferMemory, 0, bufferSize);
+    memcpy(dataStaging, vertices.data(), bufferSize);
+    device.unmapMemory(stagingBufferMemory);
 
-    void* data = device.mapMemory(bufferMemory, 0, bufferSize);
-    memcpy(data, vertices.data(), bufferSize);
-    device.unmapMemory(bufferMemory);
+    auto [buffer, bufferMemory] = createBuffer(
+        bufferSize,
+        vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+    copyBuffer(stagingBuffer, buffer, bufferSize);
+
+    return buffer;
+}
+
+vk::Buffer VulkanRenderer::createIndexBuffer() {
+    vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+    DIRK_LOG(LogVulkan, DEBUG, bufferSize);
+
+    auto [stagingBuffer, stagingBufferMemory] = createBuffer(
+        bufferSize,
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    void* data = device.mapMemory(stagingBufferMemory, 0, bufferSize);
+    memcpy(data, indices.data(), bufferSize);
+    device.unmapMemory(stagingBufferMemory);
+
+    auto [buffer, bufferMemory] = createBuffer(
+        bufferSize,
+        vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
+        vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+    copyBuffer(stagingBuffer, buffer, bufferSize);
 
     return buffer;
 }
@@ -690,6 +731,8 @@ std::tuple<vk::Buffer, vk::DeviceMemory> VulkanRenderer::createBuffer(vk::Device
 
     vk::DeviceMemory bufferMemory = device.allocateMemory(memoryAllocateInfo);
 
+    device.bindBufferMemory(buffer, bufferMemory, 0);
+
     return std::tuple(buffer, bufferMemory);
 }
 
@@ -704,6 +747,29 @@ uint32_t VulkanRenderer::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyF
 
     DIRK_LOG(LogVulkan, FATAL, "failed to find suitable memory type");
     return -1;
+}
+
+void VulkanRenderer::copyBuffer(vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size) {
+    // TODO: create separate & temp command pool as in tutorial (Chapter: Staging buffer)
+
+    vk::CommandBufferAllocateInfo allocInfo{};
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = vk::CommandBufferLevel::ePrimary;
+    allocInfo.commandBufferCount = 1;
+
+    vk::CommandBuffer commandCopyBuffer = std::move(device.allocateCommandBuffers(allocInfo).front());
+
+    vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+    commandCopyBuffer.begin(beginInfo);
+    commandCopyBuffer.copyBuffer(srcBuffer, dstBuffer, vk::BufferCopy(0, 0, size));
+    commandCopyBuffer.end();
+
+    vk::SubmitInfo submitInfo{};
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandCopyBuffer;
+    queues.graphicsQueue.submit(submitInfo);
+    queues.graphicsQueue.waitIdle(); // TODO: use a fence for more optimized simultaneous ops
 }
 
 std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
@@ -881,6 +947,7 @@ void VulkanRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
     commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
     commandBuffer.bindVertexBuffers(0, vertexBuffer, { 0 });
+    commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint16);
 
     // viewport is dynamic
     vk::Viewport viewport{};
@@ -898,7 +965,7 @@ void VulkanRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
     scissor.extent = swapChainExtent;
     commandBuffer.setScissor(0, 1, &scissor);
 
-    commandBuffer.draw(3, 1, 0, 0);
+    commandBuffer.drawIndexed(indices.size(), 1, 0, 0, 0);
 
     commandBuffer.endRenderPass();
 

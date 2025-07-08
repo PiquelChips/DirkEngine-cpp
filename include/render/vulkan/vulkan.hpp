@@ -106,8 +106,10 @@ private:
     vk::Pipeline createGraphicsPipeline();
 
     vk::Buffer createVertexBuffer();
+    vk::Buffer createIndexBuffer();
     std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+    void copyBuffer(vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size);
 
     std::vector<InFlightImage> createInFlightImages(const int imageCount);
 
@@ -156,6 +158,7 @@ private:
     vk::CommandPool commandPool;
 
     vk::Buffer vertexBuffer;
+    vk::Buffer indexBuffer;
 
     std::vector<SwapChainImage> swapChainImages;
     std::vector<InFlightImage> inFlightImages;
