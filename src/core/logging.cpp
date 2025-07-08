@@ -43,6 +43,8 @@ void endLogEntry(std::stringstream stream) {
     file << out;
 
     file.close();
+
+    // TODO: if fatal error, request engine exit
 }
 
 bool shouldLog(LogCategory category, LogLevel level) {

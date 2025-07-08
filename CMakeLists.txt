@@ -72,6 +72,12 @@ target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC
     RELEASE_BUILD=$<CONFIG:Release>
 )
 
+option(DISABLE_VALIDATION_LAYERS "Use the vulkan validation layers" OFF)
+
+if (DISABLE_VALIDATION_LAYERS)
+    target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC DISABLE_VALIDATION_LAYERS)
+endif()
+
 target_include_directories(${PROJECT_NAME} PRIVATE
     include
 )

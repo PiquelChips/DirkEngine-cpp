@@ -23,18 +23,78 @@ DEFINE_LOG_CATEGORY(LogVulkanValidation)
 VulkanRenderer::VulkanRenderer(RendererConfig rendererConfig) : rendererConfig(rendererConfig) {}
 
 int VulkanRenderer::init() {
-    int result = EXIT_SUCCESS;
+    if (glfwInit() == GLFW_FALSE) {
+        DIRK_LOG(LogVulkan, FATAL, "unable to initialize GLFW")
+        return EXIT_FAILURE;
+    }
 
-    result = initWindow();
-    if (result != EXIT_SUCCESS)
-        return result;
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    result = initVulkan();
-    if (result != EXIT_SUCCESS)
-        return result;
+    this->window = glfwCreateWindow(rendererConfig.width, rendererConfig.height, rendererConfig.name.c_str(), nullptr, nullptr);
+    if (this->window == nullptr) {
+        DIRK_LOG(LogVulkan, FATAL, "error creating GLFW window")
+        return EXIT_FAILURE;
+    }
+    DIRK_LOG(LogVulkan, DEBUG, "successfully setup GLFW window")
 
-    DIRK_LOG(LogVulkan, INFO, "engine initialization successful");
-    return result;
+    DIRK_LOG(LogVulkan, INFO, "initlializing Vulkan...");
+    // TODO: surround with try/catch as in vulkan tutorial
+    this->instance = createVulkanInstance();
+    if (!this->instance) {
+        DIRK_LOG(LogVulkan, FATAL, "instance creation failed")
+        return EXIT_FAILURE;
+    }
+#ifdef ENABLE_VALIDATION_LAYERS
+    this->debugMessenger = setupDebugMessenger();
+    if (!this->debugMessenger)
+        DIRK_LOG(LogVulkan, ERROR, "failed to create vulkan layer validation debug messenger")
+#endif
+    this->surface = createSurface();
+    if (!this->surface) {
+        DIRK_LOG(LogVulkan, FATAL, "surface creation failed")
+        return EXIT_FAILURE;
+    }
+
+    this->physicalDevice = getPhysicalDevice();
+    if (!this->surface) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to get a physical device")
+        return EXIT_FAILURE;
+    }
+
+    this->device = createLogicalDevice();
+    if (!this->device) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create logical device");
+        return EXIT_FAILURE;
+    }
+
+    this->queues = createQueues();
+
+    std::vector<vk::Image> swapChainImages = createSwapChain();
+
+    this->renderPass = createRenderPass();
+    if (!this->renderPass) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create render pass");
+        return EXIT_FAILURE;
+    }
+
+    this->commandPool = createCommandPool();
+    if (!this->commandPool) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create command pool");
+        return EXIT_FAILURE;
+    }
+
+    this->graphicsPipeline = createGraphicsPipeline();
+    if (!this->graphicsPipeline) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create graphics pipeline");
+        return EXIT_FAILURE;
+    }
+
+    this->swapChainImages = createSwapChainImages(swapChainImages);
+    this->inFlightImages = createInFlightImages(MAX_FRAMES_IN_FLIGHT);
+
+    DIRK_LOG(LogVulkan, INFO, "vulkan initialized successfully");
+    return EXIT_SUCCESS;
 }
 
 void VulkanRenderer::draw(float deltaTime) {
@@ -54,51 +114,7 @@ void VulkanRenderer::cleanup() {
     glfwTerminate();
 }
 
-int VulkanRenderer::initWindow() {
-    if (glfwInit() == GLFW_FALSE) {
-        DIRK_LOG(LogVulkan, FATAL, "unable to initialize GLFW");
-        return EXIT_FAILURE;
-    }
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-    window = glfwCreateWindow(rendererConfig.width, rendererConfig.height, rendererConfig.name.c_str(), nullptr, nullptr);
-    if (window == nullptr) {
-        DIRK_LOG(LogVulkan, FATAL, "error creating GLFW window");
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
-}
-
-int VulkanRenderer::initVulkan() {
-    DIRK_LOG(LogVulkan, INFO, "Initlializing Vulkan...");
-
-    // TODO: surround with try/catch as in vulkan tutorial
-
-    createVulkanInstance();
-#ifdef ENABLE_VALIDATION_LAYERS
-    setupDebugMessenger();
-#endif
-    createSurface();
-    getPhysicalDevice();
-    createLogicalDevice();
-
-    std::vector<vk::Image> swapChainImages = createSwapChain();
-    createRenderPass();
-    createCommandPool();
-    createGraphicsPipeline();
-
-    createSwapChainImages(swapChainImages);
-    createInFlightImages(MAX_FRAMES_IN_FLIGHT);
-
-    DIRK_LOG(LogVulkan, INFO, "vulkan initialized successfully");
-
-    return EXIT_SUCCESS;
-}
-
-void VulkanRenderer::createVulkanInstance() {
+vk::Instance VulkanRenderer::createVulkanInstance() {
     // vk app
     vk::ApplicationInfo appInfo{};
     appInfo.sType = vk::StructureType::eApplicationInfo;
@@ -109,6 +125,8 @@ void VulkanRenderer::createVulkanInstance() {
     appInfo.apiVersion = vk::ApiVersion14;
 
     auto instanceExtensions = getRequiredInstanceExtensions();
+    if (!checkRequiredInstanceExtensions(instanceExtensions))
+        return nullptr;
 
     vk::InstanceCreateInfo createInfo{};
     createInfo.sType = vk::StructureType::eInstanceCreateInfo;
@@ -125,9 +143,7 @@ void VulkanRenderer::createVulkanInstance() {
     createInfo.enabledLayerCount = 0;
 #endif
 
-    instance = vk::createInstance(createInfo);
-    check(instance);
-    DIRK_LOG(LogVulkan, INFO, "instance creation successful");
+    return vk::createInstance(createInfo);
 }
 
 std::vector<const char*> VulkanRenderer::getRequiredInstanceExtensions() {
@@ -140,21 +156,36 @@ std::vector<const char*> VulkanRenderer::getRequiredInstanceExtensions() {
     extensions.push_back(vk::EXTDebugUtilsExtensionName);
 #endif
 
-    // TODO: make sure all extensions are supported by the driver
-
     return extensions;
 }
 
-void VulkanRenderer::createSurface() {
-    VkSurfaceKHR surfaceTmp;
-    check(glfwCreateWindowSurface(instance, window, nullptr, &surfaceTmp) == VK_SUCCESS);
-    surface = vk::SurfaceKHR(surfaceTmp);
-    check(surface);
-    DIRK_LOG(LogVulkan, INFO, "surface creation successful");
+bool VulkanRenderer::checkRequiredInstanceExtensions(std::vector<const char*> extensions) {
+    auto availableExtensions = vk::enumerateInstanceExtensionProperties();
+    for (const char* extensionName : extensions) {
+        bool layerFound = false;
+
+        for (const auto& extensionProperties : availableExtensions)
+            if (strcmp(extensionName, extensionProperties.extensionName) == 0)
+                layerFound = true;
+
+        if (!layerFound) {
+            DIRK_LOG(LogVulkan, FATAL, "instance extension \"" << extensionName << "\" not found");
+            return false;
+        }
+    }
+
+    return true;
 }
 
-void VulkanRenderer::getPhysicalDevice() {
+vk::SurfaceKHR VulkanRenderer::createSurface() {
+    VkSurfaceKHR surfaceTmp;
+    glfwCreateWindowSurface(instance, window, nullptr, &surfaceTmp);
+    return vk::SurfaceKHR(surfaceTmp);
+}
+
+vk::PhysicalDevice VulkanRenderer::getPhysicalDevice() {
     auto devices = instance.enumeratePhysicalDevices();
+    vk::PhysicalDevice physicalDevice;
 
     // rank each available device
     std::multimap<int, vk::PhysicalDevice> candidates;
@@ -166,9 +197,8 @@ void VulkanRenderer::getPhysicalDevice() {
 
     if (candidates.rbegin()->first > 0) {
         physicalDevice = candidates.rbegin()->second;
-        check(physicalDevice);
     } else {
-        throw std::runtime_error("failed to find a suitable GPU!");
+        return nullptr;
     }
 
     vk::PhysicalDeviceProperties deviceProperties = physicalDevice.getProperties();
@@ -181,6 +211,8 @@ void VulkanRenderer::getPhysicalDevice() {
                  //<< "\n\tdevice type: " << deviceProperties.deviceType
                  << "\n\tapi version: " << deviceProperties.apiVersion
                  << "\n\tdriver version: " << deviceProperties.driverVersion);
+
+    return physicalDevice;
 }
 
 int VulkanRenderer::getDeviceSuitability(vk::PhysicalDevice device) {
@@ -272,7 +304,7 @@ SwapChainSupportDetails VulkanRenderer::querySwapChainSupport(vk::PhysicalDevice
     };
 }
 
-void VulkanRenderer::createLogicalDevice() {
+vk::Device VulkanRenderer::createLogicalDevice() {
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
     // queues
@@ -282,7 +314,7 @@ void VulkanRenderer::createLogicalDevice() {
     for (int i = 0; i < uniqueQueueFamilies.size(); i++) {
         std::set<uint32_t>::iterator iter = uniqueQueueFamilies.find(i);
         if (iter == uniqueQueueFamilies.end())
-            return;
+            return nullptr;
 
         uint32_t queueFamily = *iter;
 
@@ -307,13 +339,17 @@ void VulkanRenderer::createLogicalDevice() {
     createInfo.enabledExtensionCount = deviceExtensions.size();
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-    device = physicalDevice.createDevice(createInfo);
-    check(device);
+    return physicalDevice.createDevice(createInfo);
+}
 
-    DIRK_LOG(LogVulkan, INFO, "logical Vulkan device creation successful");
+Queues VulkanRenderer::createQueues() {
+    Queues queues;
 
-    device.getQueue(indices.graphicsFamily.value(), 0, &queues.graphicsQueue);
-    device.getQueue(indices.presentFamily.value(), 0, &queues.presentQueue);
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    queues.graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
+    queues.presentQueue = device.getQueue(indices.presentFamily.value(), 0);
+
+    return queues;
 }
 
 std::vector<vk::Image> VulkanRenderer::createSwapChain() {
@@ -413,7 +449,7 @@ vk::Extent2D VulkanRenderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& 
     return actualExent;
 }
 
-void VulkanRenderer::createRenderPass() {
+vk::RenderPass VulkanRenderer::createRenderPass() {
     vk::AttachmentDescription colorAttachment{};
     colorAttachment.format = swapChainImageFormat;
     colorAttachment.samples = vk::SampleCountFlagBits::e1;
@@ -447,23 +483,21 @@ void VulkanRenderer::createRenderPass() {
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    renderPass = device.createRenderPass(renderPassInfo);
-    check(renderPass);
+    return device.createRenderPass(renderPassInfo);
 }
 
-void VulkanRenderer::createCommandPool() {
+vk::CommandPool VulkanRenderer::createCommandPool() {
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
     vk::CommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = vk::StructureType::eCommandPoolCreateInfo,
-    poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value(),
+    poolInfo.sType = vk::StructureType::eCommandPoolCreateInfo;
+    poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-    commandPool = device.createCommandPool(poolInfo);
-    check(commandPool);
+    return device.createCommandPool(poolInfo);
 }
 
-void VulkanRenderer::createGraphicsPipeline() {
+vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     vk::ShaderModule vert = loadShaderModule("shader.vert");
     vk::ShaderModule frag = loadShaderModule("shader.frag");
 
@@ -547,7 +581,8 @@ void VulkanRenderer::createGraphicsPipeline() {
     pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
     pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo);
-    check(pipelineLayout);
+    if (!pipelineLayout)
+        return nullptr;
 
     // actually create the graphics pipeline
 
@@ -573,15 +608,16 @@ void VulkanRenderer::createGraphicsPipeline() {
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
-    graphicsPipeline = device.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo).value;
-    check(graphicsPipeline);
+    vk::Pipeline pipeline = device.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo).value;
 
     device.destroyShaderModule(vert);
     device.destroyShaderModule(frag);
+
+    return pipeline;
 }
 
-void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
-    swapChainImages.resize(images.size());
+std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
+    std::vector<SwapChainImage> swapImages(images.size());
 
     for (int i = 0; i < images.size(); i++) {
         SwapChainImage image;
@@ -621,14 +657,14 @@ void VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
         framebufferInfo.layers = 1;
 
         image.frameBuffer = device.createFramebuffer(framebufferInfo);
-
-        check(image);
-        swapChainImages[i] = image;
+        swapImages[i] = image;
     }
+
+    return swapImages;
 }
 
-void VulkanRenderer::createInFlightImages(const int imageCount) {
-    inFlightImages.resize(imageCount);
+std::vector<InFlightImage> VulkanRenderer::createInFlightImages(const int imageCount) {
+    std::vector<InFlightImage> images(imageCount);
 
     vk::CommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = vk::StructureType::eCommandBufferAllocateInfo;
@@ -657,8 +693,10 @@ void VulkanRenderer::createInFlightImages(const int imageCount) {
         image.inFlightFence = device.createFence(fenceInfo);
 
         check(image);
-        inFlightImages[i] = image;
+        images[i] = image;
     }
+
+    return images;
 }
 
 #ifdef ENABLE_VALIDATION_LAYERS
@@ -709,7 +747,7 @@ bool VulkanRenderer::checkValidationLayerSupport() {
     return true;
 }
 
-void VulkanRenderer::setupDebugMessenger() {
+vk::DebugUtilsMessengerEXT VulkanRenderer::setupDebugMessenger() {
     vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
     vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
 
@@ -719,9 +757,7 @@ void VulkanRenderer::setupDebugMessenger() {
     debugUtilsMessengerCreateInfoEXT.pfnUserCallback = &debugCallback;
 
     vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
-    debugMessenger = instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT, nullptr, dispatcher);
-    check(debugMessenger);
-    DIRK_LOG(LogVulkan, INFO, "debug messenger created");
+    return instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT, nullptr, dispatcher);
 }
 #endif
 
