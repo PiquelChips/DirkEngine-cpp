@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <tuple>
 
 // fix this somehow to allow ppl to disable them even in debug builds
 #ifdef DEBUG_BUILD
@@ -105,6 +106,7 @@ private:
     vk::Pipeline createGraphicsPipeline();
 
     vk::Buffer createVertexBuffer();
+    std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
     std::vector<InFlightImage> createInFlightImages(const int imageCount);

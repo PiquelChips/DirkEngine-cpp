@@ -17,6 +17,7 @@
 #include <limits>
 #include <map>
 #include <set>
+#include <tuple>
 #include <vector>
 
 DEFINE_LOG_CATEGORY(LogVulkan)
@@ -654,29 +655,42 @@ const std::vector<Vertex> vertices = {
 };
 
 vk::Buffer VulkanRenderer::createVertexBuffer() {
+    vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+    auto [buffer, bufferMemory] = createBuffer(
+        bufferSize,
+        vk::BufferUsageFlagBits::eVertexBuffer,
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    device.bindBufferMemory(buffer, bufferMemory, 0);
+
+    void* data = device.mapMemory(bufferMemory, 0, bufferSize);
+    memcpy(data, vertices.data(), bufferSize);
+    device.unmapMemory(bufferMemory);
+
+    return buffer;
+}
+
+std::tuple<vk::Buffer, vk::DeviceMemory> VulkanRenderer::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
+    // buffer
     vk::BufferCreateInfo bufferInfo{};
     bufferInfo.sType = vk::StructureType::eBufferCreateInfo;
-    bufferInfo.size = sizeof(vertices[0]) * vertices.size();
-    bufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
     bufferInfo.sharingMode = vk::SharingMode::eExclusive;
 
     vk::Buffer buffer = device.createBuffer(bufferInfo);
 
+    // buffer memory
     vk::MemoryRequirements memRequirements = device.getBufferMemoryRequirements(buffer);
 
     vk::MemoryAllocateInfo memoryAllocateInfo{};
     memoryAllocateInfo.sType = vk::StructureType::eMemoryAllocateInfo;
     memoryAllocateInfo.allocationSize = memRequirements.size;
-    memoryAllocateInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+    memoryAllocateInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
     vk::DeviceMemory bufferMemory = device.allocateMemory(memoryAllocateInfo);
-    device.bindBufferMemory(buffer, bufferMemory, 0);
 
-    void* data = device.mapMemory(bufferMemory, 0, bufferInfo.size);
-    memcpy(data, vertices.data(), bufferInfo.size);
-    device.unmapMemory(bufferMemory);
-
-    return buffer;
+    return std::tuple(buffer, bufferMemory);
 }
 
 uint32_t VulkanRenderer::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
