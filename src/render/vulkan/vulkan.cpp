@@ -125,9 +125,8 @@ vk::Instance VulkanRenderer::createVulkanInstance() {
     appInfo.apiVersion = vk::ApiVersion14;
 
     auto instanceExtensions = getRequiredInstanceExtensions();
-    if (!checkRequiredInstanceExtensions(instanceExtensions)) {
+    if (!checkRequiredInstanceExtensions(instanceExtensions))
         return nullptr;
-    }
 
     vk::InstanceCreateInfo createInfo{};
     createInfo.sType = vk::StructureType::eInstanceCreateInfo;
@@ -156,8 +155,6 @@ std::vector<const char*> VulkanRenderer::getRequiredInstanceExtensions() {
 #ifdef ENABLE_VALIDATION_LAYERS
     extensions.push_back(vk::EXTDebugUtilsExtensionName);
 #endif
-
-    // TODO: make sure all extensions are supported by the driver
 
     return extensions;
 }
