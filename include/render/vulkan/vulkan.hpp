@@ -86,7 +86,7 @@ private:
 private:
     vk::Instance createVulkanInstance();
     std::vector<const char*> getRequiredInstanceExtensions();
-    bool checkRequiredInstanceExtensions(std::vector<const char*> extensions);
+    bool checkRequiredInstanceExtensions(std::vector<const char*>& extensions);
 
     vk::SurfaceKHR createSurface();
 
@@ -105,7 +105,7 @@ private:
     vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
     vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
-    std::vector<SwapChainImage> createSwapChainImages(std::vector<vk::Image> images);
+    std::vector<SwapChainImage> createSwapChainImages(std::vector<vk::Image>& images);
 
     void recreateSwapChain();
 

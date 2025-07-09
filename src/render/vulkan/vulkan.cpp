@@ -194,7 +194,7 @@ std::vector<const char*> VulkanRenderer::getRequiredInstanceExtensions() {
     return extensions;
 }
 
-bool VulkanRenderer::checkRequiredInstanceExtensions(std::vector<const char*> extensions) {
+bool VulkanRenderer::checkRequiredInstanceExtensions(std::vector<const char*>& extensions) {
     auto availableExtensions = vk::enumerateInstanceExtensionProperties();
     for (const char* extensionName : extensions) {
         bool layerFound = false;
@@ -805,7 +805,7 @@ void VulkanRenderer::copyBuffer(vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk
     queues.graphicsQueue.waitIdle(); // TODO: use a fence for more optimized simultaneous ops
 }
 
-std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk::Image> images) {
+std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk::Image>& images) {
     std::vector<SwapChainImage> swapImages(images.size());
 
     for (int i = 0; i < images.size(); i++) {
