@@ -1,5 +1,6 @@
 BUILD=build
 RELEASE=release
+RESOURCES=$(RELEASE)/resources
 
 CMAKE_ARGS= -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ${DIRK_ENGINE_CMAKE_ARGS}
 
@@ -22,8 +23,8 @@ release: config
 	@rm -rf $(RELEASE)
 	@mkdir $(RELEASE)
 	@cp $(BUILD)/DirkEngine $(RELEASE)
-	@cp -r resources $(RELEASE)
-	@cp -r $(BUILD)/shaders $(RELEASE)
+	@cp -r $(RESOURCES) $(RELEASE)
+	@cp -r $(BUILD)/shaders $(RESOURCES)
 	@echo Release created!
 
 .PHONY: config

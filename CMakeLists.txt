@@ -22,13 +22,14 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+set(SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
 file(GLOB_RECURSE SHADER_FILES 
-    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.frag"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.comp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.geom"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.tesc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.tese"
+    "${SHADER_SOURCE_DIR}/*.vert"
+    "${SHADER_SOURCE_DIR}/*.frag"
+    "${SHADER_SOURCE_DIR}/*.comp"
+    "${SHADER_SOURCE_DIR}/*.geom"
+    "${SHADER_SOURCE_DIR}/*.tesc"
+    "${SHADER_SOURCE_DIR}/*.tese"
 )
 
 # Shader compilation target
@@ -37,7 +38,7 @@ add_custom_target(shaders)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 
 foreach(SHADER_FILE ${SHADER_FILES})
-    file(RELATIVE_PATH SHADER_RELATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${SHADER_FILE})
+    file(RELATIVE_PATH SHADER_RELATIVE_PATH ${SHADER_SOURCE_DIR} ${SHADER_FILE})
     set(SHADER_OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER_RELATIVE_PATH}.spv)
 
     get_filename_component(SHADER_OUTPUT_DIR ${SHADER_OUTPUT} DIRECTORY)
@@ -65,7 +66,7 @@ target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC
     GLFW_INCLUDE_VULKAN=1
 
     RESSOURCE_PATH=$<IF:$<CONFIG:Release>,"./resources","${CMAKE_CURRENT_SOURCE_DIR}/resources">
-    SHADER_PATH=$<IF:$<CONFIG:Release>,"./shaders","${CMAKE_CURRENT_BINARY_DIR}/shaders">
+    SHADER_PATH=$<IF:$<CONFIG:Release>,"./resources/shaders","${CMAKE_CURRENT_BINARY_DIR}/shaders">
     LOG_PATH=$<IF:$<CONFIG:Release>,"./logs","${CMAKE_CURRENT_SOURCE_DIR}/logs">
 
     DEBUG_BUILD=$<CONFIG:Debug>
