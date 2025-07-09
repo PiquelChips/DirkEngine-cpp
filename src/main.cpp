@@ -5,6 +5,9 @@
 #include <exception>
 #include <iostream>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "thirdparty/stb_image.h"
+
 DEFINE_LOG_CATEGORY(LogTemp)
 
 int main() {
