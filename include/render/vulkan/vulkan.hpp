@@ -115,15 +115,26 @@ private:
     vk::DescriptorSetLayout createDescriptorSetLayout();
     vk::DescriptorPool createDescriptorPool();
 
+    vk::Image createTextureImage();
+    vk::ImageView createTextureImageView();
     vk::Buffer createVertexBuffer();
     vk::Buffer createIndexBuffer();
 
     vk::CommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(vk::CommandBuffer& commandBuffer);
 
+    // TODO: these could be combined and return a struct
+    std::tuple<vk::Image, vk::DeviceMemory> createImage(uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties);
+    vk::ImageView createImageView(vk::Image& image, vk::Format format);
+    vk::Sampler createTextureSampler();
+
     std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+
+    // TODO: all should take a buffer ref to only need to use one buffer for the entire op if chained
+    void transitionImageLayout(const vk::Image& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
     void copyBuffer(vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size);
+    void copyBufferToImage(vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
 
     std::vector<InFlightImage> createInFlightImages(const int imageCount);
 
@@ -172,6 +183,11 @@ private:
     vk::CommandPool commandPool;
     vk::DescriptorSetLayout descriptorSetLayout;
     vk::DescriptorPool descriptorPool;
+
+    // TODO: make into a struct
+    vk::Image textureImage;
+    vk::ImageView textureImageView;
+    vk::Sampler textureSampler;
 
     vk::Buffer vertexBuffer;
     vk::Buffer indexBuffer;
