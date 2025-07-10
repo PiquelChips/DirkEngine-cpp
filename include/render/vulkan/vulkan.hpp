@@ -115,6 +115,9 @@ private:
     vk::DescriptorSetLayout createDescriptorSetLayout();
     vk::DescriptorPool createDescriptorPool();
 
+    // depth buffer
+    vk::Image createDepthResources();
+
     // textures
     vk::Image createTextureImage();
 
@@ -132,6 +135,7 @@ private:
 
     std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+    vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
 
     // TODO: all should take a buffer ref to only need to use one buffer for the entire op if chained
     void transitionImageLayout(const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
@@ -196,6 +200,12 @@ private:
     // TODO: vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;
     // TODO: vk::DeviceMemory indexBufferMemory;
+
+    // TODO: make into a struct
+    vk::Image depthImage;
+    // TDOO vk::DeviceMemory depthImageMemory;
+    vk::ImageView depthImageView;
+    vk::Format depthFormat;
 
     std::vector<SwapChainImage> swapChainImages;
     std::vector<InFlightImage> inFlightImages;
