@@ -119,7 +119,7 @@ int VulkanRenderer::init() {
         return EXIT_FAILURE;
     }
 
-    this->textureImageView = createTextureImageView();
+    this->textureImageView = createImageView(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor);
     if (!this->textureImageView) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create texture image view");
         return EXIT_FAILURE;
@@ -766,10 +766,6 @@ vk::Image VulkanRenderer::createTextureImage() {
     return texture;
 }
 
-vk::ImageView VulkanRenderer::createTextureImageView() {
-    return createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
-}
-
 vk::Buffer VulkanRenderer::createVertexBuffer() {
     vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
@@ -867,14 +863,14 @@ std::tuple<vk::Image, vk::DeviceMemory> VulkanRenderer::createImage(uint32_t wid
     return std::tuple(image, imageMemory);
 }
 
-vk::ImageView VulkanRenderer::createImageView(vk::Image& image, vk::Format format) {
+vk::ImageView VulkanRenderer::createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect) {
     vk::ImageViewCreateInfo createInfo{};
     createInfo.sType = vk::StructureType::eImageViewCreateInfo;
     createInfo.image = image;
     createInfo.viewType = vk::ImageViewType::e2D;
     createInfo.format = format;
     // basic single layer image
-    createInfo.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
+    createInfo.subresourceRange = { imageAspect, 0, 1, 0, 1 };
 
     // dont touch color channels
     createInfo.components.r = vk::ComponentSwizzle::eIdentity;
@@ -1013,7 +1009,7 @@ std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk
         SwapChainImage image;
 
         // image view
-        image.imageView = createImageView(images[i], swapChainImageFormat);
+        image.imageView = createImageView(images[i], swapChainImageFormat, vk::ImageAspectFlagBits::eColor);
 
         // frame buffers
         vk::FramebufferCreateInfo framebufferInfo{};
@@ -1130,7 +1126,6 @@ vk::Bool32 VulkanRenderer::debugCallback(
     vk::DebugUtilsMessageTypeFlagsEXT messageType,
     const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
-
     LogLevel level;
 
     switch (messageSeverity) {

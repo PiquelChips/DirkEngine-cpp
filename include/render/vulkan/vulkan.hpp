@@ -115,8 +115,10 @@ private:
     vk::DescriptorSetLayout createDescriptorSetLayout();
     vk::DescriptorPool createDescriptorPool();
 
+    // textures
     vk::Image createTextureImage();
-    vk::ImageView createTextureImageView();
+
+    // vertices & indices
     vk::Buffer createVertexBuffer();
     vk::Buffer createIndexBuffer();
 
@@ -125,7 +127,7 @@ private:
 
     // TODO: these could be combined and return a struct
     std::tuple<vk::Image, vk::DeviceMemory> createImage(uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties);
-    vk::ImageView createImageView(vk::Image& image, vk::Format format);
+    vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect);
     vk::Sampler createTextureSampler();
 
     std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
