@@ -740,6 +740,8 @@ vk::Image VulkanRenderer::createTextureImage() {
 
     check(pixels);
 
+    vk::Format format = vk::Format::eR8G8B8A8Srgb;
+
     auto [stagingBuffer, stagingBufferMemory] = createBuffer(
         imageSize,
         vk::BufferUsageFlagBits::eTransferSrc,
@@ -752,16 +754,15 @@ vk::Image VulkanRenderer::createTextureImage() {
     stbi_image_free(pixels);
 
     auto [texture, textureMemory] = createImage(
-        texWidth, texHeight,
-        vk::Format::eR8G8B8A8Srgb,
+        texWidth, texHeight, format,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
         vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     // TODO: could be done in a single command buffer for more speed (Chapter: TextureMapping/Images)
-    transitionImageLayout(texture, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+    transitionImageLayout(texture, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
     copyBufferToImage(stagingBuffer, texture, texWidth, texHeight);
-    transitionImageLayout(texture, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+    transitionImageLayout(texture, format, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
     return texture;
 }
@@ -907,7 +908,7 @@ vk::Sampler VulkanRenderer::createTextureSampler() {
     return device.createSampler(samplerInfo);
 }
 
-void VulkanRenderer::transitionImageLayout(const vk::Image& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
+void VulkanRenderer::transitionImageLayout(const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
 
     vk::ImageMemoryBarrier barrier{};

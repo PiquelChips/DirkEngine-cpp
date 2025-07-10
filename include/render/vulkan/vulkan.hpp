@@ -134,7 +134,7 @@ private:
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
     // TODO: all should take a buffer ref to only need to use one buffer for the entire op if chained
-    void transitionImageLayout(const vk::Image& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+    void transitionImageLayout(const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
     void copyBuffer(vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size);
     void copyBufferToImage(vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
 
@@ -188,11 +188,14 @@ private:
 
     // TODO: make into a struct
     vk::Image textureImage;
+    // TODO: vk::DeviceMemory textureImageMemory;
     vk::ImageView textureImageView;
     vk::Sampler textureSampler;
 
     vk::Buffer vertexBuffer;
+    // TODO: vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;
+    // TODO: vk::DeviceMemory indexBufferMemory;
 
     std::vector<SwapChainImage> swapChainImages;
     std::vector<InFlightImage> inFlightImages;
