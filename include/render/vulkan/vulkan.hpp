@@ -2,6 +2,7 @@
 
 #include "core/globals.hpp"
 #include "render/render.hpp"
+#include "render/render_types.hpp"
 
 #include "GLFW/glfw3.h"
 #include "vulkan/vulkan.hpp"
@@ -12,6 +13,7 @@
 #include <cstdint>
 #include <optional>
 #include <tuple>
+#include <vector>
 
 // fix this somehow to allow ppl to disable them even in debug builds
 #ifdef DEBUG_BUILD
@@ -124,6 +126,7 @@ private:
     // vertices & indices
     vk::Buffer createVertexBuffer();
     vk::Buffer createIndexBuffer();
+    bool loadModel();
 
     vk::CommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(vk::CommandBuffer& commandBuffer);
@@ -196,6 +199,8 @@ private:
     vk::ImageView textureImageView;
     vk::Sampler textureSampler;
 
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
     vk::Buffer vertexBuffer;
     // TODO: vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;

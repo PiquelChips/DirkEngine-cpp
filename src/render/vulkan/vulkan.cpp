@@ -8,6 +8,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "thirdparty/stb_image.h"
+#include "thirdparty/tiny_obj_loader.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
@@ -22,6 +23,7 @@
 #include <map>
 #include <set>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -122,6 +124,11 @@ int VulkanRenderer::init() {
     this->descriptorPool = createDescriptorPool();
     if (!this->descriptorPool) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create descriptor pool");
+        return EXIT_FAILURE;
+    }
+
+    if (!loadModel()) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to load model");
         return EXIT_FAILURE;
     }
 
@@ -760,24 +767,6 @@ vk::DescriptorPool VulkanRenderer::createDescriptorPool() {
     return device.createDescriptorPool(poolInfo);
 }
 
-// pos, color, texCoord
-const std::vector<Vertex> vertices = {
-    { { -0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
-    { { 0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },
-    { { 0.5f, 0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
-    { { -0.5f, 0.5f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f } },
-
-    { { -0.5f, -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
-    { { 0.5f, -0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },
-    { { 0.5f, 0.5f, -0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
-    { { -0.5f, 0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f } }
-};
-
-const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4
-};
-
 vk::Image VulkanRenderer::createDepthResources() {
     this->depthFormat = findSupportedFormat(
         { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint },
@@ -800,7 +789,7 @@ bool hasStencilComponent(vk::Format format) {
 
 vk::Image VulkanRenderer::createTextureImage() {
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load((std::string(RESSOURCE_PATH) + "/textures/texture.jpg").c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load((std::string(RESSOURCE_PATH) + "/textures/viking_room.png").c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     vk::DeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel (1 per channel)
 
     check(pixels);
@@ -874,6 +863,57 @@ vk::Buffer VulkanRenderer::createIndexBuffer() {
     copyBuffer(stagingBuffer, buffer, bufferSize);
 
     return buffer;
+}
+
+bool VulkanRenderer::loadModel() {
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, (std::string(RESSOURCE_PATH) + "/models/viking_room.obj").c_str())) {
+        DIRK_LOG(LogVulkan, WARNING, "tiny obj loader: " << warn);
+        DIRK_LOG(LogVulkan, ERROR, "tiny obj loader: " << err);
+        return false;
+    }
+
+    DIRK_LOG(LogVulkan, WARNING, "tiny obj loader: " << warn);
+    DIRK_LOG(LogVulkan, ERROR, "tiny obj loader: " << err);
+
+    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+    int vertex_count = attrib.vertices.size() / 3;
+    vertices.reserve(vertex_count);
+    indices.reserve(vertex_count);
+    uniqueVertices.reserve(vertex_count);
+
+    for (const auto& shape : shapes) {
+        for (const auto& index : shape.mesh.indices) {
+            Vertex vertex{};
+
+            vertex.pos = {
+                attrib.vertices[3 * index.vertex_index + 0],
+                attrib.vertices[3 * index.vertex_index + 1],
+                attrib.vertices[3 * index.vertex_index + 2]
+            };
+
+            vertex.texCoord = {
+                attrib.texcoords[2 * index.texcoord_index + 0],
+                1.f - attrib.texcoords[2 * index.texcoord_index + 1], // flip the image as tinyobj assumes 0 is bottom; vulkan assumes 0 is top
+            };
+
+            vertex.color = { 1.f, 1.f, 1.f };
+
+            if (uniqueVertices.count(vertex) == 0) {
+                uniqueVertices[vertex] = vertices.size();
+                vertices.emplace_back(vertex);
+            }
+
+            indices.emplace_back(uniqueVertices[vertex]);
+        }
+    }
+
+    return true;
 }
 
 vk::CommandBuffer VulkanRenderer::beginSingleTimeCommands() {
@@ -1307,7 +1347,7 @@ void VulkanRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
     commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
     commandBuffer.bindVertexBuffers(0, vertexBuffer, { 0 });
-    commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint16);
+    commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, inFlightImages[currentFrame].descriptorSet, nullptr);
 
     // viewport is dynamic
