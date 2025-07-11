@@ -1,3 +1,4 @@
+BasedOnStyle: LLVM
 IndentWidth: 4
 AccessModifierOffset: -4
 PointerAlignment: Left
@@ -5,3 +6,10 @@ ColumnLimit: 0
 SpaceAfterCStyleCast: true
 Cpp11BracedListStyle: false
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortFunctionsOnASingleLine: Inline
+NamespaceIndentation: All
+IndentCaseLabels: true
+BreakBeforeBraces: Attach
+SortIncludes: true
+SpacesInParentheses: false
+SpaceBeforeParens: ControlStatements
