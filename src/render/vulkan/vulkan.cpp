@@ -877,17 +877,25 @@ bool VulkanRenderer::loadModel() {
     std::string warn, err;
 
     if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, (std::string(RESSOURCE_PATH) + "/models/viking_room.obj").c_str())) {
-        if (warn != "")
+        if (warn != "") {
+            warn.pop_back(); // remove trailing return
             DIRK_LOG(LogVulkan, WARNING, "tiny obj loader: " << warn);
-        if (err != "")
+        }
+        if (err != "") {
+            err.pop_back(); // remove trailing return
             DIRK_LOG(LogVulkan, ERROR, "tiny obj loader: " << err);
+        }
         return false;
     }
 
-    if (warn != "")
+    if (warn != "") {
+        warn.pop_back(); // remove trailing return
         DIRK_LOG(LogVulkan, WARNING, "tiny obj loader: " << warn);
-    if (err != "")
+    }
+    if (err != "") {
+        err.pop_back(); // remove trailing return
         DIRK_LOG(LogVulkan, ERROR, "tiny obj loader: " << err);
+    }
 
     std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
