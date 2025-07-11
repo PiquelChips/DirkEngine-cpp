@@ -53,8 +53,6 @@ struct SwapChainImage {
 struct InFlightImage {
     vk::CommandBuffer commandBuffer;
     // syncing
-    vk::Semaphore imageAvailableSemaphore;
-    vk::Semaphore renderFinishedSemaphore;
     vk::Fence inFlightFence;
     // ubo for the mvp
     vk::Buffer uniformBuffer;
@@ -63,7 +61,5 @@ struct InFlightImage {
     // descriptor set for the ubo
     vk::DescriptorSet descriptorSet;
 
-    operator bool() const { return commandBuffer &&
-                                   imageAvailableSemaphore && renderFinishedSemaphore && inFlightFence &&
-                                   uniformBuffer && uniformBufferMapped && uniformBufferMemory; }
+    operator bool() const { return commandBuffer && inFlightFence && uniformBuffer && uniformBufferMapped && uniformBufferMemory; }
 };

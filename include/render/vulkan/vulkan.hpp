@@ -172,8 +172,10 @@ private:
 
     std::vector<SwapChainImage> swapChainImages;
     std::vector<InFlightImage> inFlightImages;
+    std::vector<std::tuple<vk::Semaphore, vk::Semaphore>> semaphores;
 
     uint32_t currentFrame = 0;
+    uint32_t currentSemaphore = 0;
     bool framebufferResized = false;
 
 private:
