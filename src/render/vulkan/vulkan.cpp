@@ -1284,6 +1284,7 @@ void VulkanRenderer::copyBufferToImage(vk::Buffer& buffer, vk::Image& image, uin
 
 std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk::Image>& images) {
     std::vector<SwapChainImage> swapImages(images.size());
+    semaphores.resize(images.size());
 
     for (int i = 0; i < images.size(); i++) {
         SwapChainImage image;
@@ -1304,6 +1305,9 @@ std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk
         image.frameBuffer = device.createFramebuffer(framebufferInfo);
 
         swapImages[i] = image;
+
+        vk::SemaphoreCreateInfo semaphoreInfo{};
+        semaphores[i] = std::tuple(device.createSemaphore(semaphoreInfo), device.createSemaphore(semaphoreInfo));
     }
 
     return swapImages;
@@ -1334,16 +1338,11 @@ std::vector<InFlightImage> VulkanRenderer::createInFlightImages(const int imageC
         // command buffers
         image.commandBuffer = commandBuffers[i];
 
-        // sync objects
-        vk::SemaphoreCreateInfo semaphoreInfo{};
-        semaphoreInfo.sType = vk::StructureType::eSemaphoreCreateInfo;
-
+        // fence for syncing
         vk::FenceCreateInfo fenceInfo{};
         fenceInfo.sType = vk::StructureType::eFenceCreateInfo;
         fenceInfo.flags = vk::FenceCreateFlagBits::eSignaled; // create the fence as signaled to avoid stalling at first draw call
 
-        image.imageAvailableSemaphore = device.createSemaphore(semaphoreInfo);
-        image.renderFinishedSemaphore = device.createSemaphore(semaphoreInfo);
         image.inFlightFence = device.createFence(fenceInfo);
 
         // ubo buffers for mvp
@@ -1523,11 +1522,13 @@ void VulkanRenderer::drawFrame() {
     InFlightImage image = inFlightImages[currentFrame];
     check(image);
 
+    auto [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[currentSemaphore];
+
     // wait for previous frame
     checkVulkan(device.waitForFences(1, &image.inFlightFence, vk::True, UINT64_MAX));
 
     // acquire image from swapChain
-    auto [result, imageIndex] = device.acquireNextImageKHR(swapChain, UINT64_MAX, image.imageAvailableSemaphore, VK_NULL_HANDLE);
+    auto [result, imageIndex] = device.acquireNextImageKHR(swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE);
     if (result == vk::Result::eErrorOutOfDateKHR) {
         recreateSwapChain();
         return;
@@ -1547,11 +1548,11 @@ void VulkanRenderer::drawFrame() {
     // wait semaphores
     vk::PipelineStageFlags waitStage{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
     submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = &image.imageAvailableSemaphore;
+    submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
     submitInfo.pWaitDstStageMask = &waitStage;
     // signal semaphores
     submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = &image.renderFinishedSemaphore;
+    submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
 
     // command buffers
     submitInfo.commandBufferCount = 1;
@@ -1564,7 +1565,7 @@ void VulkanRenderer::drawFrame() {
 
     // make sure to wait for the image to be rendered
     presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = &image.renderFinishedSemaphore;
+    presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
 
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = &swapChain;
@@ -1579,6 +1580,7 @@ void VulkanRenderer::drawFrame() {
     }
 
     currentFrame = (++currentFrame) % MAX_FRAMES_IN_FLIGHT;
+    currentSemaphore = (++currentSemaphore) % semaphores.size();
 }
 
 void VulkanRenderer::updateMVP(float deltaTime) {
