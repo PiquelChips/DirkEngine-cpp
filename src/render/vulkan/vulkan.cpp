@@ -660,6 +660,20 @@ vk::DescriptorSetLayout VulkanRenderer::createDescriptorSetLayout() {
     return device.createDescriptorSetLayout(layoutInfo);
 }
 
+vk::DescriptorPool VulkanRenderer::createDescriptorPool() {
+    std::array poolSizes{
+        vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, MAX_FRAMES_IN_FLIGHT),
+        vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, MAX_FRAMES_IN_FLIGHT),
+    };
+    vk::DescriptorPoolCreateInfo poolInfo{};
+    poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+    poolInfo.maxSets = MAX_FRAMES_IN_FLIGHT;
+    poolInfo.poolSizeCount = poolSizes.size();
+    poolInfo.pPoolSizes = poolSizes.data();
+
+    return device.createDescriptorPool(poolInfo);
+}
+
 vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     vk::ShaderModule vert = loadShaderModule("shader.vert");
     vk::ShaderModule frag = loadShaderModule("shader.frag");
@@ -784,20 +798,6 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     return pipeline;
 }
 
-vk::DescriptorPool VulkanRenderer::createDescriptorPool() {
-    std::array poolSizes{
-        vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, MAX_FRAMES_IN_FLIGHT),
-        vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, MAX_FRAMES_IN_FLIGHT),
-    };
-    vk::DescriptorPoolCreateInfo poolInfo{};
-    poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
-    poolInfo.maxSets = MAX_FRAMES_IN_FLIGHT;
-    poolInfo.poolSizeCount = poolSizes.size();
-    poolInfo.pPoolSizes = poolSizes.data();
-
-    return device.createDescriptorPool(poolInfo);
-}
-
 vk::Image VulkanRenderer::createDepthResources() {
     this->depthFormat = findSupportedFormat(
         { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint },
@@ -824,7 +824,7 @@ vk::Image VulkanRenderer::createColorResources() {
     return image;
 }
 
-bool hasStencilComponent(vk::Format format) {
+constexpr bool VulkanRenderer::hasStencilComponent(vk::Format format) {
     return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
 }
 
@@ -1584,11 +1584,6 @@ void VulkanRenderer::drawFrame() {
 }
 
 void VulkanRenderer::updateMVP(float deltaTime) {
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float>(currentTime - startTime).count();
-
     ModelViewProjection mvp{
         .model = glm::rotate(glm::mat4(1.f), 0.f, glm::vec3(0.f, 0.f, 1.f)),
         .view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
