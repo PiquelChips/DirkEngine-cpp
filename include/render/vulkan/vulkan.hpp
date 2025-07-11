@@ -177,25 +177,4 @@ private:
     // TODO: vk::DeviceMemory textureImageMemory;
     vk::ImageView textureImageView;
     vk::Sampler textureSampler;
-
-    ///////////////// STATIC UTILS START HERE
-    // TODO: these could be combined and return a struct
-    std::tuple<vk::Image, vk::DeviceMemory> createImage(uint32_t width, uint32_t height, vk::SampleCountFlagBits numSamples, uint32_t mipLevels, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties); // TODO: many params could have default values
-    vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect, uint32_t mipLevels);                                                                                                                               // TODO: many params could use default values
-
-    std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
-    uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
-    vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
-    static vk::SampleCountFlagBits getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice);
-
-    vk::CommandBuffer beginSingleTimeCommands();
-    void endSingleTimeCommands(vk::CommandBuffer& commandBuffer);
-
-    // TODO: all should take a buffer ref to only need to use one buffer for the entire op if chained
-    void transitionImageLayout(const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels);
-    void copyBuffer(vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size);
-    void copyBufferToImage(vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
-    void generateMipmaps(vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels);
-
-    constexpr bool hasStencilComponent(vk::Format format);
 };
