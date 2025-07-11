@@ -3,6 +3,7 @@
 #include "core/globals.hpp"
 #include "render/render.hpp"
 #include "render/render_types.hpp"
+#include "render/vulkan/vulkan_types.hpp"
 
 #include "GLFW/glfw3.h"
 #include "vulkan/vulkan.hpp"
@@ -11,7 +12,6 @@
 #include "vulkan/vulkan_structs.hpp"
 
 #include <cstdint>
-#include <optional>
 #include <tuple>
 #include <vector>
 
@@ -24,51 +24,6 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
-
-struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-
-    bool isComplete() {
-        return graphicsFamily.has_value() && presentFamily.has_value();
-    }
-};
-
-struct Queues {
-    vk::Queue graphicsQueue;
-    vk::Queue presentQueue;
-};
-
-struct SwapChainSupportDetails {
-    vk::SurfaceCapabilitiesKHR capabilities;
-    std::vector<vk::SurfaceFormatKHR> formats;
-    std::vector<vk::PresentModeKHR> presentModes;
-};
-
-struct SwapChainImage {
-    vk::ImageView imageView;
-    vk::Framebuffer frameBuffer;
-
-    operator bool() const { return imageView && frameBuffer; }
-};
-
-struct InFlightImage {
-    vk::CommandBuffer commandBuffer;
-    // syncing
-    vk::Semaphore imageAvailableSemaphore;
-    vk::Semaphore renderFinishedSemaphore;
-    vk::Fence inFlightFence;
-    // ubo for the mvp
-    vk::Buffer uniformBuffer;
-    vk::DeviceMemory uniformBufferMemory;
-    void* uniformBufferMapped;
-    // descriptor set for the ubo
-    vk::DescriptorSet descriptorSet;
-
-    operator bool() const { return commandBuffer &&
-                                   imageAvailableSemaphore && renderFinishedSemaphore && inFlightFence &&
-                                   uniformBuffer && uniformBufferMapped && uniformBufferMemory; }
-};
 
 /**
  * The vulkan implementation of the renderer
