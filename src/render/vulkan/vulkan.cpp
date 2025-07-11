@@ -104,7 +104,7 @@ int VulkanRenderer::init() {
         return EXIT_FAILURE;
     }
 
-    this->colorImageView = VulkanUtils::createImageView(device, colorImage, swapChainImageFormat, vk::ImageAspectFlagBits::eColor, 1);
+    this->colorImageView = VulkanUtils::createImageView(device, colorImage, swapChainImageFormat);
     if (!this->colorImageView) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create color image view");
         return EXIT_FAILURE;
@@ -116,7 +116,7 @@ int VulkanRenderer::init() {
         return EXIT_FAILURE;
     }
 
-    this->depthImageView = VulkanUtils::createImageView(device, depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
+    this->depthImageView = VulkanUtils::createImageView(device, depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth);
     if (!this->depthImageView) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create depth image view");
         return EXIT_FAILURE;
@@ -554,11 +554,11 @@ void VulkanRenderer::recreateSwapChain() {
 
     // recreate depth image
     this->depthImage = createDepthResources();
-    this->depthImageView = VulkanUtils::createImageView(device, depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
+    this->depthImageView = VulkanUtils::createImageView(device, depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth);
 
     // recreate msaa image buffer
     this->colorImage = createColorResources();
-    this->colorImageView = VulkanUtils::createImageView(device, colorImage, swapChainImageFormat, vk::ImageAspectFlagBits::eColor, 1);
+    this->colorImageView = VulkanUtils::createImageView(device, colorImage, swapChainImageFormat);
 
     // cleanup swap chain
     this->swapChainImages.clear();
@@ -807,9 +807,9 @@ vk::Image VulkanRenderer::createDepthResources() {
 
     auto [image, imageMemory] = VulkanUtils::createImage(
         device, physicalDevice,
-        swapChainExtent.width, swapChainExtent.height, msaaSamples, 1, depthFormat,
+        swapChainExtent.width, swapChainExtent.height, depthFormat,
         vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eDepthStencilAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal);
+        vk::MemoryPropertyFlagBits::eDeviceLocal, msaaSamples);
 
     vk::CommandBuffer commandBuffer = VulkanUtils::beginSingleTimeCommands(device, commandPool);
     VulkanUtils::transitionImageLayout(commandBuffer, image, depthFormat, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal, 1);
@@ -822,10 +822,10 @@ vk::Image VulkanRenderer::createColorResources() {
     auto [image, imageMemory] = VulkanUtils::createImage(
         device, physicalDevice,
         swapChainExtent.width, swapChainExtent.height,
-        msaaSamples, 1, swapChainImageFormat,
+        swapChainImageFormat,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal);
+        vk::MemoryPropertyFlagBits::eDeviceLocal, msaaSamples);
     return image;
 }
 
@@ -853,10 +853,10 @@ vk::Image VulkanRenderer::createTextureImage() {
 
     auto [texture, textureMemory] = VulkanUtils::createImage(
         device, physicalDevice,
-        texWidth, texHeight, vk::SampleCountFlagBits::e1, mipLevels, format,
+        texWidth, texHeight, format,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-        vk::MemoryPropertyFlagBits::eDeviceLocal);
+        vk::MemoryPropertyFlagBits::eDeviceLocal, vk::SampleCountFlagBits::e1, mipLevels);
 
     vk::CommandBuffer commandBuffer = VulkanUtils::beginSingleTimeCommands(device, commandPool);
     VulkanUtils::transitionImageLayout(commandBuffer, texture, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
@@ -1013,7 +1013,7 @@ std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk
         SwapChainImage image;
 
         // image view
-        image.imageView = VulkanUtils::createImageView(device, images[i], swapChainImageFormat, vk::ImageAspectFlagBits::eColor, 1);
+        image.imageView = VulkanUtils::createImageView(device, images[i], swapChainImageFormat);
 
         // frame buffers
         std::array attachments = { colorImageView, depthImageView, image.imageView };

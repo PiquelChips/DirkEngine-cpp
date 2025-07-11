@@ -9,8 +9,14 @@
 class VulkanUtils {
 public:
     // TODO: these could be combined and return a struct
-    static std::tuple<vk::Image, vk::DeviceMemory> createImage(vk::Device device, vk::PhysicalDevice physicalDevice, uint32_t width, uint32_t height, vk::SampleCountFlagBits numSamples, uint32_t mipLevels, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties); // TODO: many params could have default values
-    static vk::ImageView createImageView(vk::Device device, vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect, uint32_t mipLevels);                                                                                                                                                                  // TODO: many params could use default values
+    static std::tuple<vk::Image, vk::DeviceMemory> createImage(
+        vk::Device device, vk::PhysicalDevice physicalDevice,
+        uint32_t width, uint32_t height, vk::Format format,
+        vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
+        vk::SampleCountFlagBits numSamples = vk::SampleCountFlagBits::e1,
+        uint32_t mipLevels = 1);
+
+    static vk::ImageView createImageView(vk::Device device, vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor, uint32_t mipLevels = 1);
 
     static std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::Device device, vk::PhysicalDevice physicalDevice, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
     static uint32_t findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
