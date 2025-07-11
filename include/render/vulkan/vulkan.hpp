@@ -69,11 +69,10 @@ private:
     vk::DescriptorSetLayout createDescriptorSetLayout();
     vk::DescriptorPool createDescriptorPool();
 
-    // depth buffer
-    vk::Image createDepthResources();
-
-    // textures
+    // texture, depth buffer & MSAA
     vk::Image createTextureImage();
+    vk::Image createDepthResources();
+    vk::Image createColorResources();
 
     // vertices & indices
     vk::Buffer createVertexBuffer();
@@ -81,14 +80,15 @@ private:
     bool loadModel();
 
     // TODO: these could be combined and return a struct
-    std::tuple<vk::Image, vk::DeviceMemory> createImage(uint32_t width, uint32_t height, uint32_t mipLevels, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties);
-    vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect, uint32_t mipLevels);
+    std::tuple<vk::Image, vk::DeviceMemory> createImage(uint32_t width, uint32_t height, vk::SampleCountFlagBits numSamples, uint32_t mipLevels, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties); // TODO: many params could have default values
+    vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect, uint32_t mipLevels);                                                                                                                               // TODO: many params could use default values
     vk::Sampler createTextureSampler();
 
     // TODO: next 3 § of functions should be static in a utils class
     std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
     vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
+    static vk::SampleCountFlagBits getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice);
 
     vk::CommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(vk::CommandBuffer& commandBuffer);
@@ -165,6 +165,11 @@ private:
     vk::ImageView depthImageView;
     vk::Format depthFormat;
 
+    // TODO: make into a struct
+    vk::Image colorImage;
+    // TODO: vk::DeviceMemory colorImageMemory;
+    vk::ImageView colorImageView;
+
     std::vector<SwapChainImage> swapChainImages;
     std::vector<InFlightImage> inFlightImages;
 
@@ -185,5 +190,6 @@ private:
 
     RendererConfig rendererConfig;
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
-    const int MAX_FRAMES_IN_FLIGHT = 2; // dont make this too high or CPU will go faster than GPU, causing latency
+    const int MAX_FRAMES_IN_FLIGHT = 2;                                // dont make this too high or CPU will go faster than GPU, causing latency
+    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1; // TODO: in renderer features struct
 };

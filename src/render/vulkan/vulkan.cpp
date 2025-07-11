@@ -98,6 +98,18 @@ int VulkanRenderer::init() {
         return EXIT_FAILURE;
     }
 
+    this->colorImage = createColorResources();
+    if (!this->colorImage) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create color image");
+        return EXIT_FAILURE;
+    }
+
+    this->colorImageView = createImageView(colorImage, swapChainImageFormat, vk::ImageAspectFlagBits::eColor, 1);
+    if (!this->colorImageView) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create color image view");
+        return EXIT_FAILURE;
+    }
+
     this->depthImage = createDepthResources();
     if (!this->depthImage) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create depth image");
@@ -271,6 +283,7 @@ vk::PhysicalDevice VulkanRenderer::getPhysicalDevice() {
 
     if (candidates.rbegin()->first > 0) {
         physicalDevice = candidates.rbegin()->second;
+        msaaSamples = getMaxUsableSampleCount(physicalDevice);
     } else {
         return nullptr;
     }
@@ -543,6 +556,10 @@ void VulkanRenderer::recreateSwapChain() {
     this->depthImage = createDepthResources();
     this->depthImageView = createImageView(depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
 
+    // recreate msaa image buffer
+    this->colorImage = createColorResources();
+    this->colorImageView = createImageView(colorImage, swapChainImageFormat, vk::ImageAspectFlagBits::eColor, 1);
+
     // cleanup swap chain
     this->swapChainImages.clear();
     this->swapChain = nullptr;
@@ -554,11 +571,11 @@ void VulkanRenderer::recreateSwapChain() {
 vk::RenderPass VulkanRenderer::createRenderPass() {
     vk::AttachmentDescription colorAttachment{};
     colorAttachment.format = swapChainImageFormat;
-    colorAttachment.samples = vk::SampleCountFlagBits::e1;
+    colorAttachment.samples = msaaSamples;
     colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
     colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
     colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
-    colorAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+    colorAttachment.finalLayout = vk::ImageLayout::eColorAttachmentOptimal;
 
     vk::AttachmentReference colorAttachmentRef{};
     colorAttachmentRef.attachment = 0;
@@ -566,7 +583,7 @@ vk::RenderPass VulkanRenderer::createRenderPass() {
 
     vk::AttachmentDescription depthAttachment{};
     depthAttachment.format = depthFormat;
-    depthAttachment.samples = vk::SampleCountFlagBits::e1;
+    depthAttachment.samples = msaaSamples;
     depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
     depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
     depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
@@ -578,23 +595,36 @@ vk::RenderPass VulkanRenderer::createRenderPass() {
     depthAttachmentRef.attachment = 1;
     depthAttachmentRef.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
+    vk::AttachmentDescription colorAttachmentResolve{};
+    colorAttachmentResolve.format = swapChainImageFormat;
+    colorAttachmentResolve.samples = vk::SampleCountFlagBits::e1;
+    colorAttachmentResolve.loadOp = vk::AttachmentLoadOp::eDontCare;
+    colorAttachmentResolve.storeOp = vk::AttachmentStoreOp::eStore;
+    colorAttachmentResolve.initialLayout = vk::ImageLayout::eUndefined;
+    colorAttachmentResolve.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+
+    vk::AttachmentReference colorAttachmentResolveRef{};
+    colorAttachmentResolveRef.attachment = 2;
+    colorAttachmentResolveRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
+
     vk::SubpassDescription subpass{};
     subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
     subpass.pDepthStencilAttachment = &depthAttachmentRef;
+    subpass.pResolveAttachments = &colorAttachmentResolveRef;
 
     vk::SubpassDependency dependency{};
     // src
     dependency.srcSubpass = vk::SubpassExternal;
     dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests;
-    dependency.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+    dependency.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
     // dst
     dependency.dstSubpass = 0;
     dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests;
     dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 
-    std::array attachments = { colorAttachment, depthAttachment };
+    std::array attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
     vk::RenderPassCreateInfo renderPassInfo{};
     renderPassInfo.sType = vk::StructureType::eRenderPassCreateInfo;
     renderPassInfo.attachmentCount = attachments.size();
@@ -653,7 +683,6 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     auto bindingDescription = VulkanVertex::getBindingDescription();
     auto attributeDescriptons = VulkanVertex::getAttributeDescriptions();
     // vertex input
-    // hardcoded in vert shader for now
     vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = vk::StructureType::ePipelineVertexInputStateCreateInfo;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -695,7 +724,7 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     vk::PipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = vk::StructureType::ePipelineMultisampleStateCreateInfo;
     multisampling.sampleShadingEnable = vk::False;
-    multisampling.rasterizationSamples = vk::SampleCountFlagBits::e1;
+    multisampling.rasterizationSamples = msaaSamples;
 
     // color blending
     vk::PipelineColorBlendAttachmentState colorBlendAttachment{};
@@ -776,12 +805,22 @@ vk::Image VulkanRenderer::createDepthResources() {
         vk::FormatFeatureFlagBits::eDepthStencilAttachment);
 
     auto [image, imageMemory] = createImage(
-        swapChainExtent.width, swapChainExtent.height, 1, depthFormat,
+        swapChainExtent.width, swapChainExtent.height, msaaSamples, 1, depthFormat,
         vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eDepthStencilAttachment,
         vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     transitionImageLayout(image, depthFormat, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal, 1);
 
+    return image;
+}
+
+vk::Image VulkanRenderer::createColorResources() {
+    auto [image, imageMemory] = createImage(
+        swapChainExtent.width, swapChainExtent.height,
+        msaaSamples, 1, swapChainImageFormat,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
+        vk::MemoryPropertyFlagBits::eDeviceLocal);
     return image;
 }
 
@@ -812,7 +851,7 @@ vk::Image VulkanRenderer::createTextureImage() {
     stbi_image_free(pixels);
 
     auto [texture, textureMemory] = createImage(
-        texWidth, texHeight, mipLevels, format,
+        texWidth, texHeight, vk::SampleCountFlagBits::e1, mipLevels, format,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
         vk::MemoryPropertyFlagBits::eDeviceLocal);
@@ -960,14 +999,14 @@ void VulkanRenderer::endSingleTimeCommands(vk::CommandBuffer& commandBuffer) {
     queues.graphicsQueue.waitIdle(); // TODO: use a fence for more optimized simultaneous ops
 }
 
-std::tuple<vk::Image, vk::DeviceMemory> VulkanRenderer::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties) {
+std::tuple<vk::Image, vk::DeviceMemory> VulkanRenderer::createImage(uint32_t width, uint32_t height, vk::SampleCountFlagBits numSamples, uint32_t mipLevels, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties) {
     vk::ImageCreateInfo imageInfo{};
     imageInfo.imageType = vk::ImageType::e2D;
     imageInfo.format = format;
     imageInfo.extent = vk::Extent3D(width, height, 1);
     imageInfo.mipLevels = mipLevels;
     imageInfo.arrayLayers = 1;
-    imageInfo.samples = vk::SampleCountFlagBits::e1;
+    imageInfo.samples = numSamples;
     imageInfo.tiling = tiling;
     imageInfo.usage = usage;
     imageInfo.sharingMode = vk::SharingMode::eExclusive;
@@ -1206,6 +1245,21 @@ vk::Format VulkanRenderer::findSupportedFormat(const std::vector<vk::Format>& ca
     return vk::Format::eR32G32B32A32Sfloat; // random format
 }
 
+vk::SampleCountFlagBits VulkanRenderer::getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice) {
+    vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
+
+    vk::SampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+
+    if (counts & vk::SampleCountFlagBits::e64) return vk::SampleCountFlagBits::e64;
+    if (counts & vk::SampleCountFlagBits::e32) return vk::SampleCountFlagBits::e32;
+    if (counts & vk::SampleCountFlagBits::e16) return vk::SampleCountFlagBits::e16;
+    if (counts & vk::SampleCountFlagBits::e8) return vk::SampleCountFlagBits::e8;
+    if (counts & vk::SampleCountFlagBits::e4) return vk::SampleCountFlagBits::e4;
+    if (counts & vk::SampleCountFlagBits::e2) return vk::SampleCountFlagBits::e2;
+
+    return vk::SampleCountFlagBits::e1;
+}
+
 void VulkanRenderer::copyBuffer(vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size) {
     vk::CommandBuffer commandCopyBuffer = beginSingleTimeCommands();
     commandCopyBuffer.copyBuffer(srcBuffer, dstBuffer, vk::BufferCopy(0, 0, size));
@@ -1238,7 +1292,7 @@ std::vector<SwapChainImage> VulkanRenderer::createSwapChainImages(std::vector<vk
         image.imageView = createImageView(images[i], swapChainImageFormat, vk::ImageAspectFlagBits::eColor, 1);
 
         // frame buffers
-        std::array attachments = { image.imageView, depthImageView };
+        std::array attachments = { colorImageView, depthImageView, image.imageView };
         vk::FramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = vk::StructureType::eFramebufferCreateInfo;
         framebufferInfo.renderPass = renderPass;
@@ -1534,7 +1588,7 @@ void VulkanRenderer::updateMVP(float deltaTime) {
     float time = std::chrono::duration<float>(currentTime - startTime).count();
 
     ModelViewProjection mvp{
-        .model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f)),
+        .model = glm::rotate(glm::mat4(1.f), 0.f, glm::vec3(0.f, 0.f, 1.f)),
         .view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
         .proj = glm::perspective(glm::radians(45.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .1f, 10.f),
     };
