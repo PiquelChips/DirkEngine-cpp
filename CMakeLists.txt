@@ -18,6 +18,7 @@ add_subdirectory(thirdparty/glfw-3.4)
 add_subdirectory(thirdparty/glm)
 add_subdirectory(thirdparty/vulkan)
 add_subdirectory(thirdparty/stb_image)
+add_subdirectory(thirdparty/tiny_obj_loader)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
@@ -88,6 +89,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm
     stb_image
+    tiny_obj_loader
     Vulkan::Loader
     Vulkan::Headers
 )

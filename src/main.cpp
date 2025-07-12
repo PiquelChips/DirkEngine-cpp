@@ -5,9 +5,6 @@
 #include <exception>
 #include <iostream>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "thirdparty/tiny_obj_loader.h"
-
 int main() {
     try {
         auto engine = std::make_unique<dirk::DirkEngine>();
