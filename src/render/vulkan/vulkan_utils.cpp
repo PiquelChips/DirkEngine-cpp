@@ -7,6 +7,8 @@
 
 #include "vulkan/vulkan_handles.hpp"
 
+namespace dirk {
+
 ImageMemoryView VulkanUtils::createImageMemoryView(CreateImageMemoryViewInfo& createInfo) {
     auto [image, memory] = createImage(
         createInfo.device,
@@ -313,3 +315,5 @@ RendererFeatures VulkanUtils::getRendererFeatures(vk::PhysicalDevice physicalDev
         .msaaSamples = static_cast<int>(VulkanUtils::getMaxUsableSampleCount(physicalDevice)),
     };
 }
+
+} // namespace dirk

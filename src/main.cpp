@@ -11,11 +11,9 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "thirdparty/tiny_obj_loader.h"
 
-DEFINE_LOG_CATEGORY(LogTemp)
-
 int main() {
     try {
-        auto engine = std::make_unique<DirkEngine>();
+        auto engine = std::make_unique<dirk::DirkEngine>();
         dirk::gEngine = engine.get();
 
         return dirk::gEngine->main();

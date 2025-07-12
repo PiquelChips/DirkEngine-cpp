@@ -9,7 +9,6 @@
 
 namespace dirk {
 DirkEngine* gEngine = nullptr;
-}
 
 DEFINE_LOG_CATEGORY(LogEngine)
 
@@ -80,3 +79,5 @@ float DirkEngine::captureDeltaTime() {
 
     return deltaTime;
 }
+
+} // namespace dirk

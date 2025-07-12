@@ -10,6 +10,8 @@
 #include <cstdint>
 #include <optional>
 
+namespace dirk {
+
 struct VulkanVertex : Vertex {
     static vk::VertexInputBindingDescription getBindingDescription() {
         return { 0, sizeof(Vertex), vk::VertexInputRate::eVertex };
@@ -90,3 +92,5 @@ struct CreateImageMemoryViewInfo {
     vk::SampleCountFlagBits numSamples = vk::SampleCountFlagBits::e1;
     uint32_t mipLevels = 1;
 };
+
+} // namespace dirk

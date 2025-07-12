@@ -10,11 +10,9 @@
 #include "asserts.hpp"
 #include "logging.hpp"
 
-class DirkEngine;
-
-DECLARE_LOG_CATEGORY_EXTERN(LogTemp)
-
 namespace dirk {
+
+class DirkEngine;
 
 extern DirkEngine* gEngine;
 

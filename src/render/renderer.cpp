@@ -4,6 +4,8 @@
 
 DEFINE_LOG_CATEGORY(LogRenderer)
 
+namespace dirk {
+
 RendererFeatures& Renderer::getFeatures() { return features; }
 
 Renderer* createRenderer(RendererCreateInfo& createInfo) {
@@ -15,3 +17,5 @@ Renderer* createRenderer(RendererCreateInfo& createInfo) {
     DIRK_LOG(LogRenderer, FATAL, "an invalid api was specified in RendererCreateInfo.api");
     return nullptr;
 }
+
+} // namespace dirk

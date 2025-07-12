@@ -9,6 +9,8 @@
 #include "render/renderer.hpp"
 #include "render/renderer_types.hpp"
 
+namespace dirk {
+
 DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 
 class DirkEngine {
@@ -37,3 +39,5 @@ private:
 
     std::chrono::high_resolution_clock::time_point lastTick;
 };
+
+} // namespace dirk

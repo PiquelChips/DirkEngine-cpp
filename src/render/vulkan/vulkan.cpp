@@ -31,6 +31,8 @@
 DEFINE_LOG_CATEGORY(LogVulkan)
 DEFINE_LOG_CATEGORY(LogVulkanValidation)
 
+namespace dirk {
+
 VulkanRenderer::VulkanRenderer(RendererCreateInfo& createInfo) : rendererCreateInfo(createInfo) {
     check(rendererCreateInfo.api == VulkanApi);
 }
@@ -1341,3 +1343,5 @@ vk::ShaderModule VulkanRenderer::loadShaderModule(const std::string& shaderName)
     check(module);
     return module;
 }
+
+} // namespace dirk

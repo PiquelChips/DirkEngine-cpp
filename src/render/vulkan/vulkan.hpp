@@ -25,6 +25,8 @@
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
+namespace dirk {
+
 /**
  * The vulkan implementation of the renderer
  */
@@ -171,3 +173,5 @@ private:
     uint32_t mipLevels;
     vk::Sampler textureSampler;
 };
+
+} // namespace dirk
