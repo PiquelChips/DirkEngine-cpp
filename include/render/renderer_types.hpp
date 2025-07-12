@@ -3,17 +3,21 @@
 #include <cstdint>
 #include <string>
 
+class DirkEngine;
+
 enum RenderApi {
     VulkanApi,
 };
 
-struct RendererConfig {
-    uint32_t width;
-    uint32_t height;
-    std::string name;
+struct RendererInfo {
+    std::string applicationName;
+    RenderApi api;
 };
 
 struct RendererCreateInfo {
     std::string applicationName;
+    uint32_t windowWdith, windowHeight;
     RenderApi api;
+    DirkEngine* engine;
+    // TODO: ResourceManager* resourceManaer;
 };

@@ -1,8 +1,9 @@
 #pragma once
 
 #include "core/globals.hpp"
-#include "render/renderer.hpp"
 #include "render/render_types.hpp"
+#include "render/renderer.hpp"
+#include "render/renderer_types.hpp"
 #include "render/vulkan/vulkan_types.hpp"
 
 #include "GLFW/glfw3.h"
@@ -30,7 +31,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 class VulkanRenderer : public Renderer {
 
 public:
-    VulkanRenderer(RendererConfig rendererConfig);
+    VulkanRenderer(RendererCreateInfo& createInfo);
 
     int init() override;
     void draw(float deltaTime) override;
@@ -139,7 +140,7 @@ private:
 private:
     // misc variables used by the renderer
 
-    RendererConfig rendererConfig;
+    RendererCreateInfo& rendererCreateInfo;
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
     const int MAX_FRAMES_IN_FLIGHT = 2;                                // dont make this too high or CPU will go faster than GPU, causing latency
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1; // TODO: in renderer features struct

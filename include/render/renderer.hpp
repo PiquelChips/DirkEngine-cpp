@@ -1,11 +1,11 @@
 #pragma once
 
-#include <cstdint>
-#include <string>
-
+#include "core/globals.hpp"
 #include "renderer_types.hpp"
 
 class DirkEngine;
+
+DECLARE_LOG_CATEGORY_EXTERN(LogRenderer);
 
 /**
  *  The base class for a renderer

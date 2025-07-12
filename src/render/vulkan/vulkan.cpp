@@ -1,8 +1,9 @@
 #include "render/vulkan/vulkan.hpp"
+#include "core/asserts.hpp"
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
-#include "render/render.hpp"
 #include "render/render_types.hpp"
+#include "render/renderer_types.hpp"
 #include "render/vulkan/vulkan_types.hpp"
 #include "render/vulkan/vulkan_utils.hpp"
 
@@ -31,7 +32,9 @@
 DEFINE_LOG_CATEGORY(LogVulkan)
 DEFINE_LOG_CATEGORY(LogVulkanValidation)
 
-VulkanRenderer::VulkanRenderer(RendererConfig rendererConfig) : rendererConfig(rendererConfig) {}
+VulkanRenderer::VulkanRenderer(RendererCreateInfo& createInfo) : rendererCreateInfo(createInfo) {
+    check(rendererCreateInfo.api == VulkanApi);
+}
 
 int VulkanRenderer::init() {
     if (glfwInit() == GLFW_FALSE) {
@@ -42,8 +45,11 @@ int VulkanRenderer::init() {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    this->window = glfwCreateWindow(rendererConfig.width, rendererConfig.height, rendererConfig.name.c_str(), nullptr, nullptr);
-    if (this->window == nullptr) {
+    this->window = glfwCreateWindow(
+        rendererCreateInfo.windowWdith,
+        rendererCreateInfo.windowHeight,
+        rendererCreateInfo.applicationName.c_str(), nullptr, nullptr);
+    if (!this->window) {
         DIRK_LOG(LogVulkan, FATAL, "error creating GLFW window")
         return EXIT_FAILURE;
     }

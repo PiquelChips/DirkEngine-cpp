@@ -7,6 +7,7 @@
 
 #include "core/globals.hpp"
 #include "render/renderer.hpp"
+#include "render/renderer_types.hpp"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 
@@ -18,7 +19,7 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    RendererConfig RENDER_CONFIG{ 800, 600, "DirkEngine" };
+    RendererCreateInfo RENDERER_INFO{ "DirkEngine", 800, 600, VulkanApi, this };
 
 private:
     int init();
