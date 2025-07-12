@@ -1,16 +1,12 @@
 #include "core/logging.hpp"
 #include "core/asserts.hpp"
 
-#include <cstdarg>
-#include <cstdlib>
 #include <ctime>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
-#include <ostream>
 #include <sstream>
-#include <string>
 
 constexpr std::string colorEnd{ "\033[0m" };
 

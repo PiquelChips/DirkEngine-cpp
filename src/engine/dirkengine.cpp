@@ -1,6 +1,6 @@
 #include "engine/dirkengine.hpp"
 #include "core/globals.hpp"
-#include "render/vulkan/vulkan.hpp"
+#include "render/renderer.hpp"
 
 #include <GLFW/glfw3.h>
 #include <chrono>
@@ -47,17 +47,15 @@ void DirkEngine::exit(const std::string& reason) {
 int DirkEngine::init() {
     int result = EXIT_SUCCESS;
 
-    // for now we only use Vulkan
-    renderer = std::make_unique<VulkanRenderer>(RENDER_CONFIG);
+    renderer = std::unique_ptr<Renderer>(createRenderer(RENDERER_INFO));
+    check(renderer);
     result = renderer->init();
     if (result != EXIT_SUCCESS)
         return result;
 
-    // TODO: init audio
-    // TODO: init network
-    // TODO: init input
+    // TODO: init audio, network, input, ...
 
-    DIRK_LOG(LogVulkan, INFO, "engine initialization successful");
+    DIRK_LOG(LogEngine, INFO, "engine initialization successful");
 
     return result;
 }

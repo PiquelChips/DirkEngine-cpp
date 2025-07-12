@@ -1,15 +1,11 @@
 #pragma once
 
-#include <cstdint>
-#include <string>
+#include "core/globals.hpp"
+#include "renderer_types.hpp"
 
 class DirkEngine;
 
-struct RendererConfig {
-    uint32_t width;
-    uint32_t height;
-    std::string name;
-};
+DECLARE_LOG_CATEGORY_EXTERN(LogRenderer);
 
 /**
  *  The base class for a renderer
@@ -20,4 +16,11 @@ public:
     virtual int init() = 0;
     virtual void draw(float deltaTime) = 0;
     virtual void cleanup() = 0;
+
+    RendererFeatures& getFeatures();
+
+protected:
+    RendererFeatures features;
 };
+
+Renderer* createRenderer(RendererCreateInfo& createInfo);
