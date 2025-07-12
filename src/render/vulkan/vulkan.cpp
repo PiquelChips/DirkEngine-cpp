@@ -287,9 +287,7 @@ vk::PhysicalDevice VulkanRenderer::getPhysicalDevice() {
                  << "\n\tapi version: " << deviceProperties.apiVersion
                  << "\n\tdriver version: " << deviceProperties.driverVersion);
 
-    this->features = RendererFeatures{
-        .anisotropy = deviceFeatures.samplerAnisotropy == vk::True,
-    };
+    this->features = VulkanUtils::getRendererFeatures(physicalDevice);
 
     return physicalDevice;
 }
@@ -333,11 +331,7 @@ int VulkanRenderer::getDeviceSuitability(vk::PhysicalDevice device) {
     score += swapChainSupport.formats.size();
     score += swapChainSupport.presentModes.size();
 
-    RendererFeatures features = RendererFeatures{
-        .anisotropy = deviceFeatures.samplerAnisotropy == vk::True,
-    };
-
-    score += features.getScore();
+    score += VulkanUtils::getRendererFeatures(device).getScore();
 
     return score;
 }

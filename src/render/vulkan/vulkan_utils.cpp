@@ -305,3 +305,11 @@ void VulkanUtils::generateMipmaps(vk::CommandBuffer commandBuffer, vk::PhysicalD
 constexpr bool VulkanUtils::hasStencilComponent(vk::Format format) {
     return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
 }
+
+RendererFeatures VulkanUtils::getRendererFeatures(vk::PhysicalDevice physicalDevice) {
+    vk::PhysicalDeviceFeatures deviceFeatures = physicalDevice.getFeatures();
+    return RendererFeatures{
+        .anisotropy = deviceFeatures.samplerAnisotropy == vk::True,
+        .msaaSamples = static_cast<int>(VulkanUtils::getMaxUsableSampleCount(physicalDevice)),
+    };
+}

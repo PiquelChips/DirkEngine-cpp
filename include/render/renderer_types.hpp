@@ -24,8 +24,9 @@ struct RendererCreateInfo {
 
 struct RendererFeatures {
     bool anisotropy;
+    int msaaSamples;
 
-    bool isComplete() { return anisotropy; }
+    bool isComplete() { return anisotropy && msaaSamples > 1; }
 
     int getScore() {
         if (isComplete())
@@ -35,6 +36,8 @@ struct RendererFeatures {
 
         if (anisotropy)
             score += 10;
+
+        score += msaaSamples;
 
         return score;
     }

@@ -2,6 +2,7 @@
 
 #include "core/globals.hpp"
 
+#include "render/renderer_types.hpp"
 #include "vulkan_types.hpp"
 
 #include "vulkan/vulkan.hpp"
@@ -29,11 +30,12 @@ public:
     static vk::CommandBuffer beginSingleTimeCommands(vk::Device device, vk::CommandPool commandPool);
     static void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue);
 
-    // TODO: all should take a buffer ref to only need to use one buffer for the entire op if chained
     static void transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels);
     static void copyBuffer(vk::CommandBuffer commandBuffer, vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size);
     static void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
     static void generateMipmaps(vk::CommandBuffer commandBuffer, vk::PhysicalDevice physicalDevice, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels);
 
     static constexpr bool hasStencilComponent(vk::Format format);
+
+    static RendererFeatures getRendererFeatures(vk::PhysicalDevice physicalDevice);
 };
