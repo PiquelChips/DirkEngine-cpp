@@ -9,9 +9,9 @@
 #include "render/renderer.hpp"
 #include "render/renderer_types.hpp"
 
-namespace dirk {
-
 DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
+
+namespace dirk {
 
 class DirkEngine {
 

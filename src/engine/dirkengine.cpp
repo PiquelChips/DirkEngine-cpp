@@ -7,10 +7,11 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace dirk {
-DirkEngine* gEngine = nullptr;
-
 DEFINE_LOG_CATEGORY(LogEngine)
+
+namespace dirk {
+
+DirkEngine* gEngine = nullptr;
 
 int DirkEngine::main() {
     int result = EXIT_SUCCESS;
