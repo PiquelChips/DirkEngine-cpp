@@ -292,7 +292,7 @@ int VulkanRenderer::getDeviceSuitability(vk::PhysicalDevice device) {
 
     // TODO: update with vulkan tutorial checks
 
-    DIRK_LOG(LogVulkan, INFO, "found device: " << deviceProperties.deviceName);
+    DIRK_LOG(LogVulkan, DEBUG, "found device: " << deviceProperties.deviceName);
 
     // prereturn required stuff
     if (!deviceFeatures.geometryShader)
