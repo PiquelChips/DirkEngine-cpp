@@ -142,8 +142,8 @@ private:
 
     RendererCreateInfo& rendererCreateInfo;
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
-    const int MAX_FRAMES_IN_FLIGHT = 2;                                // dont make this too high or CPU will go faster than GPU, causing latency
-    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1; // TODO: in renderer features struct
+    const int MAX_FRAMES_IN_FLIGHT = 2; // dont make this too high or CPU will go faster than GPU, causing latency
+    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
     ///////////////// PER MESH STUFF STARTS HERE
     vk::DescriptorSetLayout createDescriptorSetLayout();

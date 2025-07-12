@@ -23,8 +23,8 @@ struct RendererCreateInfo {
 };
 
 struct RendererFeatures {
-    bool anisotropy;
-    int msaaSamples;
+    bool anisotropy = false;
+    int msaaSamples = 1;
 
     bool isComplete() { return anisotropy && msaaSamples > 1; }
 
