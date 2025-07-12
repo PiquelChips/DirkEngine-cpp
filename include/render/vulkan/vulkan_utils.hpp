@@ -1,14 +1,17 @@
 #pragma once
 
+#include "core/globals.hpp"
+
+#include "render/vulkan/vulkan_types.hpp"
+
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
 
-#include "core/globals.hpp"
-
 class VulkanUtils {
 public:
-    // TODO: these could be combined and return a struct
+    static ImageMemoryView createImageMemoryView(CreateImageMemoryViewInfo& createInfo);
+
     static std::tuple<vk::Image, vk::DeviceMemory> createImage(
         vk::Device device, vk::PhysicalDevice physicalDevice,
         uint32_t width, uint32_t height, vk::Format format,

@@ -7,6 +7,7 @@
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
+#include <cstdint>
 #include <optional>
 
 struct VulkanVertex : Vertex {
@@ -62,4 +63,30 @@ struct InFlightImage {
     vk::DescriptorSet descriptorSet;
 
     operator bool() const { return commandBuffer && inFlightFence && uniformBuffer && uniformBufferMapped && uniformBufferMemory; }
+};
+
+struct ImageMemoryView {
+    vk::Image image;
+    vk::DeviceMemory memory;
+    vk::ImageView view;
+
+    operator bool() const { return image && memory && view; }
+};
+
+struct CreateImageMemoryViewInfo {
+    vk::Device device;
+    vk::PhysicalDevice physicalDevice;
+
+    // the image
+    uint32_t width, height;
+    vk::Format format;
+    vk::ImageTiling tiling;
+    vk::ImageUsageFlags usage;
+    // the memory
+    vk::MemoryPropertyFlags properties;
+    // the view
+    vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor;
+    // MSAA & mipmaps
+    vk::SampleCountFlagBits numSamples = vk::SampleCountFlagBits::e1;
+    uint32_t mipLevels = 1;
 };

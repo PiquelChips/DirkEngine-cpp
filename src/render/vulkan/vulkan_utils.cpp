@@ -4,9 +4,40 @@
 #include "engine/dirkengine.hpp"
 #include "render/vulkan/vulkan.hpp"
 
+#include "render/vulkan/vulkan_types.hpp"
 #include "vulkan/vulkan_handles.hpp"
 
-std::tuple<vk::Image, vk::DeviceMemory> VulkanUtils::createImage(vk::Device device, vk::PhysicalDevice physicalDevice, uint32_t width, uint32_t height, vk::SampleCountFlagBits numSamples, uint32_t mipLevels, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties) {
+ImageMemoryView VulkanUtils::createImageMemoryView(CreateImageMemoryViewInfo& createInfo) {
+    auto [image, memory] = createImage(
+        createInfo.device,
+        createInfo.physicalDevice,
+        createInfo.width, createInfo.height,
+        createInfo.format,
+        createInfo.tiling,
+        createInfo.usage,
+        createInfo.properties,
+        createInfo.numSamples,
+        createInfo.mipLevels);
+
+    auto view = createImageView(
+        createInfo.device, image,
+        createInfo.format,
+        createInfo.imageAspect,
+        createInfo.mipLevels);
+
+    return ImageMemoryView{
+        .image = image,
+        .memory = memory,
+        .view = view,
+    };
+}
+
+std::tuple<vk::Image, vk::DeviceMemory> VulkanUtils::createImage(
+    vk::Device device, vk::PhysicalDevice physicalDevice,
+    uint32_t width, uint32_t height, vk::Format format,
+    vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
+    vk::SampleCountFlagBits numSamples, uint32_t mipLevels) {
+
     vk::ImageCreateInfo imageInfo{};
     imageInfo.imageType = vk::ImageType::e2D;
     imageInfo.format = format;

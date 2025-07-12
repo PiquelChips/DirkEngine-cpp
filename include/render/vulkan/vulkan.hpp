@@ -67,8 +67,8 @@ private:
     vk::Pipeline createGraphicsPipeline();
 
     // improve overall image quality during rendering
-    vk::Image createDepthResources();
-    vk::Image createColorResources();
+    ImageMemoryView createDepthResources();
+    ImageMemoryView createColorResources();
 
     std::vector<InFlightImage> createInFlightImages(const int imageCount);
 
@@ -114,16 +114,10 @@ private:
     vk::Pipeline graphicsPipeline;
     vk::CommandPool commandPool;
 
-    // TODO: make into a struct
-    vk::Image depthImage;
-    // TDOO vk::DeviceMemory depthImageMemory;
-    vk::ImageView depthImageView;
+    ImageMemoryView depthImageMemoryView;
     vk::Format depthFormat;
 
-    // TODO: make into a struct
-    vk::Image colorImage;
-    // TODO: vk::DeviceMemory colorImageMemory;
-    vk::ImageView colorImageView;
+    ImageMemoryView colorImageMemoryView;
 
     std::vector<SwapChainImage> swapChainImages;
     std::vector<InFlightImage> inFlightImages;
@@ -153,7 +147,7 @@ private:
     ///////////////// PER MESH STUFF STARTS HERE
     vk::DescriptorSetLayout createDescriptorSetLayout();
     vk::DescriptorPool createDescriptorPool();
-    vk::Image createTextureImage();
+    ImageMemoryView createTextureResources();
     vk::Sampler createTextureSampler();
 
     // vertices & indices
@@ -171,10 +165,8 @@ private:
     vk::Buffer indexBuffer;
     // TODO: vk::DeviceMemory indexBufferMemory;
 
-    // TODO: make into a struct
+    ImageMemoryView textureImageMemoryView;
+
     uint32_t mipLevels;
-    vk::Image textureImage;
-    // TODO: vk::DeviceMemory textureImageMemory;
-    vk::ImageView textureImageView;
     vk::Sampler textureSampler;
 };
