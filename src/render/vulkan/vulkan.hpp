@@ -4,7 +4,7 @@
 #include "render/render_types.hpp"
 #include "render/renderer.hpp"
 #include "render/renderer_types.hpp"
-#include "render/vulkan/vulkan_types.hpp"
+#include "vulkan_types.hpp"
 
 #include "GLFW/glfw3.h"
 #include "vulkan/vulkan.hpp"

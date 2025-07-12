@@ -2,7 +2,7 @@
 
 #include "core/globals.hpp"
 
-#include "render/vulkan/vulkan_types.hpp"
+#include "vulkan_types.hpp"
 
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"

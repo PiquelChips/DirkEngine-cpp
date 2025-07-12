@@ -1,11 +1,11 @@
-#include "render/vulkan/vulkan.hpp"
+#include "vulkan.hpp"
 #include "core/asserts.hpp"
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
 #include "render/render_types.hpp"
 #include "render/renderer_types.hpp"
-#include "render/vulkan/vulkan_types.hpp"
-#include "render/vulkan/vulkan_utils.hpp"
+#include "vulkan_types.hpp"
+#include "vulkan_utils.hpp"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -23,7 +23,6 @@
 #include <cstring>
 #include <fstream>
 #include <limits>
-#include <map>
 #include <set>
 #include <tuple>
 #include <utility>

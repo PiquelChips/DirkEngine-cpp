@@ -1,10 +1,10 @@
-#include "render/vulkan/vulkan_utils.hpp"
+#include "vulkan_utils.hpp"
 
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
-#include "render/vulkan/vulkan.hpp"
+#include "vulkan.hpp"
+#include "vulkan_types.hpp"
 
-#include "render/vulkan/vulkan_types.hpp"
 #include "vulkan/vulkan_handles.hpp"
 
 ImageMemoryView VulkanUtils::createImageMemoryView(CreateImageMemoryViewInfo& createInfo) {

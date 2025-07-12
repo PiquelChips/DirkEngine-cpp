@@ -1,6 +1,6 @@
 #include "render/renderer.hpp"
 #include "render/renderer_types.hpp"
-#include "render/vulkan/vulkan.hpp"
+#include "vulkan/vulkan.hpp"
 
 DEFINE_LOG_CATEGORY(LogRenderer)
 
