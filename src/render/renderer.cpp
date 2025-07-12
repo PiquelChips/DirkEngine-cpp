@@ -4,6 +4,8 @@
 
 DEFINE_LOG_CATEGORY(LogRenderer)
 
+RendererFeatures& Renderer::getFeatures() { return features; }
+
 Renderer* createRenderer(RendererCreateInfo& createInfo) {
     switch (createInfo.api) {
     case VulkanApi:

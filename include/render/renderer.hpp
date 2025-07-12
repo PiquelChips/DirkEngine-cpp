@@ -16,6 +16,11 @@ public:
     virtual int init() = 0;
     virtual void draw(float deltaTime) = 0;
     virtual void cleanup() = 0;
+
+    RendererFeatures& getFeatures();
+
+protected:
+    RendererFeatures features;
 };
 
 Renderer* createRenderer(RendererCreateInfo& createInfo);

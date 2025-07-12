@@ -21,3 +21,21 @@ struct RendererCreateInfo {
     DirkEngine* engine;
     // TODO: ResourceManager* resourceManaer;
 };
+
+struct RendererFeatures {
+    bool anisotropy;
+
+    bool isComplete() { return anisotropy; }
+
+    int getScore() {
+        if (isComplete())
+            return 1000;
+
+        int score = 0;
+
+        if (anisotropy)
+            score += 10;
+
+        return score;
+    }
+};

@@ -276,6 +276,7 @@ vk::PhysicalDevice VulkanRenderer::getPhysicalDevice() {
     }
 
     vk::PhysicalDeviceProperties deviceProperties = physicalDevice.getProperties();
+    vk::PhysicalDeviceFeatures deviceFeatures = physicalDevice.getFeatures();
     // TODO: get more human readable data (like enum values)
     DIRK_LOG(LogVulkan, INFO,
              "physical device selected: "
@@ -285,6 +286,10 @@ vk::PhysicalDevice VulkanRenderer::getPhysicalDevice() {
                  //<< "\n\tdevice type: " << deviceProperties.deviceType
                  << "\n\tapi version: " << deviceProperties.apiVersion
                  << "\n\tdriver version: " << deviceProperties.driverVersion);
+
+    this->features = RendererFeatures{
+        .anisotropy = deviceFeatures.samplerAnisotropy == vk::True,
+    };
 
     return physicalDevice;
 }
@@ -314,11 +319,6 @@ int VulkanRenderer::getDeviceSuitability(vk::PhysicalDevice device) {
     if (swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty())
         return 0;
 
-    // TODO: find a way to just disable using this later on
-    vk::PhysicalDeviceFeatures supportedFeatuers = device.getFeatures();
-    if (!supportedFeatuers.samplerAnisotropy)
-        return 0;
-
     // calculate a score to create preference based on device
     int score = 0;
 
@@ -332,6 +332,12 @@ int VulkanRenderer::getDeviceSuitability(vk::PhysicalDevice device) {
 
     score += swapChainSupport.formats.size();
     score += swapChainSupport.presentModes.size();
+
+    RendererFeatures features = RendererFeatures{
+        .anisotropy = deviceFeatures.samplerAnisotropy == vk::True,
+    };
+
+    score += features.getScore();
 
     return score;
 }
@@ -998,8 +1004,7 @@ vk::Sampler VulkanRenderer::createTextureSampler() {
     samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
     samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
 
-    // TODO: only enable if physical device supports it (see TODO in VulkanRenderer::getDeviceSuitability)
-    samplerInfo.anisotropyEnable = vk::True;
+    samplerInfo.anisotropyEnable = getFeatures().anisotropy ? vk::True : vk::False;
     samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
 
     samplerInfo.compareEnable = vk::False;
