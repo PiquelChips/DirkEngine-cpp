@@ -17,6 +17,7 @@ find_program(GLSLC glslc REQUIRED)
 add_subdirectory(thirdparty/glfw-3.4)
 add_subdirectory(thirdparty/glm)
 add_subdirectory(thirdparty/vulkan)
+add_subdirectory(thirdparty/stb_image)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
@@ -86,6 +87,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm
+    stb_image
     Vulkan::Loader
     Vulkan::Headers
 )

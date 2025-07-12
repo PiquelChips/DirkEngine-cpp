@@ -9,7 +9,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "thirdparty/stb_image.h"
+#include "stb_image/stb_image.h"
 #include "thirdparty/tiny_obj_loader.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
