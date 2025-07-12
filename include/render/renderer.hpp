@@ -3,13 +3,9 @@
 #include <cstdint>
 #include <string>
 
-class DirkEngine;
+#include "renderer_types.hpp"
 
-struct RendererConfig {
-    uint32_t width;
-    uint32_t height;
-    std::string name;
-};
+class DirkEngine;
 
 /**
  *  The base class for a renderer
@@ -21,3 +17,5 @@ public:
     virtual void draw(float deltaTime) = 0;
     virtual void cleanup() = 0;
 };
+
+Renderer* createRenderer(RendererCreateInfo& createInfo);
