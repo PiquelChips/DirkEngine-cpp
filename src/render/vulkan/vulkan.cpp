@@ -276,7 +276,6 @@ vk::PhysicalDevice VulkanRenderer::getPhysicalDevice() {
     }
 
     vk::PhysicalDeviceProperties deviceProperties = physicalDevice.getProperties();
-    vk::PhysicalDeviceFeatures deviceFeatures = physicalDevice.getFeatures();
     // TODO: get more human readable data (like enum values)
     DIRK_LOG(LogVulkan, INFO,
              "physical device selected: "
