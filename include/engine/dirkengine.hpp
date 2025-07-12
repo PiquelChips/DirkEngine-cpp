@@ -11,6 +11,8 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 
+namespace dirk {
+
 class DirkEngine {
 
 public:
@@ -37,3 +39,5 @@ private:
 
     std::chrono::high_resolution_clock::time_point lastTick;
 };
+
+} // namespace dirk

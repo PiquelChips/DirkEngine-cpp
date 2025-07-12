@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+namespace dirk {
+
 class DirkEngine;
 
 enum RenderApi {
@@ -42,3 +44,5 @@ struct RendererFeatures {
         return score;
     }
 };
+
+} // namespace dirk

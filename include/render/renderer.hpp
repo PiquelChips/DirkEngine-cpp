@@ -3,9 +3,11 @@
 #include "core/globals.hpp"
 #include "renderer_types.hpp"
 
-class DirkEngine;
-
 DECLARE_LOG_CATEGORY_EXTERN(LogRenderer);
+
+namespace dirk {
+
+class DirkEngine;
 
 /**
  *  The base class for a renderer
@@ -24,3 +26,5 @@ protected:
 };
 
 Renderer* createRenderer(RendererCreateInfo& createInfo);
+
+} // namespace dirk

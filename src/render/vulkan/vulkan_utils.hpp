@@ -9,6 +9,8 @@
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
 
+namespace dirk {
+
 class VulkanUtils {
 public:
     static ImageMemoryView createImageMemoryView(CreateImageMemoryViewInfo& createInfo);
@@ -39,3 +41,5 @@ public:
 
     static RendererFeatures getRendererFeatures(vk::PhysicalDevice physicalDevice);
 };
+
+} // namespace dirk

@@ -6,6 +6,8 @@
 #include "glm/gtx/hash.hpp"
 #include <functional>
 
+namespace dirk {
+
 struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;
@@ -16,10 +18,18 @@ struct Vertex {
     }
 };
 
+struct ModelViewProjection {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+
+} // namespace dirk
+
 namespace std {
 template <>
-struct hash<Vertex> {
-    size_t operator()(Vertex const& vertex) const {
+struct hash<dirk::Vertex> {
+    size_t operator()(dirk::Vertex const& vertex) const {
         return (
                    (
                        hash<glm::vec3>()(vertex.pos) ^
@@ -29,9 +39,3 @@ struct hash<Vertex> {
     }
 };
 } // namespace std
-
-struct ModelViewProjection {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
-};
