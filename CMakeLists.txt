@@ -11,12 +11,10 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-# TODO: embed
-find_program(GLSLC glslc REQUIRED)
+find_package(Vulkan REQUIRED)
 
 add_subdirectory(thirdparty/glfw-3.4)
 add_subdirectory(thirdparty/glm)
-add_subdirectory(thirdparty/vulkan)
 add_subdirectory(thirdparty/stb_image)
 add_subdirectory(thirdparty/tiny_obj_loader)
 
@@ -48,7 +46,7 @@ foreach(SHADER_FILE ${SHADER_FILES})
     add_custom_command(
         OUTPUT ${SHADER_OUTPUT}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_DIR}
-        COMMAND ${GLSLC} -o ${SHADER_OUTPUT} ${SHADER_FILE}
+        COMMAND Vulkan::glslc -o ${SHADER_OUTPUT} ${SHADER_FILE}
         DEPENDS ${SHADER_FILE}
         VERBATIM
     )
@@ -90,8 +88,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glm
     stb_image
     tiny_obj_loader
-    Vulkan::Loader
-    Vulkan::Headers
+    Vulkan::Vulkan
 )
 
 add_custom_target(run
