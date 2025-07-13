@@ -52,14 +52,12 @@ If you're not sure what any of that means, check out Thinkful's [GitHub Pull Req
 ### Coding Conventions
 
 - Naming convention:
-  - For functions we use pascal case: **`FunctionName`**.
-  - For variables, class members, and function parameters we use camel case: **`variableName`** and **`parameterName`**.
-
-  - For class names we use pascal case: **`ClassName`**.
+  - For functions  and class names we use pascal case: **`FunctionName`**.
 
   - For macros we use shouting snake case: **`MACRO_NAME`**.
-    - If it is specifically related to the engine, we add the 'DIRK_' prefix: **`HZ_MACRO_NAME`**.
+    - If it is specifically related to the engine, we add the 'DIRK_' prefix: **`DIRK_MACRO_NAME`**.
 
+  - For everything else (variables, class members, and function parameters) we use camel case: **`variableName`** and **`parameterName`**.
 - Use spaces for indentation, not tabs.
 
 - Don't forget to follow the rules in **`.clang-format`**
