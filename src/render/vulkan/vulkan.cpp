@@ -218,7 +218,12 @@ vk::Instance VulkanRenderer::createVulkanInstance() {
     createInfo.enabledLayerCount = 0;
 #endif
 
-    return vk::createInstance(createInfo);
+    try {
+        return vk::createInstance(createInfo);
+    } catch (const std::exception& err) {
+        DIRK_LOG(LogVulkan, FATAL, err.what());
+        return nullptr;
+    }
 }
 
 std::vector<const char*> VulkanRenderer::getRequiredInstanceExtensions() {
