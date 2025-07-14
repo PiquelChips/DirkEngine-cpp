@@ -4,6 +4,7 @@
 #include "engine/dirkengine.hpp"
 #include "render/render_types.hpp"
 #include "render/renderer_types.hpp"
+#include "tinygltf/tiny_gltf.h"
 #include "vulkan_types.hpp"
 #include "vulkan_utils.hpp"
 
@@ -18,6 +19,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -921,62 +923,92 @@ vk::Buffer VulkanRenderer::createIndexBuffer() {
 }
 
 bool VulkanRenderer::loadModel() {
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
+    tinygltf::Model model;
+    tinygltf::TinyGLTF loader;
     std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, (std::string(RESSOURCE_PATH) + "/models/viking_room.obj").c_str())) {
-        if (warn != "") {
-            warn.pop_back(); // remove trailing return
-            DIRK_LOG(LogVulkan, WARNING, "tiny obj loader: " << warn);
-        }
-        if (err != "") {
-            err.pop_back(); // remove trailing return
-            DIRK_LOG(LogVulkan, ERROR, "tiny obj loader: " << err);
-        }
-        return false;
-    }
+    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (std::string(RESSOURCE_PATH) + "/models/viking_room.obj").c_str());
 
     if (warn != "") {
         warn.pop_back(); // remove trailing return
-        DIRK_LOG(LogVulkan, WARNING, "tiny obj loader: " << warn);
+        DIRK_LOG(LogVulkan, WARNING, "tinygltf: " << warn);
     }
     if (err != "") {
         err.pop_back(); // remove trailing return
-        DIRK_LOG(LogVulkan, ERROR, "tiny obj loader: " << err);
+        DIRK_LOG(LogVulkan, ERROR, "tinygltf: " << err);
     }
 
+    if (!ret)
+        return false;
+
+    // all meshes in the model
     std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
-    int vertex_count = attrib.vertices.size() / 3;
-    vertices.reserve(vertex_count);
-    indices.reserve(vertex_count);
-    uniqueVertices.reserve(vertex_count);
+    for (const auto& mesh : model.meshes) {
+        for (const auto& primitive : mesh.primitives) {
+            // get indices
+            const tinygltf::Accessor& indexAccessor = model.accessors[primitive.indices];
+            const tinygltf::BufferView& indexBufferView = model.bufferViews[indexAccessor.bufferView];
+            const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
 
-    for (const auto& shape : shapes) {
-        for (const auto& index : shape.mesh.indices) {
-            Vertex vertex{};
+            // get vertex positions
+            const tinygltf::Accessor& posAccessor = model.accessors[primitive.attributes.at("POSITION")];
+            const tinygltf::BufferView& posBufferView = model.bufferViews[indexAccessor.bufferView];
+            const tinygltf::Buffer& posBuffer = model.buffers[posBufferView.buffer];
 
-            vertex.pos = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
-            };
+            // get texCoords if available
+            bool hasTexCoords = primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end();
+            const tinygltf::Accessor* texCoordAccessor = hasTexCoords ? &model.accessors[primitive.attributes.at("TEXCOORD_0")] : nullptr;
+            const tinygltf::BufferView* texCoordBufferView = hasTexCoords ? &model.bufferViews[texCoordAccessor->bufferView] : nullptr;
+            const tinygltf::Buffer* texCoordBuffer = hasTexCoords ? &model.buffers[texCoordBufferView->buffer] : nullptr;
 
-            vertex.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.f - attrib.texcoords[2 * index.texcoord_index + 1], // flip the image as tinyobj assumes 0 is bottom; vulkan assumes 0 is top
-            };
+            // TODO: reserve the vertices vector
 
-            vertex.color = { 1.f, 1.f, 1.f };
+            // process vertices
+            for (size_t i = 0; i < posAccessor.count; i++) {
+                Vertex vertex{};
 
-            if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = vertices.size();
-                vertices.emplace_back(vertex);
+                const float* pos = reinterpret_cast<const float*>(&posBuffer.data[posBufferView.byteOffset + posAccessor.byteOffset + i * 12]);
+                vertex.pos = { pos[0], pos[1], pos[2] };
+
+                vertex.texCoord = { 0.f, 0.f };
+                if (hasTexCoords) {
+                    const float* texCoord = reinterpret_cast<const float*>(&texCoordBuffer->data[texCoordBufferView->byteOffset + texCoordAccessor->byteOffset + i * 8]);
+                    vertex.texCoord = { texCoord[0], 1.f - texCoord[1] };
+                }
+
+                vertex.color = { 1.f, 1.f, 1.f };
+
+                if (!uniqueVertices.contains(vertex)) {
+                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                    vertices.push_back(vertex);
+                }
             }
 
-            indices.emplace_back(uniqueVertices[vertex]);
+            // proces indices
+            const unsigned char* indexData = &indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset];
+
+            indices.reserve(indexAccessor.count);
+            // handle different index component types
+            if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
+                const uint16_t* indices16 = reinterpret_cast<const uint16_t*>(indexData);
+                for (size_t i = 0; i < indexAccessor.count; i++) {
+                    Vertex vertex = vertices[indices16[i]];
+                    indices.emplace_back(uniqueVertices[vertex]);
+                }
+            } else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
+                const uint32_t* indices32 = reinterpret_cast<const uint32_t*>(indexData);
+                for (size_t i = 0; i < indexAccessor.count; i++) {
+                    Vertex vertex = vertices[indices32[i]];
+                    indices.emplace_back(uniqueVertices[vertex]);
+                }
+            } else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+                const uint8_t* indices8 = reinterpret_cast<const uint8_t*>(indexData);
+                for (size_t i = 0; i < indexAccessor.count; i++) {
+                    Vertex vertex = vertices[indices8[i]];
+                    indices.emplace_back(uniqueVertices[vertex]);
+                }
+            }
         }
     }
 
