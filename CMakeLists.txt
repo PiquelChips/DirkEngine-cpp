@@ -18,7 +18,6 @@ add_subdirectory(thirdparty/glm)
 add_subdirectory(thirdparty/tinygltf)
 
 add_subdirectory(thirdparty/stb_image)
-add_subdirectory(thirdparty/tiny_obj_loader)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
@@ -92,7 +91,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     tinygltf
 
     stb_image
-    tiny_obj_loader
 )
 
 add_custom_target(run
