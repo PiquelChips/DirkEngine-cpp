@@ -47,6 +47,11 @@ to run the commands and build the configuration for you.
 You can checkout the dedicated [**Github Project**](https://github.com/users/PiquelChips/projects/3) to understand the
 current direction of development.
 
+## Contact
+
+If you would like to contact me privately for reasons related to the project, feel free to
+email me at [**dirkengine@piquel.fr**](mailto:dirkengine@piquel.fr).
+
 ## License
 
 This project is licensed under the [**GPLv3**](LICENSE.md) license.
