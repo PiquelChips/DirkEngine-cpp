@@ -15,6 +15,8 @@ find_package(Vulkan REQUIRED)
 
 add_subdirectory(thirdparty/glfw-3.4)
 add_subdirectory(thirdparty/glm)
+add_subdirectory(thirdparty/tinygltf)
+
 add_subdirectory(thirdparty/stb_image)
 add_subdirectory(thirdparty/tiny_obj_loader)
 
@@ -84,11 +86,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
+    Vulkan::Vulkan
     glfw
     glm
+    tinygltf
+
     stb_image
     tiny_obj_loader
-    Vulkan::Vulkan
 )
 
 add_custom_target(run
