@@ -13,7 +13,6 @@ Any contribution/feedback is greatly appreciated!
 > Don't forget to check out the [contribution guidelines](/.github/CONTRIBUTING.md) and the
 > [code of conduct](/.github/CODE_OF_CONDUCT.md) of this project.
 
-
 ## Build and run the engine
 
 > [!TIP]
@@ -54,4 +53,4 @@ email me at [**dirkengine@piquel.fr**](mailto:dirkengine@piquel.fr).
 
 ## License
 
-This project is licensed under the [**GPLv3**](LICENSE.md) license.
+This project is licensed under the [**GPLv3**](LICENSE) license.

@@ -24,17 +24,19 @@ Much of the advice in [How do I ask a good question?][how-to-ask] applies here t
 
 ## Contributing a Fix or Feature
 
-1. If you haven't already, create a fork of the repository.
-2. Create a branch, and make all of your changes on that branch (this is especially
+1. If you haven't already, create a
+   [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/about-forks)
+   of the repository.
+2. Create a
+   [branch](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-branches)
+   , and make all of your changes on that branch (this is especially
    important as I squash PRs before merging them, so once the PR is merged, the branch
    effectively becomes useless).
-3. Submit a pull request and fill in the template.
+3. Submit a
+   [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests)
+   and fill in the template.
 4. Wait for a review. This project is just a hobby that I work on in my free time so it
    may take a while for me to review the PR.
-
-If you're not sure what any of that means, check out Thinkful's
-[GitHub Pull Request Tutorial](https://www.thinkful.com/learn/github-pull-request-tutorial/)
-for a complete walkthrough of the process.
 
 ### Writing a Good Pull Request
 
