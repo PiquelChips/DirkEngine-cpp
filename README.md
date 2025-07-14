@@ -39,8 +39,8 @@ CMake integration, in which case you should look into the usage in your specific
 editor.
 
 For everybody else, you can use the CLI version. Either run the CMake build and run targets
-directly or use the integrated `Makefile` to run the commands and build the configuration for
-you.
+directly or use the integrated [**Makefile**](https://github.com/PiquelChips/DirkEngine/blob/main/Makefile)
+to run the commands and build the configuration for you.
 
 ## Roadmap
 
@@ -49,4 +49,4 @@ current direction of development.
 
 ## License
 
-This project is licensed under the [**GPLv3**](LICENSE.md).
+This project is licensed under the [**GPLv3**](LICENSE.md) license.
