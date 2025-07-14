@@ -5,7 +5,7 @@ Thanks for your interest in contributing to the Dirk Engine!
 
 ## Language
 
-Although I do speak French, please keep this codebase in English.
+Although I do speak French, please keep this codebase in **proper** English. Feel free to correct people's mistakes (including myself), just be polite about it.
 
 ## Reporting Bugs
 
