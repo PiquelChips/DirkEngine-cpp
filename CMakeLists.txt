@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.31)
 
-project(DirkEngine VERSION 1.0.0 LANGUAGES CXX)
+project(DirkEngine VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(Vulkan REQUIRED)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-
-find_package(Vulkan REQUIRED)
 
 add_subdirectory(thirdparty/glfw-3.4)
 add_subdirectory(thirdparty/glm)
@@ -77,7 +77,7 @@ target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC
 option(DISABLE_VALIDATION_LAYERS "Use the vulkan validation layers" OFF)
 
 if (DISABLE_VALIDATION_LAYERS)
-    target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC DISABLE_VALIDATION_LAYERS)
+    target_compile_definitions("${CMAKE_PROJECT_NAME}" PRIVATE DISABLE_VALIDATION_LAYERS)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -89,7 +89,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glm
     tinygltf
-
     stb_image
 )
 
