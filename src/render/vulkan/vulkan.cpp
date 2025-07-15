@@ -1348,13 +1348,19 @@ void VulkanRenderer::drawFrame() {
 }
 
 void VulkanRenderer::updateMVP(float deltaTime) {
-    ModelViewProjection mvp{
-        .model = glm::rotate(glm::mat4(1.f), 0.f, glm::vec3(0.f, 0.f, 1.f)),
-        .view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
-        .proj = glm::perspective(glm::radians(45.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .1f, 10.f),
-    };
+    // glm::mat4 model = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
+    // model = glm::rotate(model, glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f));
 
-    mvp.proj[1][1] *= -1; // glm was originally designed for OpenGL. We must thus flip the y axis of the projection matrix
+    static float angle = 0.f;
+    angle += 90.f * deltaTime;
+    if (angle > 360.f)
+        angle -= 360.f;
+
+    ModelViewProjection mvp{
+        .model = glm::rotate(glm::mat4(1.f), glm::radians(angle), glm::vec3(1.f, 0.f, 0.f)),
+        .view = glm::lookAt(glm::vec3(200.f, 200.f, 200.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
+        .proj = glm::perspective(glm::radians(90.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .0001f, 10000.f),
+    };
 
     memcpy(inFlightImages[currentFrame].uniformBufferMapped, &mvp, sizeof(mvp));
 }
