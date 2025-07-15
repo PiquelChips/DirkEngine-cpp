@@ -959,7 +959,7 @@ bool VulkanRenderer::loadModel() {
 
             // get vertex positions
             const tinygltf::Accessor& posAccessor = model.accessors[primitive.attributes.at("POSITION")];
-            const tinygltf::BufferView& posBufferView = model.bufferViews[indexAccessor.bufferView];
+            const tinygltf::BufferView& posBufferView = model.bufferViews[posAccessor.bufferView];
             const tinygltf::Buffer& posBuffer = model.buffers[posBufferView.buffer];
 
             // get texCoords if available
@@ -974,13 +974,13 @@ bool VulkanRenderer::loadModel() {
             for (size_t i = 0; i < posAccessor.count; i++) {
                 Vertex vertex{};
 
-                const float* pos = reinterpret_cast<const float*>(&posBuffer.data[posBufferView.byteOffset + posAccessor.byteOffset + i * 12]);
+                const float* pos = reinterpret_cast<const float*>(&posBuffer.data[posBufferView.byteOffset + posAccessor.byteOffset + i * posBufferView.byteStride]);
                 vertex.pos = { pos[0], pos[1], pos[2] };
 
                 vertex.texCoord = { 0.f, 0.f };
                 if (hasTexCoords) {
-                    const float* texCoord = reinterpret_cast<const float*>(&texCoordBuffer->data[texCoordBufferView->byteOffset + texCoordAccessor->byteOffset + i * 8]);
-                    vertex.texCoord = { texCoord[0], 1.f - texCoord[1] };
+                    const float* texCoord = reinterpret_cast<const float*>(&texCoordBuffer->data[texCoordBufferView->byteOffset + texCoordAccessor->byteOffset + i * texCoordBufferView->byteStride]);
+                    vertex.texCoord = { texCoord[0], texCoord[1] };
                 }
 
                 vertex.color = { 1.f, 1.f, 1.f };
