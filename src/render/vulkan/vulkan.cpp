@@ -175,6 +175,7 @@ int VulkanRenderer::init() {
 void VulkanRenderer::draw(float deltaTime) {
     if (glfwWindowShouldClose(window)) {
         dirk::gEngine->exit("GLFW close event");
+        return;
     }
 
     updateMVP(deltaTime);
