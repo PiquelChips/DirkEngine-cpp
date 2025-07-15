@@ -178,6 +178,12 @@ void VulkanRenderer::draw(float deltaTime) {
         return;
     }
 
+    for (uint32_t i = 0; i < UINT32_MAX / 16; i++) {
+        deltaTime = deltaTime + 0;
+    }
+
+    DIRK_LOG(LogVulkan, TRACE, "draw");
+
     updateMVP(deltaTime);
     drawFrame();
 }
