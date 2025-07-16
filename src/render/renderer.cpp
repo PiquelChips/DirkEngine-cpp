@@ -2,9 +2,9 @@
 #include "render/renderer_types.hpp"
 #include "vulkan/vulkan.hpp"
 
-DEFINE_LOG_CATEGORY(LogRenderer)
-
 namespace dirk {
+
+DEFINE_LOG_CATEGORY(LogRenderer)
 
 RendererCreateInfo::operator RendererProperties() {
     return RendererProperties{

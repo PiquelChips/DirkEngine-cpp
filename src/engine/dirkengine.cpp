@@ -9,9 +9,9 @@
 #include <cstring>
 #include <memory>
 
-DEFINE_LOG_CATEGORY(LogEngine)
-
 namespace dirk {
+
+DEFINE_LOG_CATEGORY(LogEngine)
 
 DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
     // make sure to populate the engine fields

@@ -29,10 +29,10 @@
 #include <utility>
 #include <vector>
 
+namespace dirk {
+
 DEFINE_LOG_CATEGORY(LogVulkan)
 DEFINE_LOG_CATEGORY(LogVulkanValidation)
-
-namespace dirk {
 
 VulkanRenderer::VulkanRenderer(RendererCreateInfo& createInfo) {
     properties = createInfo;

@@ -10,9 +10,9 @@
 #include "render/renderer_types.hpp"
 #include "resources/resource_manager.hpp"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
-
 namespace dirk {
+
+DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 
 struct DirkEngineCreateInfo {
     ResourceManagerCreateInfo resourceManagerInfo;
@@ -29,8 +29,6 @@ public:
     void exit(const std::string& reason);
 
     bool isRequestingExit() const noexcept { return requestingExit; }
-
-    RendererCreateInfo RENDERER_INFO{ "DirkEngine", 800, 600, Vulkan, this };
 
     Renderer* getRenderer() const noexcept;
     ResourceManager* getResourceManager() const noexcept;

@@ -3,9 +3,9 @@
 #include "core/globals.hpp"
 #include "renderer_types.hpp"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogRenderer);
-
 namespace dirk {
+
+DECLARE_LOG_CATEGORY_EXTERN(LogRenderer);
 
 class DirkEngine;
 

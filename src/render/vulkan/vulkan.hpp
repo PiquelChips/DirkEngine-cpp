@@ -22,10 +22,10 @@
 #endif
 #endif
 
+namespace dirk {
+
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
-
-namespace dirk {
 
 /**
  * The vulkan implementation of the renderer
