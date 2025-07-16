@@ -11,9 +11,4 @@
 #include "logging.hpp"
 
 namespace dirk {
-
-class DirkEngine;
-
-extern DirkEngine* gEngine;
-
 } // namespace dirk

@@ -8,9 +8,7 @@
 int main() {
     try {
         auto engine = std::make_unique<dirk::DirkEngine>();
-        dirk::gEngine = engine.get();
-
-        return dirk::gEngine->main();
+        return engine->main();
     } catch (std::exception e) {
         std::cerr << e.what();
         return EXIT_FAILURE;
