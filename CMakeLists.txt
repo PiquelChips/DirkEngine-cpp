@@ -64,7 +64,7 @@ target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC
     GLFW_INCLUDE_NONE=1
     GLFW_INCLUDE_VULKAN=1
 
-    RESSOURCE_PATH=$<IF:$<CONFIG:Release>,"./resources","${CMAKE_CURRENT_SOURCE_DIR}/resources">
+    RESOURCE_PATH=$<IF:$<CONFIG:Release>,"./resources","${CMAKE_CURRENT_SOURCE_DIR}/resources">
     SHADER_PATH=$<IF:$<CONFIG:Release>,"./resources/shaders","${CMAKE_CURRENT_BINARY_DIR}/shaders">
     LOG_PATH=$<IF:$<CONFIG:Release>,"./logs","${CMAKE_CURRENT_SOURCE_DIR}/logs">
 
