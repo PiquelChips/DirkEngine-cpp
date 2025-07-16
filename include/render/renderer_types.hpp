@@ -13,16 +13,12 @@ enum RenderApi {
 
 struct RendererProperties {
     std::string applicationName;
-    RenderApi api;
-};
-
-struct RendererCreateInfo {
-    std::string applicationName;
     uint32_t windowWdith, windowHeight;
     RenderApi api;
     DirkEngine* engine;
-    // TODO: ResourceManager* resourceManaer;
 };
+
+struct RendererCreateInfo : public RendererProperties {};
 
 struct RendererFeatures {
     bool anisotropy = false;

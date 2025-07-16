@@ -34,11 +34,9 @@ DEFINE_LOG_CATEGORY(LogVulkanValidation)
 
 namespace dirk {
 
-VulkanRenderer::VulkanRenderer(RendererCreateInfo& createInfo) : rendererCreateInfo(createInfo) {
-    check(rendererCreateInfo.api == VulkanApi);
-
-    properties.api = rendererCreateInfo.api;
-    properties.applicationName = rendererCreateInfo.applicationName;
+VulkanRenderer::VulkanRenderer(RendererCreateInfo& createInfo) {
+    properties = createInfo;
+    check(properties.api == Vulkan);
 }
 
 int VulkanRenderer::init() {
@@ -51,9 +49,9 @@ int VulkanRenderer::init() {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     this->window = glfwCreateWindow(
-        rendererCreateInfo.windowWdith,
-        rendererCreateInfo.windowHeight,
-        properties.applicationName.c_str(), nullptr, nullptr);
+        getProperties().windowWdith,
+        getProperties().windowHeight,
+        getProperties().applicationName.c_str(), nullptr, nullptr);
     if (!this->window) {
         DIRK_LOG(LogVulkan, FATAL, "error creating GLFW window")
         return EXIT_FAILURE;
@@ -177,7 +175,7 @@ int VulkanRenderer::init() {
 
 void VulkanRenderer::draw(float deltaTime) {
     if (glfwWindowShouldClose(window)) {
-        dirk::gEngine->exit("GLFW close event");
+        getProperties().engine->exit("GLFW close event");
         return;
     }
 
