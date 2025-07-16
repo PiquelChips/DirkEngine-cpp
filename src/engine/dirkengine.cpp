@@ -1,6 +1,7 @@
 #include "engine/dirkengine.hpp"
 #include "core/globals.hpp"
 #include "render/renderer.hpp"
+#include "resources/resource_manager.hpp"
 
 #include <GLFW/glfw3.h>
 #include <chrono>
@@ -84,5 +85,8 @@ float DirkEngine::captureDeltaTime() {
 
     return deltaTime;
 }
+
+Renderer* DirkEngine::getRenderer() const noexcept { return renderer.get(); }
+ResourceManager* DirkEngine::getResourceManager() const noexcept { return resourceManager.get(); }
 
 } // namespace dirk

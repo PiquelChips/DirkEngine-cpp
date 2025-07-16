@@ -8,6 +8,7 @@
 #include "core/globals.hpp"
 #include "render/renderer.hpp"
 #include "render/renderer_types.hpp"
+#include "resources/resource_manager.hpp"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 
@@ -23,6 +24,8 @@ public:
     bool isRequestingExit() const noexcept { return requestingExit; }
 
     RendererCreateInfo RENDERER_INFO{ "DirkEngine", 800, 600, VulkanApi, this };
+    Renderer* getRenderer() const noexcept;
+    ResourceManager* getResourceManager() const noexcept;
 
 private:
     int init();
@@ -32,6 +35,7 @@ private:
 
 private:
     std::unique_ptr<Renderer> renderer = nullptr;
+    std::unique_ptr<ResourceManager> resourceManager = nullptr;
 
     bool requestingExit = false;
 
