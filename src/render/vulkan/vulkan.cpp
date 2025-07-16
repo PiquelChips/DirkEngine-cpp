@@ -837,7 +837,7 @@ ImageMemoryView VulkanRenderer::createColorResources() {
 
 ImageMemoryView VulkanRenderer::createTextureResources() {
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load((std::string(RESSOURCE_PATH) + "/textures/viking_room.png").c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load((std::string(RESSOURCE_PATH) + "/textures/DuckCM.png").c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     vk::DeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel (1 per channel)
 
     this->mipLevels = std::floor(std::log2(std::max(texWidth, texHeight))) + 1;
@@ -933,7 +933,7 @@ bool VulkanRenderer::loadModel() {
     tinygltf::TinyGLTF loader;
     std::string warn, err;
 
-    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (std::string(RESSOURCE_PATH) + "/models/viking_room.obj").c_str());
+    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (std::string(RESSOURCE_PATH) + "/models/Duck.gltf").c_str());
 
     if (warn != "") {
         warn.pop_back(); // remove trailing return
