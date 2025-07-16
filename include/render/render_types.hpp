@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core/globals.hpp"
-#include "engine/dirkengine.hpp"
 
 #include "glm/glm.hpp"
 #include "glm/gtx/hash.hpp"
@@ -33,12 +32,6 @@ struct ModelViewProjection {
  */
 struct Model {
     const std::string& name;
-    DirkEngine* engine;
-
-    ~Model() {
-        check(engine);
-        engine->getResourceManager()->unloadModel(name);
-    }
 };
 
 } // namespace dirk

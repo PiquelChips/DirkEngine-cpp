@@ -26,7 +26,6 @@ public:
      * so now worries about reusing the function a lot.
      */
     std::shared_ptr<Model> loadModel(const std::string& name);
-    void unloadModel(const std::string& name);
 
 private:
     std::unordered_map<std::string, std::weak_ptr<Model>> models;

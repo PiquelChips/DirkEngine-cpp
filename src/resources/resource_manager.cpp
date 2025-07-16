@@ -13,8 +13,4 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
     }
 }
 
-void ResourceManager::unloadModel(const std::string& name) {
-    models.erase(name);
-}
-
 } // namespace dirk
