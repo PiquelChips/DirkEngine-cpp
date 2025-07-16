@@ -23,7 +23,8 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    RendererCreateInfo RENDERER_INFO{ "DirkEngine", 800, 600, VulkanApi, this };
+    RendererCreateInfo RENDERER_INFO{ "DirkEngine", 800, 600, Vulkan, this };
+
     Renderer* getRenderer() const noexcept;
     ResourceManager* getResourceManager() const noexcept;
 

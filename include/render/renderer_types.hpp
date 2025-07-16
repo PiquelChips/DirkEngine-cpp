@@ -8,7 +8,7 @@ namespace dirk {
 class DirkEngine;
 
 enum RenderApi {
-    VulkanApi,
+    Vulkan,
 };
 
 struct RendererProperties {

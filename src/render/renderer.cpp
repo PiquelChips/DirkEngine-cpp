@@ -11,7 +11,7 @@ RendererProperties& Renderer::getProperties() noexcept { return properties; };
 
 Renderer* createRenderer(RendererCreateInfo& createInfo) {
     switch (createInfo.api) {
-    case VulkanApi:
+    case Vulkan:
         return new VulkanRenderer(createInfo);
     }
 
