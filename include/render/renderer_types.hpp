@@ -11,7 +11,7 @@ enum RenderApi {
     VulkanApi,
 };
 
-struct RendererInfo {
+struct RendererProperties {
     std::string applicationName;
     RenderApi api;
 };

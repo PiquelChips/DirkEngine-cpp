@@ -19,9 +19,11 @@ public:
     virtual void draw(float deltaTime) = 0;
     virtual void cleanup() = 0;
 
-    RendererFeatures& getFeatures();
+    RendererProperties& getProperties() noexcept;
+    RendererFeatures& getFeatures() noexcept;
 
 protected:
+    RendererProperties properties;
     RendererFeatures features;
 };
 

@@ -36,6 +36,9 @@ namespace dirk {
 
 VulkanRenderer::VulkanRenderer(RendererCreateInfo& createInfo) : rendererCreateInfo(createInfo) {
     check(rendererCreateInfo.api == VulkanApi);
+
+    properties.api = rendererCreateInfo.api;
+    properties.applicationName = rendererCreateInfo.applicationName;
 }
 
 int VulkanRenderer::init() {
@@ -50,7 +53,7 @@ int VulkanRenderer::init() {
     this->window = glfwCreateWindow(
         rendererCreateInfo.windowWdith,
         rendererCreateInfo.windowHeight,
-        rendererCreateInfo.applicationName.c_str(), nullptr, nullptr);
+        properties.applicationName.c_str(), nullptr, nullptr);
     if (!this->window) {
         DIRK_LOG(LogVulkan, FATAL, "error creating GLFW window")
         return EXIT_FAILURE;

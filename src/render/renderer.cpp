@@ -6,7 +6,8 @@ DEFINE_LOG_CATEGORY(LogRenderer)
 
 namespace dirk {
 
-RendererFeatures& Renderer::getFeatures() { return features; }
+RendererFeatures& Renderer::getFeatures() noexcept { return features; }
+RendererProperties& Renderer::getProperties() noexcept { return properties; };
 
 Renderer* createRenderer(RendererCreateInfo& createInfo) {
     switch (createInfo.api) {
