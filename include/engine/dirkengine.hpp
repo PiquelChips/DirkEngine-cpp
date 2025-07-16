@@ -17,6 +17,7 @@ class DirkEngine {
 
 public:
     int main();
+    void exit();
     void exit(const std::string& reason);
 
     bool isRequestingExit() const noexcept { return requestingExit; }

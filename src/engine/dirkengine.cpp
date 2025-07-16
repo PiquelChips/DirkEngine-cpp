@@ -39,9 +39,13 @@ int DirkEngine::main() {
     return result;
 }
 
-void DirkEngine::exit(const std::string& reason) {
+void DirkEngine::exit() {
     requestingExit = true;
+}
+
+void DirkEngine::exit(const std::string& reason) {
     DIRK_LOG(LogEngine, INFO, "engine exit has been requested with reason: " << reason);
+    this->exit();
 }
 
 int DirkEngine::init() {
