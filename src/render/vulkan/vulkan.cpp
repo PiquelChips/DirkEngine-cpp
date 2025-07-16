@@ -976,12 +976,12 @@ bool VulkanRenderer::loadModel() {
             for (size_t i = 0; i < posAccessor.count; i++) {
                 Vertex vertex{};
 
-                const float* pos = reinterpret_cast<const float*>(&posBuffer.data[posBufferView.byteOffset + posAccessor.byteOffset + i * posBufferView.byteStride]);
+                const float* pos = reinterpret_cast<const float*>(&posBuffer.data[posBufferView.byteOffset + posAccessor.byteOffset + i * 12]);
                 vertex.pos = { pos[0], pos[1], pos[2] };
 
                 vertex.texCoord = { 0.f, 0.f };
                 if (hasTexCoords) {
-                    const float* texCoord = reinterpret_cast<const float*>(&texCoordBuffer->data[texCoordBufferView->byteOffset + texCoordAccessor->byteOffset + i * texCoordBufferView->byteStride]);
+                    const float* texCoord = reinterpret_cast<const float*>(&texCoordBuffer->data[texCoordBufferView->byteOffset + texCoordAccessor->byteOffset + i * 8]);
                     vertex.texCoord = { texCoord[0], texCoord[1] };
                 }
 
