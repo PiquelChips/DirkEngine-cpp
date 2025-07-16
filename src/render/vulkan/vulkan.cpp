@@ -725,7 +725,7 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     rasterizer.polygonMode = vk::PolygonMode::eFill; // fill the polygons with fragments
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = vk::CullModeFlagBits::eBack;
-    rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
+    rasterizer.frontFace = vk::FrontFace::eClockwise;
     rasterizer.depthBiasEnable = vk::False;
 
     // disabled for now
@@ -972,8 +972,6 @@ bool VulkanRenderer::loadModel() {
             const tinygltf::BufferView* texCoordBufferView = hasTexCoords ? &model.bufferViews[texCoordAccessor->bufferView] : nullptr;
             const tinygltf::Buffer* texCoordBuffer = hasTexCoords ? &model.buffers[texCoordBufferView->buffer] : nullptr;
 
-            // TODO: reserve the vertices vector
-
             // process vertices
             for (size_t i = 0; i < posAccessor.count; i++) {
                 Vertex vertex{};
@@ -994,29 +992,35 @@ bool VulkanRenderer::loadModel() {
                     vertices.push_back(vertex);
                 }
             }
-
             // proces indices
             const unsigned char* indexData = &indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset];
 
             // handle different index component types
-            if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-                const uint16_t* indices16 = reinterpret_cast<const uint16_t*>(indexData);
-                for (size_t i = 0; i < indexAccessor.count; i++) {
-                    Vertex vertex = vertices[indices16[i]];
-                    indices.push_back(uniqueVertices[vertex]);
-                }
-            } else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
-                const uint32_t* indices32 = reinterpret_cast<const uint32_t*>(indexData);
-                for (size_t i = 0; i < indexAccessor.count; i++) {
-                    Vertex vertex = vertices[indices32[i]];
-                    indices.push_back(uniqueVertices[vertex]);
-                }
-            } else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+            switch (indexAccessor.componentType) {
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
                 const uint8_t* indices8 = reinterpret_cast<const uint8_t*>(indexData);
                 for (size_t i = 0; i < indexAccessor.count; i++) {
                     Vertex vertex = vertices[indices8[i]];
                     indices.push_back(uniqueVertices[vertex]);
                 }
+                break;
+            }
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+                const uint16_t* indices16 = reinterpret_cast<const uint16_t*>(indexData);
+                for (size_t i = 0; i < indexAccessor.count; i++) {
+                    Vertex vertex = vertices[indices16[i]];
+                    indices.push_back(uniqueVertices[vertex]);
+                }
+                break;
+            }
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
+                const uint32_t* indices32 = reinterpret_cast<const uint32_t*>(indexData);
+                for (size_t i = 0; i < indexAccessor.count; i++) {
+                    Vertex vertex = vertices[indices32[i]];
+                    indices.push_back(uniqueVertices[vertex]);
+                }
+                break;
+            }
             }
         }
     }
@@ -1360,7 +1364,7 @@ void VulkanRenderer::updateMVP(float deltaTime) {
         angle -= 360.f;
 
     ModelViewProjection mvp{
-        .model = glm::rotate(glm::mat4(1.f), glm::radians(angle), glm::vec3(1.f, 0.f, 0.f)),
+        .model = glm::rotate(glm::mat4(1.f), glm::radians(angle), glm::vec3(0.f, 1.f, 0.f)),
         .view = glm::lookAt(glm::vec3(200.f, 200.f, 200.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
         .proj = glm::perspective(glm::radians(90.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .0001f, 10000.f),
     };
