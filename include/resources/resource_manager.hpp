@@ -9,6 +9,8 @@
 
 namespace dirk {
 
+DECLARE_LOG_CATEGORY_EXTERN(LogResourceManager)
+
 class DirkEngine;
 
 struct ResourceManagerCreateInfo {

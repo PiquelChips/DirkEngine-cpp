@@ -4,6 +4,8 @@
 
 namespace dirk {
 
+DEFINE_LOG_CATEGORY(LogResourceManager)
+
 ResourceManager::ResourceManager(ResourceManagerCreateInfo& createInfo) : resourcePath(createInfo.resourcePath) {};
 
 std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
