@@ -1363,9 +1363,12 @@ void VulkanRenderer::updateMVP(float deltaTime) {
     // if (angle > 360.f)
     //     angle -= 360.f;
 
+    static float pos = 0.f;
+    pos += 100.f * deltaTime;
+
     ModelViewProjection mvp{
         .model = glm::rotate(glm::mat4(1.f), glm::radians(angle), glm::vec3(0.f, 1.f, 0.f)),
-        .view = glm::lookAt(glm::vec3(200.f, 200.f, 200.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
+        .view = glm::lookAt(glm::vec3(pos), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
         .proj = glm::perspective(glm::radians(90.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .0001f, 10000.f),
     };
 
