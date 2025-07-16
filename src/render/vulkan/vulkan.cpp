@@ -947,6 +947,10 @@ bool VulkanRenderer::loadModel() {
     if (!ret)
         return false;
 
+    vertices.clear();
+    indices.clear();
+    // TODO: reserve vertex and index vectors
+
     // all meshes in the model
     std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
@@ -994,25 +998,24 @@ bool VulkanRenderer::loadModel() {
             // proces indices
             const unsigned char* indexData = &indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset];
 
-            indices.reserve(indexAccessor.count);
             // handle different index component types
             if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
                 const uint16_t* indices16 = reinterpret_cast<const uint16_t*>(indexData);
                 for (size_t i = 0; i < indexAccessor.count; i++) {
                     Vertex vertex = vertices[indices16[i]];
-                    indices.emplace_back(uniqueVertices[vertex]);
+                    indices.push_back(uniqueVertices[vertex]);
                 }
             } else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
                 const uint32_t* indices32 = reinterpret_cast<const uint32_t*>(indexData);
                 for (size_t i = 0; i < indexAccessor.count; i++) {
                     Vertex vertex = vertices[indices32[i]];
-                    indices.emplace_back(uniqueVertices[vertex]);
+                    indices.push_back(uniqueVertices[vertex]);
                 }
             } else if (indexAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
                 const uint8_t* indices8 = reinterpret_cast<const uint8_t*>(indexData);
                 for (size_t i = 0; i < indexAccessor.count; i++) {
                     Vertex vertex = vertices[indices8[i]];
-                    indices.emplace_back(uniqueVertices[vertex]);
+                    indices.push_back(uniqueVertices[vertex]);
                 }
             }
         }
