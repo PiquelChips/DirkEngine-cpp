@@ -1359,9 +1359,9 @@ void VulkanRenderer::updateMVP(float deltaTime) {
     // model = glm::rotate(model, glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f));
 
     static float angle = 0.f;
-    angle += 90.f * deltaTime;
-    if (angle > 360.f)
-        angle -= 360.f;
+    // angle += 90.f * deltaTime;
+    // if (angle > 360.f)
+    //     angle -= 360.f;
 
     ModelViewProjection mvp{
         .model = glm::rotate(glm::mat4(1.f), glm::radians(angle), glm::vec3(0.f, 1.f, 0.f)),
