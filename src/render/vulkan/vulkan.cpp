@@ -9,8 +9,8 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "stb_image/stb_image.h"
-#include "tiny_obj_loader/tiny_obj_loader.h"
+#include "tinygltf/stb_image.h"
+#include "tinygltf/tiny_gltf.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -174,7 +175,14 @@ int VulkanRenderer::init() {
 void VulkanRenderer::draw(float deltaTime) {
     if (glfwWindowShouldClose(window)) {
         dirk::gEngine->exit("GLFW close event");
+        return;
     }
+
+    for (uint32_t i = 0; i < UINT32_MAX / 16; i++) {
+        deltaTime = deltaTime + 0;
+    }
+
+    DIRK_LOG(LogVulkan, TRACE, "draw");
 
     updateMVP(deltaTime);
     drawFrame();
@@ -717,7 +725,7 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     rasterizer.polygonMode = vk::PolygonMode::eFill; // fill the polygons with fragments
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = vk::CullModeFlagBits::eBack;
-    rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
+    rasterizer.frontFace = vk::FrontFace::eClockwise;
     rasterizer.depthBiasEnable = vk::False;
 
     // disabled for now
@@ -829,7 +837,7 @@ ImageMemoryView VulkanRenderer::createColorResources() {
 
 ImageMemoryView VulkanRenderer::createTextureResources() {
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load((std::string(RESSOURCE_PATH) + "/textures/viking_room.png").c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load((std::string(RESSOURCE_PATH) + "/textures/DuckCM.png").c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     vk::DeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel (1 per channel)
 
     this->mipLevels = std::floor(std::log2(std::max(texWidth, texHeight))) + 1;
@@ -921,62 +929,99 @@ vk::Buffer VulkanRenderer::createIndexBuffer() {
 }
 
 bool VulkanRenderer::loadModel() {
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
+    tinygltf::Model model;
+    tinygltf::TinyGLTF loader;
     std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, (std::string(RESSOURCE_PATH) + "/models/viking_room.obj").c_str())) {
-        if (warn != "") {
-            warn.pop_back(); // remove trailing return
-            DIRK_LOG(LogVulkan, WARNING, "tiny obj loader: " << warn);
-        }
-        if (err != "") {
-            err.pop_back(); // remove trailing return
-            DIRK_LOG(LogVulkan, ERROR, "tiny obj loader: " << err);
-        }
-        return false;
-    }
+    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (std::string(RESSOURCE_PATH) + "/models/Duck.gltf").c_str());
 
     if (warn != "") {
         warn.pop_back(); // remove trailing return
-        DIRK_LOG(LogVulkan, WARNING, "tiny obj loader: " << warn);
+        DIRK_LOG(LogVulkan, WARNING, "tinygltf: " << warn);
     }
     if (err != "") {
         err.pop_back(); // remove trailing return
-        DIRK_LOG(LogVulkan, ERROR, "tiny obj loader: " << err);
+        DIRK_LOG(LogVulkan, ERROR, "tinygltf: " << err);
     }
 
+    if (!ret)
+        return false;
+
+    vertices.clear();
+    indices.clear();
+    // TODO: reserve vertex and index vectors
+
+    // all meshes in the model
     std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
-    int vertex_count = attrib.vertices.size() / 3;
-    vertices.reserve(vertex_count);
-    indices.reserve(vertex_count);
-    uniqueVertices.reserve(vertex_count);
+    for (const auto& mesh : model.meshes) {
+        for (const auto& primitive : mesh.primitives) {
+            // get indices
+            const tinygltf::Accessor& indexAccessor = model.accessors[primitive.indices];
+            const tinygltf::BufferView& indexBufferView = model.bufferViews[indexAccessor.bufferView];
+            const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
 
-    for (const auto& shape : shapes) {
-        for (const auto& index : shape.mesh.indices) {
-            Vertex vertex{};
+            // get vertex positions
+            const tinygltf::Accessor& posAccessor = model.accessors[primitive.attributes.at("POSITION")];
+            const tinygltf::BufferView& posBufferView = model.bufferViews[posAccessor.bufferView];
+            const tinygltf::Buffer& posBuffer = model.buffers[posBufferView.buffer];
 
-            vertex.pos = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
-            };
+            // get texCoords if available
+            bool hasTexCoords = primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end();
+            const tinygltf::Accessor* texCoordAccessor = hasTexCoords ? &model.accessors[primitive.attributes.at("TEXCOORD_0")] : nullptr;
+            const tinygltf::BufferView* texCoordBufferView = hasTexCoords ? &model.bufferViews[texCoordAccessor->bufferView] : nullptr;
+            const tinygltf::Buffer* texCoordBuffer = hasTexCoords ? &model.buffers[texCoordBufferView->buffer] : nullptr;
 
-            vertex.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.f - attrib.texcoords[2 * index.texcoord_index + 1], // flip the image as tinyobj assumes 0 is bottom; vulkan assumes 0 is top
-            };
+            // process vertices
+            for (size_t i = 0; i < posAccessor.count; i++) {
+                Vertex vertex{};
 
-            vertex.color = { 1.f, 1.f, 1.f };
+                const float* pos = reinterpret_cast<const float*>(&posBuffer.data[posBufferView.byteOffset + posAccessor.byteOffset + i * posBufferView.byteStride]);
+                vertex.pos = { pos[0], pos[1], pos[2] };
 
-            if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = vertices.size();
-                vertices.emplace_back(vertex);
+                vertex.texCoord = { 0.f, 0.f };
+                if (hasTexCoords) {
+                    const float* texCoord = reinterpret_cast<const float*>(&texCoordBuffer->data[texCoordBufferView->byteOffset + texCoordAccessor->byteOffset + i * texCoordBufferView->byteStride]);
+                    vertex.texCoord = { texCoord[0], texCoord[1] };
+                }
+
+                vertex.color = { 1.f, 1.f, 1.f };
+
+                if (!uniqueVertices.contains(vertex)) {
+                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                    vertices.push_back(vertex);
+                }
             }
+            // proces indices
+            const unsigned char* indexData = &indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset];
 
-            indices.emplace_back(uniqueVertices[vertex]);
+            // handle different index component types
+            switch (indexAccessor.componentType) {
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+                const uint8_t* indices8 = reinterpret_cast<const uint8_t*>(indexData);
+                for (size_t i = 0; i < indexAccessor.count; i++) {
+                    Vertex vertex = vertices[indices8[i]];
+                    indices.push_back(uniqueVertices[vertex]);
+                }
+                break;
+            }
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+                const uint16_t* indices16 = reinterpret_cast<const uint16_t*>(indexData);
+                for (size_t i = 0; i < indexAccessor.count; i++) {
+                    Vertex vertex = vertices[indices16[i]];
+                    indices.push_back(uniqueVertices[vertex]);
+                }
+                break;
+            }
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
+                const uint32_t* indices32 = reinterpret_cast<const uint32_t*>(indexData);
+                for (size_t i = 0; i < indexAccessor.count; i++) {
+                    Vertex vertex = vertices[indices32[i]];
+                    indices.push_back(uniqueVertices[vertex]);
+                }
+                break;
+            }
+            }
         }
     }
 
@@ -1310,13 +1355,19 @@ void VulkanRenderer::drawFrame() {
 }
 
 void VulkanRenderer::updateMVP(float deltaTime) {
-    ModelViewProjection mvp{
-        .model = glm::rotate(glm::mat4(1.f), 0.f, glm::vec3(0.f, 0.f, 1.f)),
-        .view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
-        .proj = glm::perspective(glm::radians(45.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .1f, 10.f),
-    };
+    // glm::mat4 model = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
+    // model = glm::rotate(model, glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f));
 
-    mvp.proj[1][1] *= -1; // glm was originally designed for OpenGL. We must thus flip the y axis of the projection matrix
+    static float angle = 0.f;
+    angle += 90.f * deltaTime;
+    if (angle > 360.f)
+        angle -= 360.f;
+
+    ModelViewProjection mvp{
+        .model = glm::rotate(glm::mat4(1.f), glm::radians(angle), glm::vec3(0.f, 1.f, 0.f)),
+        .view = glm::lookAt(glm::vec3(200.f, 200.f, 200.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
+        .proj = glm::perspective(glm::radians(90.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .0001f, 10000.f),
+    };
 
     memcpy(inFlightImages[currentFrame].uniformBufferMapped, &mvp, sizeof(mvp));
 }
