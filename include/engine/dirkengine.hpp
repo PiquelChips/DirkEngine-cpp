@@ -14,9 +14,16 @@ DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 
 namespace dirk {
 
+struct DirkEngineCreateInfo {
+    ResourceManagerCreateInfo resourceManagerInfo;
+    RendererCreateInfo rendererInfo;
+};
+
 class DirkEngine {
 
 public:
+    DirkEngine(DirkEngineCreateInfo& createInfo);
+
     int main();
     void exit();
     void exit(const std::string& reason);

@@ -7,11 +7,21 @@
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 
 DEFINE_LOG_CATEGORY(LogEngine)
 
 namespace dirk {
 
+DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
+    // make sure to populate the engine fields
+    createInfo.resourceManagerInfo.engine = this;
+    createInfo.rendererInfo.engine = this;
+
+    resourceManager = std::make_unique<ResourceManager>(createInfo.resourceManagerInfo);
+    renderer = std::unique_ptr<Renderer>(createRenderer(createInfo.rendererInfo));
+    check(renderer);
+}
 
 int DirkEngine::main() {
     int result = EXIT_SUCCESS;
@@ -49,19 +59,14 @@ void DirkEngine::exit(const std::string& reason) {
 }
 
 int DirkEngine::init() {
-    int result = EXIT_SUCCESS;
-
-    renderer = std::unique_ptr<Renderer>(createRenderer(RENDERER_INFO));
-    check(renderer);
-    result = renderer->init();
-    if (result != EXIT_SUCCESS)
-        return result;
+    if (renderer->init() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
 
     // TODO: init audio, network, input, ...
 
     DIRK_LOG(LogEngine, INFO, "engine initialization successful");
 
-    return result;
+    return EXIT_SUCCESS;
 }
 
 void DirkEngine::tick(float deltaTime) {

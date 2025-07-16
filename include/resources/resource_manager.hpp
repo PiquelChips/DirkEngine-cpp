@@ -3,12 +3,18 @@
 #include "core/globals.hpp"
 #include "render/render_types.hpp"
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
 
 namespace dirk {
+
+class DirkEngine;
+
+struct ResourceManagerCreateInfo {
+    DirkEngine* engine;
+    const std::string& resourcePath;
+};
 
 /**
  * The class to manage all of the engine's filesystem operations.
@@ -18,6 +24,8 @@ namespace dirk {
 class ResourceManager {
 
 public:
+    ResourceManager(ResourceManagerCreateInfo& createInfo);
+
     /**
      * Will load a model with the filepath:
      *   RESOURCE_PATH/models/<name>/<name>.gltf
@@ -29,6 +37,8 @@ public:
 
 private:
     std::unordered_map<std::string, std::weak_ptr<Model>> models;
+
+    const std::string& resourcePath;
 };
 
 } // namespace dirk

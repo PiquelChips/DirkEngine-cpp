@@ -49,7 +49,7 @@ int VulkanRenderer::init() {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     this->window = glfwCreateWindow(
-        getProperties().windowWdith,
+        getProperties().windowWidth,
         getProperties().windowHeight,
         getProperties().applicationName.c_str(), nullptr, nullptr);
     if (!this->window) {

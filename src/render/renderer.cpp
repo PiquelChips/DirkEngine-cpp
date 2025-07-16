@@ -6,6 +6,16 @@ DEFINE_LOG_CATEGORY(LogRenderer)
 
 namespace dirk {
 
+RendererCreateInfo::operator RendererProperties() {
+    return RendererProperties{
+        .applicationName = applicationName,
+        .windowWidth = windowWidth,
+        .windowHeight = windowHeight,
+        .api = api,
+        .engine = engine,
+    };
+};
+
 RendererFeatures& Renderer::getFeatures() noexcept { return features; }
 RendererProperties& Renderer::getProperties() noexcept { return properties; };
 

@@ -218,7 +218,6 @@ void VulkanUtils::transitionImageLayout(vk::CommandBuffer commandBuffer, const v
         destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
     } else {
         DIRK_LOG(LogVulkan, FATAL, "unsupported layout transition");
-        dirk::gEngine->exit("unsupported layout transition");
         return;
     }
 
