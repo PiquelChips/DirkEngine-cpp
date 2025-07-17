@@ -24,7 +24,7 @@ Any contribution/feedback is greatly appreciated!
 
 ### Prerequisits
 
-1. A `C++` compiler such as [**Clang**](https://clang.llvm.org/), [**gcc**](https://gcc.gnu.org/) or the **MSVC Toolchain**.
+1. A `C++` compiler toolchain such as [**Clang**](https://clang.llvm.org/), [**gcc**](https://gcc.gnu.org/) or **MSVC**.
 2. The [**CMake**](https://cmake.org/) build tool and its dependencies.
 3. The [**Vulkan SDK**](https://vulkan.lunarg.com/) that we use for the renderer backend. You can follow [this](https://vulkan.lunarg.com/doc/view/latest/windows/getting_started.html) tutorial for SDK instalation.
 
