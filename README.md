@@ -2,8 +2,7 @@
 
 Welcome to the **DirkEngine** project! an opensource game engine to help me and any contributors learn about
 the fascinating technologies that go into game development. This project is just a hobby so don't expect LTS
-or any kind of production ready system. I would be happy for it to become a real production system in the
-future though.
+or any kind of production ready system (this could change if the repository gets enough traction though).
 Any contribution/feedback is greatly appreciated!
 
 ## <!-- line separator -->
