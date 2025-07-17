@@ -64,7 +64,7 @@ Much of the advice in [How do I ask a good question?][how-to-ask] applies here t
   - For macros use shouting snake case: **`MACRO_NAME`**.
     - If it is specifically related to the engine, add the 'DIRK_' prefix: **`DIRK_MACRO_NAME`**.
   - For everything else (variables, class members, and function parameters) use camel case: **`variableName`**.
-- Use spaces for indentation, not tabs.
+- Use 4 spaces for indentation, not tabs.
 - Don't forget to follow the rules in
   [**`.clang-format`**](https://github.com/PiquelChips/DirkEngine/blob/main/.clang-format)
 - When in doubt, match the code that's already there.
