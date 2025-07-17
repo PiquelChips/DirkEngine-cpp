@@ -1,7 +1,7 @@
-Contributing to the Dirk Engine!
-================================
+Contributing to the Dirk Engine
+===============================
 
-Thanks for your interest in contributing to the Dirk Engine!
+Thank you for your interest in contributing to the Dirk Engine!
 
 ## Language
 
@@ -19,7 +19,7 @@ applies to writing a good bug report too.
 
 Feature requests should also be sent to the [GitHub Issue Tracker][issue-tracker] using the feature request template.
 - Explain what the new feature is and why it should be added.
-- If possible, provide an example, like a code snippet or a screenshot, showing what your new feature might look like in use.
+- If possible, provide an example, like a code snippet or a screenshot, showing what your new feature might look like.
 Much of the advice in [How do I ask a good question?][how-to-ask] applies here too.
 
 ## Contributing a Fix or Feature
