@@ -12,6 +12,7 @@ int main() {
         dirk::DirkEngineCreateInfo engineInfo{
             .resourceManagerInfo = dirk::ResourceManagerCreateInfo{
                 .resourcePath = RESOURCE_PATH,
+                .shaderPath = SHADER_PATH,
             },
             .rendererInfo = dirk::RendererCreateInfo{
                 .applicationName = "DirkEngine",

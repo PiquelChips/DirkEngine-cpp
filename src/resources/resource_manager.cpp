@@ -14,7 +14,8 @@ namespace dirk {
 
 DEFINE_LOG_CATEGORY(LogResourceManager)
 
-ResourceManager::ResourceManager(ResourceManagerCreateInfo& createInfo) : resourcePath(createInfo.resourcePath) {};
+ResourceManager::ResourceManager(ResourceManagerCreateInfo& createInfo)
+    : resourcePath(createInfo.resourcePath), shaderPath(createInfo.shaderPath) {};
 
 std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
     if (models.contains(name)) {
