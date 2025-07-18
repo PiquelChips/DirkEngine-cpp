@@ -18,11 +18,9 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <limits>
 #include <set>
 #include <tuple>
@@ -671,8 +669,8 @@ vk::DescriptorPool VulkanRenderer::createDescriptorPool() {
 }
 
 vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
-    vk::ShaderModule vert = loadShaderModule("shader.vert");
-    vk::ShaderModule frag = loadShaderModule("shader.frag");
+    vk::ShaderModule vert = VulkanUtils::loadShaderModule(getEngine()->getResourceManager(), device, "shader.vert");
+    vk::ShaderModule frag = VulkanUtils::loadShaderModule(getEngine()->getResourceManager(), device, "shader.frag");
 
     // vert shader
     vk::PipelineShaderStageCreateInfo vertShaderStageInfo{};
@@ -1270,29 +1268,6 @@ void VulkanRenderer::updateMVP(float deltaTime) {
     };
 
     memcpy(inFlightImages[currentFrame].uniformBufferMapped, &mvp, sizeof(mvp));
-}
-
-vk::ShaderModule VulkanRenderer::loadShaderModule(const std::string& shaderName) {
-    std::ifstream file(std::string(SHADER_PATH) + "/" + shaderName + ".spv", std::ios::ate | std::ios::binary);
-
-    check(file.is_open());
-
-    size_t fileSize = (size_t) file.tellg();
-    std::vector<char> shader(fileSize);
-
-    file.seekg(0);
-    file.read(shader.data(), fileSize);
-
-    file.close();
-
-    vk::ShaderModuleCreateInfo createInfo{};
-    createInfo.sType = vk::StructureType::eShaderModuleCreateInfo;
-    createInfo.codeSize = shader.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(shader.data());
-
-    vk::ShaderModule module = device.createShaderModule(createInfo);
-    check(module);
-    return module;
 }
 
 } // namespace dirk

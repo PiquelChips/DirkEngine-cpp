@@ -137,9 +137,6 @@ private:
     void drawFrame();
     void updateMVP(float deltaTime);
 
-    // shader utilities
-    vk::ShaderModule loadShaderModule(const std::string& shaderName);
-
 private:
     // misc variables used by the renderer
 

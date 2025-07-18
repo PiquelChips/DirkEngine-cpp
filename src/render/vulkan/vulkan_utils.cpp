@@ -315,4 +315,16 @@ RendererFeatures VulkanUtils::getRendererFeatures(vk::PhysicalDevice physicalDev
     };
 }
 
+vk::ShaderModule VulkanUtils::loadShaderModule(ResourceManager* resourceManager, vk::Device device, const std::string& shaderName) {
+    check(resourceManager);
+    std::shared_ptr<Shader> shader = resourceManager->loadShader(shaderName);
+    check(shader);
+
+    vk::ShaderModuleCreateInfo createInfo{};
+    createInfo.codeSize = shader->size;
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(shader->shader.data());
+
+    return device.createShaderModule(createInfo);
+};
+
 } // namespace dirk
