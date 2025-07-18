@@ -7,7 +7,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace dirk {
@@ -137,6 +139,42 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
 
     models[name] = modelPtr;
     return modelPtr;
+}
+
+std::shared_ptr<Shader> ResourceManager::loadShader(const std::string& name) {
+    if (shaders.contains(name)) {
+        if (std::shared_ptr<Shader> shader = shaders[name].lock()) {
+            check(shader->name == name);
+            return shader;
+        } else {
+            shaders.erase(name);
+        }
+    }
+
+    // load the shader
+    std::ifstream file(shaderPath + "/" + name + ".spv", std::ios::ate | std::ios::binary);
+
+    if (!file.is_open()) {
+        DIRK_LOG(LogResourceManager, FATAL, "unable to load shader: " << name)
+        return nullptr;
+    }
+
+    size_t fileSize = file.tellg();
+    std::vector<char> shader(fileSize);
+
+    file.seekg(0);
+    file.read(shader.data(), fileSize);
+    file.close();
+
+    std::shared_ptr<Shader>
+        shaderPtr = std::make_shared<Shader>(Shader{
+            .name = name,
+            .size = fileSize,
+            .shader = shader,
+        });
+
+    shaders[name] = shaderPtr;
+    return shaderPtr;
 }
 
 } // namespace dirk

@@ -38,8 +38,18 @@ public:
      */
     std::shared_ptr<Model> loadModel(const std::string& name);
 
+    /**
+     * Will load a shader file's bytes from:
+     *   SHADER_PATH/<name>.spv
+     *
+     * This function also relies on a caching system and will only load a shader once,
+     * so no worries about reusing this function a lot.
+     */
+    std::shared_ptr<Shader> loadShader(const std::string& name);
+
 private:
     std::unordered_map<std::string, std::weak_ptr<Model>> models;
+    std::unordered_map<std::string, std::weak_ptr<Shader>> shaders;
 
     const std::string& resourcePath;
     const std::string& shaderPath;
