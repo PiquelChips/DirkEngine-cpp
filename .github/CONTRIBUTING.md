@@ -5,8 +5,8 @@ Thank you for your interest in contributing to the Dirk Engine!
 
 ## Language
 
-Although I do speak French, please keep this codebase in **proper** English.
-Don't be afraid to correct people's mistakes (including mine), just be polite about it.
+Please keep this codebase in **proper** English. Don't be afraid to correct people's
+mistakes (including mine), just be polite about it.
 
 ## Reporting Bugs
 
@@ -28,15 +28,14 @@ Much of the advice in [How do I ask a good question?][how-to-ask] applies here t
    [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/about-forks)
    of the repository.
 2. Create a
-   [branch](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-branches)
-   , and make all of your changes on that branch (this is especially
-   important as I squash PRs before merging them, so once the PR is merged, the branch
-   effectively becomes useless).
+   [branch](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-branches),
+   and make all of your changes on that branch (this is especially important as I squash PRs before merging them,
+   so once the PR is merged, the branch effectively becomes useless).
 3. Submit a
    [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests)
    and fill in the template.
-4. Wait for a review. This project is just a hobby that I work on in my free time so it
-   may take a while for me to review the PR.
+4. Wait for a review. This project is just a hobby that I work on in my free time so it may take a while for me
+   to review your PR.
 
 ### Writing a Good Pull Request
 
@@ -65,7 +64,7 @@ Much of the advice in [How do I ask a good question?][how-to-ask] applies here t
     - If it is specifically related to the engine, add the 'DIRK_' prefix: **`DIRK_MACRO_NAME`**.
   - For everything else (variables, class members, and function parameters) use camel case: **`variableName`**.
 - Use 4 spaces for indentation, not tabs.
-- Don't forget to follow the rules in
+- Don't forget to follow the formatting rules in
   [**`.clang-format`**](https://github.com/PiquelChips/DirkEngine/blob/main/.clang-format)
 - When in doubt, match the code that's already there.
 
