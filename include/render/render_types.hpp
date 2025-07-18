@@ -4,7 +4,10 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtx/hash.hpp"
+
+#include <cstdint>
 #include <functional>
+#include <vector>
 
 namespace dirk {
 
@@ -22,6 +25,38 @@ struct ModelViewProjection {
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 proj;
+};
+
+/**
+ * DirkEngine's representation of a shader
+ */
+struct Shader {
+    const std::string& name;
+
+    std::size_t size;
+    std::vector<char> shader;
+};
+
+/**
+ * DirkEngine's representation of a texture
+ */
+struct Texture {
+    std::uint32_t width, height;
+    std::size_t size;
+    std::vector<unsigned char> texture;
+};
+
+/**
+ * DirkEngine's representation of a 3D model.
+ *
+ * This is essentially an object created by the resource manager from a glTF file.
+ */
+struct Model {
+    const std::string& name;
+
+    std::vector<Vertex> vertices;
+    std::vector<std::uint32_t> indices;
+    Texture texture;
 };
 
 } // namespace dirk

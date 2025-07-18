@@ -8,20 +8,23 @@ namespace dirk {
 class DirkEngine;
 
 enum RenderApi {
-    VulkanApi,
+    Vulkan,
 };
 
-struct RendererInfo {
+struct RendererProperties {
     std::string applicationName;
+    uint32_t windowWidth, windowHeight;
     RenderApi api;
+    DirkEngine* engine;
 };
 
 struct RendererCreateInfo {
     std::string applicationName;
-    uint32_t windowWdith, windowHeight;
+    uint32_t windowWidth, windowHeight;
     RenderApi api;
     DirkEngine* engine;
-    // TODO: ResourceManager* resourceManaer;
+
+    operator RendererProperties();
 };
 
 struct RendererFeatures {

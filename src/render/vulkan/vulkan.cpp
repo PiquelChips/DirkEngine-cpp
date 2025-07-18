@@ -9,7 +9,6 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "tinygltf/stb_image.h"
 #include "tinygltf/tiny_gltf.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
@@ -18,24 +17,23 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <limits>
 #include <set>
 #include <tuple>
 #include <utility>
 #include <vector>
 
+namespace dirk {
+
 DEFINE_LOG_CATEGORY(LogVulkan)
 DEFINE_LOG_CATEGORY(LogVulkanValidation)
 
-namespace dirk {
-
-VulkanRenderer::VulkanRenderer(RendererCreateInfo& createInfo) : rendererCreateInfo(createInfo) {
-    check(rendererCreateInfo.api == VulkanApi);
+VulkanRenderer::VulkanRenderer(RendererCreateInfo& createInfo) {
+    properties = createInfo;
+    check(properties.api == Vulkan);
 }
 
 int VulkanRenderer::init() {
@@ -48,9 +46,9 @@ int VulkanRenderer::init() {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     this->window = glfwCreateWindow(
-        rendererCreateInfo.windowWdith,
-        rendererCreateInfo.windowHeight,
-        rendererCreateInfo.applicationName.c_str(), nullptr, nullptr);
+        getProperties().windowWidth,
+        getProperties().windowHeight,
+        getProperties().applicationName.c_str(), nullptr, nullptr);
     if (!this->window) {
         DIRK_LOG(LogVulkan, FATAL, "error creating GLFW window")
         return EXIT_FAILURE;
@@ -136,7 +134,8 @@ int VulkanRenderer::init() {
         return EXIT_FAILURE;
     }
 
-    if (!loadModel()) {
+    this->model = getEngine()->getResourceManager()->loadModel("Duck");
+    if (!this->model) {
         DIRK_LOG(LogVulkan, FATAL, "failed to load model");
         return EXIT_FAILURE;
     }
@@ -174,7 +173,7 @@ int VulkanRenderer::init() {
 
 void VulkanRenderer::draw(float deltaTime) {
     if (glfwWindowShouldClose(window)) {
-        dirk::gEngine->exit("GLFW close event");
+        getProperties().engine->exit("GLFW close event");
         return;
     }
 
@@ -669,8 +668,8 @@ vk::DescriptorPool VulkanRenderer::createDescriptorPool() {
 }
 
 vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
-    vk::ShaderModule vert = loadShaderModule("shader.vert");
-    vk::ShaderModule frag = loadShaderModule("shader.frag");
+    vk::ShaderModule vert = VulkanUtils::loadShaderModule(getEngine()->getResourceManager(), device, "shader.vert");
+    vk::ShaderModule frag = VulkanUtils::loadShaderModule(getEngine()->getResourceManager(), device, "shader.frag");
 
     // vert shader
     vk::PipelineShaderStageCreateInfo vertShaderStageInfo{};
@@ -836,13 +835,10 @@ ImageMemoryView VulkanRenderer::createColorResources() {
 }
 
 ImageMemoryView VulkanRenderer::createTextureResources() {
-    int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load((std::string(RESSOURCE_PATH) + "/textures/DuckCM.png").c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    vk::DeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel (1 per channel)
+    Texture& texture = model->texture;
+    vk::DeviceSize imageSize = texture.size;
 
-    this->mipLevels = std::floor(std::log2(std::max(texWidth, texHeight))) + 1;
-
-    check(pixels);
+    this->mipLevels = std::floor(std::log2(std::max(texture.width, texture.height))) + 1;
 
     vk::Format format = vk::Format::eR8G8B8A8Srgb;
 
@@ -852,16 +848,14 @@ ImageMemoryView VulkanRenderer::createTextureResources() {
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* data = device.mapMemory(stagingBufferMemory, 0, imageSize);
-    memcpy(data, pixels, imageSize);
+    memcpy(data, texture.texture.data(), imageSize);
     device.unmapMemory(stagingBufferMemory);
-
-    stbi_image_free(pixels);
 
     CreateImageMemoryViewInfo createInfo{
         .device = device,
         .physicalDevice = physicalDevice,
-        .width = static_cast<uint32_t>(texWidth),
-        .height = static_cast<uint32_t>(texHeight),
+        .width = static_cast<uint32_t>(texture.width),
+        .height = static_cast<uint32_t>(texture.height),
         .format = format,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
@@ -872,8 +866,8 @@ ImageMemoryView VulkanRenderer::createTextureResources() {
 
     vk::CommandBuffer commandBuffer = VulkanUtils::beginSingleTimeCommands(device, commandPool);
     VulkanUtils::transitionImageLayout(commandBuffer, imageMemoryView.image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
-    VulkanUtils::copyBufferToImage(commandBuffer, stagingBuffer, imageMemoryView.image, texWidth, texHeight);
-    VulkanUtils::generateMipmaps(commandBuffer, physicalDevice, imageMemoryView.image, format, texWidth, texHeight, mipLevels);
+    VulkanUtils::copyBufferToImage(commandBuffer, stagingBuffer, imageMemoryView.image, texture.width, texture.height);
+    VulkanUtils::generateMipmaps(commandBuffer, physicalDevice, imageMemoryView.image, format, texture.width, texture.height, mipLevels);
     // transitions to vk::ImageLayout::eShaderReadOnlyOptimal while generating mipmaps
     VulkanUtils::endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
 
@@ -881,7 +875,7 @@ ImageMemoryView VulkanRenderer::createTextureResources() {
 }
 
 vk::Buffer VulkanRenderer::createVertexBuffer() {
-    vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+    vk::DeviceSize bufferSize = sizeof(model->vertices[0]) * model->vertices.size();
 
     auto [stagingBuffer, stagingBufferMemory] = VulkanUtils::createBuffer(
         device, physicalDevice, bufferSize,
@@ -889,7 +883,7 @@ vk::Buffer VulkanRenderer::createVertexBuffer() {
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* dataStaging = device.mapMemory(stagingBufferMemory, 0, bufferSize);
-    memcpy(dataStaging, vertices.data(), bufferSize);
+    memcpy(dataStaging, model->vertices.data(), bufferSize);
     device.unmapMemory(stagingBufferMemory);
 
     auto [buffer, bufferMemory] = VulkanUtils::createBuffer(
@@ -905,7 +899,7 @@ vk::Buffer VulkanRenderer::createVertexBuffer() {
 }
 
 vk::Buffer VulkanRenderer::createIndexBuffer() {
-    vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+    vk::DeviceSize bufferSize = sizeof(model->indices[0]) * model->indices.size();
 
     auto [stagingBuffer, stagingBufferMemory] = VulkanUtils::createBuffer(
         device, physicalDevice, bufferSize,
@@ -913,7 +907,7 @@ vk::Buffer VulkanRenderer::createIndexBuffer() {
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* data = device.mapMemory(stagingBufferMemory, 0, bufferSize);
-    memcpy(data, indices.data(), bufferSize);
+    memcpy(data, model->indices.data(), bufferSize);
     device.unmapMemory(stagingBufferMemory);
 
     auto [buffer, bufferMemory] = VulkanUtils::createBuffer(
@@ -926,106 +920,6 @@ vk::Buffer VulkanRenderer::createIndexBuffer() {
     VulkanUtils::endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
 
     return buffer;
-}
-
-bool VulkanRenderer::loadModel() {
-    tinygltf::Model model;
-    tinygltf::TinyGLTF loader;
-    std::string warn, err;
-
-    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (std::string(RESSOURCE_PATH) + "/models/Duck.gltf").c_str());
-
-    if (warn != "") {
-        warn.pop_back(); // remove trailing return
-        DIRK_LOG(LogVulkan, WARNING, "tinygltf: " << warn);
-    }
-    if (err != "") {
-        err.pop_back(); // remove trailing return
-        DIRK_LOG(LogVulkan, ERROR, "tinygltf: " << err);
-    }
-
-    if (!ret)
-        return false;
-
-    vertices.clear();
-    indices.clear();
-    // TODO: reserve vertex and index vectors
-
-    // all meshes in the model
-    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-
-    for (const auto& mesh : model.meshes) {
-        for (const auto& primitive : mesh.primitives) {
-            // get indices
-            const tinygltf::Accessor& indexAccessor = model.accessors[primitive.indices];
-            const tinygltf::BufferView& indexBufferView = model.bufferViews[indexAccessor.bufferView];
-            const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
-
-            // get vertex positions
-            const tinygltf::Accessor& posAccessor = model.accessors[primitive.attributes.at("POSITION")];
-            const tinygltf::BufferView& posBufferView = model.bufferViews[posAccessor.bufferView];
-            const tinygltf::Buffer& posBuffer = model.buffers[posBufferView.buffer];
-
-            // get texCoords if available
-            bool hasTexCoords = primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end();
-            const tinygltf::Accessor* texCoordAccessor = hasTexCoords ? &model.accessors[primitive.attributes.at("TEXCOORD_0")] : nullptr;
-            const tinygltf::BufferView* texCoordBufferView = hasTexCoords ? &model.bufferViews[texCoordAccessor->bufferView] : nullptr;
-            const tinygltf::Buffer* texCoordBuffer = hasTexCoords ? &model.buffers[texCoordBufferView->buffer] : nullptr;
-
-            // process vertices
-            for (size_t i = 0; i < posAccessor.count; i++) {
-                Vertex vertex{};
-
-                const float* pos = reinterpret_cast<const float*>(&posBuffer.data[posBufferView.byteOffset + posAccessor.byteOffset + i * posBufferView.byteStride]);
-                vertex.pos = { pos[0], pos[1], pos[2] };
-
-                vertex.texCoord = { 0.f, 0.f };
-                if (hasTexCoords) {
-                    const float* texCoord = reinterpret_cast<const float*>(&texCoordBuffer->data[texCoordBufferView->byteOffset + texCoordAccessor->byteOffset + i * texCoordBufferView->byteStride]);
-                    vertex.texCoord = { texCoord[0], texCoord[1] };
-                }
-
-                vertex.color = { 1.f, 1.f, 1.f };
-
-                if (!uniqueVertices.contains(vertex)) {
-                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                    vertices.push_back(vertex);
-                }
-            }
-            // proces indices
-            const unsigned char* indexData = &indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset];
-
-            // handle different index component types
-            switch (indexAccessor.componentType) {
-            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-                const uint8_t* indices8 = reinterpret_cast<const uint8_t*>(indexData);
-                for (size_t i = 0; i < indexAccessor.count; i++) {
-                    Vertex vertex = vertices[indices8[i]];
-                    indices.push_back(uniqueVertices[vertex]);
-                }
-                break;
-            }
-            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-                const uint16_t* indices16 = reinterpret_cast<const uint16_t*>(indexData);
-                for (size_t i = 0; i < indexAccessor.count; i++) {
-                    Vertex vertex = vertices[indices16[i]];
-                    indices.push_back(uniqueVertices[vertex]);
-                }
-                break;
-            }
-            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
-                const uint32_t* indices32 = reinterpret_cast<const uint32_t*>(indexData);
-                for (size_t i = 0; i < indexAccessor.count; i++) {
-                    Vertex vertex = vertices[indices32[i]];
-                    indices.push_back(uniqueVertices[vertex]);
-                }
-                break;
-            }
-            }
-        }
-    }
-
-    return true;
 }
 
 vk::Sampler VulkanRenderer::createTextureSampler() {
@@ -1281,7 +1175,7 @@ void VulkanRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
     scissor.extent = swapChainExtent;
     commandBuffer.setScissor(0, 1, &scissor);
 
-    commandBuffer.drawIndexed(indices.size(), 1, 0, 0, 0);
+    commandBuffer.drawIndexed(model->indices.size(), 1, 0, 0, 0);
 
     commandBuffer.endRenderPass();
 
@@ -1359,40 +1253,20 @@ void VulkanRenderer::updateMVP(float deltaTime) {
     // model = glm::rotate(model, glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f));
 
     static float angle = 0.f;
-    angle += 90.f * deltaTime;
-    if (angle > 360.f)
-        angle -= 360.f;
+    // angle += 90.f * deltaTime;
+    // if (angle > 360.f)
+    //     angle -= 360.f;
+
+    static float pos = 0.f;
+    pos += 100.f * deltaTime;
 
     ModelViewProjection mvp{
         .model = glm::rotate(glm::mat4(1.f), glm::radians(angle), glm::vec3(0.f, 1.f, 0.f)),
-        .view = glm::lookAt(glm::vec3(200.f, 200.f, 200.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
+        .view = glm::lookAt(glm::vec3(pos), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
         .proj = glm::perspective(glm::radians(90.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .0001f, 10000.f),
     };
 
     memcpy(inFlightImages[currentFrame].uniformBufferMapped, &mvp, sizeof(mvp));
-}
-
-vk::ShaderModule VulkanRenderer::loadShaderModule(const std::string& shaderName) {
-    std::ifstream file(std::string(SHADER_PATH) + "/" + shaderName + ".spv", std::ios::ate | std::ios::binary);
-
-    check(file.is_open());
-
-    size_t fileSize = (size_t) file.tellg();
-    std::vector<char> shader(fileSize);
-
-    file.seekg(0);
-    file.read(shader.data(), fileSize);
-
-    file.close();
-
-    vk::ShaderModuleCreateInfo createInfo{};
-    createInfo.sType = vk::StructureType::eShaderModuleCreateInfo;
-    createInfo.codeSize = shader.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(shader.data());
-
-    vk::ShaderModule module = device.createShaderModule(createInfo);
-    check(module);
-    return module;
 }
 
 } // namespace dirk

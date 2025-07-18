@@ -13,6 +13,7 @@
 #include "vulkan/vulkan_structs.hpp"
 
 #include <cstdint>
+#include <memory>
 #include <tuple>
 #include <vector>
 
@@ -22,10 +23,10 @@
 #endif
 #endif
 
+namespace dirk {
+
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
-
-namespace dirk {
 
 /**
  * The vulkan implementation of the renderer
@@ -136,13 +137,9 @@ private:
     void drawFrame();
     void updateMVP(float deltaTime);
 
-    // shader utilities
-    vk::ShaderModule loadShaderModule(const std::string& shaderName);
-
 private:
     // misc variables used by the renderer
 
-    RendererCreateInfo& rendererCreateInfo;
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
     const int MAX_FRAMES_IN_FLIGHT = 2; // dont make this too high or CPU will go faster than GPU, causing latency
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
@@ -156,13 +153,11 @@ private:
     // vertices & indices
     vk::Buffer createVertexBuffer();
     vk::Buffer createIndexBuffer();
-    bool loadModel();
 
     vk::DescriptorSetLayout descriptorSetLayout;
     vk::DescriptorPool descriptorPool;
 
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    std::shared_ptr<Model> model;
     vk::Buffer vertexBuffer;
     // TODO: vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;

@@ -1,17 +1,27 @@
 #include "engine/dirkengine.hpp"
 #include "core/globals.hpp"
 #include "render/renderer.hpp"
+#include "resources/resource_manager.hpp"
 
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
-
-DEFINE_LOG_CATEGORY(LogEngine)
+#include <memory>
 
 namespace dirk {
 
-DirkEngine* gEngine = nullptr;
+DEFINE_LOG_CATEGORY(LogEngine)
+
+DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
+    // make sure to populate the engine fields
+    createInfo.resourceManagerInfo.engine = this;
+    createInfo.rendererInfo.engine = this;
+
+    resourceManager = std::make_unique<ResourceManager>(createInfo.resourceManagerInfo);
+    renderer = std::unique_ptr<Renderer>(createRenderer(createInfo.rendererInfo));
+    check(renderer);
+}
 
 int DirkEngine::main() {
     int result = EXIT_SUCCESS;
@@ -39,25 +49,24 @@ int DirkEngine::main() {
     return result;
 }
 
-void DirkEngine::exit(const std::string& reason) {
+void DirkEngine::exit() {
     requestingExit = true;
+}
+
+void DirkEngine::exit(const std::string& reason) {
     DIRK_LOG(LogEngine, INFO, "engine exit has been requested with reason: " << reason);
+    this->exit();
 }
 
 int DirkEngine::init() {
-    int result = EXIT_SUCCESS;
-
-    renderer = std::unique_ptr<Renderer>(createRenderer(RENDERER_INFO));
-    check(renderer);
-    result = renderer->init();
-    if (result != EXIT_SUCCESS)
-        return result;
+    if (renderer->init() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
 
     // TODO: init audio, network, input, ...
 
     DIRK_LOG(LogEngine, INFO, "engine initialization successful");
 
-    return result;
+    return EXIT_SUCCESS;
 }
 
 void DirkEngine::tick(float deltaTime) {
@@ -80,5 +89,8 @@ float DirkEngine::captureDeltaTime() {
 
     return deltaTime;
 }
+
+Renderer* DirkEngine::getRenderer() const noexcept { return renderer.get(); }
+ResourceManager* DirkEngine::getResourceManager() const noexcept { return resourceManager.get(); }
 
 } // namespace dirk
