@@ -9,7 +9,6 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "tinygltf/stb_image.h"
 #include "tinygltf/tiny_gltf.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
