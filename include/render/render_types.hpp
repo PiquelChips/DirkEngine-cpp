@@ -28,6 +28,16 @@ struct ModelViewProjection {
 };
 
 /**
+ * DirkEngine's representation of a shader
+ */
+struct Shader {
+    const std::string& name;
+
+    uint32_t size;
+    std::vector<std::uint32_t> shader;
+};
+
+/**
  * DirkEngine's representation of a texture
  */
 struct Texture {
