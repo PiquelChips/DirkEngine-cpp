@@ -28,6 +28,14 @@ struct ModelViewProjection {
 };
 
 /**
+ * DirkEngine's representation of a texture
+ */
+struct Texture {
+    uint32_t width, height;
+    std::vector<unsigned char> texture;
+};
+
+/**
  * DirkEngine's representation of a 3D model.
  *
  * This is essentially an object created by the resource manager from a glTF file.
@@ -37,7 +45,7 @@ struct Model {
 
     std::vector<Vertex> vertices;
     std::vector<std::uint32_t> indices;
-    std::vector<unsigned char> texture;
+    Texture texture;
 };
 
 } // namespace dirk

@@ -126,7 +126,11 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
         .name = name,
         .vertices = vertices,
         .indices = indices,
-        .texture = textureImage.image,
+        .texture = Texture{
+            .width = static_cast<uint32_t>(textureImage.width),
+            .height = static_cast<uint32_t>(textureImage.height),
+            .texture = textureImage.image,
+        },
     });
 
     models[name] = modelPtr;
