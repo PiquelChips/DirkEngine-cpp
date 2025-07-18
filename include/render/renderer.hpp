@@ -25,6 +25,8 @@ public:
 protected:
     RendererProperties properties;
     RendererFeatures features;
+
+    DirkEngine* getEngine() { return getProperties().engine; };
 };
 
 Renderer* createRenderer(RendererCreateInfo& createInfo);
