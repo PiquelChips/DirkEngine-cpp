@@ -1,4 +1,5 @@
 #include "resources/resource_manager.hpp"
+#include "core/asserts.hpp"
 #include "core/globals.hpp"
 #include "render/render_types.hpp"
 
@@ -30,7 +31,7 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
     tinygltf::TinyGLTF loader;
     std::string warn, err;
 
-    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (std::string(RESOURCE_PATH) + "/assets/Duck/Duck.gltf").c_str());
+    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (std::string(RESOURCE_PATH) + "/assets/" + name + "/" + name + ".gltf").c_str());
 
     if (warn != "") {
         warn.pop_back(); // remove trailing return
@@ -92,25 +93,23 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
     const tinygltf::BufferView& indexBufferView = model.bufferViews[indexAccessor.bufferView];
     const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
 
-    const unsigned char* indexData = &indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset];
-
     switch (indexAccessor.componentType) {
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-        const uint8_t* indexData = reinterpret_cast<const uint8_t*>(indexData);
+        const uint8_t* indexData = reinterpret_cast<const uint8_t*>(&indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset]);
         for (size_t i = 0; i < indexAccessor.count; i++) {
             indices.push_back(uniqueVertices[vertices[indexData[i]]]);
         }
         break;
     }
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-        const uint16_t* indexData = reinterpret_cast<const uint16_t*>(indexData);
+        const uint16_t* indexData = reinterpret_cast<const uint16_t*>(&indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset]);
         for (size_t i = 0; i < indexAccessor.count; i++) {
             indices.push_back(uniqueVertices[vertices[indexData[i]]]);
         }
         break;
     }
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
-        const uint32_t* indexData = reinterpret_cast<const uint32_t*>(indexData);
+        const uint32_t* indexData = reinterpret_cast<const uint32_t*>(&indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset]);
         for (size_t i = 0; i < indexAccessor.count; i++) {
             indices.push_back(uniqueVertices[vertices[indexData[i]]]);
         }
