@@ -33,15 +33,16 @@ struct ModelViewProjection {
 struct Shader {
     const std::string& name;
 
-    uint32_t size;
-    std::vector<std::uint32_t> shader;
+    std::size_t size;
+    std::vector<char> shader;
 };
 
 /**
  * DirkEngine's representation of a texture
  */
 struct Texture {
-    uint32_t width, height, size;
+    std::uint32_t width, height;
+    std::size_t size;
     std::vector<unsigned char> texture;
 };
 
