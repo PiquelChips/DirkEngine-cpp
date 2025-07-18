@@ -32,7 +32,7 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
     tinygltf::TinyGLTF loader;
     std::string warn, err;
 
-    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, (std::string(RESOURCE_PATH) + "/models/" + name + "/" + name + ".gltf").c_str());
+    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, resourcePath + "/models/" + name + "/" + name + ".gltf");
 
     if (warn != "") {
         warn.pop_back(); // remove trailing return
