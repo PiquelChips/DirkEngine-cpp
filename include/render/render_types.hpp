@@ -37,8 +37,7 @@ struct Model {
 
     std::vector<Vertex> vertices;
     std::vector<std::uint32_t> indices;
-
-    void* texture;
+    std::vector<unsigned char> texture;
 };
 
 } // namespace dirk

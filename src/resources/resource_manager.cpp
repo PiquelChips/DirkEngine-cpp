@@ -117,10 +117,16 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
     }
     }
 
+    // texture
+    const tinygltf::Material& material = model.materials[primitive.material];
+    const tinygltf::Texture& texture = model.textures[material.pbrMetallicRoughness.baseColorTexture.index];
+    const tinygltf::Image& textureImage = model.images[texture.source];
+
     std::shared_ptr<Model> modelPtr = std::make_shared<Model>(Model{
         .name = name,
         .vertices = vertices,
         .indices = indices,
+        .texture = textureImage.image,
     });
 
     models[name] = modelPtr;
