@@ -2,7 +2,7 @@
 
 Welcome to the **DirkEngine** project! an opensource game engine to help me and any contributors learn about
 the fascinating technologies that go into game development. This project is just a hobby so don't expect LTS
-or any kind of production ready system (this could change if the repository gets enough traction though).
+or any kind of production ready system (this could change in the future if this repository gets enough traction).
 Any contribution/feedback is greatly appreciated!
 
 ## <!-- line separator -->
@@ -14,13 +14,17 @@ Any contribution/feedback is greatly appreciated!
 ## Build and run the engine
 
 > [!TIP]
-> The project is not fully in engine state so this will change a lot soon!
-> See [the 0.1 milestone](https://github.com/PiquelChips/DirkEngine/milestone/1) for progress on that.
+> The **DirkEngine** is still extremely new and the build system/game creation pipelines are a work
+> in progress. This section is thus very temporary and will be expanded and improved once I have a
+> clear idea of what I want these things to look like.
+> See [#38](https://github.com/PiquelChips/DirkEngine/issues/38) for progress/discussion over said
+> systems and pipelines.
 
 > [!IMPORTANT]
 > I have only tested this project on my own machine which runs [NixOS](https://nixos.org) with
 > [this configuration](https://github.com/PiquelChips/dotfiles). If you would like to test and
-> adapt it for other **Linux distributions** or even **Windows** (ewww), feel free!
+> adapt it for other **Linux distributions** or even **Windows** (ewww), I would be happy to 
+> aprove your contributions!
 
 ### Prerequisits
 
