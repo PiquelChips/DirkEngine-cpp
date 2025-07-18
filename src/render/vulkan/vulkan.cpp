@@ -137,7 +137,8 @@ int VulkanRenderer::init() {
         return EXIT_FAILURE;
     }
 
-    if (!loadModel()) {
+    this->model = getEngine()->getResourceManager()->loadModel("Duck");
+    if (!this->model) {
         DIRK_LOG(LogVulkan, FATAL, "failed to load model");
         return EXIT_FAILURE;
     }
@@ -837,13 +838,10 @@ ImageMemoryView VulkanRenderer::createColorResources() {
 }
 
 ImageMemoryView VulkanRenderer::createTextureResources() {
-    int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load((std::string(RESOURCE_PATH) + "/assets/Duck/DuckCM.png").c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    vk::DeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel (1 per channel)
+    Texture& texture = model->texture;
+    vk::DeviceSize imageSize = texture.width * texture.height * 4; // 4 bytes per pixel (1 per channel)
 
-    this->mipLevels = std::floor(std::log2(std::max(texWidth, texHeight))) + 1;
-
-    check(pixels);
+    this->mipLevels = std::floor(std::log2(std::max(texture.width, texture.height))) + 1;
 
     vk::Format format = vk::Format::eR8G8B8A8Srgb;
 
@@ -853,16 +851,14 @@ ImageMemoryView VulkanRenderer::createTextureResources() {
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* data = device.mapMemory(stagingBufferMemory, 0, imageSize);
-    memcpy(data, pixels, imageSize);
+    memcpy(data, texture.texture.data(), imageSize);
     device.unmapMemory(stagingBufferMemory);
-
-    stbi_image_free(pixels);
 
     CreateImageMemoryViewInfo createInfo{
         .device = device,
         .physicalDevice = physicalDevice,
-        .width = static_cast<uint32_t>(texWidth),
-        .height = static_cast<uint32_t>(texHeight),
+        .width = static_cast<uint32_t>(texture.width),
+        .height = static_cast<uint32_t>(texture.height),
         .format = format,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
@@ -873,8 +869,8 @@ ImageMemoryView VulkanRenderer::createTextureResources() {
 
     vk::CommandBuffer commandBuffer = VulkanUtils::beginSingleTimeCommands(device, commandPool);
     VulkanUtils::transitionImageLayout(commandBuffer, imageMemoryView.image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
-    VulkanUtils::copyBufferToImage(commandBuffer, stagingBuffer, imageMemoryView.image, texWidth, texHeight);
-    VulkanUtils::generateMipmaps(commandBuffer, physicalDevice, imageMemoryView.image, format, texWidth, texHeight, mipLevels);
+    VulkanUtils::copyBufferToImage(commandBuffer, stagingBuffer, imageMemoryView.image, texture.width, texture.height);
+    VulkanUtils::generateMipmaps(commandBuffer, physicalDevice, imageMemoryView.image, format, texture.width, texture.height, mipLevels);
     // transitions to vk::ImageLayout::eShaderReadOnlyOptimal while generating mipmaps
     VulkanUtils::endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
 
@@ -882,7 +878,7 @@ ImageMemoryView VulkanRenderer::createTextureResources() {
 }
 
 vk::Buffer VulkanRenderer::createVertexBuffer() {
-    vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+    vk::DeviceSize bufferSize = sizeof(model->vertices[0]) * model->vertices.size();
 
     auto [stagingBuffer, stagingBufferMemory] = VulkanUtils::createBuffer(
         device, physicalDevice, bufferSize,
@@ -890,7 +886,7 @@ vk::Buffer VulkanRenderer::createVertexBuffer() {
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* dataStaging = device.mapMemory(stagingBufferMemory, 0, bufferSize);
-    memcpy(dataStaging, vertices.data(), bufferSize);
+    memcpy(dataStaging, model->vertices.data(), bufferSize);
     device.unmapMemory(stagingBufferMemory);
 
     auto [buffer, bufferMemory] = VulkanUtils::createBuffer(
@@ -906,7 +902,7 @@ vk::Buffer VulkanRenderer::createVertexBuffer() {
 }
 
 vk::Buffer VulkanRenderer::createIndexBuffer() {
-    vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+    vk::DeviceSize bufferSize = sizeof(model->indices[0]) * model->indices.size();
 
     auto [stagingBuffer, stagingBufferMemory] = VulkanUtils::createBuffer(
         device, physicalDevice, bufferSize,
@@ -914,7 +910,7 @@ vk::Buffer VulkanRenderer::createIndexBuffer() {
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* data = device.mapMemory(stagingBufferMemory, 0, bufferSize);
-    memcpy(data, indices.data(), bufferSize);
+    memcpy(data, model->indices.data(), bufferSize);
     device.unmapMemory(stagingBufferMemory);
 
     auto [buffer, bufferMemory] = VulkanUtils::createBuffer(
@@ -927,17 +923,6 @@ vk::Buffer VulkanRenderer::createIndexBuffer() {
     VulkanUtils::endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
 
     return buffer;
-}
-
-bool VulkanRenderer::loadModel() {
-    std::shared_ptr<Model> model = getProperties().engine->getResourceManager()->loadModel("Duck");
-    if (model == nullptr)
-        return false;
-
-    indices = model->indices;
-    vertices = model->vertices;
-
-    return true;
 }
 
 vk::Sampler VulkanRenderer::createTextureSampler() {
@@ -1193,7 +1178,7 @@ void VulkanRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
     scissor.extent = swapChainExtent;
     commandBuffer.setScissor(0, 1, &scissor);
 
-    commandBuffer.drawIndexed(indices.size(), 1, 0, 0, 0);
+    commandBuffer.drawIndexed(model->indices.size(), 1, 0, 0, 0);
 
     commandBuffer.endRenderPass();
 

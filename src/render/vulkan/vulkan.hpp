@@ -13,6 +13,7 @@
 #include "vulkan/vulkan_structs.hpp"
 
 #include <cstdint>
+#include <memory>
 #include <tuple>
 #include <vector>
 
@@ -155,13 +156,11 @@ private:
     // vertices & indices
     vk::Buffer createVertexBuffer();
     vk::Buffer createIndexBuffer();
-    bool loadModel();
 
     vk::DescriptorSetLayout descriptorSetLayout;
     vk::DescriptorPool descriptorPool;
 
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    std::shared_ptr<Model> model;
     vk::Buffer vertexBuffer;
     // TODO: vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;
