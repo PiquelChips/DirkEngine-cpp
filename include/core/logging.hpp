@@ -3,6 +3,8 @@
 #include <sstream>
 #include <string>
 
+namespace dirk {
+
 enum LogLevel {
     FATAL,
     ERROR,
@@ -35,13 +37,15 @@ void endLogEntry(std::stringstream stream);
  */
 bool shouldLog(LogCategory category, LogLevel level);
 
-#define DECLARE_LOG_CATEGORY_EXTERN(categoryName) extern LogCategory categoryName;
-#define DEFINE_LOG_CATEGORY(categoryName) LogCategory categoryName{ .name = #categoryName };
+#define DECLARE_LOG_CATEGORY_EXTERN(categoryName) extern dirk::LogCategory categoryName;
+#define DEFINE_LOG_CATEGORY(categoryName) dirk::LogCategory categoryName{ .name = #categoryName };
 
-#define DIRK_LOG(category, level, messages)                      \
-    if (shouldLog(category, level)) {                            \
-        endLogEntry(beginLogEntry(category, level) << messages); \
+#define DIRK_LOG(category, level, messages)                                  \
+    if (dirk::shouldLog(category, level)) {                                  \
+        dirk::endLogEntry(dirk::beginLogEntry(category, level) << messages); \
     }
 
 std::string getLevelString(LogLevel level);
 std::string getLevelColor(LogLevel level);
+
+} // namespace dirk

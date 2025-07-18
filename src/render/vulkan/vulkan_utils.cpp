@@ -218,7 +218,6 @@ void VulkanUtils::transitionImageLayout(vk::CommandBuffer commandBuffer, const v
         destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
     } else {
         DIRK_LOG(LogVulkan, FATAL, "unsupported layout transition");
-        dirk::gEngine->exit("unsupported layout transition");
         return;
     }
 
@@ -315,5 +314,17 @@ RendererFeatures VulkanUtils::getRendererFeatures(vk::PhysicalDevice physicalDev
         .msaaSamples = static_cast<int>(VulkanUtils::getMaxUsableSampleCount(physicalDevice)),
     };
 }
+
+vk::ShaderModule VulkanUtils::loadShaderModule(ResourceManager* resourceManager, vk::Device device, const std::string& shaderName) {
+    check(resourceManager);
+    std::shared_ptr<Shader> shader = resourceManager->loadShader(shaderName);
+    check(shader);
+
+    vk::ShaderModuleCreateInfo createInfo{};
+    createInfo.codeSize = shader->size;
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(shader->shader.data());
+
+    return device.createShaderModule(createInfo);
+};
 
 } // namespace dirk

@@ -8,20 +8,30 @@
 #include "core/globals.hpp"
 #include "render/renderer.hpp"
 #include "render/renderer_types.hpp"
+#include "resources/resource_manager.hpp"
+
+namespace dirk {
 
 DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 
-namespace dirk {
+struct DirkEngineCreateInfo {
+    ResourceManagerCreateInfo resourceManagerInfo;
+    RendererCreateInfo rendererInfo;
+};
 
 class DirkEngine {
 
 public:
+    DirkEngine(DirkEngineCreateInfo& createInfo);
+
     int main();
+    void exit();
     void exit(const std::string& reason);
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    RendererCreateInfo RENDERER_INFO{ "DirkEngine", 800, 600, VulkanApi, this };
+    Renderer* getRenderer() const noexcept;
+    ResourceManager* getResourceManager() const noexcept;
 
 private:
     int init();
@@ -31,6 +41,7 @@ private:
 
 private:
     std::unique_ptr<Renderer> renderer = nullptr;
+    std::unique_ptr<ResourceManager> resourceManager = nullptr;
 
     bool requestingExit = false;
 

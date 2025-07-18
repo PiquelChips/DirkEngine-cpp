@@ -3,53 +3,46 @@
 		"generator":"Khronos glTF Blender I/O v4.4.56",
 		"version":"2.0"
 	},
-	"extensionsUsed":[
-		"KHR_materials_specular"
-	],
 	"scene":0,
 	"scenes":[
 		{
 			"name":"Scene",
 			"nodes":[
-				0
+				1
 			]
 		}
 	],
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"mesh_all1_Texture1_0",
-			"rotation":[
-				0.7071068286895752,
-				0,
-				0,
-				0.7071068286895752
+			"name":"LOD3spShape"
+		},
+		{
+			"children":[
+				0
+			],
+			"name":"Node_0",
+			"scale":[
+				0.009999999776482582,
+				0.009999999776482582,
+				0.009999999776482582
 			]
 		}
 	],
 	"materials":[
 		{
-			"doubleSided":true,
-			"extensions":{
-				"KHR_materials_specular":{
-					"specularFactor":0
-				}
-			},
-			"name":"Texture1",
+			"name":"blinn3-fx",
 			"pbrMetallicRoughness":{
-				"baseColorFactor":[
-					0.800000011920929,
-					0.800000011920929,
-					0.800000011920929,
-					1
-				],
+				"baseColorTexture":{
+					"index":0
+				},
 				"metallicFactor":0
 			}
 		}
 	],
 	"meshes":[
 		{
-			"name":"mesh_all1_Texture1_0",
+			"name":"LOD3spShape",
 			"primitives":[
 				{
 					"attributes":{
@@ -63,72 +56,91 @@
 			]
 		}
 	],
+	"textures":[
+		{
+			"sampler":0,
+			"source":0
+		}
+	],
+	"images":[
+		{
+			"mimeType":"image/png",
+			"name":"DuckCM",
+			"uri":"DuckCM.png"
+		}
+	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":4677,
+			"count":2399,
 			"max":[
-				0.7419049739837646,
-				0.9248819947242737,
-				0.7210429906845093
+				96.17990112304688,
+				163.97000122070312,
+				53.92519760131836
 			],
 			"min":[
-				-0.5853449702262878,
-				-0.10764700174331665,
-				-0.7395349740982056
+				-69.29850006103516,
+				9.929369926452637,
+				-61.32819747924805
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":4677,
+			"count":2399,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":4677,
+			"count":2399,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":11484,
+			"count":12636,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":56124,
+			"byteLength":28788,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":56124,
-			"byteOffset":56124,
+			"byteLength":28788,
+			"byteOffset":28788,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":37416,
-			"byteOffset":112248,
+			"byteLength":19192,
+			"byteOffset":57576,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":22968,
-			"byteOffset":149664,
+			"byteLength":25272,
+			"byteOffset":76768,
 			"target":34963
+		}
+	],
+	"samplers":[
+		{
+			"magFilter":9729,
+			"minFilter":9987
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":172632,
-			"uri":"viking_room.bin"
+			"byteLength":102040,
+			"uri":"Duck.bin"
 		}
 	]
 }

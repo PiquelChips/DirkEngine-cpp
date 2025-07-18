@@ -3,6 +3,7 @@
 #include "core/globals.hpp"
 
 #include "render/renderer_types.hpp"
+#include "resources/resource_manager.hpp"
 #include "vulkan_types.hpp"
 
 #include "vulkan/vulkan.hpp"
@@ -40,6 +41,8 @@ public:
     static constexpr bool hasStencilComponent(vk::Format format);
 
     static RendererFeatures getRendererFeatures(vk::PhysicalDevice physicalDevice);
+
+    static vk::ShaderModule loadShaderModule(ResourceManager* resourceManager, vk::Device device, const std::string& shaderName);
 };
 
 } // namespace dirk

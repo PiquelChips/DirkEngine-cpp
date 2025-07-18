@@ -2,15 +2,26 @@
 #include "render/renderer_types.hpp"
 #include "vulkan/vulkan.hpp"
 
-DEFINE_LOG_CATEGORY(LogRenderer)
-
 namespace dirk {
 
-RendererFeatures& Renderer::getFeatures() { return features; }
+DEFINE_LOG_CATEGORY(LogRenderer)
+
+RendererCreateInfo::operator RendererProperties() {
+    return RendererProperties{
+        .applicationName = applicationName,
+        .windowWidth = windowWidth,
+        .windowHeight = windowHeight,
+        .api = api,
+        .engine = engine,
+    };
+};
+
+RendererFeatures& Renderer::getFeatures() noexcept { return features; }
+RendererProperties& Renderer::getProperties() noexcept { return properties; };
 
 Renderer* createRenderer(RendererCreateInfo& createInfo) {
     switch (createInfo.api) {
-    case VulkanApi:
+    case Vulkan:
         return new VulkanRenderer(createInfo);
     }
 

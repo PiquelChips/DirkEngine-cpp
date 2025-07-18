@@ -3,9 +3,9 @@
 #include "core/globals.hpp"
 #include "renderer_types.hpp"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogRenderer);
-
 namespace dirk {
+
+DECLARE_LOG_CATEGORY_EXTERN(LogRenderer);
 
 class DirkEngine;
 
@@ -19,10 +19,14 @@ public:
     virtual void draw(float deltaTime) = 0;
     virtual void cleanup() = 0;
 
-    RendererFeatures& getFeatures();
+    RendererProperties& getProperties() noexcept;
+    RendererFeatures& getFeatures() noexcept;
 
 protected:
+    RendererProperties properties;
     RendererFeatures features;
+
+    DirkEngine* getEngine() { return getProperties().engine; };
 };
 
 Renderer* createRenderer(RendererCreateInfo& createInfo);
