@@ -839,7 +839,7 @@ ImageMemoryView VulkanRenderer::createColorResources() {
 
 ImageMemoryView VulkanRenderer::createTextureResources() {
     Texture& texture = model->texture;
-    vk::DeviceSize imageSize = texture.width * texture.height * 4; // 4 bytes per pixel (1 per channel)
+    vk::DeviceSize imageSize = texture.size;
 
     this->mipLevels = std::floor(std::log2(std::max(texture.width, texture.height))) + 1;
 

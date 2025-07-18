@@ -129,6 +129,7 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
         .texture = Texture{
             .width = static_cast<uint32_t>(textureImage.width),
             .height = static_cast<uint32_t>(textureImage.height),
+            .size = static_cast<uint32_t>(textureImage.width * textureImage.height * (textureImage.bits / 8) * 4),
             .texture = textureImage.image,
         },
     });

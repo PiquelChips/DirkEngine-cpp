@@ -31,7 +31,7 @@ struct ModelViewProjection {
  * DirkEngine's representation of a texture
  */
 struct Texture {
-    uint32_t width, height;
+    uint32_t width, height, size;
     std::vector<unsigned char> texture;
 };
 
