@@ -5,7 +5,9 @@
 #include "glm/glm.hpp"
 #include "glm/gtx/hash.hpp"
 
+#include <cstdint>
 #include <functional>
+#include <vector>
 
 namespace dirk {
 
@@ -32,6 +34,11 @@ struct ModelViewProjection {
  */
 struct Model {
     const std::string& name;
+
+    std::vector<Vertex> vertices;
+    std::vector<std::uint32_t> indices;
+
+    void* texture;
 };
 
 } // namespace dirk
