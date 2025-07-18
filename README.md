@@ -15,7 +15,7 @@ Any contribution/feedback is greatly appreciated!
 
 > [!TIP]
 > The project is not fully in engine state so this will change a lot soon!
-> See [#22](https://github.com/PiquelChips/DirkEngine/issues/22) for progress on that.
+> See [the 0.1 milestone](https://github.com/PiquelChips/DirkEngine/milestone/1) for progress on that.
 
 > [!IMPORTANT]
 > I have only tested this project on my own machine which runs [NixOS](https://nixos.org) with
