@@ -32,8 +32,9 @@ void DirkEngine::exit(const std::string& reason) {
     this->exit();
 }
 
-Actor* DirkEngine::spawnActor(ActorSpawnInfo& spawnInfo) {
-    Actor* actor = new Actor(spawnInfo);
+template <class T>
+T* DirkEngine::spawnActor(ActorSpawnInfo& spawnInfo) {
+    Actor* actor = new T(spawnInfo);
     actors[spawnInfo.name] = actor;
     return actor;
 }

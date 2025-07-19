@@ -40,7 +40,8 @@ public:
     // managing actors
     // TODO: create a world class to manage actors
 public:
-    Actor* spawnActor(ActorSpawnInfo& spawnInfo);
+    template <class T>
+    T* spawnActor(ActorSpawnInfo& spawnInfo);
     void destroyActor(Actor* actor);
 
 private:
