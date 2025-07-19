@@ -4,7 +4,10 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
+#include "actor.hpp"
 #include "core/globals.hpp"
 #include "render/renderer.hpp"
 #include "render/renderer_types.hpp"
@@ -33,6 +36,15 @@ public:
 
     Renderer* getRenderer() const noexcept;
     ResourceManager* getResourceManager() const noexcept;
+
+    // managing actors
+    // TODO: create a world class to manage actors
+public:
+    Actor* spawnActor(ActorSpawnInfo& spawnInfo);
+    void destroyActor(Actor* actor);
+
+private:
+    std::unordered_map<std::string, Actor*> actors;
 
 private:
     int main();

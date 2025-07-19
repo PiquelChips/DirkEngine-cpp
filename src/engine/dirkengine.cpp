@@ -32,6 +32,18 @@ void DirkEngine::exit(const std::string& reason) {
     this->exit();
 }
 
+Actor* DirkEngine::spawnActor(ActorSpawnInfo& spawnInfo) {
+    Actor* actor = new Actor(spawnInfo);
+    actors[spawnInfo.name] = actor;
+    return actor;
+}
+
+void DirkEngine::destroyActor(Actor* actor) {
+    actor->deinitialize();
+    actors.erase(actor->getName());
+    delete actor;
+}
+
 int DirkEngine::main() {
     int result = EXIT_SUCCESS;
     result = init();
@@ -70,10 +82,18 @@ int DirkEngine::init() {
 }
 
 void DirkEngine::tick(float deltaTime) {
+    for (auto pair : actors) {
+        pair.second->tick(deltaTime);
+    }
+
     renderer->draw(deltaTime);
 }
 
 void DirkEngine::cleanup() {
+    for (auto pair : actors) {
+        pair.second->destroy();
+    }
+
     renderer->cleanup();
 }
 
