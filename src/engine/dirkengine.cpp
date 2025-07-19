@@ -21,7 +21,7 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
 
     resourceManager = std::make_unique<ResourceManager>(createInfo.resourceManagerInfo);
     renderer = createRenderer(createInfo.rendererInfo);
-    game = std::move(createInfo.gameInstance);
+    gameInstance = std::move(createInfo.gameInstance);
     check(renderer);
 }
 
@@ -80,7 +80,7 @@ int DirkEngine::init() {
 
     DIRK_LOG(LogEngine, INFO, "engine initialization successful");
     DIRK_LOG(LogEngine, INFO, "initializing the game");
-    if (game->initialize() != EXIT_SUCCESS) {
+    if (gameInstance->initialize() != EXIT_SUCCESS) {
         DIRK_LOG(LogEngine, FATAL, "failed to initialize the game");
         return EXIT_FAILURE;
     }

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <memory>
 
-class DirkGame : public dirk::Game {
+class DirkGame : public dirk::GameInstance {
     int initialize() override {
         return EXIT_SUCCESS;
     }

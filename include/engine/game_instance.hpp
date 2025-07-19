@@ -9,7 +9,7 @@ namespace dirk {
  * To make your own game you must create a child class and implement
  * the interface.
  */
-class Game {
+class GameInstance {
 public:
     virtual int initialize() = 0;
     virtual void begin() = 0;
