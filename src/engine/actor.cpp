@@ -7,4 +7,6 @@ Actor::Actor(ActorSpawnInfo& spawnInfo) : name(spawnInfo.name), engine(spawnInfo
 
 void Actor::destroy() { engine->destroyActor(this); }
 
+void Actor::deinitialize() {}
+
 } // namespace dirk
