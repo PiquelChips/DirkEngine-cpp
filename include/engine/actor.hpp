@@ -32,9 +32,9 @@ public:
     void destroy();
 
     const std::string& getName() const { return name; }
+    const glm::mat4& getTransformMatrix() const { return transformMatrix; }
 
     // begin Actor interface
-public:
     virtual void initialize() = 0;
     virtual void tick(float deltaTime) = 0;
     virtual void deinitialize() = 0;

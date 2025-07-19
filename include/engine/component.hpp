@@ -19,8 +19,11 @@ public:
 
     void deinitialize();
 
+    const std::string& getName() const { return name; }
+    const glm::mat4& getTransformMatrix() const { return transformMatrix; }
+
     inline const Transform& getTransform() const { return transform; }
-    inline void setTransform(const Transform& transform);
+    inline void setTransform(const Transform& inTransform);
 
     inline const glm::vec3& getLocation() const { return transform.location; }
     inline void setLocation(const glm::vec3& inLocation);
@@ -32,13 +35,16 @@ public:
     inline void setScale(const glm::vec3& inScale);
 
 private:
+    void updateTransformMatrix();
     Transform transform;
+    glm::mat4 transformMatrix{ 1.f };
 
 protected:
     Actor* getOwningActor() const { return owningActor; }
 
 private:
     Actor* owningActor;
+    const std::string& name;
 };
 
 } // namespace dirk
