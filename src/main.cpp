@@ -23,7 +23,7 @@ int main() {
         };
 
         auto engine = std::make_unique<dirk::DirkEngine>(engineInfo);
-        return engine->main();
+        return engine->run();
     } catch (std::exception e) {
         std::cerr << e.what();
         return EXIT_FAILURE;
