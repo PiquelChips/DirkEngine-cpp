@@ -9,6 +9,7 @@
 
 #include "actor.hpp"
 #include "core/globals.hpp"
+#include "game.hpp"
 #include "render/renderer.hpp"
 #include "render/renderer_types.hpp"
 #include "resources/resource_manager.hpp"
@@ -20,6 +21,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 struct DirkEngineCreateInfo {
     ResourceManagerCreateInfo resourceManagerInfo;
     RendererCreateInfo rendererInfo;
+    std::unique_ptr<Game> gameInstance;
 };
 
 class DirkEngine {
@@ -57,6 +59,7 @@ private:
 private:
     std::unique_ptr<Renderer> renderer;
     std::unique_ptr<ResourceManager> resourceManager;
+    std::unique_ptr<Game> game;
 
     bool requestingExit = false;
 

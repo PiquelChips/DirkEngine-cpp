@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <utility>
 
 namespace dirk {
 
@@ -20,6 +21,7 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
 
     resourceManager = std::make_unique<ResourceManager>(createInfo.resourceManagerInfo);
     renderer = createRenderer(createInfo.rendererInfo);
+    game = std::move(createInfo.gameInstance);
     check(renderer);
 }
 
@@ -77,6 +79,11 @@ int DirkEngine::init() {
     // TODO: init audio, network, input, ...
 
     DIRK_LOG(LogEngine, INFO, "engine initialization successful");
+    DIRK_LOG(LogEngine, INFO, "initializing the game");
+    if (game->initialize() != EXIT_SUCCESS) {
+        DIRK_LOG(LogEngine, FATAL, "failed to initialize the game");
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
