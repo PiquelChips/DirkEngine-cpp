@@ -19,7 +19,11 @@ public:
     // please use the createComponent function
     Component(ComponentCreateInfo& createInfo);
 
-    void deinitialize();
+    // begin Component interface
+    virtual void initialize() = 0;
+    virtual void tick(float deltaTime) = 0;
+    virtual void deinitialize() = 0;
+    // end Component interface
 
     const std::string& getName() const { return name; }
     const glm::mat4& getTransformMatrix() const { return transformMatrix; }
