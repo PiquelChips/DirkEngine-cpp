@@ -36,9 +36,9 @@ void DirkEngine::exit(const std::string& reason) {
 
 template <class T>
 std::shared_ptr<T> DirkEngine::spawnActor(ActorSpawnInfo& spawnInfo) {
-    std::shared_ptr<T> actor = std::make_shared<T>(spawnInfo);
+    std::shared_ptr<Actor> actor = std::make_shared<T>(spawnInfo);
     actor->initialize();
-    actors[spawnInfo.name] = actor;
+    actors[actor->getName()] = actor;
     return actor;
 }
 
