@@ -29,6 +29,7 @@ public:
     Actor(ActorSpawnInfo& spawnInfo);
 
     void destroy();
+    void deinitialize();
 
     const std::string& getName() const { return name; }
 
