@@ -35,9 +35,9 @@ public:
 
     // begin Actor interface
 public:
-    virtual void beginPlay();
-    virtual void tick(float deltaTime);
-    virtual void endPlay();
+    virtual void beginPlay() = 0;
+    virtual void tick(float deltaTime) = 0;
+    virtual void endPlay() = 0;
     // end Actor interface
 
     inline const Transform& getTransform() const { return transform; }
