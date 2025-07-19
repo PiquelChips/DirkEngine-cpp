@@ -42,7 +42,7 @@ std::shared_ptr<T> DirkEngine::spawnActor(ActorSpawnInfo& spawnInfo) {
     return actor;
 }
 
-void DirkEngine::destroyActor(std::shared_ptr<Actor> actor) {
+void DirkEngine::unregisterActor(Actor* actor) {
     actors.erase(actor->getName());
 }
 

@@ -13,6 +13,7 @@ Actor::Actor(ActorSpawnInfo& spawnInfo)
 
 void Actor::destroy() {
     deinitialize();
+    engine->unregisterActor(this);
 }
 
 void Actor::setTransform(const Transform& inTransform) {

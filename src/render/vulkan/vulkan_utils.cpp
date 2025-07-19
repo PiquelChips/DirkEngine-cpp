@@ -303,7 +303,7 @@ void VulkanUtils::generateMipmaps(vk::CommandBuffer commandBuffer, vk::PhysicalD
     commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, nullptr, barrier);
 }
 
-constexpr bool VulkanUtils::hasStencilComponent(vk::Format format) {
+bool VulkanUtils::hasStencilComponent(vk::Format format) {
     return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
 }
 

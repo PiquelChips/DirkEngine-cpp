@@ -38,7 +38,7 @@ public:
     static void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
     static void generateMipmaps(vk::CommandBuffer commandBuffer, vk::PhysicalDevice physicalDevice, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels);
 
-    static constexpr bool hasStencilComponent(vk::Format format);
+    static bool hasStencilComponent(vk::Format format);
 
     static RendererFeatures getRendererFeatures(vk::PhysicalDevice physicalDevice);
 

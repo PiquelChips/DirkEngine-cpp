@@ -44,7 +44,8 @@ public:
 public:
     template <class T>
     std::shared_ptr<T> spawnActor(ActorSpawnInfo& spawnInfo);
-    void destroyActor(std::shared_ptr<Actor> actor);
+    // for internal use only
+    void unregisterActor(Actor* actor);
 
 private:
     std::unordered_map<std::string, std::shared_ptr<Actor>> actors;
