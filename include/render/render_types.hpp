@@ -19,6 +19,13 @@ struct Vertex {
     bool operator==(const Vertex& other) const {
         return pos == other.pos && color == other.color && texCoord == other.texCoord;
     }
+
+    friend std::stringstream& operator<<(std::stringstream& stream, Vertex vertex) {
+        stream << "position: " << vertex.pos.x << vertex.pos.y << vertex.pos.z << "\n"
+               << "texCoord: " << vertex.texCoord.x << vertex.texCoord.y;
+
+        return stream;
+    }
 };
 
 struct ModelViewProjection {
