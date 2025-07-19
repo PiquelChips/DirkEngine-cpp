@@ -9,8 +9,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "stb_image/stb_image.h"
-#include "tiny_obj_loader/tiny_obj_loader.h"
+#include "tinygltf/tiny_gltf.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
@@ -21,20 +20,20 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <limits>
 #include <set>
 #include <tuple>
 #include <utility>
 #include <vector>
 
+namespace dirk {
+
 DEFINE_LOG_CATEGORY(LogVulkan)
 DEFINE_LOG_CATEGORY(LogVulkanValidation)
 
-namespace dirk {
-
-VulkanRenderer::VulkanRenderer(RendererCreateInfo& createInfo) : rendererCreateInfo(createInfo) {
-    check(rendererCreateInfo.api == VulkanApi);
+VulkanRenderer::VulkanRenderer(RendererCreateInfo& createInfo) {
+    properties = createInfo;
+    check(properties.api == Vulkan);
 }
 
 int VulkanRenderer::init() {
@@ -47,9 +46,9 @@ int VulkanRenderer::init() {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     this->window = glfwCreateWindow(
-        rendererCreateInfo.windowWdith,
-        rendererCreateInfo.windowHeight,
-        rendererCreateInfo.applicationName.c_str(), nullptr, nullptr);
+        getProperties().windowWidth,
+        getProperties().windowHeight,
+        getProperties().applicationName.c_str(), nullptr, nullptr);
     if (!this->window) {
         DIRK_LOG(LogVulkan, FATAL, "error creating GLFW window")
         return EXIT_FAILURE;
@@ -135,7 +134,8 @@ int VulkanRenderer::init() {
         return EXIT_FAILURE;
     }
 
-    if (!loadModel()) {
+    this->model = getEngine()->getResourceManager()->loadModel("Duck");
+    if (!this->model) {
         DIRK_LOG(LogVulkan, FATAL, "failed to load model");
         return EXIT_FAILURE;
     }
@@ -173,8 +173,15 @@ int VulkanRenderer::init() {
 
 void VulkanRenderer::draw(float deltaTime) {
     if (glfwWindowShouldClose(window)) {
-        dirk::gEngine->exit("GLFW close event");
+        getProperties().engine->exit("GLFW close event");
+        return;
     }
+
+    for (uint32_t i = 0; i < UINT32_MAX / 16; i++) {
+        deltaTime = deltaTime + 0;
+    }
+
+    DIRK_LOG(LogVulkan, TRACE, "draw");
 
     updateMVP(deltaTime);
     drawFrame();
@@ -666,8 +673,8 @@ vk::DescriptorPool VulkanRenderer::createDescriptorPool() {
 }
 
 vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
-    vk::ShaderModule vert = loadShaderModule("shader.vert");
-    vk::ShaderModule frag = loadShaderModule("shader.frag");
+    vk::ShaderModule vert = VulkanUtils::loadShaderModule(getEngine()->getResourceManager(), device, "shader.vert");
+    vk::ShaderModule frag = VulkanUtils::loadShaderModule(getEngine()->getResourceManager(), device, "shader.frag");
 
     // vert shader
     vk::PipelineShaderStageCreateInfo vertShaderStageInfo{};
@@ -722,7 +729,7 @@ vk::Pipeline VulkanRenderer::createGraphicsPipeline() {
     rasterizer.polygonMode = vk::PolygonMode::eFill; // fill the polygons with fragments
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = vk::CullModeFlagBits::eBack;
-    rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
+    rasterizer.frontFace = vk::FrontFace::eClockwise;
     rasterizer.depthBiasEnable = vk::False;
 
     // disabled for now
@@ -833,13 +840,10 @@ ImageMemoryView VulkanRenderer::createColorResources() {
 }
 
 ImageMemoryView VulkanRenderer::createTextureResources() {
-    int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load((std::string(RESSOURCE_PATH) + "/textures/viking_room.png").c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    vk::DeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel (1 per channel)
+    Texture& texture = model->texture;
+    vk::DeviceSize imageSize = texture.size;
 
-    this->mipLevels = std::floor(std::log2(std::max(texWidth, texHeight))) + 1;
-
-    check(pixels);
+    this->mipLevels = std::floor(std::log2(std::max(texture.width, texture.height))) + 1;
 
     vk::Format format = vk::Format::eR8G8B8A8Srgb;
 
@@ -849,16 +853,14 @@ ImageMemoryView VulkanRenderer::createTextureResources() {
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* data = device.mapMemory(stagingBufferMemory, 0, imageSize);
-    memcpy(data, pixels, imageSize);
+    memcpy(data, texture.texture.data(), imageSize);
     device.unmapMemory(stagingBufferMemory);
-
-    stbi_image_free(pixels);
 
     CreateImageMemoryViewInfo createInfo{
         .device = device,
         .physicalDevice = physicalDevice,
-        .width = static_cast<uint32_t>(texWidth),
-        .height = static_cast<uint32_t>(texHeight),
+        .width = static_cast<uint32_t>(texture.width),
+        .height = static_cast<uint32_t>(texture.height),
         .format = format,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
@@ -869,8 +871,8 @@ ImageMemoryView VulkanRenderer::createTextureResources() {
 
     vk::CommandBuffer commandBuffer = VulkanUtils::beginSingleTimeCommands(device, commandPool);
     VulkanUtils::transitionImageLayout(commandBuffer, imageMemoryView.image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
-    VulkanUtils::copyBufferToImage(commandBuffer, stagingBuffer, imageMemoryView.image, texWidth, texHeight);
-    VulkanUtils::generateMipmaps(commandBuffer, physicalDevice, imageMemoryView.image, format, texWidth, texHeight, mipLevels);
+    VulkanUtils::copyBufferToImage(commandBuffer, stagingBuffer, imageMemoryView.image, texture.width, texture.height);
+    VulkanUtils::generateMipmaps(commandBuffer, physicalDevice, imageMemoryView.image, format, texture.width, texture.height, mipLevels);
     // transitions to vk::ImageLayout::eShaderReadOnlyOptimal while generating mipmaps
     VulkanUtils::endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
 
@@ -878,7 +880,7 @@ ImageMemoryView VulkanRenderer::createTextureResources() {
 }
 
 vk::Buffer VulkanRenderer::createVertexBuffer() {
-    vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+    vk::DeviceSize bufferSize = sizeof(model->vertices[0]) * model->vertices.size();
 
     auto [stagingBuffer, stagingBufferMemory] = VulkanUtils::createBuffer(
         device, physicalDevice, bufferSize,
@@ -886,7 +888,7 @@ vk::Buffer VulkanRenderer::createVertexBuffer() {
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* dataStaging = device.mapMemory(stagingBufferMemory, 0, bufferSize);
-    memcpy(dataStaging, vertices.data(), bufferSize);
+    memcpy(dataStaging, model->vertices.data(), bufferSize);
     device.unmapMemory(stagingBufferMemory);
 
     auto [buffer, bufferMemory] = VulkanUtils::createBuffer(
@@ -902,7 +904,7 @@ vk::Buffer VulkanRenderer::createVertexBuffer() {
 }
 
 vk::Buffer VulkanRenderer::createIndexBuffer() {
-    vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+    vk::DeviceSize bufferSize = sizeof(model->indices[0]) * model->indices.size();
 
     auto [stagingBuffer, stagingBufferMemory] = VulkanUtils::createBuffer(
         device, physicalDevice, bufferSize,
@@ -910,7 +912,7 @@ vk::Buffer VulkanRenderer::createIndexBuffer() {
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* data = device.mapMemory(stagingBufferMemory, 0, bufferSize);
-    memcpy(data, indices.data(), bufferSize);
+    memcpy(data, model->indices.data(), bufferSize);
     device.unmapMemory(stagingBufferMemory);
 
     auto [buffer, bufferMemory] = VulkanUtils::createBuffer(
@@ -923,69 +925,6 @@ vk::Buffer VulkanRenderer::createIndexBuffer() {
     VulkanUtils::endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
 
     return buffer;
-}
-
-bool VulkanRenderer::loadModel() {
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
-
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, (std::string(RESSOURCE_PATH) + "/models/viking_room.obj").c_str())) {
-        if (warn != "") {
-            warn.pop_back(); // remove trailing return
-            DIRK_LOG(LogVulkan, WARNING, "tiny obj loader: " << warn);
-        }
-        if (err != "") {
-            err.pop_back(); // remove trailing return
-            DIRK_LOG(LogVulkan, ERROR, "tiny obj loader: " << err);
-        }
-        return false;
-    }
-
-    if (warn != "") {
-        warn.pop_back(); // remove trailing return
-        DIRK_LOG(LogVulkan, WARNING, "tiny obj loader: " << warn);
-    }
-    if (err != "") {
-        err.pop_back(); // remove trailing return
-        DIRK_LOG(LogVulkan, ERROR, "tiny obj loader: " << err);
-    }
-
-    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-
-    int vertex_count = attrib.vertices.size() / 3;
-    vertices.reserve(vertex_count);
-    indices.reserve(vertex_count);
-    uniqueVertices.reserve(vertex_count);
-
-    for (const auto& shape : shapes) {
-        for (const auto& index : shape.mesh.indices) {
-            Vertex vertex{};
-
-            vertex.pos = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
-            };
-
-            vertex.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.f - attrib.texcoords[2 * index.texcoord_index + 1], // flip the image as tinyobj assumes 0 is bottom; vulkan assumes 0 is top
-            };
-
-            vertex.color = { 1.f, 1.f, 1.f };
-
-            if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = vertices.size();
-                vertices.emplace_back(vertex);
-            }
-
-            indices.emplace_back(uniqueVertices[vertex]);
-        }
-    }
-
-    return true;
 }
 
 vk::Sampler VulkanRenderer::createTextureSampler() {
@@ -1241,7 +1180,7 @@ void VulkanRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
     scissor.extent = swapChainExtent;
     commandBuffer.setScissor(0, 1, &scissor);
 
-    commandBuffer.drawIndexed(indices.size(), 1, 0, 0, 0);
+    commandBuffer.drawIndexed(model->indices.size(), 1, 0, 0, 0);
 
     commandBuffer.endRenderPass();
 
@@ -1315,38 +1254,24 @@ void VulkanRenderer::drawFrame() {
 }
 
 void VulkanRenderer::updateMVP(float deltaTime) {
+    // glm::mat4 model = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
+    // model = glm::rotate(model, glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f));
+
+    static float angle = 0.f;
+    // angle += 90.f * deltaTime;
+    // if (angle > 360.f)
+    //     angle -= 360.f;
+
+    static float pos = 0.f;
+    pos += 100.f * deltaTime;
+
     ModelViewProjection mvp{
-        .model = glm::rotate(glm::mat4(1.f), 0.f, glm::vec3(0.f, 0.f, 1.f)),
-        .view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
-        .proj = glm::perspective(glm::radians(45.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .1f, 10.f),
+        .model = glm::rotate(glm::mat4(1.f), glm::radians(angle), glm::vec3(0.f, 1.f, 0.f)),
+        .view = glm::lookAt(glm::vec3(pos), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
+        .proj = glm::perspective(glm::radians(90.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .0001f, 10000.f),
     };
 
-    mvp.proj[1][1] *= -1; // glm was originally designed for OpenGL. We must thus flip the y axis of the projection matrix
-
     memcpy(inFlightImages[currentFrame].uniformBufferMapped, &mvp, sizeof(mvp));
-}
-
-vk::ShaderModule VulkanRenderer::loadShaderModule(const std::string& shaderName) {
-    std::ifstream file(std::string(SHADER_PATH) + "/" + shaderName + ".spv", std::ios::ate | std::ios::binary);
-
-    check(file.is_open());
-
-    size_t fileSize = (size_t) file.tellg();
-    std::vector<char> shader(fileSize);
-
-    file.seekg(0);
-    file.read(shader.data(), fileSize);
-
-    file.close();
-
-    vk::ShaderModuleCreateInfo createInfo{};
-    createInfo.sType = vk::StructureType::eShaderModuleCreateInfo;
-    createInfo.codeSize = shader.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(shader.data());
-
-    vk::ShaderModule module = device.createShaderModule(createInfo);
-    check(module);
-    return module;
 }
 
 } // namespace dirk

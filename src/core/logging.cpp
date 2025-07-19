@@ -7,8 +7,11 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <string_view>
 
-constexpr std::string colorEnd{ "\033[0m" };
+namespace dirk {
+
+constexpr std::string_view colorEnd{ "\033[0m" };
 
 std::stringstream beginLogEntry(LogCategory category, LogLevel level) {
     std::stringstream stream{};
@@ -110,3 +113,5 @@ std::string getLevelColor(LogLevel level) {
     color += "m";
     return color;
 }
+
+} // namespace dirk
