@@ -1,6 +1,7 @@
 #include "engine/actor.hpp"
 #include "engine/dirkengine.hpp"
 #include "render/render_types.hpp"
+#include <memory>
 
 namespace dirk {
 
@@ -33,6 +34,10 @@ void Actor::setScale(const glm::vec3& inScale) {
 
 void Actor::updateTransformMatrix() {
     transformMatrix = transform.getMatrix();
+}
+
+void Actor::registerComponent(std::shared_ptr<Component> component) {
+    components.push_back(component);
 }
 
 } // namespace dirk

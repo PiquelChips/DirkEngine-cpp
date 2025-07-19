@@ -15,6 +15,8 @@ struct ComponentCreateInfo {
 class Component {
 
 public:
+    // this constructor is used internally by the engine
+    // please use the createComponent function
     Component(ComponentCreateInfo& createInfo);
 
     void deinitialize();
@@ -43,8 +45,20 @@ protected:
     Actor* getOwningActor() const { return owningActor; }
 
 private:
+    /**
+     * This is stored as a raw pointer as the component will be destroyed
+     * before the owning actor
+     */
     Actor* owningActor;
     const std::string& name;
 };
+
+/**
+ * A raw pointer is returned as the lifetime of an actors components
+ * is managed by the actor itself. Thus, the component will be destroyed
+ * properly on actor shutdown.
+ */
+template <class T>
+Component* createComponent(ComponentCreateInfo& createInfo);
 
 } // namespace dirk

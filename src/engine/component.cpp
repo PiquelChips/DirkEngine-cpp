@@ -1,6 +1,7 @@
 #include "engine/component.hpp"
 
 #include "engine/actor.hpp"
+#include <memory>
 
 namespace dirk {
 
@@ -26,6 +27,13 @@ void Component::setScale(const glm::vec3& inScale) {
 
 void Component::updateTransformMatrix() {
     transformMatrix = transform.getMatrix() * getOwningActor()->getTransformMatrix();
+}
+
+template <class T>
+Component* createComponent(ComponentCreateInfo& createInfo) {
+    auto component = std::make_shared<T>(createInfo);
+    createInfo.owningActor->registerComponent(component);
+    return component.get();
 }
 
 } // namespace dirk
