@@ -11,6 +11,14 @@
 
 namespace dirk {
 
+struct Transform {
+    glm::vec3 location;
+    glm::vec3 rotation;
+    glm::vec3 scale;
+
+    glm::mat4 getMatrix();
+};
+
 struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;

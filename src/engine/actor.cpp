@@ -3,6 +3,8 @@
 
 namespace dirk {
 
+Actor::Actor(ActorSpawnInfo& spawnInfo) : name(spawnInfo.name), engine(spawnInfo.engine) {}
+
 void Actor::destroy() { engine->destroyActor(this); }
 
 } // namespace dirk
