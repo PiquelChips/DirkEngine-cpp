@@ -1,6 +1,7 @@
 #include "render/renderer.hpp"
 #include "render/renderer_types.hpp"
 #include "vulkan/vulkan.hpp"
+#include <memory>
 
 namespace dirk {
 
@@ -19,10 +20,10 @@ RendererCreateInfo::operator RendererProperties() {
 RendererFeatures& Renderer::getFeatures() noexcept { return features; }
 RendererProperties& Renderer::getProperties() noexcept { return properties; };
 
-Renderer* createRenderer(RendererCreateInfo& createInfo) {
+std::unique_ptr<Renderer> createRenderer(RendererCreateInfo& createInfo) {
     switch (createInfo.api) {
     case Vulkan:
-        return new VulkanRenderer(createInfo);
+        return std::make_unique<VulkanRenderer>(createInfo);
     }
 
     DIRK_LOG(LogRenderer, FATAL, "an invalid api was specified in RendererCreateInfo.api");

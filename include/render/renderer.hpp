@@ -2,6 +2,7 @@
 
 #include "core/globals.hpp"
 #include "renderer_types.hpp"
+#include <memory>
 
 namespace dirk {
 
@@ -29,6 +30,6 @@ protected:
     DirkEngine* getEngine() { return getProperties().engine; };
 };
 
-Renderer* createRenderer(RendererCreateInfo& createInfo);
+std::unique_ptr<Renderer> createRenderer(RendererCreateInfo& createInfo);
 
 } // namespace dirk

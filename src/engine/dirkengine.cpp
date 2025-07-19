@@ -19,7 +19,7 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
     createInfo.rendererInfo.engine = this;
 
     resourceManager = std::make_unique<ResourceManager>(createInfo.resourceManagerInfo);
-    renderer = std::unique_ptr<Renderer>(createRenderer(createInfo.rendererInfo));
+    renderer = createRenderer(createInfo.rendererInfo);
     check(renderer);
 }
 
