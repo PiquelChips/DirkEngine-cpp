@@ -4,6 +4,7 @@
 
 #include "glm/glm.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -29,19 +30,18 @@ public:
     Actor(ActorSpawnInfo& spawnInfo);
 
     void destroy();
-    void deinitialize();
 
     const std::string& getName() const { return name; }
 
     // begin Actor interface
 public:
-    virtual void beginPlay() = 0;
+    virtual void initialize() = 0;
     virtual void tick(float deltaTime) = 0;
-    virtual void endPlay() = 0;
+    virtual void deinitialize() = 0;
     // end Actor interface
 
     inline const Transform& getTransform() const { return transform; }
-    inline void setTransform(const Transform& transform);
+    inline void setTransform(const Transform& inTransform);
 
     inline const glm::vec3& getLocation() const { return transform.location; }
     inline void setLocation(const glm::vec3& inLocation);
@@ -53,7 +53,10 @@ public:
     inline void setScale(const glm::vec3& inScale);
 
 private:
+    void updateTransformMatrix();
     Transform transform;
+    glm::mat4 transformMatrix{ 1.f };
+
     DirkEngine* engine;
     const std::string& name;
 
