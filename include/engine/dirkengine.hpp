@@ -41,11 +41,11 @@ public:
     // TODO: create a world class to manage actors
 public:
     template <class T>
-    T* spawnActor(ActorSpawnInfo& spawnInfo);
-    void destroyActor(Actor* actor);
+    std::shared_ptr<T> spawnActor(ActorSpawnInfo& spawnInfo);
+    void destroyActor(std::shared_ptr<Actor> actor);
 
 private:
-    std::unordered_map<std::string, Actor*> actors;
+    std::unordered_map<std::string, std::shared_ptr<Actor>> actors;
 
 private:
     int main();
@@ -55,8 +55,8 @@ private:
     void cleanup();
 
 private:
-    std::unique_ptr<Renderer> renderer = nullptr;
-    std::unique_ptr<ResourceManager> resourceManager = nullptr;
+    std::unique_ptr<Renderer> renderer;
+    std::unique_ptr<ResourceManager> resourceManager;
 
     bool requestingExit = false;
 

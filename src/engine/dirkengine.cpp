@@ -33,16 +33,15 @@ void DirkEngine::exit(const std::string& reason) {
 }
 
 template <class T>
-T* DirkEngine::spawnActor(ActorSpawnInfo& spawnInfo) {
-    Actor* actor = new T(spawnInfo);
+std::shared_ptr<T> DirkEngine::spawnActor(ActorSpawnInfo& spawnInfo) {
+    std::shared_ptr<T> actor = std::make_shared<T>(spawnInfo);
+    actor->initialize();
     actors[spawnInfo.name] = actor;
     return actor;
 }
 
-void DirkEngine::destroyActor(Actor* actor) {
-    actor->deinitialize();
+void DirkEngine::destroyActor(std::shared_ptr<Actor> actor) {
     actors.erase(actor->getName());
-    delete actor;
 }
 
 int DirkEngine::main() {
