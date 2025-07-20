@@ -36,8 +36,8 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    Renderer* getRenderer() const noexcept;
-    ResourceManager* getResourceManager() const noexcept;
+    Renderer* getRenderer() const noexcept { return renderer.get(); }
+    ResourceManager* getResourceManager() const noexcept { return resourceManager.get(); }
 
     // managing actors
     // TODO: create a world class to manage actors

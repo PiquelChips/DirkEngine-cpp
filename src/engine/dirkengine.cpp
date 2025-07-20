@@ -117,7 +117,4 @@ float DirkEngine::captureDeltaTime() {
     return deltaTime;
 }
 
-Renderer* DirkEngine::getRenderer() const noexcept { return renderer.get(); }
-ResourceManager* DirkEngine::getResourceManager() const noexcept { return resourceManager.get(); }
-
 } // namespace dirk

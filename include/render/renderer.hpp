@@ -20,8 +20,8 @@ public:
     virtual void draw(float deltaTime) = 0;
     virtual void cleanup() = 0;
 
-    const RendererProperties& getProperties() const noexcept;
-    const RendererFeatures& getFeatures() const noexcept;
+    const RendererProperties& getProperties() const noexcept { return properties; }
+    const RendererFeatures& getFeatures() const noexcept { return features; }
 
 protected:
     RendererProperties properties;

@@ -17,9 +17,6 @@ RendererCreateInfo::operator RendererProperties() {
     };
 };
 
-RendererFeatures& Renderer::getFeatures() noexcept { return features; }
-RendererProperties& Renderer::getProperties() noexcept { return properties; };
-
 std::unique_ptr<Renderer> createRenderer(RendererCreateInfo& createInfo) {
     switch (createInfo.api) {
     case Vulkan:
