@@ -62,6 +62,7 @@ Much of the advice in [How do I ask a good question?][how-to-ask] applies here t
   - For functions and class names use pascal case: **`FunctionName`**.
   - For macros use shouting snake case: **`MACRO_NAME`**.
     - If it is specifically related to the engine, add the 'DIRK_' prefix: **`DIRK_MACRO_NAME`**.
+  - Files should be named using snake case: **`vulkan_renderer.hpp`**
   - For everything else (variables, class members, and function parameters) use camel case: **`variableName`**.
 - Use 4 spaces for indentation, not tabs.
 - Don't forget to follow the formatting rules in
