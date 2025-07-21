@@ -37,8 +37,4 @@ void Actor::updateTransformMatrix() {
     transformMatrix = transform.getMatrix();
 }
 
-void Actor::registerComponent(std::shared_ptr<Component> component) {
-    components.push_back(component);
-}
-
 } // namespace dirk

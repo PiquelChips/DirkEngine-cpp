@@ -11,7 +11,6 @@
 namespace dirk {
 
 class DirkEngine;
-class Component;
 
 struct ActorSpawnInfo {
     const std::string& name;
@@ -61,13 +60,6 @@ private:
 
     DirkEngine* engine;
     const std::string& name;
-
-    // managing components
-public:
-    void registerComponent(std::shared_ptr<Component> component);
-
-private:
-    std::vector<std::shared_ptr<Component>> components;
 };
 
 } // namespace dirk

@@ -2,7 +2,6 @@
 
 #include "core/globals.hpp"
 #include "engine/actor.hpp"
-#include "engine/component.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/game_instance.hpp"
 #include "render/render_types.hpp"
