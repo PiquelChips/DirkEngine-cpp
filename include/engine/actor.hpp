@@ -52,6 +52,8 @@ public:
     inline const glm::vec3& getScale() const { return transform.scale; }
     inline void setScale(const glm::vec3& inScale);
 
+    inline DirkEngine* getEngine() const noexcept { return engine; }
+
 private:
     void updateTransformMatrix();
     Transform transform;
