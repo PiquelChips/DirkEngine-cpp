@@ -317,7 +317,7 @@ RendererFeatures VulkanUtils::getRendererFeatures(vk::PhysicalDevice physicalDev
 
 vk::ShaderModule VulkanUtils::loadShaderModule(ResourceManager* resourceManager, vk::Device device, const std::string& shaderName) {
     check(resourceManager);
-    std::shared_ptr<Shader> shader = resourceManager->loadShader(shaderName);
+    std::shared_ptr<const Shader> shader = resourceManager->loadShader(shaderName);
     check(shader);
 
     vk::ShaderModuleCreateInfo createInfo{};

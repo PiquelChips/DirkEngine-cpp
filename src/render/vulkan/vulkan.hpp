@@ -157,7 +157,7 @@ private:
     vk::DescriptorSetLayout descriptorSetLayout;
     vk::DescriptorPool descriptorPool;
 
-    std::shared_ptr<Model> model;
+    std::shared_ptr<const Model> model;
     vk::Buffer vertexBuffer;
     // TODO: vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;
