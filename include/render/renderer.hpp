@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/globals.hpp"
+#include "render_types.hpp"
 #include "vulkan_types.hpp"
 
 #include "GLFW/glfw3.h"
@@ -24,6 +25,7 @@ namespace dirk {
 
 class DirkEngine;
 
+DECLARE_LOG_CATEGORY_EXTERN(LogRenderer)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 

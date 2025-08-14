@@ -17,7 +17,6 @@ int main() {
                 .applicationName = "DirkEngine",
                 .windowWidth = 800,
                 .windowHeight = 600,
-                .api = dirk::Vulkan,
             },
         };
 

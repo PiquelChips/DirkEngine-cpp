@@ -1,7 +1,6 @@
 #include "resources/resource_manager.hpp"
 #include "core/asserts.hpp"
 #include "core/globals.hpp"
-#include "render/vulkan_types.hpp"
 
 #include "tinygltf/tiny_gltf.h"
 

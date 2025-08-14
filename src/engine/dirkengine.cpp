@@ -1,6 +1,6 @@
 #include "engine/dirkengine.hpp"
 #include "core/globals.hpp"
-#include "render/vulkan.hpp"
+#include "render/renderer.hpp"
 #include "resources/resource_manager.hpp"
 
 #include <GLFW/glfw3.h>

@@ -9,7 +9,7 @@
 
 #include "actor.hpp"
 #include "core/globals.hpp"
-#include "render/vulkan.hpp"
+#include "render/renderer.hpp"
 #include "render/vulkan_types.hpp"
 #include "resources/resource_manager.hpp"
 

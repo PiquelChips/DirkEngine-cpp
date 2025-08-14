@@ -1,14 +1,15 @@
-#include "render/vulkan_utils.hpp"
+#include "render/render_utils.hpp"
 
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
 #include "render/vulkan_types.hpp"
+#include "render/render_types.hpp"
 
 #include "vulkan/vulkan_handles.hpp"
 
 namespace dirk {
 
-ImageMemoryView VulkanUtils::createImageMemoryView(CreateImageMemoryViewInfo& createInfo) {
+ImageMemoryView RenderUtils::createImageMemoryView(CreateImageMemoryViewInfo& createInfo) {
     auto [image, memory] = createImage(
         createInfo.device,
         createInfo.physicalDevice,
@@ -33,7 +34,7 @@ ImageMemoryView VulkanUtils::createImageMemoryView(CreateImageMemoryViewInfo& cr
     };
 }
 
-std::tuple<vk::Image, vk::DeviceMemory> VulkanUtils::createImage(
+std::tuple<vk::Image, vk::DeviceMemory> RenderUtils::createImage(
     vk::Device device, vk::PhysicalDevice physicalDevice,
     uint32_t width, uint32_t height, vk::Format format,
     vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
@@ -64,7 +65,7 @@ std::tuple<vk::Image, vk::DeviceMemory> VulkanUtils::createImage(
     return std::tuple(image, imageMemory);
 }
 
-vk::ImageView VulkanUtils::createImageView(vk::Device device, vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, uint32_t mipLevels) {
+vk::ImageView RenderUtils::createImageView(vk::Device device, vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, uint32_t mipLevels) {
     vk::ImageViewCreateInfo createInfo{};
     createInfo.sType = vk::StructureType::eImageViewCreateInfo;
     createInfo.image = image;
@@ -83,7 +84,7 @@ vk::ImageView VulkanUtils::createImageView(vk::Device device, vk::Image& image, 
     return device.createImageView(createInfo);
 }
 
-std::tuple<vk::Buffer, vk::DeviceMemory> VulkanUtils::createBuffer(vk::Device device, vk::PhysicalDevice physicalDevice, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
+std::tuple<vk::Buffer, vk::DeviceMemory> RenderUtils::createBuffer(vk::Device device, vk::PhysicalDevice physicalDevice, vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
     // buffer
     vk::BufferCreateInfo bufferInfo{};
     bufferInfo.sType = vk::StructureType::eBufferCreateInfo;
@@ -108,7 +109,7 @@ std::tuple<vk::Buffer, vk::DeviceMemory> VulkanUtils::createBuffer(vk::Device de
     return std::tuple(buffer, bufferMemory);
 }
 
-uint32_t VulkanUtils::findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
+uint32_t RenderUtils::findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
     vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
 
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
@@ -121,7 +122,7 @@ uint32_t VulkanUtils::findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t
     return -1;
 }
 
-vk::Format VulkanUtils::findSupportedFormat(vk::PhysicalDevice physicalDevice, const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features) {
+vk::Format RenderUtils::findSupportedFormat(vk::PhysicalDevice physicalDevice, const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features) {
     for (const auto format : candidates) {
         vk::FormatProperties props = physicalDevice.getFormatProperties(format);
 
@@ -136,7 +137,7 @@ vk::Format VulkanUtils::findSupportedFormat(vk::PhysicalDevice physicalDevice, c
     return vk::Format::eR32G32B32A32Sfloat; // random format
 }
 
-vk::SampleCountFlagBits VulkanUtils::getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice) {
+vk::SampleCountFlagBits RenderUtils::getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice) {
     vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
 
     vk::SampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
@@ -151,7 +152,7 @@ vk::SampleCountFlagBits VulkanUtils::getMaxUsableSampleCount(vk::PhysicalDevice 
     return vk::SampleCountFlagBits::e1;
 }
 
-vk::CommandBuffer VulkanUtils::beginSingleTimeCommands(vk::Device device, vk::CommandPool commandPool) {
+vk::CommandBuffer RenderUtils::beginSingleTimeCommands(vk::Device device, vk::CommandPool commandPool) {
     // TODO: create separate & temp command pool as in tutorial (Chapter: Staging buffer)
 
     vk::CommandBufferAllocateInfo allocInfo{};
@@ -168,7 +169,7 @@ vk::CommandBuffer VulkanUtils::beginSingleTimeCommands(vk::Device device, vk::Co
     return commandBuffer;
 }
 
-void VulkanUtils::endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue) {
+void RenderUtils::endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue) {
     commandBuffer.end();
 
     vk::SubmitInfo submitInfo{};
@@ -178,7 +179,7 @@ void VulkanUtils::endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Qu
     queue.waitIdle(); // TODO: use a fence for more optimized simultaneous ops
 }
 
-void VulkanUtils::transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels) {
+void RenderUtils::transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels) {
     vk::ImageMemoryBarrier barrier{};
     barrier.oldLayout = oldLayout;
     barrier.newLayout = newLayout;
@@ -223,7 +224,7 @@ void VulkanUtils::transitionImageLayout(vk::CommandBuffer commandBuffer, const v
     commandBuffer.pipelineBarrier(sourceStage, destinationStage, {}, {}, nullptr, barrier);
 }
 
-void VulkanUtils::copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height) {
+void RenderUtils::copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height) {
     vk::BufferImageCopy region{};
     region.bufferOffset = 0;
     region.bufferRowLength = 0;
@@ -235,7 +236,7 @@ void VulkanUtils::copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer&
     commandBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, { region });
 }
 
-void VulkanUtils::generateMipmaps(vk::CommandBuffer commandBuffer, vk::PhysicalDevice physicalDevice, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) {
+void RenderUtils::generateMipmaps(vk::CommandBuffer commandBuffer, vk::PhysicalDevice physicalDevice, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) {
     vk::FormatProperties formatPropertes = physicalDevice.getFormatProperties(imageFormat);
     if (!(formatPropertes.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear)) {
         DIRK_LOG(LogVulkan, FATAL, "texture image format does not support linear blitting");
@@ -302,19 +303,19 @@ void VulkanUtils::generateMipmaps(vk::CommandBuffer commandBuffer, vk::PhysicalD
     commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, nullptr, barrier);
 }
 
-bool VulkanUtils::hasStencilComponent(vk::Format format) {
+bool RenderUtils::hasStencilComponent(vk::Format format) {
     return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
 }
 
-RendererFeatures VulkanUtils::getRendererFeatures(vk::PhysicalDevice physicalDevice) {
+RendererFeatures RenderUtils::getRendererFeatures(vk::PhysicalDevice physicalDevice) {
     vk::PhysicalDeviceFeatures deviceFeatures = physicalDevice.getFeatures();
     return RendererFeatures{
         .anisotropy = deviceFeatures.samplerAnisotropy == vk::True,
-        .msaaSamples = static_cast<int>(VulkanUtils::getMaxUsableSampleCount(physicalDevice)),
+        .msaaSamples = static_cast<int>(RenderUtils::getMaxUsableSampleCount(physicalDevice)),
     };
 }
 
-vk::ShaderModule VulkanUtils::loadShaderModule(ResourceManager* resourceManager, vk::Device device, const std::string& shaderName) {
+vk::ShaderModule RenderUtils::loadShaderModule(ResourceManager* resourceManager, vk::Device device, const std::string& shaderName) {
     check(resourceManager);
     std::shared_ptr<const Shader> shader = resourceManager->loadShader(shaderName);
     check(shader);

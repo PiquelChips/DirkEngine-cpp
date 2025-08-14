@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/globals.hpp"
-#include "render/vulkan_types.hpp"
+#include "render/render_types.hpp"
 
 #include <memory>
 #include <string>

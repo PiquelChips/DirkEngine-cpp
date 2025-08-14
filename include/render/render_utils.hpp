@@ -11,7 +11,7 @@
 
 namespace dirk {
 
-class VulkanUtils {
+class RenderUtils {
 public:
     static ImageMemoryView createImageMemoryView(CreateImageMemoryViewInfo& createInfo);
 
