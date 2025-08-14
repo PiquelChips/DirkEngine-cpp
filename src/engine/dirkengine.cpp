@@ -1,6 +1,6 @@
 #include "engine/dirkengine.hpp"
 #include "core/globals.hpp"
-#include "render/renderer.hpp"
+#include "render/vulkan.hpp"
 #include "resources/resource_manager.hpp"
 
 #include <GLFW/glfw3.h>
@@ -20,8 +20,7 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
     createInfo.rendererInfo.engine = this;
 
     resourceManager = std::make_unique<ResourceManager>(createInfo.resourceManagerInfo);
-    renderer = createRenderer(createInfo.rendererInfo);
-    gameInstance = std::move(createInfo.gameInstance);
+    renderer = std::make_unique<Renderer>(createInfo.rendererInfo);
     check(renderer);
 }
 
@@ -80,10 +79,6 @@ int DirkEngine::init() {
 
     DIRK_LOG(LogEngine, INFO, "engine initialization successful");
     DIRK_LOG(LogEngine, INFO, "initializing the game");
-    if (gameInstance->initialize() != EXIT_SUCCESS) {
-        DIRK_LOG(LogEngine, FATAL, "failed to initialize the game");
-        return EXIT_FAILURE;
-    }
 
     return EXIT_SUCCESS;
 }

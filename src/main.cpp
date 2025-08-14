@@ -1,17 +1,10 @@
-#include "dirkengine.h"
+#include "engine/dirkengine.hpp"
+#include "render/vulkan_types.hpp"
 
 #include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <memory>
-
-class DirkGame : public dirk::GameInstance {
-    int initialize() override {
-        return EXIT_SUCCESS;
-    }
-    void begin() override {}
-    void deinitialize() override {}
-};
 
 int main() {
     try {
@@ -26,7 +19,6 @@ int main() {
                 .windowHeight = 600,
                 .api = dirk::Vulkan,
             },
-            .gameInstance = std::make_unique<DirkGame>(),
         };
 
         auto engine = std::make_unique<dirk::DirkEngine>(engineInfo);

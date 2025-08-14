@@ -1,6 +1,7 @@
-#include "render/renderer.hpp"
-#include "render/renderer_types.hpp"
+#include "render/vulkan_types.hpp"
+
 #include "vulkan/vulkan.hpp"
+
 #include <memory>
 
 namespace dirk {
@@ -16,16 +17,6 @@ RendererCreateInfo::operator RendererProperties() {
         .engine = engine,
     };
 };
-
-std::unique_ptr<Renderer> createRenderer(RendererCreateInfo& createInfo) {
-    switch (createInfo.api) {
-    case Vulkan:
-        return std::make_unique<VulkanRenderer>(createInfo);
-    }
-
-    DIRK_LOG(LogRenderer, FATAL, "an invalid api was specified in RendererCreateInfo.api");
-    return nullptr;
-}
 
 glm::mat4 Transform::getMatrix() {
     glm::mat4 matrix = glm::mat4(1.f);

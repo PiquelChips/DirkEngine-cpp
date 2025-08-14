@@ -9,9 +9,8 @@
 
 #include "actor.hpp"
 #include "core/globals.hpp"
-#include "game_instance.hpp"
-#include "render/renderer.hpp"
-#include "render/renderer_types.hpp"
+#include "render/vulkan.hpp"
+#include "render/vulkan_types.hpp"
 #include "resources/resource_manager.hpp"
 
 namespace dirk {
@@ -21,7 +20,6 @@ DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 struct DirkEngineCreateInfo {
     ResourceManagerCreateInfo resourceManagerInfo;
     RendererCreateInfo rendererInfo;
-    std::unique_ptr<GameInstance> gameInstance;
 };
 
 class DirkEngine {
@@ -60,7 +58,6 @@ private:
 private:
     std::unique_ptr<Renderer> renderer;
     std::unique_ptr<ResourceManager> resourceManager;
-    std::unique_ptr<GameInstance> gameInstance;
 
     bool requestingExit = false;
 

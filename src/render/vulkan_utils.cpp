@@ -1,9 +1,8 @@
-#include "vulkan_utils.hpp"
+#include "render/vulkan_utils.hpp"
 
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
-#include "vulkan.hpp"
-#include "vulkan_types.hpp"
+#include "render/vulkan_types.hpp"
 
 #include "vulkan/vulkan_handles.hpp"
 

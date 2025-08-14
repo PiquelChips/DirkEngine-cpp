@@ -1,9 +1,6 @@
 #pragma once
 
 #include "core/globals.hpp"
-#include "render/render_types.hpp"
-#include "render/renderer.hpp"
-#include "render/renderer_types.hpp"
 #include "vulkan_types.hpp"
 
 #include "GLFW/glfw3.h"
@@ -25,20 +22,25 @@
 
 namespace dirk {
 
+class DirkEngine;
+
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 /**
  * The vulkan implementation of the renderer
  */
-class VulkanRenderer : public Renderer {
+class Renderer {
 
 public:
-    VulkanRenderer(RendererCreateInfo& createInfo);
+    Renderer(RendererCreateInfo& createInfo);
 
-    int init() override;
-    void draw(float deltaTime) override;
-    void cleanup() override;
+    int init();
+    void draw(float deltaTime);
+    void cleanup();
+
+    const RendererProperties& getProperties() const noexcept { return properties; }
+    const RendererFeatures& getFeatures() const noexcept { return features; }
 
 private:
     vk::Instance createVulkanInstance();
@@ -167,6 +169,12 @@ private:
 
     uint32_t mipLevels;
     vk::Sampler textureSampler;
+
+protected:
+    RendererProperties properties;
+    RendererFeatures features;
+
+    DirkEngine* getEngine() { return getProperties().engine; };
 };
 
 } // namespace dirk

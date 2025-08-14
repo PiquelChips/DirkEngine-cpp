@@ -1,18 +1,45 @@
 #pragma once
 
-#include "render/render_types.hpp"
+#include "core/globals.hpp"
 
+#include "glm/glm.hpp"
+#include "glm/gtx/hash.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
 #include <cstdint>
+#include <functional>
 #include <optional>
+#include <sstream>
 
 namespace dirk {
 
-struct VulkanVertex : Vertex {
+struct Transform {
+    glm::vec3 location;
+    glm::vec3 rotation;
+    glm::vec3 scale;
+
+    glm::mat4 getMatrix();
+};
+
+struct Vertex {
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec2 texCoord;
+
+    bool operator==(const Vertex& other) const {
+        return pos == other.pos && color == other.color && texCoord == other.texCoord;
+    }
+
+    friend std::stringstream& operator<<(std::stringstream& stream, Vertex vertex) {
+        stream << "position: " << vertex.pos.x << vertex.pos.y << vertex.pos.z << "\n"
+               << "texCoord: " << vertex.texCoord.x << vertex.texCoord.y;
+
+        return stream;
+    }
+
     static vk::VertexInputBindingDescription getBindingDescription() {
         return { 0, sizeof(Vertex), vk::VertexInputRate::eVertex };
     }
@@ -23,6 +50,87 @@ struct VulkanVertex : Vertex {
             vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color)),
             vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, texCoord))
         };
+    }
+};
+
+struct ModelViewProjection {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+
+/**
+ * DirkEngine's representation of a shader
+ */
+struct Shader {
+    const std::string& name;
+
+    std::size_t size;
+    std::vector<char> shader;
+};
+
+/**
+ * DirkEngine's representation of a texture
+ */
+struct Texture {
+    std::uint32_t width, height;
+    std::size_t size;
+    std::vector<unsigned char> texture;
+};
+
+/**
+ * DirkEngine's representation of a 3D model.
+ *
+ * This is essentially an object created by the resource manager from a glTF file.
+ */
+struct Model {
+    const std::string& name;
+
+    std::vector<Vertex> vertices;
+    std::vector<std::uint32_t> indices;
+    Texture texture;
+};
+
+class DirkEngine;
+
+enum RenderApi {
+    Vulkan,
+};
+
+struct RendererProperties {
+    std::string applicationName;
+    uint32_t windowWidth, windowHeight;
+    RenderApi api;
+    DirkEngine* engine;
+};
+
+struct RendererCreateInfo {
+    std::string applicationName;
+    uint32_t windowWidth, windowHeight;
+    RenderApi api;
+    DirkEngine* engine;
+
+    operator RendererProperties();
+};
+
+struct RendererFeatures {
+    bool anisotropy = false;
+    int msaaSamples = 1;
+
+    bool isComplete() { return anisotropy && msaaSamples > 1; }
+
+    int getScore() {
+        if (isComplete())
+            return 1000;
+
+        int score = 0;
+
+        if (anisotropy)
+            score += 10;
+
+        score += msaaSamples;
+
+        return score;
     }
 };
 
@@ -94,3 +202,15 @@ struct CreateImageMemoryViewInfo {
 };
 
 } // namespace dirk
+
+namespace std {
+template <>
+struct hash<dirk::Vertex> {
+    size_t operator()(dirk::Vertex const& vertex) const {
+        return ((hash<glm::vec3>()(vertex.pos) ^
+                 (hash<glm::vec3>()(vertex.color) << 1)) >>
+                1) ^
+               (hash<glm::vec2>()(vertex.texCoord) << 1);
+    }
+};
+} // namespace std

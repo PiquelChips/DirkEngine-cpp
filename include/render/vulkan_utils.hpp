@@ -2,7 +2,6 @@
 
 #include "core/globals.hpp"
 
-#include "render/renderer_types.hpp"
 #include "resources/resource_manager.hpp"
 #include "vulkan_types.hpp"
 

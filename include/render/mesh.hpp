@@ -1,8 +1,7 @@
 #include "core/globals.hpp"
 #include "engine/actor.hpp"
 
-#include "vulkan/vulkan_handles.hpp"
-#include "vulkan_types.hpp"
+#include "vulkan/vulkan.hpp"
 
 namespace dirk {
 
@@ -27,7 +26,7 @@ private:
 
     bool isVisible = false;
 
-    Vulkan(Actor* owningActor);
+    Mesh(Actor* owningActor);
 
     vk::DescriptorSetLayout createDescriptorSetLayout();
     vk::DescriptorPool createDescriptorPool();

@@ -1,6 +1,6 @@
 #include "engine/actor.hpp"
 #include "engine/dirkengine.hpp"
-#include "render/render_types.hpp"
+#include "render/vulkan_types.hpp"
 #include <memory>
 
 namespace dirk {

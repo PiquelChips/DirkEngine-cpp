@@ -9,6 +9,3 @@
 
 #include "asserts.hpp"
 #include "logging.hpp"
-
-namespace dirk {
-} // namespace dirk
