@@ -67,4 +67,6 @@ private:
     std::chrono::high_resolution_clock::time_point lastTick;
 };
 
+DirkEngineCreateInfo getEngineCreateInfo(int argc, char** argv);
+
 } // namespace dirk
