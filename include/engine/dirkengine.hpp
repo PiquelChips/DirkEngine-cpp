@@ -45,7 +45,7 @@ public:
 
 private:
     std::unordered_map<std::string_view, std::shared_ptr<Actor>> actors;
-    // END TODO
+    // END
 
 private:
     int init();

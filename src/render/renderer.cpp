@@ -55,7 +55,6 @@ int Renderer::init() {
     DIRK_LOG(LogVulkan, DEBUG, "successfully setup GLFW window")
 
     DIRK_LOG(LogVulkan, INFO, "initlializing Vulkan...");
-    // TODO: surround with try/catch as in vulkan tutorial
     this->instance = createVulkanInstance();
     if (!this->instance) {
         DIRK_LOG(LogVulkan, FATAL, "instance creation failed")
