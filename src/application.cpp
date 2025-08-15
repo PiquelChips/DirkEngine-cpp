@@ -1,4 +1,4 @@
-#include "engine/dirkengine.hpp"
+#include "dirkengine.h"
 
 dirk::DirkEngineCreateInfo dirk::getEngineCreateInfo(int argc, char** argv) {
     return dirk::DirkEngineCreateInfo{
