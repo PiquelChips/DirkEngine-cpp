@@ -188,9 +188,9 @@ void Actor::updateData() {
 
 void Actor::recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout) {
     ModelViewProjection mvp{
-        .model = transformMatrix,
+        .model = getTransformMatrix(),
         .view = glm::lookAt(glm::vec3(0.f, 200.f, 200.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)), // TDOO: get from player location in the future
-        .proj = engine->getRenderer()->getProjection(),
+        .proj = engine->getCamera()->getProjectionMatrix(),
     };
     std::memcpy(uniformBufferMapped, &mvp, sizeof(mvp));
 

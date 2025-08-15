@@ -9,6 +9,7 @@
 
 #include "actor.hpp"
 #include "core/globals.hpp"
+#include "render/camera.hpp"
 #include "render/render_types.hpp"
 #include "render/renderer.hpp"
 #include "render/vulkan_types.hpp"
@@ -45,6 +46,14 @@ public:
 
 private:
     std::unordered_map<std::string_view, std::shared_ptr<Actor>> actors;
+    // END
+
+    // TODO: move this to player manager class
+public:
+    Camera* getCamera() { return camera.get(); }
+
+private:
+    std::unique_ptr<Camera> camera;
     // END
 
 private:

@@ -2,6 +2,7 @@
 #include "core/asserts.hpp"
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
+#include "render/camera.hpp"
 #include "render/render_utils.hpp"
 #include "render/vulkan_types.hpp"
 
@@ -142,11 +143,9 @@ void Renderer::draw(float deltaTime) {
         return;
     }
 
-    for (uint32_t i = 0; i < UINT32_MAX / 16; i++) {
+    for (uint32_t i = 0; i < UINT32_MAX / 512; i++) {
         deltaTime = deltaTime + 0;
     }
-
-    DIRK_LOG(LogVulkan, TRACE, "draw");
 
     drawFrame();
 }
@@ -496,6 +495,8 @@ void Renderer::recreateSwapChain() {
 
     std::vector<vk::Image> swapChainImages = createSwapChain(this->swapChain);
     this->swapChainImages = createSwapChainImages(swapChainImages);
+
+    getEngine()->getCamera()->setAspectRatio(static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height));
 }
 
 vk::RenderPass Renderer::createRenderPass() {
@@ -1056,12 +1057,6 @@ void Renderer::drawFrame() {
 
     currentFrame = (++currentFrame) % MAX_FRAMES_IN_FLIGHT;
     currentSemaphore = (++currentSemaphore) % semaphores.size();
-}
-
-glm::mat4 Renderer::getProjection() {
-    glm::mat4 proj = glm::perspective(glm::radians(90.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .0001f, 10000.f);
-    proj[1][1] *= -1;
-    return proj;
 }
 
 } // namespace dirk
