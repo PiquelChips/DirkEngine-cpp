@@ -157,7 +157,7 @@ private:
 
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
     const int MAX_FRAMES_IN_FLIGHT = 2; // dont make this too high or CPU will go faster than GPU, causing latency
-    const int MAX_DESCRIPTOR_SET_COUNT = 20;
+    const int MAX_DESCRIPTOR_SET_COUNT = 20; // incrementally increase as scenes get bigger
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
     RendererProperties properties;
