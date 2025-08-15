@@ -18,7 +18,7 @@ DEFINE_LOG_CATEGORY(LogResourceManager)
 ResourceManager::ResourceManager(ResourceManagerCreateInfo& createInfo)
     : resourcePath(createInfo.resourcePath), shaderPath(createInfo.shaderPath) {};
 
-std::shared_ptr<const Model> ResourceManager::loadModel(const std::string_view name) {
+std::shared_ptr<const Model> ResourceManager::loadModel(const std::string& name) {
     if (models.contains(name)) {
         if (std::shared_ptr<const Model> model = models[name].lock()) {
             check(model->name == name);
@@ -140,7 +140,7 @@ std::shared_ptr<const Model> ResourceManager::loadModel(const std::string_view n
     return modelPtr;
 }
 
-std::shared_ptr<const Shader> ResourceManager::loadShader(const std::string_view name) {
+std::shared_ptr<const Shader> ResourceManager::loadShader(const std::string& name) {
     if (shaders.contains(name)) {
         if (std::shared_ptr<const Shader> shader = shaders[name].lock()) {
             check(shader->name == name);
@@ -151,7 +151,7 @@ std::shared_ptr<const Shader> ResourceManager::loadShader(const std::string_view
     }
 
     // load the shader
-    std::ifstream file(std::string(shaderPath) + "/" + std::string(name) + ".spv", std::ios::ate | std::ios::binary);
+    std::ifstream file(shaderPath + "/" + name + ".spv", std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
         DIRK_LOG(LogResourceManager, FATAL, "unable to load shader: " << name)

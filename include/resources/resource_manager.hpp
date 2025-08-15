@@ -36,7 +36,7 @@ public:
      * This function relies on a caching system and will only load a model once,
      * so no worries about reusing the function a lot.
      */
-    std::shared_ptr<const Model> loadModel(const std::string_view name);
+    std::shared_ptr<const Model> loadModel(const std::string& name);
 
     /**
      * Will load a shader file's bytes from:
@@ -45,14 +45,14 @@ public:
      * This function also relies on a caching system and will only load a shader once,
      * so no worries about reusing this function a lot.
      */
-    std::shared_ptr<const Shader> loadShader(const std::string_view name);
+    std::shared_ptr<const Shader> loadShader(const std::string& name);
 
 private:
     std::unordered_map<std::string_view, std::weak_ptr<const Model>> models;
     std::unordered_map<std::string_view, std::weak_ptr<const Shader>> shaders;
 
-    const std::string_view resourcePath;
-    const std::string_view shaderPath;
+    const std::string& resourcePath;
+    const std::string& shaderPath;
 };
 
 } // namespace dirk

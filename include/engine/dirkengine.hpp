@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <memory>
-#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -41,12 +41,11 @@ public:
     // TODO: create a world class to manage actors
 public:
     template <class T>
-    std::shared_ptr<T> spawnActor(ActorSpawnInfo& spawnInfo);
-    // for internal use only
-    void unregisterActor(Actor* actor);
+    std::shared_ptr<T> spawnActor(ActorCreateInfo& spawnInfo);
+    void destroyActor(Actor* actor);
 
 private:
-    std::unordered_map<std::string, std::shared_ptr<Actor>> actors;
+    std::unordered_map<std::string_view, std::shared_ptr<Actor>> actors;
 
 private:
     int main();

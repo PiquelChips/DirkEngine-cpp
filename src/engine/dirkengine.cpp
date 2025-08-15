@@ -35,21 +35,19 @@ void DirkEngine::exit(const std::string& reason) {
 }
 
 template <class T>
-std::shared_ptr<T> DirkEngine::spawnActor(ActorSpawnInfo& spawnInfo) {
+std::shared_ptr<T> DirkEngine::spawnActor(ActorCreateInfo& spawnInfo) {
     std::shared_ptr<Actor> actor = std::make_shared<T>(spawnInfo);
     actor->initialize();
     actors[actor->getName()] = actor;
     return actor;
 }
 
-void DirkEngine::unregisterActor(Actor* actor) {
+void DirkEngine::destroyActor(Actor* actor) {
     actors.erase(actor->getName());
 }
 
 int DirkEngine::main() {
-    int result = EXIT_SUCCESS;
-    result = init();
-
+    int result = init();
     if (result != EXIT_SUCCESS)
         return result;
 
@@ -69,7 +67,7 @@ int DirkEngine::main() {
     DIRK_LOG(LogEngine, INFO, "exiting");
     cleanup();
 
-    return result;
+    return EXIT_SUCCESS;
 }
 
 int DirkEngine::init() {
