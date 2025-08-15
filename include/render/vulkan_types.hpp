@@ -1,6 +1,6 @@
 #pragma once
 
-#include "render/render_types.hpp"
+#include "core/globals.hpp"
 
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
@@ -12,17 +12,40 @@
 
 namespace dirk {
 
-struct VulkanVertex : Vertex {
-    static vk::VertexInputBindingDescription getBindingDescription() {
-        return { 0, sizeof(Vertex), vk::VertexInputRate::eVertex };
-    }
+class DirkEngine;
 
-    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions() {
-        return {
-            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, pos)),
-            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color)),
-            vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, texCoord))
-        };
+struct RendererProperties {
+    std::string applicationName;
+    uint32_t windowWidth, windowHeight;
+    DirkEngine* engine;
+};
+
+struct RendererCreateInfo {
+    std::string applicationName;
+    uint32_t windowWidth, windowHeight;
+    DirkEngine* engine;
+
+    operator RendererProperties();
+};
+
+struct RendererFeatures {
+    bool anisotropy = false;
+    int msaaSamples = 1;
+
+    bool isComplete() { return anisotropy && msaaSamples > 1; }
+
+    int getScore() {
+        if (isComplete())
+            return 1000;
+
+        int score = 0;
+
+        if (anisotropy)
+            score += 10;
+
+        score += msaaSamples;
+
+        return score;
     }
 };
 
@@ -57,14 +80,8 @@ struct InFlightImage {
     vk::CommandBuffer commandBuffer;
     // syncing
     vk::Fence inFlightFence;
-    // ubo for the mvp
-    vk::Buffer uniformBuffer;
-    vk::DeviceMemory uniformBufferMemory;
-    void* uniformBufferMapped;
-    // descriptor set for the ubo
-    vk::DescriptorSet descriptorSet;
 
-    operator bool() const { return commandBuffer && inFlightFence && uniformBuffer && uniformBufferMapped && uniformBufferMemory; }
+    operator bool() const { return commandBuffer && inFlightFence; }
 };
 
 struct ImageMemoryView {

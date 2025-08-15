@@ -1,34 +1,167 @@
 #pragma once
 
 #include "core/globals.hpp"
-#include "renderer_types.hpp"
+#include "render_types.hpp"
+#include "vulkan_types.hpp"
+
+#include "GLFW/glfw3.h"
+#include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_enums.hpp"
+#include "vulkan/vulkan_handles.hpp"
+#include "vulkan/vulkan_structs.hpp"
+
+#include <cstdint>
+#include <memory>
+#include <tuple>
+#include <vector>
+
+#ifdef DEBUG_BUILD
+#ifndef DISABLE_VALIDATION_LAYERS
+#define ENABLE_VALIDATION_LAYERS
+#endif
+#endif
 
 namespace dirk {
 
-DECLARE_LOG_CATEGORY_EXTERN(LogRenderer);
-
 class DirkEngine;
 
+DECLARE_LOG_CATEGORY_EXTERN(LogRenderer)
+DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
+DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
+
 /**
- *  The base class for a renderer
- *  This class should not be implemented directly
+ * The vulkan implementation of the renderer
  */
 class Renderer {
+
 public:
-    virtual int init() = 0;
-    virtual void draw(float deltaTime) = 0;
-    virtual void cleanup() = 0;
+    Renderer(RendererCreateInfo& createInfo);
 
-    RendererProperties& getProperties() noexcept;
-    RendererFeatures& getFeatures() noexcept;
+    int init();
+    void draw(float deltaTime);
+    void cleanup();
 
-protected:
+    const RendererProperties& getProperties() const noexcept { return properties; }
+    const RendererFeatures& getFeatures() const noexcept { return features; }
+
+private:
+    vk::Instance createVulkanInstance();
+    std::vector<const char*> getRequiredInstanceExtensions();
+    bool checkRequiredInstanceExtensions(std::vector<const char*>& extensions);
+
+    vk::SurfaceKHR createSurface();
+
+    // selecting the physical device
+    vk::PhysicalDevice getPhysicalDevice();
+    int getDeviceSuitability(vk::PhysicalDevice device);
+    bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
+    SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
+
+    vk::Device createLogicalDevice();
+    Queues createQueues();
+
+    // swap chain
+    std::vector<vk::Image> createSwapChain(vk::SwapchainKHR oldSwapChain);
+    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+    vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+    vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
+    std::vector<SwapChainImage> createSwapChainImages(std::vector<vk::Image>& images);
+
+    void recreateSwapChain();
+
+    vk::RenderPass createRenderPass();
+    vk::CommandPool createCommandPool();
+    vk::Pipeline createGraphicsPipeline();
+    vk::DescriptorSetLayout createDescriptorSetLayout();
+    vk::DescriptorPool createDescriptorPool();
+
+    // improve overall image quality during rendering
+    ImageMemoryView createDepthResources();
+    ImageMemoryView createColorResources();
+
+    std::vector<InFlightImage> createInFlightImages(const int imageCount);
+
+public:
+    inline const std::tuple<vk::Device, vk::PhysicalDevice> getDevices() { return std::tuple(device, physicalDevice); }
+    inline const Queues& getQueues() { return queues; }
+    inline const vk::SurfaceKHR& getSurface() { return surface; }
+    glm::mat4 getProjection();
+
+    vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
+
+#ifdef ENABLE_VALIDATION_LAYERS
+private:
+    static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
+        vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        vk::DebugUtilsMessageTypeFlagsEXT messageType,
+        const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
+        void* pUserData);
+
+    bool checkValidationLayerSupport();
+    vk::DebugUtilsMessengerEXT setupDebugMessenger();
+
+    std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
+    vk::DebugUtilsMessengerEXT debugMessenger;
+#endif
+
+    static void frameBufferResizeCallback(GLFWwindow* window, int width, int height);
+
+private:
+    // vulkan stuff
+
+    // base required objects
+    GLFWwindow* window = nullptr;
+    vk::Instance instance;
+
+    Queues queues;
+    vk::SurfaceKHR surface;
+
+    // devices
+    vk::PhysicalDevice physicalDevice;
+    vk::Device device;
+
+    // swap chain
+    vk::SwapchainKHR swapChain;
+    vk::Format swapChainImageFormat;
+    vk::Extent2D swapChainExtent;
+
+    // rendering
+    vk::RenderPass renderPass;
+    vk::PipelineLayout pipelineLayout;
+    vk::Pipeline graphicsPipeline;
+    vk::CommandPool commandPool;
+
+    ImageMemoryView depthImageMemoryView;
+    vk::Format depthFormat;
+
+    ImageMemoryView colorImageMemoryView;
+
+    vk::DescriptorSetLayout descriptorSetLayout;
+    vk::DescriptorPool descriptorPool;
+
+    std::vector<SwapChainImage> swapChainImages;
+    std::vector<InFlightImage> inFlightImages;
+    std::vector<std::tuple<vk::Semaphore, vk::Semaphore>> semaphores;
+
+    uint32_t currentFrame = 0;
+    uint32_t currentSemaphore = 0;
+    bool framebufferResized = false;
+
+private:
+    // drawing, should be removed and improved later on
+    void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
+    void drawFrame();
+
+private:
+    // misc variables used by the renderer
+
+    const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
+    const int MAX_FRAMES_IN_FLIGHT = 2; // dont make this too high or CPU will go faster than GPU, causing latency
+    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
+
     RendererProperties properties;
     RendererFeatures features;
-
     DirkEngine* getEngine() { return getProperties().engine; };
 };
-
-Renderer* createRenderer(RendererCreateInfo& createInfo);
 
 } // namespace dirk

@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <utility>
 
 namespace dirk {
 
@@ -19,18 +20,15 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
     createInfo.rendererInfo.engine = this;
 
     resourceManager = std::make_unique<ResourceManager>(createInfo.resourceManagerInfo);
-    renderer = std::unique_ptr<Renderer>(createRenderer(createInfo.rendererInfo));
+    check(resourceManager);
+    renderer = std::make_unique<Renderer>(createInfo.rendererInfo);
     check(renderer);
-}
 
-int DirkEngine::main() {
-    int result = EXIT_SUCCESS;
-    result = init();
+    init();
 
-    if (result != EXIT_SUCCESS)
-        return result;
-
-    lastTick = std::chrono::high_resolution_clock::now();
+    for (auto actorCreateInfo : createInfo.actorCreateInfos) {
+        spawnActor(actorCreateInfo);
+    }
 
     while (true) {
         float deltaTime = captureDeltaTime();
@@ -45,8 +43,6 @@ int DirkEngine::main() {
 
     DIRK_LOG(LogEngine, INFO, "exiting");
     cleanup();
-
-    return result;
 }
 
 void DirkEngine::exit() {
@@ -58,7 +54,21 @@ void DirkEngine::exit(const std::string& reason) {
     this->exit();
 }
 
+std::shared_ptr<Actor> DirkEngine::spawnActor(ActorCreateInfo spawnInfo) {
+    DIRK_LOG(LogEngine, INFO, "spawning actor " << spawnInfo.name);
+    spawnInfo.engine = this;
+    std::shared_ptr<Actor> actor = std::make_shared<Actor>(spawnInfo);
+    actors[actor->getName()] = actor;
+    return actor;
+}
+
+void DirkEngine::destroyActor(Actor* actor) {
+    actors.erase(actor->getName());
+}
+
 int DirkEngine::init() {
+    lastTick = std::chrono::high_resolution_clock::now();
+
     if (renderer->init() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
@@ -70,10 +80,18 @@ int DirkEngine::init() {
 }
 
 void DirkEngine::tick(float deltaTime) {
+    for (auto pair : actors) {
+        pair.second->tick(deltaTime);
+    }
+
     renderer->draw(deltaTime);
 }
 
 void DirkEngine::cleanup() {
+    for (auto pair : actors) {
+        pair.second->destroy();
+    }
+
     renderer->cleanup();
 }
 
@@ -89,8 +107,5 @@ float DirkEngine::captureDeltaTime() {
 
     return deltaTime;
 }
-
-Renderer* DirkEngine::getRenderer() const noexcept { return renderer.get(); }
-ResourceManager* DirkEngine::getResourceManager() const noexcept { return resourceManager.get(); }
 
 } // namespace dirk

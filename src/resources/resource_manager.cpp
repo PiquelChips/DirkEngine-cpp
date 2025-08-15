@@ -1,7 +1,6 @@
 #include "resources/resource_manager.hpp"
 #include "core/asserts.hpp"
 #include "core/globals.hpp"
-#include "render/render_types.hpp"
 
 #include "tinygltf/tiny_gltf.h"
 
@@ -19,9 +18,9 @@ DEFINE_LOG_CATEGORY(LogResourceManager)
 ResourceManager::ResourceManager(ResourceManagerCreateInfo& createInfo)
     : resourcePath(createInfo.resourcePath), shaderPath(createInfo.shaderPath) {};
 
-std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
+std::shared_ptr<const Model> ResourceManager::loadModel(const std::string& name) {
     if (models.contains(name)) {
-        if (std::shared_ptr<Model> model = models[name].lock()) {
+        if (std::shared_ptr<const Model> model = models[name].lock()) {
             check(model->name == name);
             return model;
         } else {
@@ -141,9 +140,9 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
     return modelPtr;
 }
 
-std::shared_ptr<Shader> ResourceManager::loadShader(const std::string& name) {
+std::shared_ptr<const Shader> ResourceManager::loadShader(const std::string& name) {
     if (shaders.contains(name)) {
-        if (std::shared_ptr<Shader> shader = shaders[name].lock()) {
+        if (std::shared_ptr<const Shader> shader = shaders[name].lock()) {
             check(shader->name == name);
             return shader;
         } else {
