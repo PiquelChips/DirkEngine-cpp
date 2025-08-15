@@ -11,5 +11,16 @@ dirk::DirkEngineCreateInfo dirk::getEngineCreateInfo(int argc, char** argv) {
             .windowWidth = 800,
             .windowHeight = 600,
         },
+        .actorCreateInfos{
+            ActorCreateInfo{
+                .name = "Duck",
+                .modelName = "Duck",
+                .transform = Transform{
+                    .location = glm::vec3(0.f),
+                    .rotation = glm::vec3(0.f),
+                    .scale = glm::vec3(1.f),
+                },
+            },
+        }
     };
 }

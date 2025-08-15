@@ -20,14 +20,13 @@ DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 struct DirkEngineCreateInfo {
     ResourceManagerCreateInfo resourceManagerInfo;
     RendererCreateInfo rendererInfo;
+    const std::vector<ActorCreateInfo>& actorCreateInfos;
 };
 
 class DirkEngine {
 
 public:
     DirkEngine(DirkEngineCreateInfo& createInfo);
-
-    int run() { return main(); }
 
     void exit();
     void exit(const std::string& reason);
@@ -40,15 +39,13 @@ public:
     // managing actors
     // TODO: create a world class to manage actors
 public:
-    template <class T>
-    std::shared_ptr<T> spawnActor(ActorCreateInfo& spawnInfo);
+    std::shared_ptr<Actor> spawnActor(ActorCreateInfo& spawnInfo);
     void destroyActor(Actor* actor);
 
 private:
     std::unordered_map<std::string_view, std::shared_ptr<Actor>> actors;
 
 private:
-    int main();
     int init();
     void tick(float deltaTime);
 

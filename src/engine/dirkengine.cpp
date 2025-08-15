@@ -23,35 +23,12 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
     check(resourceManager);
     renderer = std::make_unique<Renderer>(createInfo.rendererInfo);
     check(renderer);
-}
 
-void DirkEngine::exit() {
-    requestingExit = true;
-}
+    init();
 
-void DirkEngine::exit(const std::string& reason) {
-    DIRK_LOG(LogEngine, INFO, "engine exit has been requested with reason: " << reason);
-    this->exit();
-}
-
-template <class T>
-std::shared_ptr<T> DirkEngine::spawnActor(ActorCreateInfo& spawnInfo) {
-    std::shared_ptr<Actor> actor = std::make_shared<T>(spawnInfo);
-    actor->initialize();
-    actors[actor->getName()] = actor;
-    return actor;
-}
-
-void DirkEngine::destroyActor(Actor* actor) {
-    actors.erase(actor->getName());
-}
-
-int DirkEngine::main() {
-    int result = init();
-    if (result != EXIT_SUCCESS)
-        return result;
-
-    lastTick = std::chrono::high_resolution_clock::now();
+    for (auto actorCreateInfo : createInfo.actorCreateInfos) {
+        spawnActor(actorCreateInfo);
+    }
 
     while (true) {
         float deltaTime = captureDeltaTime();
@@ -66,11 +43,31 @@ int DirkEngine::main() {
 
     DIRK_LOG(LogEngine, INFO, "exiting");
     cleanup();
+}
 
-    return EXIT_SUCCESS;
+void DirkEngine::exit() {
+    requestingExit = true;
+}
+
+void DirkEngine::exit(const std::string& reason) {
+    DIRK_LOG(LogEngine, INFO, "engine exit has been requested with reason: " << reason);
+    this->exit();
+}
+
+std::shared_ptr<Actor> DirkEngine::spawnActor(ActorCreateInfo& spawnInfo) {
+    spawnInfo.engine = this;
+    std::shared_ptr<Actor> actor = std::make_shared<Actor>(spawnInfo);
+    actors[actor->getName()] = actor;
+    return actor;
+}
+
+void DirkEngine::destroyActor(Actor* actor) {
+    actors.erase(actor->getName());
 }
 
 int DirkEngine::init() {
+    lastTick = std::chrono::high_resolution_clock::now();
+
     if (renderer->init() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
