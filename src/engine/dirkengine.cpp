@@ -1,5 +1,6 @@
 #include "engine/dirkengine.hpp"
 #include "core/globals.hpp"
+#include "render/camera.hpp"
 #include "render/renderer.hpp"
 #include "resources/resource_manager.hpp"
 
@@ -25,6 +26,8 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
     check(renderer);
 
     init();
+
+    camera = std::make_unique<Camera>();
 
     for (auto actorCreateInfo : createInfo.actorCreateInfos) {
         spawnActor(actorCreateInfo);
@@ -80,6 +83,7 @@ int DirkEngine::init() {
 }
 
 void DirkEngine::tick(float deltaTime) {
+    camera->tick(deltaTime);
     for (auto pair : actors) {
         pair.second->tick(deltaTime);
     }

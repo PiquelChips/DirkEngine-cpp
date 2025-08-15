@@ -83,11 +83,7 @@ std::shared_ptr<const Model> ResourceManager::loadModel(const std::string& name)
         }
 
         vertex.color = { 1.f, 1.f, 1.f };
-
-        if (!uniqueVertices.contains(vertex)) {
-            uniqueVertices[vertex] = vertices.size();
-            vertices.push_back(vertex);
-        }
+        vertices.push_back(vertex);
     }
 
     // indices
@@ -99,21 +95,21 @@ std::shared_ptr<const Model> ResourceManager::loadModel(const std::string& name)
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
         const uint8_t* indexData = reinterpret_cast<const uint8_t*>(&indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset]);
         for (size_t i = 0; i < indexAccessor.count; i++) {
-            indices.push_back(uniqueVertices[vertices[indexData[i]]]);
+            indices.push_back(indexData[i]);
         }
         break;
     }
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
         const uint16_t* indexData = reinterpret_cast<const uint16_t*>(&indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset]);
         for (size_t i = 0; i < indexAccessor.count; i++) {
-            indices.push_back(uniqueVertices[vertices[indexData[i]]]);
+            indices.push_back(indexData[i]);
         }
         break;
     }
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
         const uint32_t* indexData = reinterpret_cast<const uint32_t*>(&indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset]);
         for (size_t i = 0; i < indexAccessor.count; i++) {
-            indices.push_back(uniqueVertices[vertices[indexData[i]]]);
+            indices.push_back(indexData[i]);
         }
         break;
     }
