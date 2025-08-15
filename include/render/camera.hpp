@@ -35,8 +35,8 @@ private:
     // camera settings
     float fieldOfView = glm::radians(90.f);
     float aspectRatio = 16.f / 9.f;
-    float near = .0001;
-    float far = 1000.f;
+    float near = .1;
+    float far = 100000.f;
 };
 
 } // namespace dirk

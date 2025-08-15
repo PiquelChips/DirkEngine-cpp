@@ -26,8 +26,17 @@ dirk::DirkEngineCreateInfo dirk::getEngineCreateInfo(int argc, char** argv) {
                 .modelName = "Duck",
                 .transform = Transform{
                     .location = glm::vec3(-100.f, 0.f, 0.f),
-                    .rotation = glm::vec3(0.f),
+                    .rotation = glm::vec3(-90.f, 0.f, 0.f),
                     .scale = glm::vec3(1.f),
+                },
+            },
+            ActorCreateInfo{
+                .name = "Viking Room",
+                .modelName = "viking_room",
+                .transform = Transform{
+                    .location = glm::vec3(0.f, -200.f, -200.f),
+                    .rotation = glm::vec3(-135.f, 0.f, 0.f),
+                    .scale = glm::vec3(600.f),
                 },
             },
         },
