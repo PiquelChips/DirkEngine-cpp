@@ -5,15 +5,15 @@
 #include "glm/glm.hpp"
 
 #include <memory>
-#include <string>
+#include <string_view>
 #include <vector>
 
 namespace dirk {
 
 class DirkEngine;
 
-struct ActorSpawnInfo {
-    const std::string& name;
+struct ActorCreateInfo {
+    const std::string_view name;
     DirkEngine* engine;
     Transform transform;
 };
@@ -26,12 +26,12 @@ struct ActorSpawnInfo {
 class Actor {
 
 public:
-    Actor(ActorSpawnInfo& spawnInfo);
+    Actor(ActorCreateInfo& spawnInfo);
 
     void destroy();
 
-    const std::string& getName() const { return name; }
-    const glm::mat4& getTransformMatrix() const { return transformMatrix; }
+    inline const std::string_view getName() const { return name; }
+    inline const glm::mat4& getTransformMatrix() const { return transformMatrix; }
 
     // begin Actor interface
     virtual void initialize() = 0;
@@ -59,7 +59,7 @@ private:
     glm::mat4 transformMatrix{ 1.f };
 
     DirkEngine* engine;
-    const std::string& name;
+    const std::string_view name;
 };
 
 } // namespace dirk

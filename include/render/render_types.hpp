@@ -10,6 +10,7 @@
 
 #include <functional>
 #include <sstream>
+#include <string_view>
 
 namespace dirk {
 
@@ -60,7 +61,7 @@ struct ModelViewProjection {
  * DirkEngine's representation of a shader
  */
 struct Shader {
-    const std::string& name;
+    const std::string_view name;
 
     std::size_t size;
     std::vector<char> shader;
@@ -81,7 +82,7 @@ struct Texture {
  * This is essentially an object created by the resource manager from a glTF file.
  */
 struct Model {
-    const std::string& name;
+    const std::string_view name;
 
     std::vector<Vertex> vertices;
     std::vector<std::uint32_t> indices;
