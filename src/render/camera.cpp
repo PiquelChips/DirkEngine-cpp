@@ -29,7 +29,6 @@ void Camera::setFar(float inFar) {
 
 void Camera::updateProjectionMatrix() {
     projectionMatrix = glm::perspective(fieldOfView, aspectRatio, near, far);
-    // projectionMatrix[1][1] *= -1;
 }
 
 } // namespace dirk
