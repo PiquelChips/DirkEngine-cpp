@@ -15,8 +15,8 @@ class DirkEngine;
 
 struct ResourceManagerCreateInfo {
     DirkEngine* engine;
-    const std::string& resourcePath;
-    const std::string& shaderPath;
+    const std::string resourcePath;
+    const std::string shaderPath;
 };
 
 /**
