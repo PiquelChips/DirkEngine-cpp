@@ -26,29 +26,9 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
 
     init();
 
-    spawnActor(ActorCreateInfo{
-        .name = "Duck",
-        .modelName = "Duck",
-        .transform = Transform{
-            .location = glm::vec3(100.f, 0.f, 0.f),
-            .rotation = glm::vec3(0.f),
-            .scale = glm::vec3(1.f),
-        },
-    });
-
-    spawnActor(ActorCreateInfo{
-        .name = "Duck2",
-        .modelName = "Duck",
-        .transform = Transform{
-            .location = glm::vec3(-100.f, 0.f, 0.f),
-            .rotation = glm::vec3(0.f),
-            .scale = glm::vec3(1.f),
-        },
-    });
-    // TODO: use create infos to spawn actors
-    // for (auto actorCreateInfo : createInfo.actorCreateInfos) {
-    //     spawnActor(actorCreateInfo);
-    // }
+    for (auto actorCreateInfo : createInfo.actorCreateInfos) {
+        spawnActor(actorCreateInfo);
+    }
 
     while (true) {
         float deltaTime = captureDeltaTime();

@@ -21,7 +21,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 struct DirkEngineCreateInfo {
     ResourceManagerCreateInfo resourceManagerInfo;
     RendererCreateInfo rendererInfo;
-    const std::vector<ActorCreateInfo>& actorCreateInfos;
+    std::vector<ActorCreateInfo> actorCreateInfos;
 };
 
 class DirkEngine {
