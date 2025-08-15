@@ -54,7 +54,6 @@ private:
     // selecting the physical device
     vk::PhysicalDevice getPhysicalDevice();
     int getDeviceSuitability(vk::PhysicalDevice device);
-    QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
 
@@ -73,12 +72,22 @@ private:
     vk::RenderPass createRenderPass();
     vk::CommandPool createCommandPool();
     vk::Pipeline createGraphicsPipeline();
+    vk::DescriptorSetLayout createDescriptorSetLayout();
+    vk::DescriptorPool createDescriptorPool();
 
     // improve overall image quality during rendering
     ImageMemoryView createDepthResources();
     ImageMemoryView createColorResources();
 
     std::vector<InFlightImage> createInFlightImages(const int imageCount);
+
+public:
+    inline const std::tuple<vk::Device, vk::PhysicalDevice> getDevices() { return std::tuple(device, physicalDevice); }
+    inline const Queues& getQueues() { return queues; }
+    inline const vk::SurfaceKHR& getSurface() { return surface; }
+    glm::mat4 getProjection();
+
+    vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
 
 #ifdef ENABLE_VALIDATION_LAYERS
 private:
@@ -127,6 +136,9 @@ private:
 
     ImageMemoryView colorImageMemoryView;
 
+    vk::DescriptorSetLayout descriptorSetLayout;
+    vk::DescriptorPool descriptorPool;
+
     std::vector<SwapChainImage> swapChainImages;
     std::vector<InFlightImage> inFlightImages;
     std::vector<std::tuple<vk::Semaphore, vk::Semaphore>> semaphores;
@@ -139,7 +151,6 @@ private:
     // drawing, should be removed and improved later on
     void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
-    void updateMVP(float deltaTime);
 
 private:
     // misc variables used by the renderer
@@ -148,34 +159,8 @@ private:
     const int MAX_FRAMES_IN_FLIGHT = 2; // dont make this too high or CPU will go faster than GPU, causing latency
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
-    ///////////////// PER MESH STUFF STARTS HERE
-    vk::DescriptorSetLayout createDescriptorSetLayout();
-    vk::DescriptorPool createDescriptorPool();
-    ImageMemoryView createTextureResources();
-    vk::Sampler createTextureSampler();
-
-    // vertices & indices
-    vk::Buffer createVertexBuffer();
-    vk::Buffer createIndexBuffer();
-
-    vk::DescriptorSetLayout descriptorSetLayout;
-    vk::DescriptorPool descriptorPool;
-
-    std::shared_ptr<const Model> model;
-    vk::Buffer vertexBuffer;
-    // TODO: vk::DeviceMemory vertexBufferMemory;
-    vk::Buffer indexBuffer;
-    // TODO: vk::DeviceMemory indexBufferMemory;
-
-    ImageMemoryView textureImageMemoryView;
-
-    uint32_t mipLevels;
-    vk::Sampler textureSampler;
-
-protected:
     RendererProperties properties;
     RendererFeatures features;
-
     DirkEngine* getEngine() { return getProperties().engine; };
 };
 

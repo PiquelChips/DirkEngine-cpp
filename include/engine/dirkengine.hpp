@@ -9,6 +9,7 @@
 
 #include "actor.hpp"
 #include "core/globals.hpp"
+#include "render/render_types.hpp"
 #include "render/renderer.hpp"
 #include "render/vulkan_types.hpp"
 #include "resources/resource_manager.hpp"
@@ -36,14 +37,15 @@ public:
     Renderer* getRenderer() const noexcept { return renderer.get(); }
     ResourceManager* getResourceManager() const noexcept { return resourceManager.get(); }
 
-    // managing actors
     // TODO: create a world class to manage actors
 public:
-    std::shared_ptr<Actor> spawnActor(ActorCreateInfo& spawnInfo);
+    std::unordered_map<std::string_view, std::shared_ptr<Actor>>& getActors() { return actors; }
+    std::shared_ptr<Actor> spawnActor(ActorCreateInfo spawnInfo);
     void destroyActor(Actor* actor);
 
 private:
     std::unordered_map<std::string_view, std::shared_ptr<Actor>> actors;
+    // END TODO
 
 private:
     int init();

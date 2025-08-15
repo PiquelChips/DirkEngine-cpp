@@ -100,6 +100,12 @@ int Renderer::init() {
         return EXIT_FAILURE;
     }
 
+    this->descriptorPool = createDescriptorPool();
+    if (!this->descriptorPool) {
+        DIRK_LOG(LogVulkan, FATAL, "failed to create descriptor pool");
+        return EXIT_FAILURE;
+    }
+
     this->colorImageMemoryView = createColorResources();
     if (!this->colorImageMemoryView) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create color image");
@@ -124,42 +130,6 @@ int Renderer::init() {
         return EXIT_FAILURE;
     }
 
-    this->descriptorPool = createDescriptorPool();
-    if (!this->descriptorPool) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to create descriptor pool");
-        return EXIT_FAILURE;
-    }
-
-    this->model = getEngine()->getResourceManager()->loadModel("Duck");
-    if (!this->model) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to load model");
-        return EXIT_FAILURE;
-    }
-
-    this->textureImageMemoryView = createTextureResources();
-    if (!this->textureImageMemoryView) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to create texture image");
-        return EXIT_FAILURE;
-    }
-
-    this->textureSampler = createTextureSampler();
-    if (!this->textureSampler) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to create texture sampler");
-        return EXIT_FAILURE;
-    }
-
-    this->vertexBuffer = createVertexBuffer();
-    if (!this->vertexBuffer) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to create vertex buffer");
-        return EXIT_FAILURE;
-    }
-
-    this->indexBuffer = createIndexBuffer();
-    if (!this->indexBuffer) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to create index buffer");
-        return EXIT_FAILURE;
-    }
-
     this->swapChainImages = createSwapChainImages(swapChainImages);
     this->inFlightImages = createInFlightImages(MAX_FRAMES_IN_FLIGHT);
 
@@ -179,7 +149,6 @@ void Renderer::draw(float deltaTime) {
 
     DIRK_LOG(LogVulkan, TRACE, "draw");
 
-    updateMVP(deltaTime);
     drawFrame();
 }
 
@@ -310,7 +279,7 @@ int Renderer::getDeviceSuitability(vk::PhysicalDevice device) {
     if (!deviceFeatures.geometryShader)
         return 0;
 
-    QueueFamilyIndices indices = findQueueFamilies(device);
+    QueueFamilyIndices indices = RenderUtils::findQueueFamilies(device, surface);
     if (!indices.isComplete())
         return 0;
 
@@ -340,33 +309,6 @@ int Renderer::getDeviceSuitability(vk::PhysicalDevice device) {
     return score;
 }
 
-QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device) {
-    QueueFamilyIndices indices;
-
-    std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
-
-    int i = 0;
-    for (const auto& queueFamily : queueFamilies) {
-        // graphics queue
-        if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
-            indices.graphicsFamily = i;
-
-        // present queue
-        vk::Bool32 presentSupport = device.getSurfaceSupportKHR(i, surface);
-
-        if (presentSupport)
-            indices.presentFamily = i;
-
-        // dont loop over every possible queue if we have the required ones already
-        if (indices.isComplete())
-            break;
-
-        i++;
-    }
-
-    return indices;
-}
-
 bool Renderer::checkDeviceExtensionSupport(vk::PhysicalDevice device) {
     std::vector<vk::ExtensionProperties> availableExtensions = device.enumerateDeviceExtensionProperties();
 
@@ -388,7 +330,7 @@ SwapChainSupportDetails Renderer::querySwapChainSupport(vk::PhysicalDevice devic
 }
 
 vk::Device Renderer::createLogicalDevice() {
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = RenderUtils::findQueueFamilies(physicalDevice, surface);
 
     // queues
     std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
@@ -429,7 +371,7 @@ vk::Device Renderer::createLogicalDevice() {
 Queues Renderer::createQueues() {
     Queues queues;
 
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = RenderUtils::findQueueFamilies(physicalDevice, surface);
     queues.graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
     queues.presentQueue = device.getQueue(indices.presentFamily.value(), 0);
 
@@ -472,7 +414,7 @@ std::vector<vk::Image> Renderer::createSwapChain(vk::SwapchainKHR oldSwapChain) 
     createInfo.oldSwapchain = oldSwapChain;
 
     // image sharing if multiple queues
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = RenderUtils::findQueueFamilies(physicalDevice, surface);
     uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
     if (indices.graphicsFamily != indices.presentFamily) {
@@ -627,7 +569,7 @@ vk::RenderPass Renderer::createRenderPass() {
 }
 
 vk::CommandPool Renderer::createCommandPool() {
-    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices queueFamilyIndices = RenderUtils::findQueueFamilies(physicalDevice, surface);
 
     vk::CommandPoolCreateInfo poolInfo{};
     poolInfo.sType = vk::StructureType::eCommandPoolCreateInfo;
@@ -808,7 +750,7 @@ ImageMemoryView Renderer::createDepthResources() {
     };
     ImageMemoryView imageMemoryView = RenderUtils::createImageMemoryView(createInfo);
 
-    vk::CommandBuffer commandBuffer = RenderUtils::beginSingleTimeCommands(device, commandPool);
+    vk::CommandBuffer commandBuffer = RenderUtils::beginSingleTimeCommands(device, physicalDevice, surface);
     RenderUtils::transitionImageLayout(commandBuffer, imageMemoryView.image, depthFormat, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal, 1);
     RenderUtils::endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
 
@@ -830,119 +772,6 @@ ImageMemoryView Renderer::createColorResources() {
     return RenderUtils::createImageMemoryView(createInfo);
 }
 
-ImageMemoryView Renderer::createTextureResources() {
-    const Texture& texture = model->texture;
-    vk::DeviceSize imageSize = texture.size;
-
-    this->mipLevels = std::floor(std::log2(std::max(texture.width, texture.height))) + 1;
-
-    vk::Format format = vk::Format::eR8G8B8A8Srgb;
-
-    auto [stagingBuffer, stagingBufferMemory] = RenderUtils::createBuffer(
-        device, physicalDevice, imageSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-    void* data = device.mapMemory(stagingBufferMemory, 0, imageSize);
-    memcpy(data, texture.texture.data(), imageSize);
-    device.unmapMemory(stagingBufferMemory);
-
-    CreateImageMemoryViewInfo createInfo{
-        .device = device,
-        .physicalDevice = physicalDevice,
-        .width = static_cast<uint32_t>(texture.width),
-        .height = static_cast<uint32_t>(texture.height),
-        .format = format,
-        .tiling = vk::ImageTiling::eOptimal,
-        .usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-        .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
-        .mipLevels = mipLevels,
-    };
-    ImageMemoryView imageMemoryView = RenderUtils::createImageMemoryView(createInfo);
-
-    vk::CommandBuffer commandBuffer = RenderUtils::beginSingleTimeCommands(device, commandPool);
-    RenderUtils::transitionImageLayout(commandBuffer, imageMemoryView.image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
-    RenderUtils::copyBufferToImage(commandBuffer, stagingBuffer, imageMemoryView.image, texture.width, texture.height);
-    RenderUtils::generateMipmaps(commandBuffer, physicalDevice, imageMemoryView.image, format, texture.width, texture.height, mipLevels);
-    // transitions to vk::ImageLayout::eShaderReadOnlyOptimal while generating mipmaps
-    RenderUtils::endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
-
-    return imageMemoryView;
-}
-
-vk::Buffer Renderer::createVertexBuffer() {
-    vk::DeviceSize bufferSize = sizeof(model->vertices[0]) * model->vertices.size();
-
-    auto [stagingBuffer, stagingBufferMemory] = RenderUtils::createBuffer(
-        device, physicalDevice, bufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-    void* dataStaging = device.mapMemory(stagingBufferMemory, 0, bufferSize);
-    memcpy(dataStaging, model->vertices.data(), bufferSize);
-    device.unmapMemory(stagingBufferMemory);
-
-    auto [buffer, bufferMemory] = RenderUtils::createBuffer(
-        device, physicalDevice, bufferSize,
-        vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
-        vk::MemoryPropertyFlagBits::eDeviceLocal);
-
-    vk::CommandBuffer commandBuffer = RenderUtils::beginSingleTimeCommands(device, commandPool);
-    commandBuffer.copyBuffer(stagingBuffer, buffer, vk::BufferCopy(0, 0, bufferSize));
-    RenderUtils::endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
-
-    return buffer;
-}
-
-vk::Buffer Renderer::createIndexBuffer() {
-    vk::DeviceSize bufferSize = sizeof(model->indices[0]) * model->indices.size();
-
-    auto [stagingBuffer, stagingBufferMemory] = RenderUtils::createBuffer(
-        device, physicalDevice, bufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-    void* data = device.mapMemory(stagingBufferMemory, 0, bufferSize);
-    memcpy(data, model->indices.data(), bufferSize);
-    device.unmapMemory(stagingBufferMemory);
-
-    auto [buffer, bufferMemory] = RenderUtils::createBuffer(
-        device, physicalDevice, bufferSize,
-        vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
-        vk::MemoryPropertyFlagBits::eDeviceLocal);
-
-    vk::CommandBuffer commandBuffer = RenderUtils::beginSingleTimeCommands(device, commandPool);
-    commandBuffer.copyBuffer(stagingBuffer, buffer, vk::BufferCopy(0, 0, bufferSize));
-    RenderUtils::endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
-
-    return buffer;
-}
-
-vk::Sampler Renderer::createTextureSampler() {
-    vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
-    vk::SamplerCreateInfo samplerInfo{};
-
-    samplerInfo.magFilter = vk::Filter::eLinear;
-    samplerInfo.minFilter = vk::Filter::eLinear;
-
-    samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
-    samplerInfo.mipLodBias = 0.f;
-    samplerInfo.minLod = 0.f;
-    samplerInfo.maxLod = vk::LodClampNone;
-
-    samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
-    samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
-    samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
-
-    samplerInfo.anisotropyEnable = getFeatures().anisotropy ? vk::True : vk::False;
-    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-
-    samplerInfo.compareEnable = vk::False;
-    samplerInfo.compareOp = vk::CompareOp::eAlways;
-    samplerInfo.unnormalizedCoordinates = vk::False; // the tex coords are normalized
-
-    return device.createSampler(samplerInfo);
-}
 std::vector<SwapChainImage> Renderer::createSwapChainImages(std::vector<vk::Image>& images) {
     std::vector<SwapChainImage> swapImages(images.size());
     semaphores.resize(images.size());
@@ -985,14 +814,6 @@ std::vector<InFlightImage> Renderer::createInFlightImages(const int imageCount) 
     cmdAllocInfo.commandBufferCount = imageCount;
     std::vector<vk::CommandBuffer> commandBuffers = device.allocateCommandBuffers(cmdAllocInfo);
 
-    // mass descriptor set layout allocation
-    std::vector<vk::DescriptorSetLayout> layouts(imageCount, descriptorSetLayout);
-    vk::DescriptorSetAllocateInfo descAllocInfo{};
-    descAllocInfo.descriptorPool = descriptorPool;
-    descAllocInfo.descriptorSetCount = layouts.size();
-    descAllocInfo.pSetLayouts = layouts.data();
-    std::vector<vk::DescriptorSet> descriptorSets = device.allocateDescriptorSets(descAllocInfo);
-
     for (int i = 0; i < imageCount; i++) {
         InFlightImage image;
 
@@ -1006,59 +827,53 @@ std::vector<InFlightImage> Renderer::createInFlightImages(const int imageCount) 
 
         image.inFlightFence = device.createFence(fenceInfo);
 
-        // ubo buffers for mvp
-        vk::DeviceSize bufferSize = sizeof(ModelViewProjection);
-        auto [uniformBuffer, uniformBufferMemory] = RenderUtils::createBuffer(
-            device, physicalDevice, bufferSize,
-            vk::BufferUsageFlagBits::eUniformBuffer,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-        image.uniformBuffer = uniformBuffer;
-        image.uniformBufferMemory = uniformBufferMemory;
-        image.uniformBufferMapped = device.mapMemory(uniformBufferMemory, 0, bufferSize);
-
-        // descriptor sets
-
-        // writes to the descriptor sets
-        std::array descriptorWrites{
-            vk::WriteDescriptorSet{},
-            vk::WriteDescriptorSet{},
-        };
-
-        // set descriptor for ubo
-        vk::DescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = image.uniformBuffer;
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(ModelViewProjection);
-
-        descriptorWrites[0].dstSet = descriptorSets[i];
-        descriptorWrites[0].dstBinding = 0;
-        descriptorWrites[0].dstArrayElement = 0;
-        descriptorWrites[0].descriptorCount = 1;
-        descriptorWrites[0].descriptorType = vk::DescriptorType::eUniformBuffer;
-        descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-        // set descriptor for texture sampling
-        vk::DescriptorImageInfo imageInfo{};
-        imageInfo.imageView = textureImageMemoryView.view;
-        imageInfo.sampler = textureSampler;
-        imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-
-        descriptorWrites[1].dstSet = descriptorSets[i];
-        descriptorWrites[1].dstBinding = 1;
-        descriptorWrites[1].dstArrayElement = 0;
-        descriptorWrites[1].descriptorCount = 1;
-        descriptorWrites[1].descriptorType = vk::DescriptorType::eCombinedImageSampler;
-        descriptorWrites[1].pImageInfo = &imageInfo;
-
-        device.updateDescriptorSets(descriptorWrites, {});
-        image.descriptorSet = descriptorSets[i];
-
         check(image);
         images[i] = image;
     }
 
     return images;
+}
+
+vk::DescriptorSet Renderer::createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout) {
+    vk::DescriptorSetAllocateInfo descAllocInfo{};
+    descAllocInfo.descriptorPool = descriptorPool;
+    descAllocInfo.descriptorSetCount = 1;
+    descAllocInfo.pSetLayouts = &descriptorSetLayout;
+    vk::DescriptorSet descriptorSet = device.allocateDescriptorSets(descAllocInfo)[0];
+
+    // writes to the descriptor sets
+    std::array descriptorWrites{
+        vk::WriteDescriptorSet{},
+        vk::WriteDescriptorSet{},
+    };
+
+    // set descriptor for ubo
+    vk::DescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = uniformBuffer;
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(ModelViewProjection);
+
+    descriptorWrites[0].dstSet = descriptorSet;
+    descriptorWrites[0].dstBinding = 0;
+    descriptorWrites[0].dstArrayElement = 0;
+    descriptorWrites[0].descriptorCount = 1;
+    descriptorWrites[0].descriptorType = vk::DescriptorType::eUniformBuffer;
+    descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+    vk::DescriptorImageInfo imageInfo{};
+    imageInfo.imageView = imageView;
+    imageInfo.sampler = sampler;
+    imageInfo.imageLayout = layout;
+
+    descriptorWrites[1].dstSet = descriptorSet;
+    descriptorWrites[1].dstBinding = 1;
+    descriptorWrites[1].dstArrayElement = 0;
+    descriptorWrites[1].descriptorCount = 1;
+    descriptorWrites[1].descriptorType = vk::DescriptorType::eCombinedImageSampler;
+    descriptorWrites[1].pImageInfo = &imageInfo;
+
+    device.updateDescriptorSets(descriptorWrites, {});
+    return descriptorSet;
 }
 
 #ifdef ENABLE_VALIDATION_LAYERS
@@ -1151,9 +966,6 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
 
     commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-    commandBuffer.bindVertexBuffers(0, vertexBuffer, { 0 });
-    commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
-    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, inFlightImages[currentFrame].descriptorSet, nullptr);
 
     // viewport is dynamic
     vk::Viewport viewport{};
@@ -1171,7 +983,10 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
     scissor.extent = swapChainExtent;
     commandBuffer.setScissor(0, 1, &scissor);
 
-    commandBuffer.drawIndexed(model->indices.size(), 1, 0, 0, 0);
+    // for all actors: recordCommandBuffer
+    for (auto pair : getEngine()->getActors()) {
+        pair.second->recordCommandBuffer(commandBuffer, pipelineLayout);
+    }
 
     commandBuffer.endRenderPass();
 
@@ -1244,25 +1059,10 @@ void Renderer::drawFrame() {
     currentSemaphore = (++currentSemaphore) % semaphores.size();
 }
 
-void Renderer::updateMVP(float deltaTime) {
-    // glm::mat4 model = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
-    // model = glm::rotate(model, glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f));
-
-    static float angle = 0.f;
-    // angle += 90.f * deltaTime;
-    // if (angle > 360.f)
-    //     angle -= 360.f;
-
-    static float pos = 0.f;
-    pos += 100.f * deltaTime;
-
-    ModelViewProjection mvp{
-        .model = glm::rotate(glm::mat4(1.f), glm::radians(angle), glm::vec3(0.f, 1.f, 0.f)),
-        .view = glm::lookAt(glm::vec3(pos), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f)),
-        .proj = glm::perspective(glm::radians(90.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .0001f, 10000.f),
-    };
-
-    memcpy(inFlightImages[currentFrame].uniformBufferMapped, &mvp, sizeof(mvp));
+glm::mat4 Renderer::getProjection() {
+    glm::mat4 proj = glm::perspective(glm::radians(90.f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), .0001f, 10000.f);
+    proj[1][1] *= -1;
+    return proj;
 }
 
 } // namespace dirk

@@ -80,14 +80,8 @@ struct InFlightImage {
     vk::CommandBuffer commandBuffer;
     // syncing
     vk::Fence inFlightFence;
-    // ubo for the mvp
-    vk::Buffer uniformBuffer;
-    vk::DeviceMemory uniformBufferMemory;
-    void* uniformBufferMapped;
-    // descriptor set for the ubo
-    vk::DescriptorSet descriptorSet;
 
-    operator bool() const { return commandBuffer && inFlightFence && uniformBuffer && uniformBufferMapped && uniformBufferMemory; }
+    operator bool() const { return commandBuffer && inFlightFence; }
 };
 
 struct ImageMemoryView {

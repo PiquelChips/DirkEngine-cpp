@@ -74,6 +74,7 @@ struct Texture {
     std::uint32_t width, height;
     std::size_t size;
     std::vector<unsigned char> texture;
+    static const vk::Format format = vk::Format::eR8G8B8A8Srgb;
 };
 
 /**

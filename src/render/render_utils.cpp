@@ -152,8 +152,17 @@ vk::SampleCountFlagBits RenderUtils::getMaxUsableSampleCount(vk::PhysicalDevice 
     return vk::SampleCountFlagBits::e1;
 }
 
-vk::CommandBuffer RenderUtils::beginSingleTimeCommands(vk::Device device, vk::CommandPool commandPool) {
+vk::CommandBuffer RenderUtils::beginSingleTimeCommands(vk::Device device, vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface) {
     // TODO: create separate & temp command pool as in tutorial (Chapter: Staging buffer)
+    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice, surface);
+
+    vk::CommandPoolCreateInfo poolInfo{};
+    poolInfo.sType = vk::StructureType::eCommandPoolCreateInfo;
+    poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+    vk::CommandPool commandPool = device.createCommandPool(poolInfo);
+    // END TODO
 
     vk::CommandBufferAllocateInfo allocInfo{};
     allocInfo.commandPool = commandPool;
@@ -326,5 +335,32 @@ vk::ShaderModule RenderUtils::loadShaderModule(ResourceManager* resourceManager,
 
     return device.createShaderModule(createInfo);
 };
+
+QueueFamilyIndices RenderUtils::findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface) {
+    QueueFamilyIndices indices;
+
+    std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
+
+    int i = 0;
+    for (const auto& queueFamily : queueFamilies) {
+        // graphics queue
+        if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
+            indices.graphicsFamily = i;
+
+        // present queue
+        vk::Bool32 presentSupport = device.getSurfaceSupportKHR(i, surface);
+
+        if (presentSupport)
+            indices.presentFamily = i;
+
+        // dont loop over every possible queue if we have the required ones already
+        if (indices.isComplete())
+            break;
+
+        i++;
+    }
+
+    return indices;
+}
 
 } // namespace dirk

@@ -29,7 +29,7 @@ public:
     static vk::Format findSupportedFormat(vk::PhysicalDevice physicalDevice, const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
     static vk::SampleCountFlagBits getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice);
 
-    static vk::CommandBuffer beginSingleTimeCommands(vk::Device device, vk::CommandPool commandPool);
+    static vk::CommandBuffer beginSingleTimeCommands(vk::Device device, vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface);
     static void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue);
 
     static void transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels = 1);
@@ -42,6 +42,8 @@ public:
     static RendererFeatures getRendererFeatures(vk::PhysicalDevice physicalDevice);
 
     static vk::ShaderModule loadShaderModule(ResourceManager* resourceManager, vk::Device device, const std::string& shaderName);
+
+    static QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 };
 
 } // namespace dirk

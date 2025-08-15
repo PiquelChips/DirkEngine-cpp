@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string_view>
+#include <vulkan/vulkan_handles.hpp>
 
 namespace dirk {
 
@@ -26,7 +27,6 @@ class Actor {
 
 public:
     Actor(ActorCreateInfo& spawnInfo);
-    ~Actor();
 
     void tick(float deltaTime);
     void destroy();
@@ -61,22 +61,21 @@ private:
 
 public:
     inline const std::string_view getModelName() const noexcept { return model->name; }
-    void updateActorModel(const std::string_view name);
+    // record draw commands for this mesh
+    void recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout);
+    void setModel(const std::string_view name);
 
 private:
-    vk::DescriptorSetLayout createDescriptorSetLayout();
-    vk::DescriptorPool createDescriptorPool();
-    ImageMemoryView createTextureResources();
-    vk::Sampler createTextureSampler();
-
-    // vertices & indices
-    vk::Buffer createVertexBuffer();
-    vk::Buffer createIndexBuffer();
-
-    vk::DescriptorSetLayout descriptorSetLayout;
-    vk::DescriptorPool descriptorPool;
+    // will copy data from model into required buffers
+    void updateData();
 
     std::shared_ptr<const Model> model;
+
+    vk::DescriptorSet descriptorSet;
+
+    vk::Buffer uniformBuffer;
+    vk::DeviceMemory uniformBufferMemory;
+    void* uniformBufferMapped;
 
     vk::Buffer vertexBuffer;
     vk::DeviceMemory vertexBufferMemory;

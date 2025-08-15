@@ -26,9 +26,29 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
 
     init();
 
-    for (auto actorCreateInfo : createInfo.actorCreateInfos) {
-        spawnActor(actorCreateInfo);
-    }
+    spawnActor(ActorCreateInfo{
+        .name = "Duck",
+        .modelName = "Duck",
+        .transform = Transform{
+            .location = glm::vec3(100.f, 0.f, 0.f),
+            .rotation = glm::vec3(0.f),
+            .scale = glm::vec3(1.f),
+        },
+    });
+
+    spawnActor(ActorCreateInfo{
+        .name = "Duck2",
+        .modelName = "Duck",
+        .transform = Transform{
+            .location = glm::vec3(-100.f, 0.f, 0.f),
+            .rotation = glm::vec3(0.f),
+            .scale = glm::vec3(1.f),
+        },
+    });
+    // TODO: use create infos to spawn actors
+    // for (auto actorCreateInfo : createInfo.actorCreateInfos) {
+    //     spawnActor(actorCreateInfo);
+    // }
 
     while (true) {
         float deltaTime = captureDeltaTime();
@@ -54,7 +74,8 @@ void DirkEngine::exit(const std::string& reason) {
     this->exit();
 }
 
-std::shared_ptr<Actor> DirkEngine::spawnActor(ActorCreateInfo& spawnInfo) {
+std::shared_ptr<Actor> DirkEngine::spawnActor(ActorCreateInfo spawnInfo) {
+    DIRK_LOG(LogEngine, INFO, "spawning actor " << spawnInfo.name);
     spawnInfo.engine = this;
     std::shared_ptr<Actor> actor = std::make_shared<Actor>(spawnInfo);
     actors[actor->getName()] = actor;
@@ -74,7 +95,6 @@ int DirkEngine::init() {
     // TODO: init audio, network, input, ...
 
     DIRK_LOG(LogEngine, INFO, "engine initialization successful");
-    DIRK_LOG(LogEngine, INFO, "initializing the game");
 
     return EXIT_SUCCESS;
 }
