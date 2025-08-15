@@ -2,8 +2,8 @@
 
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
-#include "render/vulkan_types.hpp"
 #include "render/render_types.hpp"
+#include "render/vulkan_types.hpp"
 
 #include "vulkan/vulkan_handles.hpp"
 
@@ -153,16 +153,13 @@ vk::SampleCountFlagBits RenderUtils::getMaxUsableSampleCount(vk::PhysicalDevice 
 }
 
 vk::CommandBuffer RenderUtils::beginSingleTimeCommands(vk::Device device, vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface) {
-    // TODO: create separate & temp command pool as in tutorial (Chapter: Staging buffer)
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice, surface);
 
     vk::CommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = vk::StructureType::eCommandPoolCreateInfo;
-    poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    poolInfo.flags = vk::CommandPoolCreateFlagBits::eTransient;
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
     vk::CommandPool commandPool = device.createCommandPool(poolInfo);
-    // END TODO
 
     vk::CommandBufferAllocateInfo allocInfo{};
     allocInfo.commandPool = commandPool;
