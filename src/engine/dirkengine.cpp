@@ -1,6 +1,7 @@
 #include "engine/dirkengine.hpp"
 
 #include "core/logging.hpp"
+#include "glm/trigonometric.hpp"
 #include "render/camera.hpp"
 #include "render/renderer.hpp"
 
@@ -23,7 +24,7 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
         DIRK_LOG(LogEngine, FATAL, "unable to initialize renderer");
         return;
     }
-    camera = std::make_shared<Camera>(glm::vec3(0.f, 0.f, -1.f), glm::vec3(0.f, 0.f, 6.f), 45.f, .1f, 100.f);
+    camera = std::make_shared<Camera>(glm::vec3(0.f, 400.f, 400.f), glm::vec3(0.f, -1.f, -1.f), glm::radians(45.f), .1f, 100000.f);
 
     lastTick = std::chrono::high_resolution_clock::now();
     for (auto actorCreateInfo : createInfo.actorCreateInfos) {

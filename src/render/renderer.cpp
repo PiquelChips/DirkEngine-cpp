@@ -668,7 +668,7 @@ vk::Pipeline Renderer::createGraphicsPipeline() {
     rasterizer.polygonMode = vk::PolygonMode::eFill; // fill the polygons with fragments
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = vk::CullModeFlagBits::eBack;
-    rasterizer.frontFace = vk::FrontFace::eClockwise;
+    rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
     rasterizer.depthBiasEnable = vk::False;
 
     // disabled for now

@@ -87,6 +87,7 @@ public:
     vk::Device getLogicalDevice() { return device; }
     vk::PhysicalDevice getPhysicalDevice() { return physicalDevice; }
     Queues getQueues() { return queues; }
+    vk::Extent2D getSwapChainExtent() { return swapChainExtent; }
 
     vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
 

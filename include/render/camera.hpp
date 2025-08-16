@@ -13,7 +13,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogCamera)
 
 class Camera {
 public:
-    Camera(glm::vec3 positon, glm::vec3 direction, float fov, float nearClip, float farClip);
+    Camera(glm::vec3 positon, glm::vec3 forwardDirection, float fov, float nearClip, float farClip);
 
     void tick(float deltaTime);
     void resize(std::uint32_t width, std::uint32_t height);
@@ -40,9 +40,15 @@ private:
     float farClip = 100.f;
 
     glm::vec3 position{ 0.f };
-    glm::vec3 direction{ 0.f };
+    glm::vec3 forwardDirection{ 0.f };
 
+    glm::vec2 lastMousePosition{ 0.f };
     std::uint32_t width, height;
+
+    static constexpr glm::vec3 upDirection{ 0.f, 1.f, 0.f };
+    static constexpr float SENSITIVITY = .002f;
+    static constexpr float ROTATION_SPEED = .3f;
+    static constexpr float MOVEMENT_SPEED = 1000.f;
 };
 
 } // namespace dirk
