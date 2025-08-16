@@ -8,35 +8,42 @@
 #include <vector>
 
 #include "actor.hpp"
-#include "core/globals.hpp"
-#include "render/camera.hpp"
-#include "render/render_types.hpp"
-#include "render/renderer.hpp"
 #include "render/vulkan_types.hpp"
-#include "resources/resource_manager.hpp"
 
 namespace dirk {
 
 DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 
+class Renderer;
+class Camera;
+
 struct DirkEngineCreateInfo {
-    ResourceManagerCreateInfo resourceManagerInfo;
     RendererCreateInfo rendererInfo;
     std::vector<ActorCreateInfo> actorCreateInfos;
 };
+
+DirkEngineCreateInfo getEngineCreateInfo(int argc, char** argv);
 
 class DirkEngine {
 
 public:
     DirkEngine(DirkEngineCreateInfo& createInfo);
+    ~DirkEngine();
 
     void exit();
     void exit(const std::string& reason);
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    Renderer* getRenderer() const noexcept { return renderer.get(); }
-    ResourceManager* getResourceManager() const noexcept { return resourceManager.get(); }
+public:
+    static DirkEngine* get() { return engine; }
+    static std::shared_ptr<Renderer> getRenderer() { return get()->renderer; }
+    static std::shared_ptr<Camera> getCamera() { return get()->camera; }
+
+private:
+    inline static DirkEngine* engine;
+    std::shared_ptr<Renderer> renderer;
+    std::shared_ptr<Camera> camera;
 
     // TODO: create a world class to manage actors
 public:
@@ -48,32 +55,12 @@ private:
     std::unordered_map<std::string_view, std::shared_ptr<Actor>> actors;
     // END
 
-    // TODO: move this to player manager class
-public:
-    Camera* getCamera() { return camera.get(); }
-
 private:
-    std::unique_ptr<Camera> camera;
-    // END
-
-private:
-    int init();
     void tick(float deltaTime);
-
-    void cleanup();
-
-private:
-    std::unique_ptr<Renderer> renderer;
-    std::unique_ptr<ResourceManager> resourceManager;
-
-    bool requestingExit = false;
-
-private:
     float captureDeltaTime();
 
     std::chrono::high_resolution_clock::time_point lastTick;
+    bool requestingExit = false;
 };
-
-DirkEngineCreateInfo getEngineCreateInfo(int argc, char** argv);
 
 } // namespace dirk

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/globals.hpp"
+#include "engine/dirkengine.hpp"
 #include "render_types.hpp"
 #include "vulkan_types.hpp"
 
@@ -23,8 +24,6 @@
 
 namespace dirk {
 
-class DirkEngine;
-
 DECLARE_LOG_CATEGORY_EXTERN(LogRenderer)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
@@ -36,13 +35,15 @@ class Renderer {
 
 public:
     Renderer(RendererCreateInfo& createInfo);
+    ~Renderer();
 
-    int init();
     void draw(float deltaTime);
-    void cleanup();
+    int init();
 
     const RendererProperties& getProperties() const noexcept { return properties; }
     const RendererFeatures& getFeatures() const noexcept { return features; }
+
+    static std::shared_ptr<Renderer> get() { return DirkEngine::getRenderer(); }
 
 private:
     vk::Instance createVulkanInstance();
@@ -52,7 +53,7 @@ private:
     vk::SurfaceKHR createSurface();
 
     // selecting the physical device
-    vk::PhysicalDevice getPhysicalDevice();
+    vk::PhysicalDevice selectPhysicalDevice();
     int getDeviceSuitability(vk::PhysicalDevice device);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
@@ -82,10 +83,10 @@ private:
     std::vector<InFlightImage> createInFlightImages(const int imageCount);
 
 public:
-    inline const std::tuple<vk::Device, vk::PhysicalDevice> getDevices() { return std::tuple(device, physicalDevice); }
-    inline const Queues& getQueues() { return queues; }
-    inline const vk::SurfaceKHR& getSurface() { return surface; }
-    glm::mat4 getProjection();
+    GLFWwindow* getWindow() { return window; }
+    vk::Device getLogicalDevice() { return device; }
+    vk::PhysicalDevice getPhysicalDevice() { return physicalDevice; }
+    Queues getQueues() { return queues; }
 
     vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
 
@@ -156,13 +157,44 @@ private:
     // misc variables used by the renderer
 
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
-    const int MAX_FRAMES_IN_FLIGHT = 2; // dont make this too high or CPU will go faster than GPU, causing latency
+    const int MAX_FRAMES_IN_FLIGHT = 2;      // dont make this too high or CPU will go faster than GPU, causing latency
     const int MAX_DESCRIPTOR_SET_COUNT = 20; // incrementally increase as scenes get bigger
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
     RendererProperties properties;
     RendererFeatures features;
-    DirkEngine* getEngine() { return getProperties().engine; };
+
+public:
+    // some static utility functions
+    static ImageMemoryView createImageMemoryView(CreateImageMemoryViewInfo& createInfo);
+
+    static std::tuple<vk::Image, vk::DeviceMemory> createImage(
+        uint32_t width, uint32_t height, vk::Format format,
+        vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
+        vk::SampleCountFlagBits numSamples = vk::SampleCountFlagBits::e1,
+        uint32_t mipLevels = 1);
+
+    static vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor, uint32_t mipLevels = 1);
+
+    static std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
+    static uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+    static vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
+    static vk::SampleCountFlagBits getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice);
+    static QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
+
+    static vk::CommandBuffer beginSingleTimeCommands();
+    static void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue);
+
+    static void transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels = 1);
+    static void copyBuffer(vk::CommandBuffer commandBuffer, vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size);
+    static void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
+    static void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels);
+
+    static bool hasStencilComponent(vk::Format format);
+
+    static RendererFeatures getRendererFeatures(vk::PhysicalDevice physicalDevice);
+
+    static vk::ShaderModule loadShaderModule(const std::string& shaderName);
 };
 
 } // namespace dirk

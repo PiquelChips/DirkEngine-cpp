@@ -1,8 +1,8 @@
 #include "engine/dirkengine.hpp"
-#include "core/globals.hpp"
+
+#include "core/logging.hpp"
 #include "render/camera.hpp"
 #include "render/renderer.hpp"
-#include "resources/resource_manager.hpp"
 
 #include <GLFW/glfw3.h>
 #include <chrono>
@@ -16,19 +16,16 @@ namespace dirk {
 DEFINE_LOG_CATEGORY(LogEngine)
 
 DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
-    // make sure to populate the engine fields
-    createInfo.resourceManagerInfo.engine = this;
-    createInfo.rendererInfo.engine = this;
+    engine = this;
 
-    resourceManager = std::make_unique<ResourceManager>(createInfo.resourceManagerInfo);
-    check(resourceManager);
-    renderer = std::make_unique<Renderer>(createInfo.rendererInfo);
-    check(renderer);
+    renderer = std::make_shared<Renderer>(createInfo.rendererInfo);
+    if (renderer->init() != EXIT_SUCCESS) {
+        DIRK_LOG(LogEngine, FATAL, "unable to initialize renderer");
+        return;
+    }
+    camera = std::make_shared<Camera>(glm::vec3(0.f, 0.f, -1.f), glm::vec3(0.f, 0.f, 6.f), 45.f, .1f, 100.f);
 
-    init();
-
-    camera = std::make_unique<Camera>();
-
+    lastTick = std::chrono::high_resolution_clock::now();
     for (auto actorCreateInfo : createInfo.actorCreateInfos) {
         spawnActor(actorCreateInfo);
     }
@@ -43,9 +40,13 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
 
         tick(deltaTime);
     }
+}
 
+DirkEngine::~DirkEngine() {
     DIRK_LOG(LogEngine, INFO, "exiting");
-    cleanup();
+    for (auto pair : actors) {
+        pair.second->destroy();
+    }
 }
 
 void DirkEngine::exit() {
@@ -59,7 +60,6 @@ void DirkEngine::exit(const std::string& reason) {
 
 std::shared_ptr<Actor> DirkEngine::spawnActor(ActorCreateInfo spawnInfo) {
     DIRK_LOG(LogEngine, INFO, "spawning actor " << spawnInfo.name);
-    spawnInfo.engine = this;
     std::shared_ptr<Actor> actor = std::make_shared<Actor>(spawnInfo);
     actors[actor->getName()] = actor;
     return actor;
@@ -69,34 +69,13 @@ void DirkEngine::destroyActor(Actor* actor) {
     actors.erase(actor->getName());
 }
 
-int DirkEngine::init() {
-    lastTick = std::chrono::high_resolution_clock::now();
-
-    if (renderer->init() != EXIT_SUCCESS)
-        return EXIT_FAILURE;
-
-    // TODO: init audio, network, input, ...
-
-    DIRK_LOG(LogEngine, INFO, "engine initialization successful");
-
-    return EXIT_SUCCESS;
-}
-
 void DirkEngine::tick(float deltaTime) {
-    camera->tick(deltaTime);
+    Camera::get()->tick(deltaTime);
     for (auto pair : actors) {
         pair.second->tick(deltaTime);
     }
 
-    renderer->draw(deltaTime);
-}
-
-void DirkEngine::cleanup() {
-    for (auto pair : actors) {
-        pair.second->destroy();
-    }
-
-    renderer->cleanup();
+    Renderer::get()->draw(deltaTime);
 }
 
 float DirkEngine::captureDeltaTime() {

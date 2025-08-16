@@ -4,10 +4,10 @@
 #include "render/vulkan_types.hpp"
 
 #include "glm/glm.hpp"
+#include "vulkan/vulkan_handles.hpp"
 
 #include <memory>
 #include <string_view>
-#include <vulkan/vulkan_handles.hpp>
 
 namespace dirk {
 
@@ -16,7 +16,6 @@ class DirkEngine;
 struct ActorCreateInfo {
     const std::string_view name;
     const std::string_view modelName;
-    DirkEngine* engine;
     Transform transform;
 };
 
@@ -37,7 +36,6 @@ public:
     inline bool isVisible() { return visible; }
 
 private:
-    DirkEngine* engine;
     const std::string_view name;
     bool visible = false;
 

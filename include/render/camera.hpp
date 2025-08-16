@@ -2,7 +2,10 @@
 
 #include "core/globals.hpp"
 
+#include "engine/dirkengine.hpp"
 #include "glm/glm.hpp"
+#include <cstdint>
+#include <memory>
 
 namespace dirk {
 
@@ -10,33 +13,36 @@ DECLARE_LOG_CATEGORY_EXTERN(LogCamera)
 
 class Camera {
 public:
-    Camera();
+    Camera(glm::vec3 positon, glm::vec3 direction, float fov, float nearClip, float farClip);
 
     void tick(float deltaTime);
+    void resize(std::uint32_t width, std::uint32_t height);
 
-    inline const glm::mat4 getProjectionMatrix() const noexcept { return projectionMatrix; }
+    inline const glm::mat4& getProjection() const { return projection; }
+    inline const glm::mat4& getInverseProjection() const { return inverseProjection; }
+    inline const glm::mat4& getView() const { return view; }
+    inline const glm::mat4& getInverseView() const { return inverseView; }
 
-    inline float getFieldOfView() { return fieldOfView; }
-    void setFieldOfView(float inFieldOfView);
-
-    inline float getAspectRatio() { return aspectRatio; }
-    void setAspectRatio(float inAspectRatio);
-
-    inline float getNear() { return near; }
-    void setNear(float inNear);
-
-    inline float getFar() { return far; }
-    void setFar(float inFar);
+    static std::shared_ptr<Camera> get() { return DirkEngine::getCamera(); }
 
 private:
-    void updateProjectionMatrix();
-    glm::mat4 projectionMatrix{ 1.f };
+    void updateProjection();
+    void updateView();
+
+    glm::mat4 projection{ 1.f };
+    glm::mat4 inverseProjection{ 1.f };
+    glm::mat4 view{ 1.f };
+    glm::mat4 inverseView{ 1.f };
 
     // camera settings
-    float fieldOfView = glm::radians(90.f);
-    float aspectRatio = 16.f / 9.f;
-    float near = .1;
-    float far = 100000.f;
+    float fov = glm::radians(45.f);
+    float nearClip = .1f;
+    float farClip = 100.f;
+
+    glm::vec3 position{ 0.f };
+    glm::vec3 direction{ 0.f };
+
+    std::uint32_t width, height;
 };
 
 } // namespace dirk

@@ -15,9 +15,6 @@ namespace dirk {
 
 DEFINE_LOG_CATEGORY(LogResourceManager)
 
-ResourceManager::ResourceManager(ResourceManagerCreateInfo& createInfo)
-    : resourcePath(createInfo.resourcePath), shaderPath(createInfo.shaderPath) {};
-
 std::shared_ptr<const Model> ResourceManager::loadModel(const std::string& name) {
     if (models.contains(name)) {
         if (std::shared_ptr<const Model> model = models[name].lock()) {
@@ -33,7 +30,7 @@ std::shared_ptr<const Model> ResourceManager::loadModel(const std::string& name)
     tinygltf::TinyGLTF loader;
     std::string warn, err;
 
-    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, resourcePath + "/models/" + name + "/" + name + ".gltf");
+    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, std::string(resourcePath) + "/models/" + name + "/" + name + ".gltf");
 
     if (warn != "") {
         warn.pop_back(); // remove trailing return
@@ -147,7 +144,7 @@ std::shared_ptr<const Shader> ResourceManager::loadShader(const std::string& nam
     }
 
     // load the shader
-    std::ifstream file(shaderPath + "/" + name + ".spv", std::ios::ate | std::ios::binary);
+    std::ifstream file(std::string(shaderPath) + "/" + name + ".spv", std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
         DIRK_LOG(LogResourceManager, FATAL, "unable to load shader: " << name)

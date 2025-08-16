@@ -1,34 +1,22 @@
 #include "render/camera.hpp"
 
-#include "glm/gtc/matrix_transform.hpp"
+#include <cstdint>
 
 namespace dirk {
 
 DEFINE_LOG_CATEGORY(LogCamera);
 
-Camera::Camera() { updateProjectionMatrix(); }
+Camera::Camera(glm::vec3 position, glm::vec3 direction, float fov, float nearClip, float farClip)
+    : position(position), direction(direction), fov(fov), nearClip(nearClip), farClip(farClip) {
+    updateProjection();
+    updateView();
+}
 
 void Camera::tick(float deltaTime) {}
 
-void Camera::setFieldOfView(float inFieldOfView) {
-    fieldOfView = inFieldOfView;
-    updateProjectionMatrix();
-}
-void Camera::setAspectRatio(float inAspectRation) {
-    aspectRatio = inAspectRation;
-    updateProjectionMatrix();
-}
-void Camera::setNear(float inNear) {
-    near = inNear;
-    updateProjectionMatrix();
-}
-void Camera::setFar(float inFar) {
-    far = inFar;
-    updateProjectionMatrix();
-}
+void Camera::resize(std::uint32_t width, std::uint32_t height) {}
 
-void Camera::updateProjectionMatrix() {
-    projectionMatrix = glm::perspective(fieldOfView, aspectRatio, near, far);
-}
+void Camera::updateProjection() {}
+void Camera::updateView() {}
 
 } // namespace dirk
