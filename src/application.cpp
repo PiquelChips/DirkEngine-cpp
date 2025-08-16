@@ -4,10 +4,19 @@ dirk::DirkEngineCreateInfo dirk::getEngineCreateInfo(int argc, char** argv) {
     return dirk::DirkEngineCreateInfo{
         .rendererInfo = dirk::RendererCreateInfo{
             .applicationName = "DirkEngine",
-            .windowWidth = 800,
-            .windowHeight = 600,
+            .windowWidth = 1200,
+            .windowHeight = 800,
         },
         .actorCreateInfos{
+            ActorCreateInfo{
+                .name = "Shrek",
+                .modelName = "Shrek",
+                .transform = Transform{
+                    .location = glm::vec3(0.f, 0.f, 0.f),
+                    .rotation = glm::vec3(0.f),
+                    .scale = glm::vec3(1.f),
+                },
+            },
             ActorCreateInfo{
                 .name = "Duck",
                 .modelName = "Duck",
