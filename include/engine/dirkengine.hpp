@@ -3,11 +3,16 @@
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <memory>
-#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
 
+#include "actor.hpp"
 #include "core/globals.hpp"
+#include "render/camera.hpp"
+#include "render/render_types.hpp"
 #include "render/renderer.hpp"
-#include "render/renderer_types.hpp"
+#include "render/vulkan_types.hpp"
 #include "resources/resource_manager.hpp"
 
 namespace dirk {
@@ -17,6 +22,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 struct DirkEngineCreateInfo {
     ResourceManagerCreateInfo resourceManagerInfo;
     RendererCreateInfo rendererInfo;
+    std::vector<ActorCreateInfo> actorCreateInfos;
 };
 
 class DirkEngine {
@@ -24,14 +30,31 @@ class DirkEngine {
 public:
     DirkEngine(DirkEngineCreateInfo& createInfo);
 
-    int main();
     void exit();
     void exit(const std::string& reason);
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    Renderer* getRenderer() const noexcept;
-    ResourceManager* getResourceManager() const noexcept;
+    Renderer* getRenderer() const noexcept { return renderer.get(); }
+    ResourceManager* getResourceManager() const noexcept { return resourceManager.get(); }
+
+    // TODO: create a world class to manage actors
+public:
+    std::unordered_map<std::string_view, std::shared_ptr<Actor>>& getActors() { return actors; }
+    std::shared_ptr<Actor> spawnActor(ActorCreateInfo spawnInfo);
+    void destroyActor(Actor* actor);
+
+private:
+    std::unordered_map<std::string_view, std::shared_ptr<Actor>> actors;
+    // END
+
+    // TODO: move this to player manager class
+public:
+    Camera* getCamera() { return camera.get(); }
+
+private:
+    std::unique_ptr<Camera> camera;
+    // END
 
 private:
     int init();
@@ -40,8 +63,8 @@ private:
     void cleanup();
 
 private:
-    std::unique_ptr<Renderer> renderer = nullptr;
-    std::unique_ptr<ResourceManager> resourceManager = nullptr;
+    std::unique_ptr<Renderer> renderer;
+    std::unique_ptr<ResourceManager> resourceManager;
 
     bool requestingExit = false;
 
@@ -50,5 +73,7 @@ private:
 
     std::chrono::high_resolution_clock::time_point lastTick;
 };
+
+DirkEngineCreateInfo getEngineCreateInfo(int argc, char** argv);
 
 } // namespace dirk

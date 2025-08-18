@@ -1,7 +1,6 @@
 #include "resources/resource_manager.hpp"
 #include "core/asserts.hpp"
 #include "core/globals.hpp"
-#include "render/render_types.hpp"
 
 #include "tinygltf/tiny_gltf.h"
 
@@ -19,9 +18,9 @@ DEFINE_LOG_CATEGORY(LogResourceManager)
 ResourceManager::ResourceManager(ResourceManagerCreateInfo& createInfo)
     : resourcePath(createInfo.resourcePath), shaderPath(createInfo.shaderPath) {};
 
-std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
+std::shared_ptr<const Model> ResourceManager::loadModel(const std::string& name) {
     if (models.contains(name)) {
-        if (std::shared_ptr<Model> model = models[name].lock()) {
+        if (std::shared_ptr<const Model> model = models[name].lock()) {
             check(model->name == name);
             return model;
         } else {
@@ -84,11 +83,7 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
         }
 
         vertex.color = { 1.f, 1.f, 1.f };
-
-        if (!uniqueVertices.contains(vertex)) {
-            uniqueVertices[vertex] = vertices.size();
-            vertices.push_back(vertex);
-        }
+        vertices.push_back(vertex);
     }
 
     // indices
@@ -100,21 +95,21 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
         const uint8_t* indexData = reinterpret_cast<const uint8_t*>(&indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset]);
         for (size_t i = 0; i < indexAccessor.count; i++) {
-            indices.push_back(uniqueVertices[vertices[indexData[i]]]);
+            indices.push_back(indexData[i]);
         }
         break;
     }
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
         const uint16_t* indexData = reinterpret_cast<const uint16_t*>(&indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset]);
         for (size_t i = 0; i < indexAccessor.count; i++) {
-            indices.push_back(uniqueVertices[vertices[indexData[i]]]);
+            indices.push_back(indexData[i]);
         }
         break;
     }
     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
         const uint32_t* indexData = reinterpret_cast<const uint32_t*>(&indexBuffer.data[indexBufferView.byteOffset + indexAccessor.byteOffset]);
         for (size_t i = 0; i < indexAccessor.count; i++) {
-            indices.push_back(uniqueVertices[vertices[indexData[i]]]);
+            indices.push_back(indexData[i]);
         }
         break;
     }
@@ -141,9 +136,9 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& name) {
     return modelPtr;
 }
 
-std::shared_ptr<Shader> ResourceManager::loadShader(const std::string& name) {
+std::shared_ptr<const Shader> ResourceManager::loadShader(const std::string& name) {
     if (shaders.contains(name)) {
-        if (std::shared_ptr<Shader> shader = shaders[name].lock()) {
+        if (std::shared_ptr<const Shader> shader = shaders[name].lock()) {
             check(shader->name == name);
             return shader;
         } else {
