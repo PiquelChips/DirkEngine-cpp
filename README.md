@@ -50,7 +50,7 @@ current direction of development.
 
 ## Contact
 
-If you would like to contact me privately for reasons related to the project, send me an email at [**dirkengine@piquel.fr**](mailto:dirkengine@piquel.fr).
+If you would like to contact me privately for reasons related to the **DirkEngine** (such as any security issues),send me an email at [**dirkengine@piquel.fr**](mailto:dirkengine@piquel.fr).
 
 ## License
 
