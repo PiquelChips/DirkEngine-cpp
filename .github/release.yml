@@ -1,0 +1,15 @@
+changelog:
+  exclude:
+    labels:
+      - documentation
+      - ci-cd
+  categories:
+    - title: Features
+      labels:
+        - enhancement
+    - title: Bugs and Optimizations
+      labels:
+        - bug
+    - title: Other
+      labels:
+        - "*"
