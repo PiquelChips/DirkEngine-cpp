@@ -1,5 +1,6 @@
-# CMake build files
+# Generated premake build files
 build/
+Makefile
 
 # Clangd files
 compile_commands.json
