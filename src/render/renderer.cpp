@@ -156,6 +156,7 @@ void Renderer::draw(float deltaTime) {
         return;
     }
 
+    // TODO: find when can be removed
     for (uint32_t i = 0; i < UINT32_MAX / 512; i++) {
         deltaTime = deltaTime + 0;
     }
