@@ -55,7 +55,6 @@ int Renderer::init() {
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     this->window = glfwCreateWindow(
         getProperties().windowWidth,
@@ -66,7 +65,6 @@ int Renderer::init() {
         return EXIT_FAILURE;
     }
 
-    glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, Renderer::frameBufferResizeCallback);
     DIRK_LOG(LogVulkan, DEBUG, "successfully setup GLFW window")
 
@@ -101,7 +99,7 @@ int Renderer::init() {
 
     this->queues = createQueues();
 
-    std::vector<vk::Image> swapChainImages = createSwapChain(VK_NULL_HANDLE);
+    std::vector<vk::Image> swapChainImages = createSwapChain();
 
     this->commandPool = createCommandPool();
     if (!this->commandPool) {
@@ -382,7 +380,7 @@ Queues Renderer::createQueues() {
     return queues;
 }
 
-std::vector<vk::Image> Renderer::createSwapChain(vk::SwapchainKHR oldSwapChain) {
+std::vector<vk::Image> Renderer::createSwapChain() {
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
     vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -415,7 +413,7 @@ std::vector<vk::Image> Renderer::createSwapChain(vk::SwapchainKHR oldSwapChain) 
     createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
     createInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque; // ignore alpha
     createInfo.clipped = vk::True;                                      // ingore hidden pixels (behind other windows for ex)
-    createInfo.oldSwapchain = oldSwapChain;
+    createInfo.oldSwapchain = nullptr;
 
     // image sharing if multiple queues
     QueueFamilyIndices indices = Renderer::findQueueFamilies(physicalDevice);
@@ -497,9 +495,15 @@ void Renderer::recreateSwapChain() {
 
     // cleanup swap chain
     this->swapChainImages.clear();
-    this->swapChain = nullptr;
 
-    std::vector<vk::Image> swapChainImages = createSwapChain(this->swapChain);
+    for (auto image : swapChainImages) {
+        device.destroyFramebuffer(image.frameBuffer);
+        device.destroyImageView(image.imageView);
+    }
+
+    this->device.destroySwapchainKHR(this->swapChain);
+
+    std::vector<vk::Image> swapChainImages = createSwapChain();
     this->swapChainImages = createSwapChainImages(swapChainImages);
 
     Camera::get()->resize(swapChainExtent.width, swapChainExtent.height);
@@ -939,9 +943,7 @@ vk::DebugUtilsMessengerEXT Renderer::setupDebugMessenger() {
 #endif
 
 void Renderer::frameBufferResizeCallback(GLFWwindow* window, int width, int height) {
-    // TODO: reinterpret_cast stops the program with no error?????????
-    // Renderer* renderer = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
-    // renderer->framebufferResized = true;
+    Renderer::get()->framebufferResized = true;
 }
 
 void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) {
