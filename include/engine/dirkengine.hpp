@@ -22,8 +22,6 @@ struct DirkEngineCreateInfo {
     std::vector<ActorCreateInfo> actorCreateInfos;
 };
 
-DirkEngineCreateInfo getEngineCreateInfo(int argc, char** argv);
-
 class DirkEngine {
 
 public:
