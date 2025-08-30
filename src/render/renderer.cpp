@@ -2,6 +2,7 @@
 #include "core/asserts.hpp"
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
+#include "engine/world.hpp"
 #include "render/camera.hpp"
 #include "render/vulkan_types.hpp"
 
@@ -988,7 +989,7 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
     commandBuffer.setScissor(0, 1, &scissor);
 
     // for all actors: recordCommandBuffer
-    for (auto pair : DirkEngine::get()->getActors()) {
+    for (auto pair : World::get()->getActors()) {
         pair.second->recordCommandBuffer(commandBuffer, pipelineLayout);
     }
 
