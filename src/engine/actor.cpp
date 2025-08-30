@@ -1,6 +1,7 @@
 #include "engine/actor.hpp"
 
 #include "engine/dirkengine.hpp"
+#include "engine/world.hpp"
 #include "render/camera.hpp"
 #include "render/render_types.hpp"
 #include "render/renderer.hpp"
@@ -29,7 +30,7 @@ void Actor::setModel(const std::string_view name) {
 void Actor::tick(float deltaTime) {}
 
 void Actor::destroy() {
-    DirkEngine::get()->destroyActor(this);
+    World::get()->destroyActor(this);
 }
 
 void Actor::setTransform(const Transform& inTransform) {

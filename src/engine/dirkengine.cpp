@@ -1,6 +1,7 @@
 #include "engine/dirkengine.hpp"
 
 #include "core/logging.hpp"
+#include "engine/world.hpp"
 #include "glm/trigonometric.hpp"
 #include "render/camera.hpp"
 #include "render/renderer.hpp"
@@ -10,7 +11,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
-#include <utility>
 
 namespace dirk {
 
@@ -24,12 +24,10 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
         DIRK_LOG(LogEngine, FATAL, "unable to initialize renderer");
         return;
     }
+    world = std::make_shared<World>(createInfo.actorCreateInfos);
     camera = std::make_shared<Camera>(glm::vec3(0.f, 1000.f, 1000.f), glm::vec3(0.f, -1.f, -1.f), glm::radians(45.f), .1f, 100000.f);
 
     lastTick = std::chrono::high_resolution_clock::now();
-    for (auto actorCreateInfo : createInfo.actorCreateInfos) {
-        spawnActor(actorCreateInfo);
-    }
 
     while (true) {
         float deltaTime = captureDeltaTime();
@@ -45,7 +43,6 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
 
 DirkEngine::~DirkEngine() {
     DIRK_LOG(LogEngine, INFO, "exiting");
-    actors.clear();
 }
 
 void DirkEngine::exit() {
@@ -57,22 +54,9 @@ void DirkEngine::exit(const std::string& reason) {
     this->exit();
 }
 
-std::shared_ptr<Actor> DirkEngine::spawnActor(ActorCreateInfo spawnInfo) {
-    DIRK_LOG(LogEngine, INFO, "spawning actor " << spawnInfo.name);
-    std::shared_ptr<Actor> actor = std::make_shared<Actor>(spawnInfo);
-    actors[actor->getName()] = actor;
-    return actor;
-}
-
-void DirkEngine::destroyActor(Actor* actor) {
-    actors.erase(actor->getName());
-}
-
 void DirkEngine::tick(float deltaTime) {
+    World::get()->tick(deltaTime);
     Camera::get()->tick(deltaTime);
-    for (auto pair : actors) {
-        pair.second->tick(deltaTime);
-    }
 
     Renderer::get()->draw(deltaTime);
 }
