@@ -16,5 +16,5 @@ project "Runtime"
         "%{IncludeDir.vulkan}"
     }
 
-    -- links { "%{Library.vulkan}" }
-    links { "/home/piquel/Vulkan-SDK/x86_64/lib/libvulkan.so" }
+    links { "%{Library.vulkan}" }
+    libdirs { "%{LibraryDir.vulkan}" }

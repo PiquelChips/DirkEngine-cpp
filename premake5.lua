@@ -8,12 +8,18 @@ workspace "DirkEngine"
     VulkanSDK = os.getenv("VULKAN_SDK")
 
     IncludeDir = {}
-    IncludeDir["glm"] = "Thirdparty/glm"
-    IncludeDir["tinygltf"] = "Thirdparty/tinygltf/include"
+    IncludeDir["glm"] = workingdirectory .. "/Thirdparty/glm"
+    IncludeDir["tinygltf"] = workingdirectory .. "/Thirdparty/tinygltf/include"
     IncludeDir["vulkan"] = VulkanSDK .. "/include"
 
+    LibraryDir = {}
+    LibraryDir["vulkan"] = VulkanSDK .. "/lib"
+
     Library = {}
-    Library["vulkan"] = VulkanSDK .. "/lib/libvulkan.so"
+    Library["vulkan"] = "vulkan"
+
+    -- TODO: find better solution
+    defines { "LOG_PATH", "RESOURCE_PATH" }
 
     filter "configurations:Editor"
       defines { "WITH_EDITOR" }
@@ -21,12 +27,12 @@ workspace "DirkEngine"
       symbols "On"
 
    filter "configurations:Debug"
-      defines { "DIRK_DEBUG_BUILD" }
+      defines { "DEBUG_BUILD" }
       runtime "Debug"
       symbols "On"
 
    filter "configurations:Shipping"
-      defines { "DIRK_SHIPPING_BUILD" }
+      defines { "SHIPPING_BUILD" }
       runtime "Release"
       optimize "On"
       symbols "Off"

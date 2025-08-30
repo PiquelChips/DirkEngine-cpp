@@ -1,2 +1,1 @@
-include "Editor"
 include "Runtime"
