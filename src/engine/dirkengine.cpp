@@ -45,9 +45,7 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
 
 DirkEngine::~DirkEngine() {
     DIRK_LOG(LogEngine, INFO, "exiting");
-    for (auto pair : actors) {
-        pair.second->destroy();
-    }
+    actors.clear();
 }
 
 void DirkEngine::exit() {
