@@ -11,14 +11,6 @@ namespace dirk {
 
 DECLARE_LOG_CATEGORY_EXTERN(LogResourceManager)
 
-class DirkEngine;
-
-struct ResourceManagerCreateInfo {
-    DirkEngine* engine;
-    const std::string resourcePath;
-    const std::string shaderPath;
-};
-
 /**
  * The class to manage all of the engine's filesystem operations.
  * These include loading/unloading shaders, models, config files, and any other data
@@ -27,8 +19,6 @@ struct ResourceManagerCreateInfo {
 class ResourceManager {
 
 public:
-    ResourceManager(ResourceManagerCreateInfo& createInfo);
-
     /**
      * Will load a model with the filepath:
      *   RESOURCE_PATH/models/<name>/<name>.gltf
@@ -36,7 +26,7 @@ public:
      * This function relies on a caching system and will only load a model once,
      * so no worries about reusing the function a lot.
      */
-    std::shared_ptr<const Model> loadModel(const std::string& name);
+    static std::shared_ptr<const Model> loadModel(const std::string& name);
 
     /**
      * Will load a shader file's bytes from:
@@ -45,14 +35,14 @@ public:
      * This function also relies on a caching system and will only load a shader once,
      * so no worries about reusing this function a lot.
      */
-    std::shared_ptr<const Shader> loadShader(const std::string& name);
+    static std::shared_ptr<const Shader> loadShader(const std::string& name);
 
 private:
-    std::unordered_map<std::string_view, std::weak_ptr<const Model>> models;
-    std::unordered_map<std::string_view, std::weak_ptr<const Shader>> shaders;
+    inline static std::unordered_map<std::string_view, std::weak_ptr<const Model>> models;
+    inline static std::unordered_map<std::string_view, std::weak_ptr<const Shader>> shaders;
 
-    const std::string& resourcePath;
-    const std::string& shaderPath;
+    static constexpr std::string_view resourcePath = RESOURCE_PATH;
+    static constexpr std::string_view shaderPath = SHADER_PATH;
 };
 
 } // namespace dirk

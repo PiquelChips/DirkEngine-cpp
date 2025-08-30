@@ -8,7 +8,6 @@ RendererCreateInfo::operator RendererProperties() {
         .applicationName = applicationName,
         .windowWidth = windowWidth,
         .windowHeight = windowHeight,
-        .engine = engine,
     };
 };
 

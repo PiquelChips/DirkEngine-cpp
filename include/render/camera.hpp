@@ -2,7 +2,10 @@
 
 #include "core/globals.hpp"
 
+#include "engine/dirkengine.hpp"
 #include "glm/glm.hpp"
+#include <cstdint>
+#include <memory>
 
 namespace dirk {
 
@@ -10,33 +13,42 @@ DECLARE_LOG_CATEGORY_EXTERN(LogCamera)
 
 class Camera {
 public:
-    Camera();
+    Camera(glm::vec3 positon, glm::vec3 forwardDirection, float fov, float nearClip, float farClip);
 
     void tick(float deltaTime);
+    void resize(std::uint32_t width, std::uint32_t height);
 
-    inline const glm::mat4 getProjectionMatrix() const noexcept { return projectionMatrix; }
+    inline const glm::mat4& getProjection() const { return projection; }
+    inline const glm::mat4& getInverseProjection() const { return inverseProjection; }
+    inline const glm::mat4& getView() const { return view; }
+    inline const glm::mat4& getInverseView() const { return inverseView; }
 
-    inline float getFieldOfView() { return fieldOfView; }
-    void setFieldOfView(float inFieldOfView);
-
-    inline float getAspectRatio() { return aspectRatio; }
-    void setAspectRatio(float inAspectRatio);
-
-    inline float getNear() { return near; }
-    void setNear(float inNear);
-
-    inline float getFar() { return far; }
-    void setFar(float inFar);
+    static std::shared_ptr<Camera> get() { return DirkEngine::getCamera(); }
 
 private:
-    void updateProjectionMatrix();
-    glm::mat4 projectionMatrix{ 1.f };
+    void updateProjection();
+    void updateView();
+
+    glm::mat4 projection{ 1.f };
+    glm::mat4 inverseProjection{ 1.f };
+    glm::mat4 view{ 1.f };
+    glm::mat4 inverseView{ 1.f };
 
     // camera settings
-    float fieldOfView = glm::radians(90.f);
-    float aspectRatio = 16.f / 9.f;
-    float near = .1;
-    float far = 100000.f;
+    float fov = glm::radians(45.f);
+    float nearClip = .1f;
+    float farClip = 100.f;
+
+    glm::vec3 position{ 0.f };
+    glm::vec3 forwardDirection{ 0.f };
+
+    glm::vec2 lastMousePosition{ 0.f };
+    std::uint32_t width, height;
+
+    static constexpr glm::vec3 upDirection{ 0.f, 1.f, 0.f };
+    static constexpr float SENSITIVITY = .002f;
+    static constexpr float ROTATION_SPEED = .3f;
+    static constexpr float MOVEMENT_SPEED = 1000.f;
 };
 
 } // namespace dirk

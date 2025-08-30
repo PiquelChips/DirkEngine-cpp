@@ -17,13 +17,11 @@ class DirkEngine;
 struct RendererProperties {
     std::string applicationName;
     uint32_t windowWidth, windowHeight;
-    DirkEngine* engine;
 };
 
 struct RendererCreateInfo {
     std::string applicationName;
     uint32_t windowWidth, windowHeight;
-    DirkEngine* engine;
 
     operator RendererProperties();
 };
@@ -93,9 +91,6 @@ struct ImageMemoryView {
 };
 
 struct CreateImageMemoryViewInfo {
-    vk::Device device;
-    vk::PhysicalDevice physicalDevice;
-
     // the image
     uint32_t width, height;
     vk::Format format;

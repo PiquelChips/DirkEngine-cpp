@@ -36,7 +36,7 @@ void endLogEntry(std::stringstream stream) {
         return;
 
     std::filesystem::create_directory(std::filesystem::path{ logPath });
-    std::ofstream file(logPath + "/latest.log");
+    std::ofstream file(logPath + "/latest.log", std::ios::app);
     check(file.is_open());
 
     file << out << std::endl;
