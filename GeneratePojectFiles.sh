@@ -5,6 +5,7 @@ if [ "$DIRK_ENGINE_DEV" = "true" ]; then
     cd Engine/Build || exit
     go build -o Binaries/DirkBuild Source/main.go
     cd ../.. || exit
+    echo "Success"
 fi
 
 echo "Generating project files..."
