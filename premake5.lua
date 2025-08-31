@@ -39,4 +39,4 @@ workspace "DirkEngine"
 
     filter {}
     
-include "Source"
+include "Engine"
