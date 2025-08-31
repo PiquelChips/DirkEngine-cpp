@@ -8,7 +8,7 @@ project "Editor"
 
     files { "src/**.cpp" }
 
-    includedirs { "include", }
+    includedirs { "include" }
 
     libdirs {
         "%{LibraryDir.vulkan}",
