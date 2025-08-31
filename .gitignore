@@ -1,15 +1,3 @@
-# Generated build files
-build/
-Makefile
-
-# Clangd files
-compile_commands.json
-.cache/
-
-# Release builds
-release/
-logs/
-
-#
+# Generated Engien files
 Binaries/
 Intermediate/
