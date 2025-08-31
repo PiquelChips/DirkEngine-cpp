@@ -14,10 +14,15 @@ project "Runtime"
 
     filter "files:**.vert or **.frag"
         buildcommands {
-            'glslc -fshader-stage=%{file.extension:sub(2)} "%{file.relpath}" -o "%{cfg.targetdir}/../shaders/%{file.name}.spv"'
+            'glslc -fshader-stage=%{file.extension:sub(2)} "%{file.relpath}" -o "%{cfg.targetdir}/shaders/%{file.name}.spv"'
         }
-        buildoutputs { "%{cfg.targetdir}/../shaders/%{file.name}.spv" }
+        buildoutputs { "%{cfg.targetdir}/shaders/%{file.name}.spv" }
     filter {}
+
+    defines {
+        "RESOURCE_PATH=\"../resources\"",
+        "SHADER_PATH=\"" .. outputdir .. "/shaders\""
+    }
 
     includedirs {
         "include",

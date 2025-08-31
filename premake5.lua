@@ -2,15 +2,17 @@ workspace "DirkEngine"
     configurations { "Editor", "Debug", "Shipping" }
     startproject "Editor"
     
-    workingdirectory = os.getenv("PWD")
-    outputdir = workingdirectory .. "/build/%{prj.name}-%{cfg.buildcfg}-%{cfg.system}"
+    workdir = os.getenv("PWD")
+
+    outputdir = workdir .. "/build/%{prj.name}-%{cfg.buildcfg}-%{cfg.system}"
+    tempdir = workdir .. "/Engine/Intermediate"
 
     VulkanSDK = os.getenv("VULKAN_SDK")
     GLFW = os.getenv("GLFW")
 
     IncludeDir = {}
-    IncludeDir["glm"] = workingdirectory .. "/Engine/Thirdparty/glm"
-    IncludeDir["tinygltf"] = workingdirectory .. "/Engine/Thirdparty"
+    IncludeDir["glm"] = workdir .. "/Engine/Thirdparty/glm"
+    IncludeDir["tinygltf"] = workdir .. "/Engine/Thirdparty"
     IncludeDir["vulkan"] = VulkanSDK .. "/include"
     IncludeDir["glfw"] = GLFW .. "/include"
 
@@ -27,9 +29,7 @@ workspace "DirkEngine"
         "GLFW_INCLUDE_NONE=1",
         "GLFW_INCLUDE_VULKAN=1",
 
-        "LOG_PATH=\"./\"",
-        "RESOURCE_PATH=\"./\"",
-        "SHADER_PATH=\"./\""
+        "LOG_PATH=\"" .. tempdir .. "/logs\"",
     }
 
     filter "configurations:Editor"
