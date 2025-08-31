@@ -20,8 +20,8 @@ project "Runtime"
     filter {}
 
     defines {
-        "RESOURCE_PATH=\"../resources\"",
-        "SHADER_PATH=\"" .. outputdir .. "/shaders\""
+        'RESOURCE_PATH="../resources"',
+        'SHADER_PATH="' .. outputdir .. '/shaders"'
     }
 
     includedirs {
