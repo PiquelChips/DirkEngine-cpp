@@ -5,17 +5,23 @@ import (
 	"os"
 )
 
-func run(target string) {
-	build(target)
-	fmt.Printf("running %s\n", target)
+func run(target string) error {
+	outPath, err := build(target)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("running target %s at %s\n", target, outPath)
+	return nil
 }
 
-func build(target string) {
-	fmt.Printf("building %s\n", target)
+func build(target string) (string, error) {
+	fmt.Printf("building target %s\n", target)
+	return "", nil
 }
 
-func clean() {
+func clean() error {
 	fmt.Printf("cleaning\n")
+	return nil
 }
 
 func usage() {
