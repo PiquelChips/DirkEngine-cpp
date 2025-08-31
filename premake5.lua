@@ -9,7 +9,7 @@ workspace "DirkEngine"
 
     IncludeDir = {}
     IncludeDir["glm"] = workingdirectory .. "/Thirdparty/glm"
-    IncludeDir["tinygltf"] = workingdirectory .. "/Thirdparty/tinygltf/include"
+    IncludeDir["tinygltf"] = workingdirectory .. "/Thirdparty"
     IncludeDir["vulkan"] = VulkanSDK .. "/include"
 
     LibraryDir = {}
