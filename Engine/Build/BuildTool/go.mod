@@ -1,3 +1,3 @@
-module github.com/PiquelChips/DirkEngine/Build
+module DirkBuildTool
 
 go 1.25
