@@ -11,10 +11,7 @@ func usage() {
 }
 
 func setup() error {
-	fmt.Printf("setup\n")
-
-	// index all thirdparty libs
-
+	fmt.Printf("setup has not been implemented yet. this is a work in progress\n")
 	return nil
 }
 
