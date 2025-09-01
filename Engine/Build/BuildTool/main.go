@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/PiquelChips/DirkEngine/Build/Source/export"
 )
@@ -16,16 +17,27 @@ func usage() {
 
 func setup() error {
 	fmt.Printf("setup\n")
-	exporter := export.NewMakefileExporter()
 
-	// detect build configurations
+	// index all thirdparty libs
 
-	return exporter.Export()
+	return nil
 }
 
 func generate() error {
 	fmt.Printf("generate\n")
-	return nil
+
+	exporter := export.NewMakefileExporter()
+
+	sourcePath, err := filepath.Abs(os.Getenv("PWD") + "/Engine")
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(sourcePath)
+
+	// detect build configurations
+
+	return exporter.Export()
 }
 
 func main() {
