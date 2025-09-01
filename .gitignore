@@ -5,3 +5,4 @@ Makefile
 
 # makefile for build system
 !Engine/Build/BuildTool/Makefile
+!Makefile
