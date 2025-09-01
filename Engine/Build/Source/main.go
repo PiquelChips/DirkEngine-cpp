@@ -8,10 +8,24 @@ import (
 )
 
 func usage() {
-	fmt.Printf("usage ./GenerateProjectFiles.sh <target>\n")
+	fmt.Printf("usage: DirkBuildTool <target>\n")
 	fmt.Printf("\tSetup project for building. This includes generating\n")
 	fmt.Printf("\tfiles for the target build system & creating required\n")
 	fmt.Printf("\tdirectories.\n")
+}
+
+func setup() error {
+	fmt.Printf("setup\n")
+	exporter := export.NewMakefileExporter()
+
+	// detect build configurations
+
+	return exporter.Export()
+}
+
+func generate() error {
+	fmt.Printf("generate\n")
+	return nil
 }
 
 func main() {
@@ -20,18 +34,18 @@ func main() {
 		return
 	}
 
-	var exporter export.Exporter
+	var run func() error
 	switch os.Args[1] {
-	case "Makefile":
-		exporter = export.NewMakefileExporter()
+	case "setup":
+		run = setup
+	case "generate":
+		run = generate
 	default:
 		usage()
 		return
 	}
 
-	// detect build configurations
-
-	if err := exporter.Export(); err != nil {
+	if err := run(); err != nil {
 		panic(err)
 	}
 }
