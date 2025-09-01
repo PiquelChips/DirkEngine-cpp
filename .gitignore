@@ -1,8 +1,3 @@
 # Generated Engien files
 Binaries/
 Intermediate/
-Makefile
-
-# makefile for build system
-!Engine/Build/BuildTool/Makefile
-!Makefile
