@@ -29,7 +29,7 @@ $(TARGET): $(OUT)
 $(OUT): $(OBJ)
 	@echo Linking $(TARGET)...
 	@mkdir -p $(dir $@)
-	@$(AR) -rcs "$@" $<
+	@$(AR) -rcs "$@" $^
 #@$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%$(SRC_EXT)
