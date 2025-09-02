@@ -2,7 +2,7 @@
 #include "core/asserts.hpp"
 #include "core/globals.hpp"
 
-#include "tinygltf/tiny_gltf.h"
+#include "tinygltf.h"
 
 #include <cstddef>
 #include <cstdint>

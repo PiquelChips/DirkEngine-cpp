@@ -9,7 +9,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "resources/resource_manager.hpp"
-#include "tinygltf/tiny_gltf.h"
+#include "tinygltf.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
