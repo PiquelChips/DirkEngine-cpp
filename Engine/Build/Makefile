@@ -5,11 +5,10 @@ BIN_DIR=../../Binaries
 
 .PHONY: run $(TARGET) $(DEPS)
 run: $(TARGET)
-	@echo Running $(BIN_DIR)/$(TARGET)
-	@$(BIN_DIR)/$(TARGET)
+	@$(MAKE) -C $(SOURCE_DIR)/$(TARGET) run
 
 $(TARGET): $(DEPS)
-	@$(MAKE) -C $(SOURCE_DIR)/$@
+	@$(MAKE) -C $(SOURCE_DIR)/$@ $@
 
 $(DEPS):
-	@$(MAKE) -C $(SOURCE_DIR)/$@
+	@$(MAKE) -C $(SOURCE_DIR)/$@ $@

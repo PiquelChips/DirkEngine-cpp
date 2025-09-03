@@ -4,6 +4,10 @@ INT_DIR=../../../Intermediate/$(TARGET)
 THIRDPARTY_DIR=../Thirdparty
 INCLUDE_DIR=include
 
+# these are relative to the project root
+WORKING_DIRECTORY=Engine/Source/$(TARGET)
+ROOT_INT_DIR=Intermediate/$(TARGET)
+
 CXX_STD=c++23
 
 OUT=$(BIN_DIR)/lib$(TARGET).so
@@ -22,7 +26,7 @@ OBJ=$(SRC:$(SRC_DIR)/%$(SRC_EXT)=$(OBJ_DIR)/%.o)
 
 CFLAGS=-fPIC -Wall -Wextra -std=$(CXX_STD)
 CXXFLAGS=-I$(INCLUDE_DIR) -I$(THIRDPARTY_DIR)/glm -I$(THIRDPARTY_DIR) -I${GLFW}/include -I${VULKAN_SDK}/include
-DEFINES=-DGLFW_INCLUDE_NONE -DGLFW_INCLUDE_VULKAN -DLOG_PATH=\"./\" -DRESOURCE_PATH=\"./\" -DSHADER_PATH=\"./\"
+DEFINES=-DGLFW_INCLUDE_NONE -DGLFW_INCLUDE_VULKAN -DLOG_PATH=\"./\" -DRESOURCE_PATH=\"$(WORKING_DIRECTORY)/resources\" -DSHADER_PATH=\"$(ROOT_INT_DIR)/shaders\"
 
 LDFLAGS=-shared -L${GLFW}/lib -L${VULKAN_SDK}/lib
 LDLIBS=-lglfw -lvulkan
