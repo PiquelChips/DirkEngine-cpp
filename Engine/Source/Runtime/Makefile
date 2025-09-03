@@ -12,6 +12,11 @@ SRC_DIR=src
 SRC_EXT=.cpp
 SRC=$(shell find $(SRC_DIR) -name '*$(SRC_EXT)')
 
+SHADERS_DIR=shaders
+SHADERS_OUT_DIR=$(INT_DIR)/shaders
+SHADERS=$(shell find $(SHADERS_DIR) -type f)
+SPV=$(SHADERS:$(SHADERS_DIR)/%=$(SHADERS_OUT_DIR)/%.spv)
+
 OBJ_DIR=$(INT_DIR)/obj
 OBJ=$(SRC:$(SRC_DIR)/%$(SRC_EXT)=$(OBJ_DIR)/%.o)
 
@@ -23,7 +28,7 @@ LDFLAGS=-shared -L${GLFW}/lib -L${VULKAN_SDK}/lib
 LDLIBS=-lglfw -lvulkan
 
 .PHONY: $(TARGET)
-$(TARGET): $(OUT)
+$(TARGET): $(OUT) $(SPV)
 	@echo Built $(TARGET)
 
 $(OUT): $(OBJ)
@@ -35,3 +40,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%$(SRC_EXT)
 	@echo Compiling $*$(SRC_EXT)...
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEFINES) -MMD -MP -c $< -o $@
+
+$(SHADERS_OUT_DIR)/%.spv: $(SHADERS_DIR)/%
+	@echo Compiling shader $*...
+	@mkdir -p $(dir $@)
+	@glslc $< -o $@
