@@ -2,6 +2,7 @@ BUILD_DIR=Engine/Build
 
 BIN_DIR=Binaries
 INT_DIR=Intermediate
+SAVED_DIR=Saved
 
 .PHONY: run build clean
 run: build
@@ -13,4 +14,4 @@ build:
 
 clean:
 	@echo Cleaning...
-	@rm -rf $(BIN_DIR) $(INT_DIR)
+	@rm -rf $(BIN_DIR) $(INT_DIR) $(SAVED_DIR)
