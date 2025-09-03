@@ -1,4 +1,4 @@
-OUT=../Binaries/DirkBuildTool
+OUT=../../../Binaries/DirkBuildTool
 SRC=$(shell find . -type f -name '*.go')
 
 .PHONY: all
