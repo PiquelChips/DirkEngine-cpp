@@ -7,7 +7,7 @@ import (
 
 func usage() {
 	fmt.Printf("usage: DirkBuildTool <command>\n")
-	fmt.Printf("\tsetup - will setup the dependencies for development\n")
+	fmt.Printf("\tsetup - setup the dependencies for development\n")
 }
 
 func setup() error {
