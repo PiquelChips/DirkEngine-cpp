@@ -1,10 +1,5 @@
-# CMake build files
-build/
-
-# Clangd files
+# Generated Engine files
+Binaries/
+Intermediate/
+Saved/
 compile_commands.json
-.cache/
-
-# Release builds
-release/
-logs/

@@ -1,0 +1,52 @@
+TARGET=Editor
+BIN_DIR=../../../Binaries
+INT_DIR=../../../Intermediate/$(TARGET)
+THIRDPARTY_DIR=../Thirdparty
+INCLUDE_DIR=include
+
+# these are relative to the project root
+WORKING_DIRECTORY=Engine/Source/$(TARGET)
+ROOT_INT_DIR=Intermediate/$(TARGET)
+ROOT_SAVE_DIR=Saved/$(TARGET)
+
+CXX_STD=c++23
+
+OUT=$(BIN_DIR)/$(TARGET)
+
+SRC_DIR=src
+SRC_EXT=.cpp
+SRC=$(shell find $(SRC_DIR) -name '*$(SRC_EXT)')
+
+SHADERS_DIR=shaders
+SHADERS_OUT_DIR=$(INT_DIR)/shaders
+SHADERS=$(shell find $(SHADERS_DIR) -type f)
+SPV=$(SHADERS:$(SHADERS_DIR)/%=$(SHADERS_OUT_DIR)/%.spv)
+
+OBJ_DIR=$(INT_DIR)/obj
+OBJ=$(SRC:$(SRC_DIR)/%$(SRC_EXT)=$(OBJ_DIR)/%.o)
+
+CFLAGS=-fPIC -Wall -Wextra -std=$(CXX_STD)
+CXXFLAGS=-I$(INCLUDE_DIR) -I$(THIRDPARTY_DIR)/glm -I$(THIRDPARTY_DIR) -I${GLFW}/include -I${VULKAN_SDK}/include -I../Runtime/include
+DEFINES=-DGLFW_INCLUDE_NONE -DGLFW_INCLUDE_VULKAN -DLOG_PATH=\"$(ROOT_SAVE_DIR)/logs\" -DRESOURCE_PATH=\"$(WORKING_DIRECTORY)/resources\" -DSHADER_PATH=\"$(ROOT_INT_DIR)/shaders\"
+
+LDFLAGS=-Wl,-rpath,'$$ORIGIN' -L$(BIN_DIR)
+LDLIBS=-lRuntime
+
+.PHONY: $(TARGET)
+$(TARGET): $(OUT) $(SPV)
+	@echo Built $(TARGET)
+
+$(OUT): $(OBJ)
+	@echo Linking $(TARGET)...
+	@mkdir -p $(dir $@)
+	@$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%$(SRC_EXT)
+	@echo Compiling $*$(SRC_EXT)...
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEFINES) -MMD -MP -c $< -o $@
+
+$(SHADERS_OUT_DIR)/%.spv: $(SHADERS_DIR)/%
+	@echo Compiling shader $*...
+	@mkdir -p $(dir $@)
+	@glslc $< -o $@

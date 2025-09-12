@@ -1,37 +1,17 @@
-BUILD=build
-RELEASE=release
-RESOURCES=$(RELEASE)/resources
-NUM_JOBS=16
+BUILD_DIR=Engine/Build
 
-CMAKE_ARGS= -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ${DIRK_ENGINE_CMAKE_ARGS}
+BIN_DIR=Binaries
+INT_DIR=Intermediate
+SAVED_DIR=Saved
 
-.PHONY: run
-run: config
-	@cmake --build $(BUILD) --config=Debug --target=run -j $(NUM_JOBS)
+.PHONY: run build clean
+run: build
+	@echo Running Editor...
+	@Binaries/Editor
 
-.PHONY: build
-build: config
-	@cmake --build $(BUILD) --config=Debug -j $(NUM_JOBS)
+build:
+	@$(MAKE) -C $(BUILD_DIR) Editor
 
-.PHONY: shaders
-shaders: config
-	@cmake --build $(BUILD) --config=Debug --target=shaders -j $(NUM_JOBS)
-
-.PHONY: release
-release: config
-	@cmake --build $(BUILD) --config=Release -j $(NUM_JOBS)
-	@echo Creating release...
-	@rm -rf $(RELEASE)
-	@mkdir $(RELEASE)
-	@cp $(BUILD)/DirkEngine $(RELEASE)
-	@cp -r $(RESOURCES) $(RELEASE)
-	@cp -r $(BUILD)/shaders $(RESOURCES)
-	@echo Release created!
-
-.PHONY: config
-config:
-	@cmake -S . -B $(BUILD) $(CMAKE_ARGS)
-
-.PHONY: clean
 clean:
-	@git clean -dfx
+	@echo Cleaning...
+	@rm -rf $(BIN_DIR) $(INT_DIR) $(SAVED_DIR)
