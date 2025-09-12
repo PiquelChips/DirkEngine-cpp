@@ -3,7 +3,7 @@ BIN_DIR=../../../Binaries
 INT_DIR=../../../Intermediate/$(TARGET)
 THIRDPARTY_DIR=../Thirdparty
 INCLUDE_DIR=include
-COMPILE_COMMANDS_FILE=$(INT_DIR)/compile_commands.json
+COMPILE_COMMANDS_FILE=../../../compile_commands.json
 
 # these are relative to the project root
 WORKING_DIRECTORY=Engine/Source/$(TARGET)
