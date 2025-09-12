@@ -3,6 +3,7 @@ BIN_DIR=../../../Binaries
 INT_DIR=../../../Intermediate/$(TARGET)
 THIRDPARTY_DIR=../Thirdparty
 INCLUDE_DIR=include
+COMPILE_COMMANDS_FILE=$(INT_DIR)/compile_commands.json
 
 # these are relative to the project root
 WORKING_DIRECTORY=Engine/Source/$(TARGET)
@@ -32,21 +33,32 @@ DEFINES=-DGLFW_INCLUDE_NONE -DGLFW_INCLUDE_VULKAN -DLOG_PATH=\"$(ROOT_SAVE_DIR)/
 LDFLAGS=-shared -L${GLFW}/lib -L${VULKAN_SDK}/lib
 LDLIBS=-lglfw -lvulkan
 
+BUILD_CMD=$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEFINES) -MMD -MP -c $< -o $@
+
 .PHONY: $(TARGET)
 $(TARGET): $(OUT) $(SPV)
 	@echo Built $(TARGET)
+	@echo "{}]" >> $(COMPILE_COMMANDS_FILE)
+	@mkdir -p ../../../$(ROOT_SAVE_DIR)/logs
 
 $(OUT): $(OBJ)
 	@echo Linking $(TARGET)...
 	@mkdir -p $(dir $@)
 	@$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%$(SRC_EXT)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%$(SRC_EXT) $(COMPILE_COMMANDS_FILE)
 	@echo Compiling $*$(SRC_EXT)...
 	@mkdir -p $(dir $@)
-	@$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEFINES) -MMD -MP -c $< -o $@
+	@echo '{"directory": "$(shell pwd)", "command": "$(BUILD_CMD)", "file": "$<"},' >> $(COMPILE_COMMANDS_FILE)
+	@$(BUILD_CMD)
 
 $(SHADERS_OUT_DIR)/%.spv: $(SHADERS_DIR)/%
 	@echo Compiling shader $*...
 	@mkdir -p $(dir $@)
 	@glslc $< -o $@
+
+$(COMPILE_COMMANDS_FILE):
+	-@rm $@ 2> /dev/null
+	@mkdir -p $(dir $@)
+	@touch $@
+	@echo "[" >> $@
