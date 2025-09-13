@@ -1,17 +1,28 @@
-BUILD_DIR=Engine/Build
+BUILD_TOOL=Binaries/DirkBuildTool
+BUILD_TOOL_DIR=Engine/Build/DirkBuildTool
+BUILD_TOOL_SRC=$(shell find $(BUILD_TOOL_DIR) -type f -name '*.go')
 
-BIN_DIR=Binaries
-INT_DIR=Intermediate
-SAVED_DIR=Saved
+EDITOR=Binaries/DirkEditor
 
-.PHONY: run build clean
+.PHONY: clean setup projectfiles clangdb build run
 run: build
-	@echo Running Editor...
-	@Binaries/Editor
+	@$(EDITOR)
 
-build:
-	@$(MAKE) -C $(BUILD_DIR) Editor
+build: $(BUILD_TOOL)
+	@$(BUILD_TOOL) build
+
+setup: $(BUILD_TOOL)
+	@$(BUILD_TOOL) setup
+
+projectfiles: $(BUILD_TOOL)
+	@$(BUILD_TOOL) projectfiles
+
+clangdb: $(BUILD_TOOL)
+	@$(BUILD_TOOL) clangdb
 
 clean:
-	@echo Cleaning...
-	@rm -rf $(BIN_DIR) $(INT_DIR) $(SAVED_DIR)
+	@rm -rf Intermediate Saved Binaries compile_commands.json
+
+$(BUILD_TOOL): $(BUILD_TOOL_SRC)
+	@echo Building build tool...
+	@go build -o $@ $(BUILD_TOOL_DIR)/main.go
