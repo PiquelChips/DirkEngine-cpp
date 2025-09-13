@@ -1,6 +1,6 @@
 ## TARGET -- the target name, used for output files & dirs
 ## ROOT_DIR -- engine root dir
-## TYPE -- shared, static, exec
+## TYPE -- shared, exec
 ## 
 ## CFLAGS -- flags for compilation like warnings and the standard
 ## CXXFLAGS -- more flags for the compilation (this one is mainly used for includes)
@@ -12,7 +12,12 @@
 BIN_DIR=$(ROOT_DIR)/Binaries
 INT_DIR=$(ROOT_DIR)/Intermediate/$(TARGET)
 
-OUT=$(BIN_DIR)/lib$(TARGET).so
+ifeq ($(TYPE), "shared")
+	OUT=$(BIN_DIR)/lib$(TARGET).so
+endif
+ifeq ($(TYPE), "exec")
+	OUT=$(BIN_DIR)/$(TARGET)
+endif
 
 LDFLAGS += -L$(BIN_DIR)
 
