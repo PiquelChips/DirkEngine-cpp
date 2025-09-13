@@ -20,12 +20,14 @@ func Build() error {
 
 	/**
 	 * BUILD FLOW
-	 * - load saved thirdparty dependencies
+	 * + load saved thirdparty dependencies
 	 * - look for target in src dir (for now will be Editor)
 	 * - resolve dependencies (ignore duplicates)
+	 * - open compile commands
 	 * - build every target
 	 *   - main target should be last (Editor)
 	 *   - generate makefile & run
+	 * - close compile commands
 	 */
 	return nil
 }
