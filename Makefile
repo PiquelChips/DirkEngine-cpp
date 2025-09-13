@@ -14,12 +14,6 @@ build: $(BUILD_TOOL)
 setup: $(BUILD_TOOL)
 	@$(BUILD_TOOL) setup
 
-projectfiles: $(BUILD_TOOL)
-	@$(BUILD_TOOL) projectfiles
-
-clangdb: $(BUILD_TOOL)
-	@$(BUILD_TOOL) clangdb
-
 clean:
 	@rm -rf Intermediate Saved Binaries compile_commands.json
 
