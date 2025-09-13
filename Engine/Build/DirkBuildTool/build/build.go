@@ -1,11 +1,16 @@
 package build
 
-import "fmt"
+import (
+	"DirkBuildTool/setup"
+	"fmt"
+)
 
 func Build() error {
 	fmt.Printf("build has not been implemented yet. this is a work in progress\n")
-	// detect & create bin & intermediate dirs
-	// don't forget to add all include paths of deps to all modules
+	thirdparty, err := setup.ReadThirdparty()
+	if err != nil {
+		return err
+	}
 
 	/**
 	 * BUILD OPTIONS:

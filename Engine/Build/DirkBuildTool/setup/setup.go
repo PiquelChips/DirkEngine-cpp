@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 )
 
+const thirdpartyFile = "thirdparty.json"
+
 func Setup() error {
 	// TODO: build glfw
 
@@ -56,9 +58,22 @@ func Setup() error {
 		return nil
 	}
 
-	return output.WriteIntFile("thirdparty.json", data)
+	return output.WriteIntFile(thirdpartyFile, data)
 }
 
 func getDir(name string) (string, error) {
 	return filepath.Abs(fmt.Sprintf("%s/%s", output.Dirs.Thirdparty, name))
+}
+
+func ReadThirdparty() (*models.Thirdparty, error) {
+	data, err := output.ReadIntFile(thirdpartyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	var thirdparty *models.Thirdparty
+	if err = json.Unmarshal(data, thirdparty); err != nil {
+		return nil, err
+	}
+	return thirdparty, nil
 }
