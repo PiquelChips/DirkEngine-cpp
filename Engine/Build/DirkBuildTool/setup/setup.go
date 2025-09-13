@@ -15,6 +15,7 @@ func Setup() error {
 	// TODO: build glfw
 
 	glfw := os.Getenv("GLFW")
+	vulkan := os.Getenv("VULKAN_SDK")
 
 	// hardcoded deps
 	thirdparty := models.Thirdparty{
@@ -33,6 +34,12 @@ func Setup() error {
 			IsHeaderOnly: false,
 			IncludeDir:   fmt.Sprintf("%s/include", glfw),
 			LibDir:       fmt.Sprintf("%s/lib", glfw),
+		},
+		"vulkan": &models.ThirdpartyDep{
+			Name:         "vulkan",
+			IsHeaderOnly: false,
+			IncludeDir:   fmt.Sprintf("%s/include", vulkan),
+			LibDir:       fmt.Sprintf("%s/lib", vulkan),
 		},
 	}
 
