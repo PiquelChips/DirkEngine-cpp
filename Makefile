@@ -19,4 +19,4 @@ clean:
 
 $(BUILD_TOOL): $(BUILD_TOOL_SRC)
 	@echo Building build tool...
-	@go build -o $@ $(BUILD_TOOL_DIR)/main.go
+	@go build -C $(BUILD_TOOL_DIR) -o ../../../$@ main.go
