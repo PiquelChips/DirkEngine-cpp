@@ -3,22 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"DirkBuildTool/build"
+	"DirkBuildTool/setup"
 )
 
 func usage() {
 	fmt.Printf("usage: DirkBuildTool <command>\n")
 	fmt.Printf("\tsetup - setup the dependencies for development\n")
 	fmt.Printf("\tbuild - build the editor\n")
-}
-
-func setup() error {
-	fmt.Printf("setup has not been implemented yet. this is a work in progress\n")
-	return nil
-}
-
-func build() error {
-	fmt.Printf("build has not been implemented yet. this is a work in progress\n")
-	return nil
 }
 
 func main() {
@@ -30,9 +23,9 @@ func main() {
 	var run func() error
 	switch os.Args[1] {
 	case "setup":
-		run = setup
+		run = setup.Setup
 	case "build":
-		run = build
+		run = build.Build
 	default:
 		usage()
 		return
