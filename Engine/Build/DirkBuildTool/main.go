@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"DirkBuildTool/build"
+	"DirkBuildTool/output"
 	"DirkBuildTool/setup"
 )
 
@@ -18,6 +19,10 @@ func main() {
 	if len(os.Args) != 2 {
 		usage()
 		return
+	}
+
+	if err := output.GetOutDirs(); err != nil {
+		panic(err)
 	}
 
 	var run func() error

@@ -15,6 +15,7 @@ func Build() error {
 
 	/**
 	 * BUILD FLOW
+	 * - load saved thirdparty dependencies
 	 * - look for target in src dir (for now will be Editor)
 	 * - resolve dependencies (ignore duplicates)
 	 * - build every target
