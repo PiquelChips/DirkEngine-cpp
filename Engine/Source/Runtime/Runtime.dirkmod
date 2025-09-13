@@ -1,0 +1,18 @@
+{
+    "name": "Runtime",
+    "c_standard": "c++23",
+    "type": "shared",
+    "dependencies": [],
+    "external": [
+        "glfw",
+        "glm",
+        "tinygltf"
+    ],
+    "defines": [
+        "GLFW_INCLUDE_NONE",
+        "GLFW_INCLUDE_VLUKAN",
+        "LOG_PATH=\".\"",
+        "RESOURCE_PATH=\".\"",
+        "SHADER_PATH=\".\""
+    ]
+}

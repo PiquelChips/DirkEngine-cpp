@@ -1,0 +1,12 @@
+{
+    "name": "Editor",
+    "c_standard": "c++23",
+    "type": "exec",
+    "dependencies": [
+        "Runtime"
+    ],
+    "external": [],
+    "defines": [
+        "WITH_EDITOR"
+    ]
+}
