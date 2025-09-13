@@ -5,11 +5,14 @@ import (
 	"DirkBuildTool/output"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 )
 
 func Setup() error {
 	// TODO: build glfw
+
+	glfw := os.Getenv("GLFW")
 
 	// hardcoded deps
 	thirdparty := models.Thirdparty{
@@ -23,16 +26,28 @@ func Setup() error {
 			IsHeaderOnly: true,
 			IncludeDir:   ".",
 		},
+		"glfw": &models.ThirdpartyDep{
+			Name:         "glfw",
+			IsHeaderOnly: false,
+			IncludeDir:   fmt.Sprintf("%s/include", glfw),
+			LibDir:       fmt.Sprintf("%s/lib", glfw),
+		},
 	}
 
 	// make all paths absolute
 	for _, dep := range thirdparty {
 		dir, err := getDir(dep.Name)
-		incDir, err := filepath.Abs(fmt.Sprintf("%s/%s", dir, dep.IncludeDir))
 		if err != nil {
 			return nil
 		}
-		dep.IncludeDir = incDir
+
+		if !filepath.IsAbs(dep.IncludeDir) {
+			incDir, err := filepath.Abs(fmt.Sprintf("%s/%s", dir, dep.IncludeDir))
+			if err != nil {
+				return nil
+			}
+			dep.IncludeDir = incDir
+		}
 	}
 
 	// write the file
