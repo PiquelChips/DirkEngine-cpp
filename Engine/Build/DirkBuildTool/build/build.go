@@ -23,9 +23,9 @@ func Build() error {
 
 	final := configs["Editor"]
 
+	// TODO: NEDDS FIX
 	targetConfigs := map[string]*models.ModuleConfig{final.Name: final}
 	addDeps(targetConfigs, configs, final)
-
 	targets := map[string]*models.Module{}
 	for name, config := range targetConfigs {
 		deps := []*models.Dependency{}
@@ -47,9 +47,27 @@ func Build() error {
 	}
 
 	// open compile commands file
-	// loop over every target but final & build
-	// build final
-	// close compile commands
+	if err := output.WriteIntFile("compile_commands.json", []byte("["), true); err != nil {
+		return nil
+	}
+
+	for _, target := range targets {
+		if target.Name == final.Name {
+			continue
+		}
+
+		if err := target.Build(); err != nil {
+			return nil
+		}
+	}
+
+	if err := targets[final.Name].Build(); err != nil {
+		return err
+	}
+
+	if err := output.WriteIntFile("compile_commands.json", []byte("{}]"), false); err != nil {
+		return nil
+	}
 
 	/**
 	 * BUILD OPTIONS:

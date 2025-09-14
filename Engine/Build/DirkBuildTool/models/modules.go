@@ -1,6 +1,9 @@
 package models
 
-import "fmt"
+import (
+	"DirkBuildTool/output"
+	"fmt"
+)
 
 // read from .dirkmod files
 type ModuleConfig struct {
@@ -70,6 +73,14 @@ func (m *Module) ToMakefile() *Makefile {
 		LdFlags: ldFlags,
 		CFlags:  fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
 	}
+}
+
+func (m *Module) Build() error {
+	_, err := m.ToMakefile().ToBytes()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type Thirdparty map[string]*Dependency
