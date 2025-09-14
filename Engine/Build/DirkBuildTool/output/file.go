@@ -8,10 +8,22 @@ import (
 
 const filePerm = 0644
 
-func WriteIntFile(name string, data []byte) error {
+func WriteIntFile(name string, data []byte, overwrite bool) error {
 	name = strings.Trim(name, "/")
 	name = fmt.Sprintf("%s/%s", Dirs.Intermediate, name)
-	return os.WriteFile(name, data, filePerm)
+
+	if overwrite {
+		return os.WriteFile(name, data, filePerm)
+	}
+
+	f, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE, filePerm)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	f.Write(data)
+	return nil
 }
 
 func ReadIntFile(name string) ([]byte, error) {

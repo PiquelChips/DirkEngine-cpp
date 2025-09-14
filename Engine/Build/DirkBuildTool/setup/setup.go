@@ -65,7 +65,7 @@ func Setup() error {
 		return nil
 	}
 
-	return output.WriteIntFile(thirdpartyFile, data)
+	return output.WriteIntFile(thirdpartyFile, data, true)
 }
 
 func getDir(name string) (string, error) {
