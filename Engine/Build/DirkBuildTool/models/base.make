@@ -12,16 +12,16 @@
 BIN_DIR=$(ROOT_DIR)/Binaries
 INT_DIR=$(ROOT_DIR)/Intermediate/$(TARGET)
 
-OUT=$(BIN_DIR)/
-ifeq ($(TYPE), "shared")
-        OUT+=lib$(TARGET).so
+OUT=
+ifeq ($(TYPE),shared)
+	OUT=$(BIN_DIR)/lib$(TARGET).so
 endif
-ifeq ($(TYPE), "exec")
-        OUT+=$(TARGET)
+ifeq ($(TYPE),exec)
+	OUT=$(BIN_DIR)/$(TARGET)
 endif
 
-LDFLAGS += -L$(BIN_DIR)
-CXXFLAGS += -Iinclude
+LDFLAGS+= -L$(BIN_DIR)
+CXXFLAGS+= -Iinclude
 
 COMPILE_COMMANDS_FILE=$(ROOT_DIR)/compile_commands.json
 
@@ -40,7 +40,7 @@ OBJ=$(SRC:$(SRC_DIR)/%$(SRC_EXT)=$(OBJ_DIR)/%.o)
 BUILD_CMD=$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEFINES) -MMD -MP -c $< -o $@
 
 .PHONY: $(TARGET)
-$(TARGET): $(OUT) $(SPV)
+$(TARGET): $(SPV) $(OUT)
 	@echo Built $(TARGET)
 
 $(OUT): $(OBJ)

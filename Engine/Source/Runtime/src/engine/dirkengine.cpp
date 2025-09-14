@@ -6,7 +6,8 @@
 #include "render/camera.hpp"
 #include "render/renderer.hpp"
 
-#include <GLFW/glfw3.h>
+#include "GLFW/glfw3.h"
+
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
