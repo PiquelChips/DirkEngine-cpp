@@ -12,18 +12,19 @@
 BIN_DIR=$(ROOT_DIR)/Binaries
 INT_DIR=$(ROOT_DIR)/Intermediate/$(TARGET)
 
+OUT=$(BIN_DIR)/
 ifeq ($(TYPE), "shared")
-	OUT=$(BIN_DIR)/lib$(TARGET).so
+        OUT+=lib$(TARGET).so
 endif
 ifeq ($(TYPE), "exec")
-	OUT=$(BIN_DIR)/$(TARGET)
+        OUT+=$(TARGET)
 endif
 
 LDFLAGS += -L$(BIN_DIR)
+CXXFLAGS += -Iinclude
 
 COMPILE_COMMANDS_FILE=$(ROOT_DIR)/compile_commands.json
 
-INCLUDE_DIR=include
 SRC_DIR=src
 SRC_EXT=.cpp
 SRC=$(shell find $(SRC_DIR) -name '*$(SRC_EXT)')

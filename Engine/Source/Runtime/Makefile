@@ -57,3 +57,4 @@ $(SHADERS_OUT_DIR)/%.spv: $(SHADERS_DIR)/%
 	@echo Compiling shader $*...
 	@mkdir -p $(dir $@)
 	@glslc $< -o $@
+
