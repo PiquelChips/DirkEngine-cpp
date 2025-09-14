@@ -1,7 +1,7 @@
 {
     "name": "Editor",
     "c_standard": "c++23",
-    "type": "exec",
+    "is_lib": true,
     "dependencies": [
         "Runtime"
     ],

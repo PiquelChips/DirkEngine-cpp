@@ -4,7 +4,7 @@ package models
 type ModuleConfig struct {
 	Name    string   `json:"name"`
 	Std     string   `json:"c_standard"`
-	Type    string   `json:"type"`         // lib, exec
+	IsLib   bool     `json:"is_lib"`       // lib, exec
 	Deps    []string `json:"dependencies"` // project modules
 	Ext     []string `json:"external"`     // thirdparty modules
 	Defines []string `json:"defines"`
