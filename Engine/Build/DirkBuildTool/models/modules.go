@@ -31,6 +31,47 @@ type Module struct {
 	Defines []string
 }
 
+func (m *Module) ToMakefile() *Makefile {
+	var typeStr string
+	var ldFlags string
+	if m.IsLib {
+		typeStr = "shared"
+		ldFlags = ldFlags + " -shared"
+	} else {
+		typeStr = "exec"
+	}
+
+	libDirs := []string{}
+	incDirs := []string{}
+	libs := []string{}
+	for _, dep := range m.Deps {
+		if dep.IncludeDir != "" {
+			incDirs = append(incDirs, dep.IncludeDir)
+		}
+
+		if dep.IsHeaderOnly {
+			continue
+		}
+
+		if dep.LibDir != "" {
+			libDirs = append(libDirs, dep.LibDir)
+		}
+		libs = append(libs, dep.Name)
+	}
+
+	return &Makefile{
+		Target:  m.Name,
+		RootDir: m.Path,
+		Type:    typeStr,
+		LibDirs: libDirs,
+		IncDirs: incDirs,
+		Libs:    libs,
+		Defines: m.Defines,
+		LdFlags: ldFlags,
+		CFlags:  fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
+	}
+}
+
 type Thirdparty map[string]*Dependency
 
 type Dependency struct {
