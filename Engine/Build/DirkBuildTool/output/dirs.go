@@ -8,11 +8,14 @@ import (
 const dirPerm = 0755
 
 var Dirs struct {
-	Intermediate, Binaries,
+	Root, Intermediate, Binaries,
 	Source, Thirdparty string
 }
 
 func GetOutDirs() error {
+	if err := mkdirAndAbs(".", &Dirs.Root); err != nil {
+		return err
+	}
 	if err := mkdirAndAbs("Intermediate", &Dirs.Intermediate); err != nil {
 		return err
 	}

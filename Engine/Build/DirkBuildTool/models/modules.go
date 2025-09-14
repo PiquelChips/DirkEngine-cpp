@@ -61,7 +61,7 @@ func (m *Module) ToMakefile() *Makefile {
 
 	return &Makefile{
 		Target:  m.Name,
-		RootDir: m.Path,
+		RootDir: output.Dirs.Root,
 		Type:    typeStr,
 		LibDirs: libDirs,
 		IncDirs: incDirs,
