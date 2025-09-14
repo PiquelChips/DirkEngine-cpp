@@ -16,10 +16,13 @@ func Build() error {
 		return err
 	}
 
-	_, err = searchDir(output.Dirs.Source)
+	configs, err := searchDir(output.Dirs.Source)
 	if err != nil {
 		return err
 	}
+
+	final := configs["Editor"]
+	fmt.Printf("%v\n", final)
 
 	//var targets map[string]*models.Module
 
@@ -32,14 +35,15 @@ func Build() error {
 	/**
 	 * BUILD FLOW
 	 * + load saved thirdparty dependencies
-	 * - look for target in src dir (for now will be Editor)
-	 * - resolve dependencies (ignore duplicates)
+	 * + load all configs
+	 * - get Editor config & build module
 	 * - open compile commands
 	 * - build every target
 	 *   - main target should be last (Editor)
 	 *   - generate makefile & run
 	 * - close compile commands
 	 */
+
 	return nil
 }
 
@@ -97,7 +101,7 @@ func getMod(path, name string) (*models.ModuleConfig, error) {
 			config := &models.ModuleConfig{}
 			err = json.Unmarshal(data, config)
 			if err != nil {
-				fmt.Printf("Error in %s.dirkmod: %s", name, err.Error())
+				fmt.Printf("Error in %s.dirkmod: %s\n", name, err.Error())
 				return nil, nil
 			}
 

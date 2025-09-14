@@ -15,6 +15,15 @@ type Module struct {
 	Name    string
 	CxxStd  string
 	IsLib   bool
-	Deps    []Module
+	Deps    []Dependency
 	Defines []string
+}
+
+type Thirdparty map[string]*Dependency
+
+type Dependency struct {
+	Name         string `json:"name"`
+	IsHeaderOnly bool   `json:"header_only"`
+	IncludeDir   string `json:"inc_dir"`
+	LibDir       string `json:"lib_dir,omitempty"`
 }

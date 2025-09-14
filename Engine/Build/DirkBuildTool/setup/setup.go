@@ -19,23 +19,23 @@ func Setup() error {
 
 	// hardcoded deps
 	thirdparty := models.Thirdparty{
-		"glm": &models.ThirdpartyDep{
+		"glm": &models.Dependency{
 			Name:         "glm",
 			IsHeaderOnly: true,
 			IncludeDir:   ".",
 		},
-		"tinygltf": &models.ThirdpartyDep{
+		"tinygltf": &models.Dependency{
 			Name:         "tinygltf",
 			IsHeaderOnly: true,
 			IncludeDir:   ".",
 		},
-		"glfw": &models.ThirdpartyDep{
+		"glfw": &models.Dependency{
 			Name:         "glfw",
 			IsHeaderOnly: false,
 			IncludeDir:   fmt.Sprintf("%s/include", glfw),
 			LibDir:       fmt.Sprintf("%s/lib", glfw),
 		},
-		"vulkan": &models.ThirdpartyDep{
+		"vulkan": &models.Dependency{
 			Name:         "vulkan",
 			IsHeaderOnly: false,
 			IncludeDir:   fmt.Sprintf("%s/include", vulkan),
