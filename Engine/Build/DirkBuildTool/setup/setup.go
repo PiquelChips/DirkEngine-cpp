@@ -78,7 +78,7 @@ func ReadThirdparty() (*models.Thirdparty, error) {
 		return nil, err
 	}
 
-	var thirdparty *models.Thirdparty
+	thirdparty := &models.Thirdparty{}
 	if err = json.Unmarshal(data, thirdparty); err != nil {
 		return nil, err
 	}
