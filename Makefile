@@ -1,6 +1,6 @@
 BUILD_TOOL=Binaries/DirkBuildTool
 BUILD_TOOL_DIR=Engine/Build/DirkBuildTool
-BUILD_TOOL_SRC=$(shell find $(BUILD_TOOL_DIR) -type f -name '*.go')
+BUILD_TOOL_SRC=$(shell find $(BUILD_TOOL_DIR) -type f -name '*')
 
 EDITOR=Binaries/DirkEditor
 
