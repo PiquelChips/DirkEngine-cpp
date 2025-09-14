@@ -23,12 +23,11 @@ func Build() error {
 
 	final := configs["Editor"]
 
-	targetConfigs := map[string]*models.ModuleConfig{}
+	targetConfigs := map[string]*models.ModuleConfig{final.Name: final}
 	addDeps(targetConfigs, configs, final)
 
 	targets := map[string]*models.Module{}
 	for name, config := range targetConfigs {
-
 		deps := []*models.Dependency{}
 		for _, depName := range config.Deps {
 			deps = append(deps, targetConfigs[depName].ToDependency())
