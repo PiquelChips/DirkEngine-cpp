@@ -6,13 +6,14 @@
     "external": [
         "glfw",
         "glm",
-        "tinygltf"
+        "tinygltf",
+        "vulkan"
     ],
     "defines": [
         "GLFW_INCLUDE_NONE",
         "GLFW_INCLUDE_VLUKAN",
-        "LOG_PATH=\".\"",
-        "RESOURCE_PATH=\".\"",
-        "SHADER_PATH=\".\""
+        "LOG_PATH=\\\".\\\"",
+        "RESOURCE_PATH=\\\".\\\"",
+        "SHADER_PATH=\\\".\\\""
     ]
 }
