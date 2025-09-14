@@ -11,7 +11,7 @@ import (
 
 func Build() error {
 	fmt.Printf("build has not been implemented yet. this is a work in progress\n")
-	_, err := setup.ReadThirdparty()
+	thirdparty, err := setup.ReadThirdparty()
 	if err != nil {
 		return err
 	}
@@ -22,26 +22,40 @@ func Build() error {
 	}
 
 	final := configs["Editor"]
-	fmt.Printf("%v\n", final)
 
-	//var targets map[string]*models.Module
+	targetConfigs := map[string]*models.ModuleConfig{}
+	addDeps(targetConfigs, configs, final)
+
+	targets := map[string]*models.Module{}
+	for name, config := range targetConfigs {
+
+		deps := []*models.Dependency{}
+		for _, depName := range config.Deps {
+			deps = append(deps, targetConfigs[depName].ToDependency())
+		}
+		for _, depName := range config.Ext {
+			deps = append(deps, thirdparty[depName])
+		}
+
+		targets[name] = &models.Module{
+			Name:    config.Name,
+			Path:    config.Path,
+			Std:     config.Std,
+			IsLib:   config.IsLib,
+			Deps:    deps,
+			Defines: config.Defines,
+		}
+	}
+
+	// open compile commands file
+	// loop over every target but final & build
+	// build final
+	// close compile commands
 
 	/**
 	 * BUILD OPTIONS:
 	 * - shipping -- static linking & all optimizations
 	 * - dev -- shared linking & no optimizations
-	 */
-
-	/**
-	 * BUILD FLOW
-	 * + load saved thirdparty dependencies
-	 * + load all configs
-	 * - get Editor config & build module
-	 * - open compile commands
-	 * - build every target
-	 *   - main target should be last (Editor)
-	 *   - generate makefile & run
-	 * - close compile commands
 	 */
 
 	return nil
@@ -77,7 +91,8 @@ func searchDir(path string) (map[string]*models.ModuleConfig, error) {
 }
 
 func getMod(path, name string) (*models.ModuleConfig, error) {
-	entries, err := os.ReadDir(fmt.Sprintf("%s/%s", path, name))
+	path = fmt.Sprintf("%s/%s", path, name)
+	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +108,7 @@ func getMod(path, name string) (*models.ModuleConfig, error) {
 		}
 
 		if info.Name() == fmt.Sprintf("%s.dirkmod", name) {
-			data, err := os.ReadFile(fmt.Sprintf("%s/%s/%s.dirkmod", path, name, name))
+			data, err := os.ReadFile(fmt.Sprintf("%s/%s.dirkmod", path, name))
 			if err != nil {
 				return nil, err
 			}
@@ -105,9 +120,29 @@ func getMod(path, name string) (*models.ModuleConfig, error) {
 				return nil, nil
 			}
 
+			config.Path = path
 			return config, nil
 		}
 	}
 
 	return nil, nil
+}
+
+func addDeps(targetConfigs map[string]*models.ModuleConfig, configs map[string]*models.ModuleConfig, dep *models.ModuleConfig) {
+	startLen := len(targetConfigs)
+	for _, depName := range dep.Deps {
+		dep, ok := configs[depName]
+		if !ok {
+			fmt.Printf("dependency %s referenced in module %s does not exist\n", depName, dep.Name)
+			continue
+		}
+
+		targetConfigs[depName] = dep
+	}
+
+	if len(targetConfigs) != startLen {
+		for _, conf := range targetConfigs {
+			addDeps(targetConfigs, configs, conf)
+		}
+	}
 }

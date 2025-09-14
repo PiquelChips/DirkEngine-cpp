@@ -1,21 +1,33 @@
 package models
 
+import "fmt"
+
 // read from .dirkmod files
 type ModuleConfig struct {
 	Name    string   `json:"name"`
 	Std     string   `json:"c_standard"`
-	IsLib   bool     `json:"is_lib"`       // lib, exec
+	IsLib   bool     `json:"is_lib"`
 	Deps    []string `json:"dependencies"` // project modules
 	Ext     []string `json:"external"`     // thirdparty modules
 	Defines []string `json:"defines"`
+	Path    string   // shouldn't be in json
+}
+
+func (m *ModuleConfig) ToDependency() *Dependency {
+	return &Dependency{
+		Name:         m.Name,
+		IsHeaderOnly: false,
+		IncludeDir:   fmt.Sprintf("%s/include", m.Path),
+	}
 }
 
 // constructed for building
 type Module struct {
 	Name    string
-	CxxStd  string
+	Path    string
+	Std     string
 	IsLib   bool
-	Deps    []Dependency
+	Deps    []*Dependency
 	Defines []string
 }
 

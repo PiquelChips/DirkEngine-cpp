@@ -72,14 +72,14 @@ func getDir(name string) (string, error) {
 	return filepath.Abs(fmt.Sprintf("%s/%s", output.Dirs.Thirdparty, name))
 }
 
-func ReadThirdparty() (*models.Thirdparty, error) {
+func ReadThirdparty() (models.Thirdparty, error) {
 	data, err := output.ReadIntFile(thirdpartyFile)
 	if err != nil {
 		return nil, err
 	}
 
-	thirdparty := &models.Thirdparty{}
-	if err = json.Unmarshal(data, thirdparty); err != nil {
+	thirdparty := models.Thirdparty{}
+	if err = json.Unmarshal(data, &thirdparty); err != nil {
 		return nil, err
 	}
 	return thirdparty, nil
