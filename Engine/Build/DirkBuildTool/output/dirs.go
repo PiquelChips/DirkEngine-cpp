@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-const dirPerm = 0755
+const DirPerm = 0755
 
 var Dirs struct {
 	Root, Intermediate, Binaries,
@@ -36,7 +36,7 @@ func mkdirAndAbs(dir string, out *string) error {
 	if err != nil {
 		return err
 	}
-	err = os.MkdirAll(dir, dirPerm)
+	err = os.MkdirAll(dir, DirPerm)
 	if err != nil {
 		return err
 	}

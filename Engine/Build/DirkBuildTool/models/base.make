@@ -23,7 +23,7 @@ endif
 LDFLAGS += -L$(BIN_DIR)
 CXXFLAGS += -Iinclude
 
-COMPILE_COMMANDS_FILE=$(INT_DIR)/compile_commands.json
+COMPILE_COMMANDS_FILE=$(ROOT_DIR)/compile_commands.json
 
 SRC_DIR=src
 SRC_EXT=.cpp

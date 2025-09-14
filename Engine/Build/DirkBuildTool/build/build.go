@@ -46,8 +46,8 @@ func Build() error {
 		}
 	}
 
-	// open compile commands file
-	if err := output.WriteIntFile("compile_commands.json", []byte("["), true); err != nil {
+	compileCommandsPath := fmt.Sprintf("%s/compile_commands.json", output.Dirs.Root)
+	if err := os.WriteFile(compileCommandsPath, []byte("["), output.FilePerm); err != nil {
 		return nil
 	}
 
@@ -65,8 +65,14 @@ func Build() error {
 		return err
 	}
 
-	if err := output.WriteIntFile("compile_commands.json", []byte("{}]"), false); err != nil {
-		return nil
+	f, err := os.OpenFile(compileCommandsPath, os.O_APPEND|os.O_CREATE, output.FilePerm)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err := f.Write([]byte("{}]")); err != nil {
+		return err
 	}
 
 	/**

@@ -6,17 +6,17 @@ import (
 	"strings"
 )
 
-const filePerm = 0644
+const FilePerm = 0644
 
 func WriteIntFile(name string, data []byte, overwrite bool) error {
 	name = strings.Trim(name, "/")
 	name = fmt.Sprintf("%s/%s", Dirs.Intermediate, name)
 
 	if overwrite {
-		return os.WriteFile(name, data, filePerm)
+		return os.WriteFile(name, data, FilePerm)
 	}
 
-	f, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE, filePerm)
+	f, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE, FilePerm)
 	if err != nil {
 		return err
 	}

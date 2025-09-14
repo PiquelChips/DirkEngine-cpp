@@ -3,6 +3,8 @@ package models
 import (
 	"DirkBuildTool/output"
 	"fmt"
+	"os"
+	"os/exec"
 )
 
 // read from .dirkmod files
@@ -75,12 +77,33 @@ func (m *Module) ToMakefile() *Makefile {
 	}
 }
 
+func (m *Module) ModDir() (string, error) {
+	modDir := fmt.Sprintf("%s/%s", output.Dirs.Intermediate, m.Name)
+	return modDir, os.MkdirAll(modDir, output.DirPerm)
+}
+
 func (m *Module) Build() error {
-	_, err := m.ToMakefile().ToBytes()
+	makefile, err := m.ToMakefile().ToBytes()
 	if err != nil {
 		return err
 	}
-	return nil
+
+	modDir, err := m.ModDir()
+	if err != nil {
+		return err
+	}
+
+	makefilePath := fmt.Sprintf("%s/Makefile", modDir)
+	if err := os.WriteFile(makefilePath, makefile, output.FilePerm); err != nil {
+		return err
+	}
+
+	cmd := exec.Command("make", "-f", makefilePath)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = m.Path
+
+	return cmd.Run()
 }
 
 type Thirdparty map[string]*Dependency
