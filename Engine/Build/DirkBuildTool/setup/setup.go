@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const configFile = "setup.json"
 
 type SetupConfig struct {
 	Thirdparty map[string]*models.Dependency
+	lastSetup  time.Time
 }
 
 var config *SetupConfig
@@ -28,7 +30,9 @@ func Get() *SetupConfig {
 }
 
 func Setup() error {
-	config = &SetupConfig{}
+	config = &SetupConfig{
+		lastSetup: time.Now(),
+	}
 	// TODO: build glfw
 
 	glfw := os.Getenv("GLFW")
