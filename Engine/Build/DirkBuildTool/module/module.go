@@ -28,66 +28,97 @@ type Module struct {
 	IsLib   bool
 	Deps    []*Module
 	Ext     []*models.Dependency
-	Defines []string
 	Config  *ModuleConfig
+	selfDep *models.Dependency // itself represented as a dependency
 }
 
 func (m *Module) ToMakefile() *make.Makefile {
-	/*
-		var typeStr string
-		var ldFlags string
-		if m.IsLib {
-			typeStr = "shared"
-			ldFlags = ldFlags + " -shared"
-		} else {
-			typeStr = "exec"
+	var typeStr string
+	var ldFlags string
+	if m.IsLib {
+		typeStr = "shared"
+		ldFlags = ldFlags + " -shared"
+	} else {
+		typeStr = "exec"
+	}
+
+	libDirs := []string{}
+	incDirs := []string{}
+	libs := []string{}
+	defines := m.Config.Defines
+	for _, dep := range m.getDeps() {
+		if dep.IncludeDir != "" {
+			incDirs = append(incDirs, dep.IncludeDir)
 		}
 
-		libDirs := []string{}
-		incDirs := []string{}
-		libs := []string{}
-		for _, dep := range m.Deps {
-			if dep.IncludeDir != "" {
-				incDirs = append(incDirs, dep.IncludeDir)
-			}
-
-			if dep.IsHeaderOnly {
-				continue
-			}
-
-			if dep.LibDir != "" {
-				libDirs = append(libDirs, dep.LibDir)
-			}
-			libs = append(libs, dep.Name)
+		if dep.IsHeaderOnly {
+			continue
 		}
 
-		return &make.Makefile{
-			Target:  m.Name,
-			RootDir: output.Dirs.Root,
-			Type:    typeStr,
-			LibDirs: libDirs,
-			IncDirs: incDirs,
-			Libs:    libs,
-			Defines: m.Defines,
-			LdFlags: ldFlags,
-			CFlags:  fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
+		if dep.LibDir != "" {
+			libDirs = append(libDirs, dep.LibDir)
 		}
-	*/
-	return nil
+		libs = append(libs, dep.Name)
+
+		if defines != nil {
+			defines = append(defines, dep.Defines...)
+		}
+	}
+
+	return &make.Makefile{
+		Target:  m.Name,
+		RootDir: output.Dirs.Root,
+		Type:    typeStr,
+		LibDirs: libDirs,
+		IncDirs: incDirs,
+		Libs:    libs,
+		Defines: defines,
+		LdFlags: ldFlags,
+		CFlags:  fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
+	}
 }
 
-func (m *Module) ModDir() (string, error) {
+func (m *Module) toDep() *models.Dependency {
+	if m.selfDep != nil {
+		return m.selfDep
+	}
+
+	return &models.Dependency{
+		Name:         m.Name,
+		IsHeaderOnly: false,
+		IncludeDir:   fmt.Sprintf("%s/include", m.Path),
+		Defines:      m.Config.Defines,
+	}
+}
+
+func (m *Module) getDeps() []*models.Dependency {
+	deps := m.Ext
+
+	for _, mod := range m.Deps {
+		deps = append(deps, mod.toDep())
+		deps = append(deps, mod.getDeps()...)
+	}
+
+	return deps
+}
+
+func (m *Module) modDir() (string, error) {
 	modDir := fmt.Sprintf("%s/%s", output.Dirs.Intermediate, m.Name)
 	return modDir, os.MkdirAll(modDir, output.DirPerm)
 }
 
 func (m *Module) Build() error {
+	for _, dep := range m.Deps {
+		if err := dep.Build(); err != nil {
+			return err
+		}
+	}
 	makefile, err := m.ToMakefile().ToBytes()
 	if err != nil {
 		return err
 	}
 
-	modDir, err := m.ModDir()
+	modDir, err := m.modDir()
 	if err != nil {
 		return err
 	}
@@ -107,14 +138,13 @@ func (m *Module) Build() error {
 
 func (c *ModuleConfig) ToModule() *Module {
 	return &Module{
-		Name:    c.Name,
-		Path:    fmt.Sprintf("%s/%s", output.Dirs.Source, c.Name),
-		Std:     c.Std,
-		IsLib:   c.IsLib,
-		Deps:    nil,
-		Ext:     nil,
-		Defines: c.Defines,
-		Config:  c,
+		Name:   c.Name,
+		Path:   fmt.Sprintf("%s/%s", output.Dirs.Source, c.Name),
+		Std:    c.Std,
+		IsLib:  c.IsLib,
+		Deps:   nil,
+		Ext:    nil,
+		Config: c,
 	}
 }
 

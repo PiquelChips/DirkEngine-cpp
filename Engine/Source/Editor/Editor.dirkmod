@@ -1,7 +1,7 @@
 {
-    "name": "Editor",
+    "name": "DirkEditor",
     "c_standard": "c++23",
-    "is_lib": true,
+    "is_lib": false,
     "dependencies": [
         "Runtime"
     ],

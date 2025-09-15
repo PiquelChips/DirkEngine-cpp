@@ -12,7 +12,6 @@ import (
 const defaultTarget = "Editor"
 
 func Build() error {
-	fmt.Printf("build has not been implemented yet. this is a work in progress\n")
 	thirdparty, err := setup.ReadThirdparty()
 	if err != nil {
 		return err
