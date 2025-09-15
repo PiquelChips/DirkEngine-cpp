@@ -13,8 +13,8 @@ import (
 const configFile = "setup.json"
 
 type SetupConfig struct {
-	Thirdparty map[string]*models.Dependency
-	lastSetup  time.Time
+	Thirdparty map[string]*models.Dependency `json:"thirdparty"`
+	LastSetup  time.Time                     `json:"last_setup"`
 }
 
 var config *SetupConfig
@@ -30,9 +30,15 @@ func Get() *SetupConfig {
 }
 
 func Setup() error {
-	config = &SetupConfig{
-		lastSetup: time.Now(),
+	config = &SetupConfig{}
+	if data, err := output.ReadIntFile(configFile); err == nil {
+		if err := json.Unmarshal(data, config); err == nil {
+			return nil
+		}
 	}
+	fmt.Printf("no valid setup file detected, running setup")
+
+	config.LastSetup = time.Now()
 	// TODO: build glfw
 
 	glfw := os.Getenv("GLFW")
