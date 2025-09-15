@@ -9,35 +9,50 @@ import (
 	"path/filepath"
 )
 
-const thirdpartyFile = "thirdparty.json"
+const configFile = "setup.json"
 
-type Thirdparty map[string]*models.Dependency
+type SetupConfig struct {
+	Thirdparty map[string]*models.Dependency
+}
+
+var config *SetupConfig
+
+func Get() *SetupConfig {
+	if config == nil {
+		if err := Setup(); err != nil {
+			panic(err)
+		}
+	}
+
+	return config
+}
 
 func Setup() error {
+	config = &SetupConfig{}
 	// TODO: build glfw
 
 	glfw := os.Getenv("GLFW")
 	vulkan := os.Getenv("VULKAN_SDK")
 
 	// hardcoded deps
-	thirdparty := Thirdparty{
-		"glm": &models.Dependency{
+	config.Thirdparty = map[string]*models.Dependency{
+		"glm": {
 			Name:         "glm",
 			IsHeaderOnly: true,
-			IncludeDir:   ".",
+			IncludeDir:   ".", // relative to thirdparty dir
 		},
-		"tinygltf": &models.Dependency{
+		"tinygltf": {
 			Name:         "tinygltf",
 			IsHeaderOnly: true,
-			IncludeDir:   ".",
+			IncludeDir:   ".", // relative to thirdparty dir
 		},
-		"glfw": &models.Dependency{
+		"glfw": {
 			Name:         "glfw",
 			IsHeaderOnly: false,
 			IncludeDir:   fmt.Sprintf("%s/include", glfw),
 			LibDir:       fmt.Sprintf("%s/lib", glfw),
 		},
-		"vulkan": &models.Dependency{
+		"vulkan": {
 			Name:         "vulkan",
 			IsHeaderOnly: false,
 			IncludeDir:   fmt.Sprintf("%s/include", vulkan),
@@ -46,7 +61,7 @@ func Setup() error {
 	}
 
 	// make all paths absolute
-	for _, dep := range thirdparty {
+	for _, dep := range config.Thirdparty {
 		dir, err := getDir(dep.Name)
 		if err != nil {
 			return nil
@@ -62,27 +77,14 @@ func Setup() error {
 	}
 
 	// write the file
-	data, err := json.Marshal(thirdparty)
+	data, err := json.Marshal(config)
 	if err != nil {
 		return nil
 	}
 
-	return output.WriteIntFile(thirdpartyFile, data, true)
+	return output.WriteIntFile(configFile, data, true)
 }
 
 func getDir(name string) (string, error) {
 	return filepath.Abs(fmt.Sprintf("%s/%s", output.Dirs.Thirdparty, name))
-}
-
-func ReadThirdparty() (Thirdparty, error) {
-	data, err := output.ReadIntFile(thirdpartyFile)
-	if err != nil {
-		return nil, err
-	}
-
-	thirdparty := Thirdparty{}
-	if err = json.Unmarshal(data, &thirdparty); err != nil {
-		return nil, err
-	}
-	return thirdparty, nil
 }
