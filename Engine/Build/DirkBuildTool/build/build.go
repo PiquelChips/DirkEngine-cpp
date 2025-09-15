@@ -1,13 +1,15 @@
 package build
 
 import (
-	"DirkBuildTool/models"
+	"DirkBuildTool/module"
 	"DirkBuildTool/output"
 	"DirkBuildTool/setup"
 	"encoding/json"
 	"fmt"
 	"os"
 )
+
+const defaultTarget = "Editor"
 
 func Build() error {
 	fmt.Printf("build has not been implemented yet. this is a work in progress\n")
@@ -21,49 +23,20 @@ func Build() error {
 		return err
 	}
 
-	final := configs["Editor"]
-
-	// TODO: NEDDS FIX
-	targetConfigs := map[string]*models.ModuleConfig{final.Name: final}
-	addDeps(targetConfigs, configs, final)
-	targets := map[string]*models.Module{}
-	for name, config := range targetConfigs {
-		deps := []*models.Dependency{}
-		for _, depName := range config.Deps {
-			deps = append(deps, targetConfigs[depName].ToDependency())
-		}
-		for _, depName := range config.Ext {
-			deps = append(deps, thirdparty[depName])
-		}
-
-		targets[name] = &models.Module{
-			Name:    config.Name,
-			Path:    config.Path,
-			Std:     config.Std,
-			IsLib:   config.IsLib,
-			Deps:    deps,
-			Defines: config.Defines,
-		}
+	modules := map[string]*module.Module{}
+	for name, config := range configs {
+		modules[name] = config.ToModule()
 	}
+
+	target := modules[defaultTarget]
+	module.ResolveDependencies(target, modules, thirdparty)
 
 	compileCommandsPath := fmt.Sprintf("%s/compile_commands.json", output.Dirs.Root)
 	if err := os.WriteFile(compileCommandsPath, []byte("["), output.FilePerm); err != nil {
 		return nil
 	}
 
-	for _, target := range targets {
-		if target.Name == final.Name {
-			continue
-		}
-
-		if err := target.Build(); err != nil {
-			return nil
-		}
-	}
-
-	if err := targets[final.Name].Build(); err != nil {
-		return err
-	}
+	target.Build()
 
 	f, err := os.OpenFile(compileCommandsPath, os.O_APPEND|os.O_CREATE, output.FilePerm)
 	if err != nil {
@@ -84,13 +57,13 @@ func Build() error {
 	return nil
 }
 
-func searchDir(path string) (map[string]*models.ModuleConfig, error) {
+func searchDir(path string) (map[string]*module.ModuleConfig, error) {
 	entries, err := os.ReadDir(output.Dirs.Source)
 	if err != nil {
 		return nil, err
 	}
 
-	configs := map[string]*models.ModuleConfig{}
+	configs := map[string]*module.ModuleConfig{}
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
@@ -113,7 +86,7 @@ func searchDir(path string) (map[string]*models.ModuleConfig, error) {
 	return configs, nil
 }
 
-func getMod(path, name string) (*models.ModuleConfig, error) {
+func getMod(path, name string) (*module.ModuleConfig, error) {
 	path = fmt.Sprintf("%s/%s", path, name)
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -136,14 +109,13 @@ func getMod(path, name string) (*models.ModuleConfig, error) {
 				return nil, err
 			}
 
-			config := &models.ModuleConfig{}
+			config := &module.ModuleConfig{}
 			err = json.Unmarshal(data, config)
 			if err != nil {
 				fmt.Printf("Error in %s.dirkmod: %s\n", name, err.Error())
 				return nil, nil
 			}
 
-			config.Path = path
 			return config, nil
 		}
 	}
@@ -151,7 +123,7 @@ func getMod(path, name string) (*models.ModuleConfig, error) {
 	return nil, nil
 }
 
-func addDeps(targetConfigs map[string]*models.ModuleConfig, configs map[string]*models.ModuleConfig, dep *models.ModuleConfig) {
+func addDeps(targetConfigs map[string]*module.ModuleConfig, configs map[string]*module.ModuleConfig, dep *module.ModuleConfig) {
 	startLen := len(targetConfigs)
 	for _, depName := range dep.Deps {
 		dep, ok := configs[depName]

@@ -11,6 +11,8 @@ import (
 
 const thirdpartyFile = "thirdparty.json"
 
+type Thirdparty map[string]*models.Dependency
+
 func Setup() error {
 	// TODO: build glfw
 
@@ -18,7 +20,7 @@ func Setup() error {
 	vulkan := os.Getenv("VULKAN_SDK")
 
 	// hardcoded deps
-	thirdparty := models.Thirdparty{
+	thirdparty := Thirdparty{
 		"glm": &models.Dependency{
 			Name:         "glm",
 			IsHeaderOnly: true,
@@ -72,13 +74,13 @@ func getDir(name string) (string, error) {
 	return filepath.Abs(fmt.Sprintf("%s/%s", output.Dirs.Thirdparty, name))
 }
 
-func ReadThirdparty() (models.Thirdparty, error) {
+func ReadThirdparty() (Thirdparty, error) {
 	data, err := output.ReadIntFile(thirdpartyFile)
 	if err != nil {
 		return nil, err
 	}
 
-	thirdparty := models.Thirdparty{}
+	thirdparty := Thirdparty{}
 	if err = json.Unmarshal(data, &thirdparty); err != nil {
 		return nil, err
 	}
