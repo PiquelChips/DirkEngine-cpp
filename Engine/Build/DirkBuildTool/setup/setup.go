@@ -36,7 +36,7 @@ func Setup() error {
 			return nil
 		}
 	}
-	fmt.Printf("no valid setup file detected, running setup")
+	fmt.Printf("no valid setup file detected, running setup\n")
 
 	config.LastSetup = time.Now()
 	// TODO: build glfw

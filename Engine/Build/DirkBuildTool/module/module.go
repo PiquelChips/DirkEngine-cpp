@@ -153,7 +153,7 @@ func ResolveDependencies(module *Module, modules map[string]*Module) {
 	for _, moduleName := range module.Config.Deps {
 		mod, ok := modules[moduleName]
 		if !ok {
-			fmt.Printf("module %s required by module %s does not exist", moduleName, module.Name)
+			fmt.Printf("module %s required by module %s does not exist\n", moduleName, module.Name)
 			continue
 		}
 		module.Deps = append(module.Deps, mod)
@@ -164,7 +164,7 @@ func ResolveDependencies(module *Module, modules map[string]*Module) {
 	for _, depName := range module.Config.Ext {
 		dep, ok := setup.Get().Thirdparty[depName]
 		if !ok {
-			fmt.Printf("external dependency %s required by module %s does not exist", depName, module.Name)
+			fmt.Printf("external dependency %s required by module %s does not exist\n", depName, module.Name)
 			continue
 		}
 		module.Ext = append(module.Ext, dep)
