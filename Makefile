@@ -4,7 +4,7 @@ BUILD_TOOL_SRC=$(shell find $(BUILD_TOOL_DIR) -type f -name '*')
 
 EDITOR=Binaries/DirkEditor
 
-.PHONY: clean setup projectfiles clangdb build run
+.PHONY: clean run
 run: $(BUILD_TOOL)
 	@$(BUILD_TOOL)
 	@ln -sf Editor $(EDITOR)
