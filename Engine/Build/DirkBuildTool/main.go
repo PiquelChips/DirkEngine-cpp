@@ -9,34 +9,20 @@ import (
 	"DirkBuildTool/setup"
 )
 
-func usage() {
-	fmt.Printf("usage: DirkBuildTool <command>\n")
-	fmt.Printf("\tsetup - setup the dependencies for development\n")
-	fmt.Printf("\tbuild - build the editor\n")
-}
-
 func main() {
-	if len(os.Args) != 2 {
-		usage()
-		return
-	}
-
 	if err := output.GetOutDirs(); err != nil {
 		panic(err)
 	}
 
-	var run func() error
-	switch os.Args[1] {
-	case "setup":
-		run = setup.Setup
-	case "build":
-		run = build.Build
-	default:
-		usage()
+	if len(os.Args) != 1 {
+		fmt.Printf("cli not implemented yet, please run without params\n")
 		return
 	}
 
-	if err := run(); err != nil {
+	if err := setup.Setup(); err != nil {
+		panic(err)
+	}
+	if err := build.Build("Editor"); err != nil {
 		panic(err)
 	}
 }

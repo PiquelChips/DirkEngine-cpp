@@ -5,15 +5,10 @@ BUILD_TOOL_SRC=$(shell find $(BUILD_TOOL_DIR) -type f -name '*')
 EDITOR=Binaries/DirkEditor
 
 .PHONY: clean setup projectfiles clangdb build run
-run: build
-	@$(EDITOR)
-
-build: $(BUILD_TOOL)
-	@$(BUILD_TOOL) build
+run: $(BUILD_TOOL)
+	@$(BUILD_TOOL)
 	@ln -sf Editor $(EDITOR)
-
-setup: $(BUILD_TOOL)
-	@$(BUILD_TOOL) setup
+	@$(EDITOR)
 
 clean:
 	@rm -rf Intermediate Saved Binaries compile_commands.json

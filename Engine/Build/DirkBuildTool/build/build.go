@@ -9,9 +9,7 @@ import (
 	"os"
 )
 
-const targetName = "Editor"
-
-func Build() error {
+func Build(targetName string) error {
 	thirdparty, err := setup.ReadThirdparty()
 	if err != nil {
 		return err
