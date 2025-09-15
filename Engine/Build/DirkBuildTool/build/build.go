@@ -3,17 +3,12 @@ package build
 import (
 	"DirkBuildTool/module"
 	"DirkBuildTool/output"
-	"DirkBuildTool/setup"
 	"encoding/json"
 	"fmt"
 	"os"
 )
 
 func Build(targetName string) error {
-	thirdparty, err := setup.ReadThirdparty()
-	if err != nil {
-		return err
-	}
 
 	configs, err := searchDir(output.Dirs.Source)
 	if err != nil {
@@ -30,7 +25,7 @@ func Build(targetName string) error {
 		fmt.Printf("target %s does not exist", targetName)
 		return nil
 	}
-	module.ResolveDependencies(target, modules, thirdparty)
+	module.ResolveDependencies(target, modules)
 
 	/*
 		compileCommandsPath := fmt.Sprintf("%s/compile_commands.json", output.Dirs.Root)
