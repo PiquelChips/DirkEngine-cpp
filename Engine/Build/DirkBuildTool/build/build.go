@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-const defaultTarget = "Editor"
+const targetName = "Editor"
 
 func Build() error {
 	thirdparty, err := setup.ReadThirdparty()
@@ -27,25 +27,33 @@ func Build() error {
 		modules[name] = config.ToModule()
 	}
 
-	target := modules[defaultTarget]
-	module.ResolveDependencies(target, modules, thirdparty)
-
-	compileCommandsPath := fmt.Sprintf("%s/compile_commands.json", output.Dirs.Root)
-	if err := os.WriteFile(compileCommandsPath, []byte("["), output.FilePerm); err != nil {
+	target, ok := modules[targetName]
+	if !ok {
+		fmt.Printf("target %s does not exist", targetName)
 		return nil
 	}
+	module.ResolveDependencies(target, modules, thirdparty)
+
+	/*
+		compileCommandsPath := fmt.Sprintf("%s/compile_commands.json", output.Dirs.Root)
+		if err := os.WriteFile(compileCommandsPath, []byte("["), output.FilePerm); err != nil {
+			return nil
+		}
+	*/
 
 	target.Build()
 
-	f, err := os.OpenFile(compileCommandsPath, os.O_APPEND|os.O_CREATE, output.FilePerm)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
+	/*
+		f, err := os.OpenFile(compileCommandsPath, os.O_APPEND|os.O_CREATE, output.FilePerm)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
 
-	if _, err := f.Write([]byte("{}]")); err != nil {
-		return err
-	}
+		if _, err := f.Write([]byte("{}]")); err != nil {
+			return err
+		}
+	*/
 
 	/**
 	 * BUILD OPTIONS:

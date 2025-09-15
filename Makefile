@@ -10,6 +10,7 @@ run: build
 
 build: $(BUILD_TOOL)
 	@$(BUILD_TOOL) build
+	@ln -sf Editor $(EDITOR)
 
 setup: $(BUILD_TOOL)
 	@$(BUILD_TOOL) setup

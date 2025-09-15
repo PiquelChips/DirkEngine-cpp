@@ -1,5 +1,5 @@
 {
-    "name": "DirkEditor",
+    "name": "Editor",
     "c_standard": "c++23",
     "is_lib": false,
     "dependencies": [
