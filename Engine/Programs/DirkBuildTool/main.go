@@ -19,10 +19,11 @@ func main() {
 		return
 	}
 
-	if err := setup.Setup(); err != nil {
+	buildConfig := &setup.BuildConfig{Target: "Editor"}
+	if err := setup.Setup(buildConfig); err != nil {
 		panic(err)
 	}
-	if err := build.Build(&build.BuildConfig{Target: "Editor"}); err != nil {
+	if err := build.Build(buildConfig); err != nil {
 		panic(err)
 	}
 }

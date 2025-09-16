@@ -12,16 +12,21 @@ import (
 
 const configFile = "setup.json"
 
+type BuildConfig struct {
+	Target string `json:"target"`
+}
+
 type SetupConfig struct {
-	Thirdparty map[string]*models.Dependency `json:"thirdparty"`
-	LastSetup  time.Time                     `json:"last_setup"`
+	Thirdparty  map[string]*models.Dependency `json:"thirdparty"`
+	LastSetup   time.Time                     `json:"last_setup"`
+	BuildConfig *BuildConfig                  `json:"build_config"`
 }
 
 var config *SetupConfig
 
 func Get() *SetupConfig {
 	if config == nil {
-		if err := Setup(); err != nil {
+		if err := Setup(nil); err != nil {
 			panic(err)
 		}
 	}
@@ -29,8 +34,8 @@ func Get() *SetupConfig {
 	return config
 }
 
-func Setup() error {
-	config = &SetupConfig{}
+func Setup(buildConfig *BuildConfig) error {
+	config = &SetupConfig{BuildConfig: buildConfig}
 	if data, err := output.ReadIntFile(configFile); err == nil {
 		if err := json.Unmarshal(data, config); err == nil {
 			return nil

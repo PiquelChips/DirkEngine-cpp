@@ -3,16 +3,13 @@ package build
 import (
 	"DirkBuildTool/module"
 	"DirkBuildTool/output"
+	"DirkBuildTool/setup"
 	"encoding/json"
 	"fmt"
 	"os"
 )
 
-type BuildConfig struct {
-	Target string `json:"target"`
-}
-
-func Build(config *BuildConfig) error {
+func Build(config *setup.BuildConfig) error {
 	configs, err := searchDir(output.Dirs.Source)
 	if err != nil {
 		return err
