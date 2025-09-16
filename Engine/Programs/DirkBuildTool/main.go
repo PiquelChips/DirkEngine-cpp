@@ -22,7 +22,7 @@ func main() {
 	if err := setup.Setup(); err != nil {
 		panic(err)
 	}
-	if err := build.Build("Editor"); err != nil {
+	if err := build.Build(&build.BuildConfig{Target: "Editor"}); err != nil {
 		panic(err)
 	}
 }

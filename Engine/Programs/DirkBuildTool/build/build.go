@@ -8,8 +8,11 @@ import (
 	"os"
 )
 
-func Build(targetName string) error {
+type BuildConfig struct {
+	Target string `json:"target"`
+}
 
+func Build(config *BuildConfig) error {
 	configs, err := searchDir(output.Dirs.Source)
 	if err != nil {
 		return err
@@ -20,40 +23,14 @@ func Build(targetName string) error {
 		modules[name] = config.ToModule()
 	}
 
-	target, ok := modules[targetName]
+	target, ok := modules[config.Target]
 	if !ok {
-		fmt.Printf("target %s does not exist", targetName)
+		fmt.Printf("target %s does not exist", config.Target)
 		return nil
 	}
+
 	module.ResolveDependencies(target, modules)
-
-	/*
-		compileCommandsPath := fmt.Sprintf("%s/compile_commands.json", output.Dirs.Root)
-		if err := os.WriteFile(compileCommandsPath, []byte("["), output.FilePerm); err != nil {
-			return nil
-		}
-	*/
-
 	target.Build()
-
-	/*
-		f, err := os.OpenFile(compileCommandsPath, os.O_APPEND|os.O_CREATE, output.FilePerm)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		if _, err := f.Write([]byte("{}]")); err != nil {
-			return err
-		}
-	*/
-
-	/**
-	 * BUILD OPTIONS:
-	 * - shipping -- static linking & all optimizations
-	 * - dev -- shared linking & no optimizations
-	 */
-
 	return nil
 }
 
