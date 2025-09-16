@@ -36,9 +36,17 @@ func Get() *SetupConfig {
 
 func Setup(buildConfig *BuildConfig) error {
 	config = &SetupConfig{BuildConfig: buildConfig}
+	// attempt to read file
 	if data, err := output.ReadIntFile(configFile); err == nil {
+		// check json is valid
 		if err := json.Unmarshal(data, config); err == nil {
-			return nil
+			// get file info
+			if info, err := output.GetIntFileInfo(configFile); err == nil {
+				// check dif between LastSetup & last file update
+				if config.LastSetup.Sub(info.ModTime()).Seconds() < 1 {
+					return nil
+				}
+			}
 		}
 	}
 	fmt.Printf("no valid setup file detected, running setup\n")

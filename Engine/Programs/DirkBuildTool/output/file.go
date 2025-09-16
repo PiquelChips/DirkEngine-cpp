@@ -31,3 +31,10 @@ func ReadIntFile(name string) ([]byte, error) {
 	name = fmt.Sprintf("%s/%s", Dirs.Intermediate, name)
 	return os.ReadFile(name)
 }
+
+func GetIntFileInfo(name string) (os.FileInfo, error) {
+	name = strings.Trim(name, "/")
+	name = fmt.Sprintf("%s/%s", Dirs.Intermediate, name)
+
+	return os.Stat(name)
+}
