@@ -41,7 +41,6 @@ BUILD_CMD=$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEFINES) -MMD -MP -c $< -o $@
 
 .PHONY: $(TARGET)
 $(TARGET): $(SPV) $(OUT)
-	@echo Built $(TARGET)
 
 $(OUT): $(OBJ)
 	@echo Linking $(TARGET)...
@@ -51,7 +50,6 @@ $(OUT): $(OBJ)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%$(SRC_EXT)
 	@echo Compiling $*$(SRC_EXT)...
 	@mkdir -p $(dir $@)
-	@echo '{"directory": "$(shell pwd)", "command": "$(BUILD_CMD)", "file": "$<"},' >> $(COMPILE_COMMANDS_FILE)
 	@$(BUILD_CMD)
 
 $(SHADERS_OUT_DIR)/%.spv: $(SHADERS_DIR)/%

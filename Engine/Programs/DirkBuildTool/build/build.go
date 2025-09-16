@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -24,17 +25,18 @@ func Build(config *setup.BuildConfig) error {
 
 	target, ok := modules[config.Target]
 	if !ok {
-		fmt.Printf("target %s does not exist", config.Target)
+		log.Printf("Target %s does not exist, skipping...", config.Target)
 		return nil
 	}
 
+	log.Printf("Resolving dependencies...")
 	module.ResolveDependencies(target, modules)
 	err = target.Build()
 	if err == nil {
 		return nil
 	}
 	if errors.Is(err, &exec.ExitError{}) {
-		fmt.Printf("an error occured in build process")
+		log.Printf("An error occured in build process. See previous errors for details.")
 		return nil
 	}
 	return err
@@ -95,7 +97,7 @@ func getMod(path, name string) (*module.ModuleConfig, error) {
 			config := &module.ModuleConfig{}
 			err = json.Unmarshal(data, config)
 			if err != nil {
-				fmt.Printf("Error in %s.dirkmod: %s\n", name, err.Error())
+				log.Printf("Error loading module %s: %s\n", name, err.Error())
 				return nil, nil
 			}
 
@@ -108,23 +110,4 @@ func getMod(path, name string) (*module.ModuleConfig, error) {
 	}
 
 	return nil, nil
-}
-
-func addDeps(targetConfigs map[string]*module.ModuleConfig, configs map[string]*module.ModuleConfig, dep *module.ModuleConfig) {
-	startLen := len(targetConfigs)
-	for _, depName := range dep.Deps {
-		dep, ok := configs[depName]
-		if !ok {
-			fmt.Printf("dependency %s referenced in module %s does not exist\n", depName, dep.Name)
-			continue
-		}
-
-		targetConfigs[depName] = dep
-	}
-
-	if len(targetConfigs) != startLen {
-		for _, conf := range targetConfigs {
-			addDeps(targetConfigs, configs, conf)
-		}
-	}
 }

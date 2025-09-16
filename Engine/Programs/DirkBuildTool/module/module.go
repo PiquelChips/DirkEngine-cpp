@@ -6,6 +6,7 @@ import (
 	"DirkBuildTool/output"
 	"DirkBuildTool/setup"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -36,6 +37,7 @@ type Module struct {
 }
 
 func (m *Module) ToMakefile() *make.Makefile {
+	log.Printf("Generating Makefile for %s...", m.Name)
 	var typeStr string
 	var ldFlags string
 	if m.IsLib {
@@ -146,6 +148,7 @@ func (m *Module) Build() error {
 			return err
 		}
 	}
+	log.Printf("Building target %s...", m.Name)
 	makefile, err := m.ToMakefile().ToBytes()
 	if err != nil {
 		return err
@@ -161,12 +164,18 @@ func (m *Module) Build() error {
 	}
 
 	makefilePath := fmt.Sprintf("%s/Makefile", intDir)
-	cmd := exec.Command("make", "-f", makefilePath)
+	cmd := exec.Command("make", "-f", makefilePath, "-j", "8")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = m.Path
 
-	return cmd.Run()
+	if err := cmd.Run(); err != nil {
+		log.Printf("There was an error building %s", m.Name)
+		return err
+	}
+
+	log.Printf("Successfully built %s", m.Name)
+	return nil
 }
 
 func (c *ModuleConfig) ToModule() *Module {
@@ -187,7 +196,7 @@ func ResolveDependencies(module *Module, modules map[string]*Module) {
 	for _, moduleName := range module.Config.Deps {
 		mod, ok := modules[moduleName]
 		if !ok {
-			fmt.Printf("module %s required by module %s does not exist\n", moduleName, module.Name)
+			log.Printf("Module %s required by module %s does not exist\n", moduleName, module.Name)
 			continue
 		}
 		module.Deps = append(module.Deps, mod)
@@ -198,7 +207,7 @@ func ResolveDependencies(module *Module, modules map[string]*Module) {
 	for _, depName := range module.Config.Ext {
 		dep, ok := setup.Get().Thirdparty[depName]
 		if !ok {
-			fmt.Printf("external dependency %s required by module %s does not exist\n", depName, module.Name)
+			log.Printf("External dependency %s required by module %s does not exist\n", depName, module.Name)
 			continue
 		}
 		module.Ext = append(module.Ext, dep)

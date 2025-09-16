@@ -5,6 +5,7 @@ import (
 	"DirkBuildTool/output"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -14,6 +15,10 @@ const configFile = "setup.json"
 
 type BuildConfig struct {
 	Target string `json:"target"`
+}
+
+func (c *BuildConfig) String() string {
+	return c.Target
 }
 
 type SetupConfig struct {
@@ -70,7 +75,7 @@ func Setup(buildConfig *BuildConfig) error {
 	if isSetupValid(buildConfig) {
 		return nil
 	}
-	fmt.Printf("no valid setup file detected, running setup\n")
+	log.Printf("No valid setup file detected, running setup...\n")
 
 	config.LastSetup = time.Now()
 	// TODO: build glfw
@@ -106,12 +111,12 @@ func Setup(buildConfig *BuildConfig) error {
 
 	// make all paths absolute
 	for _, dep := range config.Thirdparty {
-		dir, err := getDir(dep.Name)
-		if err != nil {
-			return nil
-		}
-
 		if !filepath.IsAbs(dep.IncludeDir) {
+			dir, err := getDir(dep.Name)
+			if err != nil {
+				return nil
+			}
+
 			incDir, err := filepath.Abs(fmt.Sprintf("%s/%s", dir, dep.IncludeDir))
 			if err != nil {
 				return nil
@@ -126,6 +131,7 @@ func Setup(buildConfig *BuildConfig) error {
 		return nil
 	}
 
+	log.Printf("Writting setup file...\n")
 	return output.WriteIntFile(configFile, data, true)
 }
 

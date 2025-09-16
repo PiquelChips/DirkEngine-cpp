@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"DirkBuildTool/build"
@@ -20,6 +21,7 @@ func main() {
 	}
 
 	buildConfig := &setup.BuildConfig{Target: "Editor"}
+	log.Printf("Running build tool with config: %s\n", buildConfig.String())
 	if err := setup.Setup(buildConfig); err != nil {
 		panic(err)
 	}
