@@ -129,6 +129,12 @@ func (m *Module) writeIntFile(name string, data []byte, overwrite bool) error {
 	return nil
 }
 
+func (m *Module) readIntFile(name string) ([]byte, error) {
+	name = strings.Trim(name, "/")
+	name = fmt.Sprintf("%s/%s/%s", output.Dirs.Intermediate, m.Name, name)
+	return os.ReadFile(name)
+}
+
 func (m *Module) intDir() (string, error) {
 	modDir := fmt.Sprintf("%s/%s", output.Dirs.Intermediate, m.Name)
 	return modDir, os.MkdirAll(modDir, output.DirPerm)
