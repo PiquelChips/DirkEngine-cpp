@@ -7,7 +7,6 @@ EDITOR=Binaries/DirkEditor
 .PHONY: clean run
 run: $(BUILD_TOOL)
 	@$(BUILD_TOOL)
-	@ln -sf Editor $(EDITOR)
 	@$(EDITOR)
 
 clean:

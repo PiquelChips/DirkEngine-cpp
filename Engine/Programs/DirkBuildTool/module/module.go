@@ -13,6 +13,7 @@ import (
 // read from .dirkmod files
 type ModuleConfig struct {
 	Name    string   `json:"name"`
+	Target  string   `json:"target"`
 	Std     string   `json:"c_standard"`
 	IsLib   bool     `json:"is_lib"`
 	Deps    []string `json:"dependencies"` // project modules
@@ -23,6 +24,7 @@ type ModuleConfig struct {
 // constructed for building
 type Module struct {
 	Name    string
+	Target  string
 	Path    string
 	Std     string
 	IsLib   bool
@@ -66,7 +68,8 @@ func (m *Module) ToMakefile() *make.Makefile {
 	}
 
 	return &make.Makefile{
-		Target:  m.Name,
+		Name:    m.Name,
+		Target:  m.Target,
 		RootDir: output.Dirs.Root,
 		Type:    typeStr,
 		LibDirs: libDirs,
@@ -139,6 +142,7 @@ func (m *Module) Build() error {
 func (c *ModuleConfig) ToModule() *Module {
 	return &Module{
 		Name:   c.Name,
+		Target: c.Target,
 		Path:   fmt.Sprintf("%s/%s", output.Dirs.Source, c.Name),
 		Std:    c.Std,
 		IsLib:  c.IsLib,

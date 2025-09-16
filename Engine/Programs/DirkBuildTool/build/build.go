@@ -90,6 +90,10 @@ func getMod(path, name string) (*module.ModuleConfig, error) {
 				return nil, nil
 			}
 
+			if config.Target == "" {
+				config.Target = config.Name
+			}
+
 			return config, nil
 		}
 	}

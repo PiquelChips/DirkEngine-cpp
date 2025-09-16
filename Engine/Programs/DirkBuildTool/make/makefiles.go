@@ -6,8 +6,8 @@ import (
 )
 
 type Makefile struct {
-	Target, RootDir  string
-	Type             string // exec, static, shared
+	Name, Target     string
+	RootDir, Type    string // exec, static, shared
 	LibDirs, IncDirs []string
 	Libs, Defines    []string
 	LdFlags, CFlags  string
@@ -18,6 +18,10 @@ var makeBase []byte
 
 func (makefile *Makefile) ToBytes() ([]byte, error) {
 	buffer := bytes.NewBuffer(nil)
+
+	buffer.WriteString("NAME=")
+	buffer.WriteString(makefile.Name)
+	buffer.Write([]byte("\n"))
 
 	buffer.WriteString("TARGET=")
 	buffer.WriteString(makefile.Target)
