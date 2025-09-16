@@ -43,6 +43,7 @@ func Setup(buildConfig *BuildConfig) error {
 			// get file info
 			if info, err := output.GetIntFileInfo(configFile); err == nil {
 				// check dif between LastSetup & last file update
+				// TODO: doesnt seem to work
 				if config.LastSetup.Sub(info.ModTime()).Seconds() < 1 {
 					return nil
 				}
