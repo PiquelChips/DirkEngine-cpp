@@ -34,7 +34,7 @@ func Get() *SetupConfig {
 	return config
 }
 
-func isSetupValid() bool {
+func isSetupValid(buildConfig *BuildConfig) bool {
 	// attempt to read setup file
 	data, err := output.ReadIntFile(configFile)
 	if err != nil {
@@ -58,12 +58,16 @@ func isSetupValid() bool {
 		return false
 	}
 
+	if config.BuildConfig != buildConfig {
+		return false
+	}
+
 	return true
 }
 
 func Setup(buildConfig *BuildConfig) error {
 	config = &SetupConfig{BuildConfig: buildConfig}
-	if isSetupValid() {
+	if isSetupValid(buildConfig) {
 		return nil
 	}
 	fmt.Printf("no valid setup file detected, running setup\n")
