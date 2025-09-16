@@ -5,8 +5,10 @@ import (
 	"DirkBuildTool/output"
 	"DirkBuildTool/setup"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 )
 
 func Build(config *setup.BuildConfig) error {
@@ -27,8 +29,15 @@ func Build(config *setup.BuildConfig) error {
 	}
 
 	module.ResolveDependencies(target, modules)
-	target.Build()
-	return nil
+	err = target.Build()
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, &exec.ExitError{}) {
+		fmt.Printf("an error occured in build process")
+		return nil
+	}
+	return err
 }
 
 func searchDir(path string) (map[string]*module.ModuleConfig, error) {
