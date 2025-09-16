@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // read from .dirkmod files
@@ -105,7 +106,30 @@ func (m *Module) getDeps() []*models.Dependency {
 	return deps
 }
 
-func (m *Module) modDir() (string, error) {
+func (m *Module) writeIntFile(name string, data []byte, overwrite bool) error {
+	intDir, err := m.intDir()
+	if err != nil {
+		return err
+	}
+
+	name = strings.Trim(name, "/")
+	name = fmt.Sprintf("%s/%s", intDir, name)
+
+	if overwrite {
+		return os.WriteFile(name, data, output.FilePerm)
+	}
+
+	f, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE, output.FilePerm)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	f.Write(data)
+	return nil
+}
+
+func (m *Module) intDir() (string, error) {
 	modDir := fmt.Sprintf("%s/%s", output.Dirs.Intermediate, m.Name)
 	return modDir, os.MkdirAll(modDir, output.DirPerm)
 }
@@ -121,16 +145,16 @@ func (m *Module) Build() error {
 		return err
 	}
 
-	modDir, err := m.modDir()
+	if err := m.writeIntFile("Makefile", makefile, true); err != nil {
+		return err
+	}
+
+	intDir, err := m.intDir()
 	if err != nil {
 		return err
 	}
 
-	makefilePath := fmt.Sprintf("%s/Makefile", modDir)
-	if err := os.WriteFile(makefilePath, makefile, output.FilePerm); err != nil {
-		return err
-	}
-
+	makefilePath := fmt.Sprintf("%s/Makefile", intDir)
 	cmd := exec.Command("make", "-f", makefilePath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
