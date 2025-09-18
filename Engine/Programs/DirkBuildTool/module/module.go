@@ -40,12 +40,6 @@ func (m *Module) ToMakefile() *make.Makefile {
 	log.Printf("Generating Makefile for %s...", m.Name)
 	var typeStr string
 	var ldFlags string
-	if m.IsLib {
-		typeStr = "shared"
-		ldFlags = ldFlags + " -shared"
-	} else {
-		typeStr = "exec"
-	}
 
 	libDirs := []string{}
 	incDirs := []string{}
@@ -71,16 +65,18 @@ func (m *Module) ToMakefile() *make.Makefile {
 	}
 
 	return &make.Makefile{
-		Name:    m.Name,
-		Target:  m.Target,
-		RootDir: output.Dirs.Root,
-		Type:    typeStr,
-		LibDirs: libDirs,
-		IncDirs: incDirs,
-		Libs:    libs,
-		Defines: defines,
-		LdFlags: ldFlags,
-		CFlags:  fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
+		Name:     m.Name,
+		Target:   m.Target,
+		RootDir:  output.Dirs.Root,
+		Type:     typeStr,
+		LibDirs:  libDirs,
+		IncDirs:  incDirs,
+		Libs:     libs,
+		Defines:  defines,
+		LdFlags:  ldFlags,
+		IsLib:    m.IsLib,
+		IsStatic: false,
+		CFlags:   fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
 	}
 }
 

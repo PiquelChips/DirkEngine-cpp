@@ -12,11 +12,9 @@ type Makefile struct {
 	LibDirs, IncDirs []string
 	Libs, Defines    []string
 	LdFlags, CFlags  string
+	IsLib, IsStatic  bool
 	buffer           *bytes.Buffer
 }
-
-//go:embed base.make
-var makeBase []byte
 
 //go:embed makefiles
 var makefiles embed.FS
@@ -25,7 +23,22 @@ func (m *Makefile) ToBytes() ([]byte, error) {
 	m.buffer = bytes.NewBuffer(nil)
 
 	m.writeVar("NAME", m.Name)
+
 	m.writeVar("TARGET", m.Target)
+	m.buffer.WriteString("TARGET=")
+	if m.IsLib {
+		m.buffer.WriteString("lib")
+	}
+	m.buffer.WriteString(m.Target)
+	if m.IsLib {
+		if m.IsStatic {
+			m.buffer.WriteString(".a")
+		} else {
+			m.buffer.WriteString(".so")
+		}
+	}
+	m.newLine()
+
 	m.writeVar("ROOT_DIR", m.RootDir)
 	m.writeVar("TYPE", m.Type)
 	m.writeVar("CFLAGS", m.CFlags)
@@ -54,7 +67,24 @@ func (m *Makefile) ToBytes() ([]byte, error) {
 	}
 	m.writeVar("LDLIBS", ldLibs...)
 
-	m.buffer.Write(makeBase)
+	m.writeBase("base")
+	m.writeBase("compilation")
+
+	if !m.IsLib && !m.IsStatic {
+		// exec
+		m.writeBase("cxx_lnk")
+	} else if !m.IsLib && m.IsStatic {
+		// static exec
+		m.buffer.WriteString("LDFLAGS += -static\n")
+		m.writeBase("cxx_lnk")
+	} else if m.IsLib && !m.IsStatic {
+		// shared lib
+		m.buffer.WriteString("LDFLAGS += -shared\n")
+		m.writeBase("cxx_lnk")
+	} else if m.IsLib && m.IsStatic {
+		// static lib
+		m.writeBase("ar_lnk")
+	}
 
 	return m.buffer.Bytes(), nil
 }
@@ -70,5 +100,16 @@ func (m *Makefile) writeVar(key string, values ...string) {
 			m.buffer.WriteString(" ")
 		}
 	}
-	m.buffer.WriteString("\n")
+	m.newLine()
+}
+
+func (m *Makefile) newLine() { m.buffer.WriteString("\n") }
+
+func (m *Makefile) writeBase(name string) {
+	data, err := makefiles.ReadFile(fmt.Sprintf("makefiles/%s.make", name))
+	if err != nil {
+		panic(err)
+	}
+	m.buffer.Write(data)
+	m.newLine()
 }
