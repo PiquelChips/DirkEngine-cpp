@@ -2,7 +2,8 @@ package make
 
 import (
 	"bytes"
-	_ "embed"
+	"embed"
+	"fmt"
 )
 
 type Makefile struct {
@@ -11,64 +12,63 @@ type Makefile struct {
 	LibDirs, IncDirs []string
 	Libs, Defines    []string
 	LdFlags, CFlags  string
+	buffer           *bytes.Buffer
 }
 
 //go:embed base.make
 var makeBase []byte
 
-func (makefile *Makefile) ToBytes() ([]byte, error) {
-	buffer := bytes.NewBuffer(nil)
+//go:embed makefiles
+var makefiles embed.FS
 
-	buffer.WriteString("NAME=")
-	buffer.WriteString(makefile.Name)
-	buffer.Write([]byte("\n"))
+func (m *Makefile) ToBytes() ([]byte, error) {
+	m.buffer = bytes.NewBuffer(nil)
 
-	buffer.WriteString("TARGET=")
-	buffer.WriteString(makefile.Target)
-	buffer.Write([]byte("\n"))
+	m.writeVar("NAME", m.Name)
+	m.writeVar("TARGET", m.Target)
+	m.writeVar("ROOT_DIR", m.RootDir)
+	m.writeVar("TYPE", m.Type)
+	m.writeVar("CFLAGS", m.CFlags)
 
-	buffer.WriteString("ROOT_DIR=")
-	buffer.WriteString(makefile.RootDir)
-	buffer.Write([]byte("\n"))
-
-	buffer.WriteString("TYPE=")
-	buffer.WriteString(makefile.Type)
-	buffer.Write([]byte("\n"))
-
-	buffer.WriteString("CFLAGS=")
-	buffer.WriteString(makefile.CFlags)
-	buffer.Write([]byte("\n"))
-
-	buffer.WriteString("CXXFLAGS=")
-	for _, dir := range makefile.IncDirs {
-		buffer.WriteString(" -I")
-		buffer.WriteString(dir)
+	cxxFlags := []string{}
+	for _, dir := range m.IncDirs {
+		cxxFlags = append(cxxFlags, fmt.Sprintf("-I%s", dir))
 	}
-	buffer.Write([]byte("\n"))
+	m.writeVar("CXXFLAGS", cxxFlags...)
 
-	buffer.WriteString("DEFINES=")
-	for _, define := range makefile.Defines {
-		buffer.WriteString(" -D")
-		buffer.WriteString(define)
+	defines := []string{}
+	for _, define := range m.Defines {
+		defines = append(defines, fmt.Sprintf("-D%s", define))
 	}
-	buffer.Write([]byte("\n"))
+	m.writeVar("DEFINES", defines...)
 
-	buffer.WriteString("LDFLAGS=")
-	buffer.WriteString(makefile.LdFlags)
-	for _, dir := range makefile.LibDirs {
-		buffer.WriteString(" -L")
-		buffer.WriteString(dir)
+	ldFlags := []string{m.LdFlags}
+	for _, dir := range m.LibDirs {
+		ldFlags = append(ldFlags, fmt.Sprintf("-L%s", dir))
 	}
-	buffer.Write([]byte("\n"))
+	m.writeVar("LDFLAGS", ldFlags...)
 
-	buffer.WriteString("LDLIBS=")
-	for _, lib := range makefile.Libs {
-		buffer.WriteString(" -l")
-		buffer.WriteString(lib)
+	ldLibs := []string{}
+	for _, lib := range m.Libs {
+		ldLibs = append(ldLibs, fmt.Sprintf("-l%s", lib))
 	}
-	buffer.Write([]byte("\n"))
+	m.writeVar("LDLIBS", ldLibs...)
 
-	buffer.Write(makeBase)
+	m.buffer.Write(makeBase)
 
-	return buffer.Bytes(), nil
+	return m.buffer.Bytes(), nil
+}
+
+func (m *Makefile) writeVar(key string, values ...string) {
+	m.buffer.WriteString(key)
+	m.buffer.WriteString("=")
+	if len(values) == 1 {
+		m.buffer.WriteString(values[0])
+	} else {
+		for _, value := range values {
+			m.buffer.WriteString(value)
+			m.buffer.WriteString(" ")
+		}
+	}
+	m.buffer.WriteString("\n")
 }

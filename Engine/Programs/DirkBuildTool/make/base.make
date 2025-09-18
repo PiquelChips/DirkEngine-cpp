@@ -1,3 +1,4 @@
+## NAME -- the name of the module
 ## TARGET -- the target name, used for output files & dirs
 ## ROOT_DIR -- engine root dir
 ## TYPE -- shared, exec
@@ -10,7 +11,7 @@
 ## LDLIBS -- libs for linking
 
 BIN_DIR=$(ROOT_DIR)/Binaries
-INT_DIR=$(ROOT_DIR)/Intermediate/$(TARGET)
+INT_DIR=$(ROOT_DIR)/Intermediate/$(NAME)
 
 OUT=
 ifeq ($(TYPE),shared)
