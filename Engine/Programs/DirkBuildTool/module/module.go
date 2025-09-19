@@ -41,7 +41,6 @@ func (m *Module) ToMakefile() *make.Makefile {
 	log.Printf("Generating Makefile for %s...", m.Name)
 	var ldFlags string
 
-	libDirs := []string{}
 	incDirs := []string{}
 	libs := []string{}
 	defines := m.Config.Defines
@@ -54,9 +53,6 @@ func (m *Module) ToMakefile() *make.Makefile {
 			continue
 		}
 
-		if dep.LibDir != "" {
-			libDirs = append(libDirs, dep.LibDir)
-		}
 		libs = append(libs, dep.Name)
 
 		if defines != nil {
@@ -68,7 +64,6 @@ func (m *Module) ToMakefile() *make.Makefile {
 		Name:     m.Name,
 		Target:   m.Target,
 		RootDir:  output.Dirs.Root,
-		LibDirs:  libDirs,
 		IncDirs:  incDirs,
 		Libs:     libs,
 		Defines:  defines,

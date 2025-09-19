@@ -88,14 +88,19 @@ func Setup(buildConfig *BuildConfig) error {
 	if isSetupValid(buildConfig) {
 		return nil
 	}
-	log.Printf("No valid setup file detected, running setup...\n")
+	log.Printf("No valid setup file detected. Running setup...\n")
 
 	config.LastSetup = time.Now()
 	config.BuildConfig = buildConfig
 	// TODO: build glfw
 
-	glfw := os.Getenv("GLFW")
-	vulkan := os.Getenv("VULKAN_SDK")
+	glfwDir := os.Getenv("GLFW")
+	os.Symlink(fmt.Sprintf("%s/lib/libglfw.so", glfwDir), fmt.Sprintf("%s/libglfw.so", output.Dirs.Binaries))
+	os.Symlink(fmt.Sprintf("%s/lib/libglfw.so.3", glfwDir), fmt.Sprintf("%s/libglfw.so.3", output.Dirs.Binaries))
+
+	vulkanDir := os.Getenv("VULKAN_SDK")
+	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so", vulkanDir), fmt.Sprintf("%s/libvulkan.so", output.Dirs.Binaries))
+	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so.1", vulkanDir), fmt.Sprintf("%s/libvulkan.so.1", output.Dirs.Binaries))
 
 	// hardcoded deps
 	config.Thirdparty = map[string]*models.Dependency{
@@ -112,14 +117,12 @@ func Setup(buildConfig *BuildConfig) error {
 		"glfw": {
 			Name:         "glfw",
 			IsHeaderOnly: false,
-			IncludeDir:   fmt.Sprintf("%s/include", glfw),
-			LibDir:       fmt.Sprintf("%s/lib", glfw),
+			IncludeDir:   fmt.Sprintf("%s/include", glfwDir),
 		},
 		"vulkan": {
 			Name:         "vulkan",
 			IsHeaderOnly: false,
-			IncludeDir:   fmt.Sprintf("%s/include", vulkan),
-			LibDir:       fmt.Sprintf("%s/lib", vulkan),
+			IncludeDir:   fmt.Sprintf("%s/include", vulkanDir),
 		},
 	}
 

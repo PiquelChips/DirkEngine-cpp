@@ -7,14 +7,14 @@ import (
 )
 
 type Makefile struct {
-	Name, Target     string
-	RootDir          string
-	LibDirs, IncDirs []string
-	Libs, Defines    []string
-	LdFlags, CFlags  string
-	IsLib, IsStatic  bool
-	Optimize         bool
-	buffer           *bytes.Buffer
+	Name, Target    string
+	RootDir         string
+	IncDirs         []string
+	Libs, Defines   []string
+	LdFlags, CFlags string
+	IsLib, IsStatic bool
+	Optimize        bool
+	buffer          *bytes.Buffer
 }
 
 //go:embed makefiles
@@ -58,11 +58,7 @@ func (m *Makefile) ToBytes() ([]byte, error) {
 	}
 	m.writeVar("DEFINES", defines...)
 
-	ldFlags := []string{m.LdFlags}
-	for _, dir := range m.LibDirs {
-		ldFlags = append(ldFlags, fmt.Sprintf("-L%s", dir))
-	}
-	m.writeVar("LDFLAGS", ldFlags...)
+	m.writeVar("LDFLAGS", m.LdFlags)
 
 	ldLibs := []string{}
 	for _, lib := range m.Libs {
@@ -81,7 +77,7 @@ func (m *Makefile) ToBytes() ([]byte, error) {
 		m.writeBase("cxx_lnk")
 	} else if m.IsLib && !m.IsStatic {
 		// shared lib
-		m.buffer.WriteString("LDFLAGS += -shared\n")
+		m.buffer.WriteString("LDFLAGS+= -shared\n")
 		m.writeBase("cxx_lnk")
 	} else if m.IsLib && m.IsStatic {
 		// static lib
