@@ -14,11 +14,25 @@ import (
 const configFile = "setup.json"
 
 type BuildConfig struct {
-	Target string `json:"target"`
+	Target    string `json:"target"`
+	BuildType string `json:"build_type"`
+	Optimize  bool   `json:"opmtimize"`
+	Shipping  bool   `json:"shipping"`
 }
 
 func (c *BuildConfig) String() string {
-	return c.Target
+	optStr := "off"
+	if c.Optimize {
+		optStr = "on"
+	}
+
+	shipStr := "off"
+	if c.Shipping {
+		shipStr = "on"
+	}
+
+	return fmt.Sprintf("\n\ttarget: %s\n\tbuild type: %s\n\toptimizations: %s\n\tshipping: %s",
+		c.Target, c.BuildType, optStr, shipStr)
 }
 
 type SetupConfig struct {
@@ -58,7 +72,6 @@ func isSetupValid(buildConfig *BuildConfig) bool {
 	}
 
 	// check dif between LastSetup & last file update
-	// TODO: doesnt seem to work
 	if config.LastSetup.Sub(info.ModTime()).Seconds() > 1 {
 		return false
 	}
@@ -71,13 +84,14 @@ func isSetupValid(buildConfig *BuildConfig) bool {
 }
 
 func Setup(buildConfig *BuildConfig) error {
-	config = &SetupConfig{BuildConfig: buildConfig}
+	config = &SetupConfig{}
 	if isSetupValid(buildConfig) {
 		return nil
 	}
 	log.Printf("No valid setup file detected, running setup...\n")
 
 	config.LastSetup = time.Now()
+	config.BuildConfig = buildConfig
 	// TODO: build glfw
 
 	glfw := os.Getenv("GLFW")

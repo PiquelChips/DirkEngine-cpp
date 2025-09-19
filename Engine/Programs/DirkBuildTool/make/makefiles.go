@@ -8,11 +8,12 @@ import (
 
 type Makefile struct {
 	Name, Target     string
-	RootDir, Type    string // exec, static, shared
+	RootDir          string
 	LibDirs, IncDirs []string
 	Libs, Defines    []string
 	LdFlags, CFlags  string
 	IsLib, IsStatic  bool
+	Optimize         bool
 	buffer           *bytes.Buffer
 }
 
@@ -24,7 +25,6 @@ func (m *Makefile) ToBytes() ([]byte, error) {
 
 	m.writeVar("NAME", m.Name)
 
-	m.writeVar("TARGET", m.Target)
 	m.buffer.WriteString("TARGET=")
 	if m.IsLib {
 		m.buffer.WriteString("lib")
@@ -40,8 +40,11 @@ func (m *Makefile) ToBytes() ([]byte, error) {
 	m.newLine()
 
 	m.writeVar("ROOT_DIR", m.RootDir)
-	m.writeVar("TYPE", m.Type)
 	m.writeVar("CFLAGS", m.CFlags)
+
+	if m.Optimize {
+		m.buffer.WriteString("CFLAGS+= -O3\n")
+	}
 
 	cxxFlags := []string{}
 	for _, dir := range m.IncDirs {
@@ -75,7 +78,6 @@ func (m *Makefile) ToBytes() ([]byte, error) {
 		m.writeBase("cxx_lnk")
 	} else if !m.IsLib && m.IsStatic {
 		// static exec
-		m.buffer.WriteString("LDFLAGS += -static\n")
 		m.writeBase("cxx_lnk")
 	} else if m.IsLib && !m.IsStatic {
 		// shared lib

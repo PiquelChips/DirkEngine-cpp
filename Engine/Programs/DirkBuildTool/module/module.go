@@ -34,11 +34,11 @@ type Module struct {
 	Ext     []*models.Dependency
 	Config  *ModuleConfig
 	selfDep *models.Dependency // itself represented as a dependency
+	build   *setup.BuildConfig
 }
 
 func (m *Module) ToMakefile() *make.Makefile {
 	log.Printf("Generating Makefile for %s...", m.Name)
-	var typeStr string
 	var ldFlags string
 
 	libDirs := []string{}
@@ -68,14 +68,14 @@ func (m *Module) ToMakefile() *make.Makefile {
 		Name:     m.Name,
 		Target:   m.Target,
 		RootDir:  output.Dirs.Root,
-		Type:     typeStr,
 		LibDirs:  libDirs,
 		IncDirs:  incDirs,
 		Libs:     libs,
 		Defines:  defines,
 		LdFlags:  ldFlags,
 		IsLib:    m.IsLib,
-		IsStatic: false,
+		IsStatic: m.build.Shipping,
+		Optimize: m.build.Optimize,
 		CFlags:   fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
 	}
 }
@@ -174,7 +174,7 @@ func (m *Module) Build() error {
 	return nil
 }
 
-func (c *ModuleConfig) ToModule() *Module {
+func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) *Module {
 	return &Module{
 		Name:   c.Name,
 		Target: c.Target,
@@ -184,6 +184,7 @@ func (c *ModuleConfig) ToModule() *Module {
 		Deps:   nil,
 		Ext:    nil,
 		Config: c,
+		build:  buildConfig,
 	}
 }
 

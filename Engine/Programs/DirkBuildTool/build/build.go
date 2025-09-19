@@ -12,7 +12,7 @@ import (
 	"os/exec"
 )
 
-func Build(config *setup.BuildConfig) error {
+func Build(buildConfig *setup.BuildConfig) error {
 	configs, err := searchDir(output.Dirs.Source)
 	if err != nil {
 		return err
@@ -20,12 +20,12 @@ func Build(config *setup.BuildConfig) error {
 
 	modules := map[string]*module.Module{}
 	for name, config := range configs {
-		modules[name] = config.ToModule()
+		modules[name] = config.ToModule(buildConfig)
 	}
 
-	target, ok := modules[config.Target]
+	target, ok := modules[buildConfig.Target]
 	if !ok {
-		log.Printf("Target %s does not exist, skipping...", config.Target)
+		log.Printf("Target %s does not exist, skipping...", buildConfig.Target)
 		return nil
 	}
 
