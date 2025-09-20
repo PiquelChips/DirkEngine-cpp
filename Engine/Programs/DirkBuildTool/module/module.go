@@ -25,16 +25,17 @@ type ModuleConfig struct {
 
 // constructed for building
 type Module struct {
-	Name    string
-	Target  string
-	Path    string
-	Std     string
-	IsLib   bool
-	Deps    []*Module
-	Ext     []*models.Dependency
-	Config  *ModuleConfig
-	selfDep *models.Dependency // itself represented as a dependency
-	build   *setup.BuildConfig
+	Name       string
+	Target     string
+	Path       string
+	Std        string
+	IsLib      bool
+	Deps       []*Module
+	Ext        []*models.Dependency
+	Dependants []*models.Dependency
+	Config     *ModuleConfig
+	selfDep    *models.Dependency // itself represented as a dependency
+	build      *setup.BuildConfig
 }
 
 func (m *Module) ToMakefile() *make.Makefile {
@@ -56,6 +57,12 @@ func (m *Module) ToMakefile() *make.Makefile {
 		libs = append(libs, dep.Name)
 
 		if defines != nil {
+			defines = append(defines, dep.Defines...)
+		}
+	}
+
+	for _, dep := range m.Dependants {
+		if dep.Defines != nil {
 			defines = append(defines, dep.Defines...)
 		}
 	}
@@ -178,8 +185,9 @@ func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) *Module {
 	}
 }
 
-func (m *Module) ResolveDependencies(modules map[string]*Module) {
+func (m *Module) ResolveDependencies(modules map[string]*Module, dependants []*models.Dependency) {
 	// TODO: circular dependency detection
+	m.Dependants = dependants
 	for _, moduleName := range m.Config.Deps {
 		mod, ok := modules[moduleName]
 		if !ok {
@@ -187,7 +195,7 @@ func (m *Module) ResolveDependencies(modules map[string]*Module) {
 			continue
 		}
 		m.Deps = append(m.Deps, mod)
-		mod.ResolveDependencies(modules)
+		mod.ResolveDependencies(modules, append(dependants, m.toDep()))
 	}
 
 	// external dependencies

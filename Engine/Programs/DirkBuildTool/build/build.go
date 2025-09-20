@@ -30,7 +30,7 @@ func Build(buildConfig *setup.BuildConfig) error {
 	}
 
 	log.Printf("Resolving dependencies...")
-	target.ResolveDependencies(modules)
+	target.ResolveDependencies(modules, nil)
 	err = target.Build()
 	if err == nil {
 		return nil
