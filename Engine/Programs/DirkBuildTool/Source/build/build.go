@@ -13,6 +13,7 @@ import (
 )
 
 func Build(buildConfig *setup.BuildConfig) error {
+	log.Printf("Build %s for %s\n", buildConfig.Target, buildConfig.Type.Name)
 	configs, err := searchDir(output.Dirs.Source)
 	if err != nil {
 		return err

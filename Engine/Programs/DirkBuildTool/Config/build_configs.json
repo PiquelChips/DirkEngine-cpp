@@ -1,0 +1,16 @@
+{
+    "Development": {
+        "opmtimize": false,
+        "shipping": false,
+        "defines": [
+            "DIRK_DEVELOPMENT_BUILD"
+        ]
+    },
+    "Shipping": {
+        "opmtimize": true,
+        "shipping": true,
+        "defines": [
+            "DIRK_SHIPPING_BUILD"
+        ]
+    }
+}

@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"DirkBuildTool/config"
 	"DirkBuildTool/models"
 	"DirkBuildTool/output"
 	"encoding/json"
@@ -14,25 +15,8 @@ import (
 const setupFile = "setup.json"
 
 type BuildConfig struct {
-	Target    string `json:"target"`
-	BuildType string `json:"build_type"`
-	Optimize  bool   `json:"opmtimize"`
-	Shipping  bool   `json:"shipping"`
-}
-
-func (c *BuildConfig) String() string {
-	optStr := "off"
-	if c.Optimize {
-		optStr = "on"
-	}
-
-	shipStr := "off"
-	if c.Shipping {
-		shipStr = "on"
-	}
-
-	return fmt.Sprintf("\n\ttarget: %s\n\tbuild type: %s\n\toptimizations: %s\n\tshipping: %s",
-		c.Target, c.BuildType, optStr, shipStr)
+	Target string            `json:"target"`
+	Type   *config.BuildType `json:"build_type"`
 }
 
 type SetupConfig struct {
@@ -41,17 +25,7 @@ type SetupConfig struct {
 	BuildConfig *BuildConfig                  `json:"build_config"`
 }
 
-var config *SetupConfig
-
-func Get() *SetupConfig {
-	if config == nil {
-		if err := Setup(nil); err != nil {
-			panic(err)
-		}
-	}
-
-	return config
-}
+var Config *SetupConfig
 
 func isSetupValid(buildConfig *BuildConfig) bool {
 	// attempt to read setup file
@@ -61,7 +35,7 @@ func isSetupValid(buildConfig *BuildConfig) bool {
 	}
 
 	// check json is valid
-	if err := json.Unmarshal(data, config); err != nil {
+	if err := json.Unmarshal(data, Config); err != nil {
 		return false
 	}
 
@@ -72,11 +46,11 @@ func isSetupValid(buildConfig *BuildConfig) bool {
 	}
 
 	// check dif between LastSetup & last file update
-	if config.LastSetup.Sub(info.ModTime()).Seconds() > 1 {
+	if Config.LastSetup.Sub(info.ModTime()).Seconds() > 1 {
 		return false
 	}
 
-	if config.BuildConfig != buildConfig {
+	if Config.BuildConfig != buildConfig {
 		return false
 	}
 
@@ -84,14 +58,14 @@ func isSetupValid(buildConfig *BuildConfig) bool {
 }
 
 func Setup(buildConfig *BuildConfig) error {
-	config = &SetupConfig{}
+	Config = &SetupConfig{}
 	if isSetupValid(buildConfig) {
 		return nil
 	}
 	log.Printf("No valid setup file detected. Running setup...\n")
 
-	config.LastSetup = time.Now()
-	config.BuildConfig = buildConfig
+	Config.LastSetup = time.Now()
+	Config.BuildConfig = buildConfig
 	// TODO: build glfw
 
 	glfwDir := os.Getenv("GLFW")
@@ -103,7 +77,7 @@ func Setup(buildConfig *BuildConfig) error {
 	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so.1", vulkanDir), fmt.Sprintf("%s/libvulkan.so.1", output.Dirs.Binaries))
 
 	// hardcoded deps
-	config.Thirdparty = map[string]*models.Dependency{
+	Config.Thirdparty = map[string]*models.Dependency{
 		"glm": {
 			Name:         "glm",
 			IsHeaderOnly: true,
@@ -127,7 +101,7 @@ func Setup(buildConfig *BuildConfig) error {
 	}
 
 	// make all paths absolute
-	for _, dep := range config.Thirdparty {
+	for _, dep := range Config.Thirdparty {
 		if !filepath.IsAbs(dep.IncludeDir) {
 			dir, err := getDir(dep.Name)
 			if err != nil {
@@ -143,7 +117,7 @@ func Setup(buildConfig *BuildConfig) error {
 	}
 
 	// write the file
-	data, err := json.Marshal(config)
+	data, err := json.Marshal(Config)
 	if err != nil {
 		return nil
 	}

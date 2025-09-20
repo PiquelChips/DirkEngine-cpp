@@ -26,44 +26,40 @@ func main() {
 		return
 	}
 
-	var buildConfig *setup.BuildConfig
-	if len(os.Args) == 1 {
-		buildConfig = &setup.BuildConfig{
-			Target:    "Editor",
-			BuildType: "Development",
-			Optimize:  false,
-			Shipping:  false,
-		}
-	} else if len(os.Args) == 3 {
-		buildConfig = &setup.BuildConfig{
-			Target:    os.Args[1],
-			BuildType: os.Args[2],
-		}
-
-		switch buildConfig.BuildType {
-		case "Development":
-			buildConfig.Optimize = false
-			buildConfig.Shipping = false
-		case "Shipping":
-			buildConfig.Optimize = true
-			buildConfig.Shipping = true
-		default:
-			log.Printf("Cannot build target %s for %s. Defaulting to Development.\n", buildConfig.Target, buildConfig.BuildType)
-			buildConfig.BuildType = "Development"
-			buildConfig.Optimize = false
-			buildConfig.Shipping = false
-		}
-	} else {
+	target := ""
+	buildType := ""
+	switch len(os.Args) {
+	case 1:
+		target = "Editor"
+		buildType = "Development"
+	case 2:
+		target = os.Args[1]
+		buildType = "Development"
+	case 3:
+		target = os.Args[1]
+		buildType = os.Args[2]
+	default:
 		fmt.Printf("Invalid number of arguments.\n")
 		usage()
 		os.Exit(1)
 		return
 	}
 
+	buildConf, ok := config.BuildTypes[buildType]
+	if !ok {
+		fmt.Printf("Build type %s does not exist. Defaulting to Development\n", buildType)
+		os.Exit(1)
+		return
+	}
+
+	buildConfig := &setup.BuildConfig{
+		Target: target,
+		Type:   buildConf,
+	}
+
 	if err := setup.Setup(buildConfig); err != nil {
 		panic(err)
 	}
-	log.Printf("Running build tool with config: %s\n", buildConfig.String())
 	if err := build.Build(buildConfig); err != nil {
 		panic(err)
 	}

@@ -71,15 +71,15 @@ func (m *Module) ToMakefile() *make.Makefile {
 	return &make.Makefile{
 		Name:      m.Name,
 		Target:    m.Target,
-		BuildType: m.build.BuildType,
+		BuildType: m.build.Type.Name,
 		RootDir:   output.Dirs.Root,
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,
 		LdFlags:   ldFlags,
 		IsLib:     m.IsLib,
-		IsStatic:  m.build.Shipping,
-		Optimize:  m.build.Optimize,
+		IsStatic:  m.build.Type.Shipping,
+		Optimize:  m.build.Type.Optimize,
 		CFlags:    fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
 	}
 }
@@ -204,7 +204,7 @@ func (m *Module) ResolveDependencies(modules map[string]*Module, dependants []*m
 
 	// external dependencies
 	for _, depName := range m.Config.Ext {
-		dep, ok := setup.Get().Thirdparty[depName]
+		dep, ok := setup.Config.Thirdparty[depName]
 		if !ok {
 			log.Printf("External dependency %s required by module %s does not exist\n", depName, m.Name)
 			continue
