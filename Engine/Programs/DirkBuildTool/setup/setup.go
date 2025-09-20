@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const configFile = "setup.json"
+const setupFile = "setup.json"
 
 type BuildConfig struct {
 	Target    string `json:"target"`
@@ -55,7 +55,7 @@ func Get() *SetupConfig {
 
 func isSetupValid(buildConfig *BuildConfig) bool {
 	// attempt to read setup file
-	data, err := output.ReadIntFile(configFile)
+	data, err := output.ReadIntFile(setupFile)
 	if err != nil {
 		return false
 	}
@@ -66,7 +66,7 @@ func isSetupValid(buildConfig *BuildConfig) bool {
 	}
 
 	// get file info
-	info, err := output.GetIntFileInfo(configFile)
+	info, err := output.GetIntFileInfo(setupFile)
 	if err != nil {
 		return false
 	}
@@ -149,7 +149,7 @@ func Setup(buildConfig *BuildConfig) error {
 	}
 
 	log.Printf("Writting setup file...\n")
-	return output.WriteIntFile(configFile, data, true)
+	return output.WriteIntFile(setupFile, data, true)
 }
 
 func getDir(name string) (string, error) {
