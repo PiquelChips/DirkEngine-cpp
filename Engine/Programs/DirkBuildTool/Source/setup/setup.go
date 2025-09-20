@@ -62,7 +62,7 @@ func Setup(buildConfig *BuildConfig) error {
 	if isSetupValid(buildConfig) {
 		return nil
 	}
-	log.Printf("No valid setup file detected. Running setup...\n")
+	log.Printf("No valid setup file detected. Running setup\n")
 
 	Config.LastSetup = time.Now()
 	Config.BuildConfig = buildConfig
@@ -122,7 +122,7 @@ func Setup(buildConfig *BuildConfig) error {
 		return nil
 	}
 
-	log.Printf("Writting setup file...\n")
+	log.Printf("Writting setup file\n")
 	return output.WriteIntFile(setupFile, data, true)
 }
 

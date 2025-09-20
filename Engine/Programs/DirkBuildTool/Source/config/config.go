@@ -10,8 +10,8 @@ import (
 
 type BuildType struct {
 	Name     string   `json:"-"`
-	Optimize bool     `json:"opmtimize"`
-	Shipping bool     `json:"shipping"`
+	Optimize bool     `json:"optimize"`
+	Compact  bool     `json:"compact"` // compact the output (essentially statically linking)
 	Defines  []string `json:"defines"`
 }
 

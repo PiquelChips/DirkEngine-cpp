@@ -40,7 +40,7 @@ type Module struct {
 }
 
 func (m *Module) ToMakefile() *make.Makefile {
-	log.Printf("Generating Makefile for %s...", m.Name)
+	log.Printf("Generating Makefile for %s", m.Name)
 	var ldFlags string
 
 	incDirs := []string{}
@@ -78,7 +78,7 @@ func (m *Module) ToMakefile() *make.Makefile {
 		Defines:   defines,
 		LdFlags:   ldFlags,
 		IsLib:     m.IsLib,
-		IsStatic:  m.build.Type.Shipping,
+		IsStatic:  m.build.Type.Compact,
 		Optimize:  m.build.Type.Optimize,
 		CFlags:    fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
 	}
@@ -142,7 +142,7 @@ func (m *Module) Build() error {
 			return err
 		}
 	}
-	log.Printf("Building target %s...", m.Name)
+	log.Printf("Building target %s", m.Name)
 	makefile, err := m.ToMakefile().ToBytes()
 	if err != nil {
 		return err
@@ -188,7 +188,8 @@ func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) *Module {
 
 func (m *Module) ResolveDependencies(modules map[string]*Module, dependants []*models.Dependency) {
 	if slices.Contains(dependants, m.toDep()) {
-		fmt.Printf("Circular dependency detected. Module %s has already been included.", m.Name)
+		fmt.Printf("Circular dependency detected. Module %s has already been included\n", m.Name)
+		return
 	}
 
 	m.Dependants = dependants

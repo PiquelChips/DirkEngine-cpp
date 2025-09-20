@@ -1,14 +1,14 @@
 {
     "Development": {
         "opmtimize": false,
-        "shipping": false,
+        "compact": false,
         "defines": [
             "DIRK_DEVELOPMENT_BUILD"
         ]
     },
     "Shipping": {
         "opmtimize": true,
-        "shipping": true,
+        "compact": true,
         "defines": [
             "DIRK_SHIPPING_BUILD"
         ]

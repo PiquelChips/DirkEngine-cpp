@@ -13,7 +13,7 @@ import (
 )
 
 func Build(buildConfig *setup.BuildConfig) error {
-	log.Printf("Build %s for %s\n", buildConfig.Target, buildConfig.Type.Name)
+	log.Printf("Building %s for %s\n", buildConfig.Target, buildConfig.Type.Name)
 	configs, err := searchDir(output.Dirs.Source)
 	if err != nil {
 		return err
@@ -26,18 +26,18 @@ func Build(buildConfig *setup.BuildConfig) error {
 
 	target, ok := modules[buildConfig.Target]
 	if !ok {
-		log.Printf("Target %s does not exist, skipping...", buildConfig.Target)
+		log.Printf("Target %s does not exist, skipping", buildConfig.Target)
 		return nil
 	}
 
-	log.Printf("Resolving dependencies...")
+	log.Printf("Resolving dependencies")
 	target.ResolveDependencies(modules, nil)
 	err = target.Build()
 	if err == nil {
 		return nil
 	}
 	if errors.Is(err, &exec.ExitError{}) {
-		log.Printf("An error occured in build process. See previous errors for details.")
+		fmt.Printf("An error occured in build process. See previous errors for details")
 		return nil
 	}
 	return err
