@@ -123,12 +123,6 @@ func (m *Module) writeIntFile(name string, data []byte, overwrite bool) error {
 	return nil
 }
 
-func (m *Module) readIntFile(name string) ([]byte, error) {
-	name = strings.Trim(name, "/")
-	name = fmt.Sprintf("%s/%s/%s", output.Dirs.Intermediate, m.Name, name)
-	return os.ReadFile(name)
-}
-
 func (m *Module) intDir() (string, error) {
 	modDir := fmt.Sprintf("%s/%s", output.Dirs.Intermediate, m.Name)
 	return modDir, os.MkdirAll(modDir, output.DirPerm)
@@ -184,26 +178,25 @@ func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) *Module {
 	}
 }
 
-func ResolveDependencies(module *Module, modules map[string]*Module) {
+func (m *Module) ResolveDependencies(modules map[string]*Module) {
 	// TODO: circular dependency detection
-	for _, moduleName := range module.Config.Deps {
+	for _, moduleName := range m.Config.Deps {
 		mod, ok := modules[moduleName]
 		if !ok {
-			log.Printf("Module %s required by module %s does not exist\n", moduleName, module.Name)
+			log.Printf("Module %s required by module %s does not exist\n", moduleName, m.Name)
 			continue
 		}
-		module.Deps = append(module.Deps, mod)
-		ResolveDependencies(mod, modules)
+		m.Deps = append(m.Deps, mod)
+		mod.ResolveDependencies(modules)
 	}
 
 	// external dependencies
-	for _, depName := range module.Config.Ext {
+	for _, depName := range m.Config.Ext {
 		dep, ok := setup.Get().Thirdparty[depName]
 		if !ok {
-			log.Printf("External dependency %s required by module %s does not exist\n", depName, module.Name)
+			log.Printf("External dependency %s required by module %s does not exist\n", depName, m.Name)
 			continue
 		}
-		module.Ext = append(module.Ext, dep)
+		m.Ext = append(m.Ext, dep)
 	}
-
 }
