@@ -9,7 +9,7 @@ const DirPerm = 0755
 
 var Dirs struct {
 	Root, Intermediate, Binaries,
-	Source, Thirdparty string
+	Source, Thirdparty, Config string
 }
 
 func GetOutDirs() error {
@@ -26,6 +26,9 @@ func GetOutDirs() error {
 		return err
 	}
 	if err := mkdirAndAbs("Engine/Source/Thirdparty", &Dirs.Thirdparty); err != nil {
+		return err
+	}
+	if err := mkdirAndAbs("Engine/Programs/DirkBuildTool/Config", &Dirs.Config); err != nil {
 		return err
 	}
 	return nil

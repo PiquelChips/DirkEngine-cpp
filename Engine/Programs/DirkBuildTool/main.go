@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"DirkBuildTool/build"
+	"DirkBuildTool/config"
 	"DirkBuildTool/output"
 	"DirkBuildTool/setup"
 )
@@ -17,6 +18,12 @@ func usage() {
 func main() {
 	if err := output.GetOutDirs(); err != nil {
 		panic(err)
+	}
+
+	config := config.LoadConfig()
+	if config == nil {
+		os.Exit(1)
+		return
 	}
 
 	var buildConfig *setup.BuildConfig
