@@ -7,14 +7,14 @@ import (
 )
 
 type Makefile struct {
-	Name, Target    string
-	RootDir         string
-	IncDirs         []string
-	Libs, Defines   []string
-	LdFlags, CFlags string
-	IsLib, IsStatic bool
-	Optimize        bool
-	buffer          *bytes.Buffer
+	Name, Target       string
+	BuildType, RootDir string
+	IncDirs            []string
+	Libs, Defines      []string
+	LdFlags, CFlags    string
+	IsLib, IsStatic    bool
+	Optimize           bool
+	buffer             *bytes.Buffer
 }
 
 //go:embed makefiles
@@ -40,6 +40,7 @@ func (m *Makefile) ToBytes() ([]byte, error) {
 	m.newLine()
 
 	m.writeVar("ROOT_DIR", m.RootDir)
+	m.writeVar("BUILD_TYPE", m.BuildType)
 	m.writeVar("CFLAGS", m.CFlags)
 
 	if m.Optimize {

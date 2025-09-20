@@ -61,17 +61,18 @@ func (m *Module) ToMakefile() *make.Makefile {
 	}
 
 	return &make.Makefile{
-		Name:     m.Name,
-		Target:   m.Target,
-		RootDir:  output.Dirs.Root,
-		IncDirs:  incDirs,
-		Libs:     libs,
-		Defines:  defines,
-		LdFlags:  ldFlags,
-		IsLib:    m.IsLib,
-		IsStatic: m.build.Shipping,
-		Optimize: m.build.Optimize,
-		CFlags:   fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
+		Name:      m.Name,
+		Target:    m.Target,
+		BuildType: m.build.BuildType,
+		RootDir:   output.Dirs.Root,
+		IncDirs:   incDirs,
+		Libs:      libs,
+		Defines:   defines,
+		LdFlags:   ldFlags,
+		IsLib:     m.IsLib,
+		IsStatic:  m.build.Shipping,
+		Optimize:  m.build.Optimize,
+		CFlags:    fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
 	}
 }
 
