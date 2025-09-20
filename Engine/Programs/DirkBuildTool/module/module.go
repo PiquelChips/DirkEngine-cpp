@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 )
 
@@ -186,7 +187,10 @@ func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) *Module {
 }
 
 func (m *Module) ResolveDependencies(modules map[string]*Module, dependants []*models.Dependency) {
-	// TODO: circular dependency detection
+	if slices.Contains(dependants, m.toDep()) {
+		fmt.Printf("Circular dependency detected. Module %s has already been included.", m.Name)
+	}
+
 	m.Dependants = dependants
 	for _, moduleName := range m.Config.Deps {
 		mod, ok := modules[moduleName]
