@@ -6,7 +6,6 @@ import (
 
 	"DirkBuildTool/build"
 	"DirkBuildTool/config"
-	"DirkBuildTool/output"
 	"DirkBuildTool/setup"
 )
 
@@ -15,15 +14,7 @@ func usage() {
 }
 
 func main() {
-	if err := output.GetOutDirs(); err != nil {
-		panic(err)
-	}
-
-	config := config.LoadConfig()
-	if config == nil {
-		os.Exit(1)
-		return
-	}
+	config.LoadConfig()
 
 	target := ""
 	buildType := ""
@@ -44,7 +35,7 @@ func main() {
 		return
 	}
 
-	buildConf, ok := config.BuildTypes[buildType]
+	buildConf, ok := config.Get().BuildTypes[buildType]
 	if !ok {
 		fmt.Printf("Build type %s does not exist. Defaulting to Development\n", buildType)
 		os.Exit(1)

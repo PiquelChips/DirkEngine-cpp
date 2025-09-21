@@ -1,6 +1,7 @@
 package module
 
 import (
+	"DirkBuildTool/config"
 	"DirkBuildTool/make"
 	"DirkBuildTool/models"
 	"DirkBuildTool/output"
@@ -18,7 +19,6 @@ type Module interface {
 	getName() string
 	getPath() string
 
-	toDep() *models.Dependency
 	getDeps() []*models.Dependency
 }
 
@@ -49,10 +49,9 @@ func Build(m Module) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = m.getPath()
-	log.Printf("%s\n", makefilePath)
 
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("There was an error building %s: %s", m.getName(), err.Error())
+		fmt.Printf("There was an error building %s: %s\n", m.getName(), err.Error())
 		return err
 	}
 
@@ -84,6 +83,6 @@ func writeIntFile(m Module, name string, data []byte, overwrite bool) error {
 }
 
 func intDir(m Module) (string, error) {
-	modDir := fmt.Sprintf("%s/%s", output.Dirs.Intermediate, m.getName())
+	modDir := fmt.Sprintf("%s/%s", config.Get().Dirs.Intermediate, m.getName())
 	return modDir, os.MkdirAll(modDir, output.DirPerm)
 }

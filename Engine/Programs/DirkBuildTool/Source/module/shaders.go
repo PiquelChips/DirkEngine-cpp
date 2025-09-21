@@ -1,9 +1,9 @@
 package module
 
 import (
+	"DirkBuildTool/config"
 	"DirkBuildTool/make"
 	"DirkBuildTool/models"
-	"DirkBuildTool/output"
 )
 
 type ShaderModule struct {
@@ -14,7 +14,7 @@ func (m *ShaderModule) ToMakefile() make.Makefile {
 	return &make.ShaderMakefile{
 		Name:    m.Name,
 		Path:    m.Path,
-		RootDir: output.Dirs.Root,
+		RootDir: config.Get().Dirs.Root,
 	}
 }
 

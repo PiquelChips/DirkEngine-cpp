@@ -69,12 +69,12 @@ func Setup(buildConfig *BuildConfig) error {
 	// TODO: build glfw
 
 	glfwDir := os.Getenv("GLFW")
-	os.Symlink(fmt.Sprintf("%s/lib/libglfw.so", glfwDir), fmt.Sprintf("%s/libglfw.so", output.Dirs.Binaries))
-	os.Symlink(fmt.Sprintf("%s/lib/libglfw.so.3", glfwDir), fmt.Sprintf("%s/libglfw.so.3", output.Dirs.Binaries))
+	os.Symlink(fmt.Sprintf("%s/lib/libglfw.so", glfwDir), fmt.Sprintf("%s/libglfw.so", config.Get().Dirs.Binaries))
+	os.Symlink(fmt.Sprintf("%s/lib/libglfw.so.3", glfwDir), fmt.Sprintf("%s/libglfw.so.3", config.Get().Dirs.Binaries))
 
 	vulkanDir := os.Getenv("VULKAN_SDK")
-	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so", vulkanDir), fmt.Sprintf("%s/libvulkan.so", output.Dirs.Binaries))
-	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so.1", vulkanDir), fmt.Sprintf("%s/libvulkan.so.1", output.Dirs.Binaries))
+	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so", vulkanDir), fmt.Sprintf("%s/libvulkan.so", config.Get().Dirs.Binaries))
+	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so.1", vulkanDir), fmt.Sprintf("%s/libvulkan.so.1", config.Get().Dirs.Binaries))
 
 	// hardcoded deps
 	Config.Thirdparty = map[string]*models.Dependency{
@@ -127,5 +127,5 @@ func Setup(buildConfig *BuildConfig) error {
 }
 
 func getDir(name string) (string, error) {
-	return filepath.Abs(fmt.Sprintf("%s/%s", output.Dirs.Thirdparty, name))
+	return filepath.Abs(fmt.Sprintf("%s/%s", config.Get().Dirs.Thirdparty, name))
 }
