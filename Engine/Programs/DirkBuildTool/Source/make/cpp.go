@@ -19,7 +19,7 @@ type CppMakefile struct {
 func (m *CppMakefile) ToBytes() ([]byte, error) {
 	m.buffer = bytes.NewBuffer(nil)
 
-	m.writeVar("NAME", m.Name)
+	writeVar(m.buffer, "NAME", m.Name)
 
 	m.buffer.WriteString("TARGET=")
 	if m.IsLib {
@@ -33,11 +33,11 @@ func (m *CppMakefile) ToBytes() ([]byte, error) {
 			m.buffer.WriteString(".so")
 		}
 	}
-	m.newLine()
+	newLine(m.buffer)
 
-	m.writeVar("ROOT_DIR", m.RootDir)
-	m.writeVar("BUILD_TYPE", m.BuildType)
-	m.writeVar("CFLAGS", m.CFlags)
+	writeVar(m.buffer, "ROOT_DIR", m.RootDir)
+	writeVar(m.buffer, "BUILD_TYPE", m.BuildType)
+	writeVar(m.buffer, "CFLAGS", m.CFlags)
 
 	if m.Optimize {
 		m.buffer.WriteString("CFLAGS+= -O3\n")
@@ -47,64 +47,39 @@ func (m *CppMakefile) ToBytes() ([]byte, error) {
 	for _, dir := range m.IncDirs {
 		cxxFlags = append(cxxFlags, fmt.Sprintf("-I%s", dir))
 	}
-	m.writeVar("CXXFLAGS", cxxFlags...)
+	writeVar(m.buffer, "CXXFLAGS", cxxFlags...)
 
 	defines := []string{}
 	for _, define := range m.Defines {
 		defines = append(defines, fmt.Sprintf("-D%s", define))
 	}
-	m.writeVar("DEFINES", defines...)
+	writeVar(m.buffer, "DEFINES", defines...)
 
-	m.writeVar("LDFLAGS", m.LdFlags)
+	writeVar(m.buffer, "LDFLAGS", m.LdFlags)
 
 	ldLibs := []string{}
 	for _, lib := range m.Libs {
 		ldLibs = append(ldLibs, fmt.Sprintf("-l%s", lib))
 	}
-	m.writeVar("LDLIBS", ldLibs...)
+	writeVar(m.buffer, "LDLIBS", ldLibs...)
 
-	m.writeBase("base")
-	m.writeBase("compilation")
+	writeBase(m.buffer, "base")
+	writeBase(m.buffer, "compilation")
 
 	if !m.IsLib && !m.IsStatic {
 		// exec
-		m.writeBase("cxx_lnk")
+		writeBase(m.buffer, "cxx_lnk")
 	} else if !m.IsLib && m.IsStatic {
 		// static exec
-		m.writeBase("cxx_lnk")
+		writeBase(m.buffer, "cxx_lnk")
 	} else if m.IsLib && !m.IsStatic {
 		// shared lib
 		m.buffer.WriteString("LDFLAGS+= -shared\n")
-		m.writeBase("cxx_lnk")
+		writeBase(m.buffer, "cxx_lnk")
 	} else if m.IsLib && m.IsStatic {
 		// static lib
-		m.writeBase("ar_lnk")
+		writeBase(m.buffer, "ar_lnk")
 	}
 
 	return m.buffer.Bytes(), nil
-}
-
-func (m *CppMakefile) writeVar(key string, values ...string) {
-	m.buffer.WriteString(key)
-	m.buffer.WriteString("=")
-	if len(values) == 1 {
-		m.buffer.WriteString(values[0])
-	} else {
-		for _, value := range values {
-			m.buffer.WriteString(value)
-			m.buffer.WriteString(" ")
-		}
-	}
-	m.newLine()
-}
-
-func (m *CppMakefile) newLine() { m.buffer.WriteString("\n") }
-
-func (m *CppMakefile) writeBase(name string) {
-	data, err := makefiles.ReadFile(fmt.Sprintf("makefiles/%s.make", name))
-	if err != nil {
-		panic(err)
-	}
-	m.buffer.Write(data)
-	m.newLine()
 }
