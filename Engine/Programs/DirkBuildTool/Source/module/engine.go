@@ -1,9 +1,9 @@
 package module
 
 import (
+	"DirkBuildTool/config"
 	"DirkBuildTool/make"
 	"DirkBuildTool/models"
-	"DirkBuildTool/output"
 	"DirkBuildTool/setup"
 	"fmt"
 	"log"
@@ -14,6 +14,8 @@ import (
 type ModuleConfig struct {
 	Name    string   `json:"name"`
 	Target  string   `json:"target"`
+	Type    string   `json:"type"`
+	Path    string   `json:"-"`
 	Std     string   `json:"c_standard"`
 	IsLib   bool     `json:"is_lib"`
 	Deps    []string `json:"dependencies"` // project modules
@@ -22,16 +24,31 @@ type ModuleConfig struct {
 }
 
 func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
-	return &CppModule{
-		Name:   c.Name,
-		Target: c.Target,
-		Path:   fmt.Sprintf("%s/%s", output.Dirs.Source, c.Name),
-		Std:    c.Std,
-		IsLib:  c.IsLib,
-		Deps:   nil,
-		Ext:    nil,
-		Config: c,
-		build:  buildConfig,
+	if c.Type == "" {
+		c.Type = "cpp"
+	}
+
+	switch c.Type {
+	case "shaders":
+		return &ShaderModule{
+			Name: c.Name,
+			Path: c.Path,
+		}
+	case "cpp":
+		return &CppModule{
+			Name:   c.Name,
+			Target: c.Target,
+			Path:   c.Path,
+			Std:    c.Std,
+			IsLib:  c.IsLib,
+			Deps:   nil,
+			Ext:    nil,
+			Config: c,
+			build:  buildConfig,
+		}
+	default:
+		log.Printf("Module type %s used by module %s does not exist. Please use \"shaders\" or \"cpp\"\n", c.Type, c.Name)
+		return nil
 	}
 }
 
@@ -51,7 +68,7 @@ type CppModule struct {
 }
 
 func (m *CppModule) ToMakefile() make.Makefile {
-	log.Printf("Generating Makefile for %s", m.Name)
+	log.Printf("Generating Makefile for %s\n", m.Name)
 	var ldFlags string
 
 	incDirs := []string{}
@@ -83,7 +100,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		Name:      m.Name,
 		Target:    m.Target,
 		BuildType: m.build.Type.Name,
-		RootDir:   output.Dirs.Root,
+		RootDir:   config.Get().Dirs.Root,
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,
@@ -124,7 +141,9 @@ func (m *CppModule) getDeps() []*models.Dependency {
 	deps := m.Ext
 
 	for _, mod := range m.Deps {
-		deps = append(deps, mod.toDep())
+		if cppMod, ok := mod.(*CppModule); ok {
+			deps = append(deps, cppMod.toDep())
+		}
 		deps = append(deps, mod.getDeps()...)
 	}
 

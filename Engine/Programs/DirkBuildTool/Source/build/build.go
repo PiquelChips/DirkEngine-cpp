@@ -1,8 +1,8 @@
 package build
 
 import (
+	"DirkBuildTool/config"
 	"DirkBuildTool/module"
-	"DirkBuildTool/output"
 	"DirkBuildTool/setup"
 	"encoding/json"
 	"errors"
@@ -14,9 +14,20 @@ import (
 
 func Build(buildConfig *setup.BuildConfig) error {
 	log.Printf("Building %s for %s\n", buildConfig.Target, buildConfig.Type.Name)
-	configs, err := searchDir(output.Dirs.Source)
-	if err != nil {
-		return err
+	configs := map[string]*module.ModuleConfig{}
+	for _, dir := range config.Get().Dirs.Modules {
+		modConfigs, err := searchDir(dir)
+		if err != nil {
+			return err
+		}
+
+		for name, conf := range modConfigs {
+			if _, ok := configs[name]; ok {
+				fmt.Printf("Module %s is declared twice", name)
+			} else {
+				configs[name] = conf
+			}
+		}
 	}
 
 	modules := map[string]module.Module{}
@@ -35,32 +46,19 @@ func Build(buildConfig *setup.BuildConfig) error {
 		cppTarget.ResolveDependencies(modules, nil)
 	}
 
-	// shaders
-	err = module.Build(&module.ShaderModule{
-		Name: "Shaders",
-		Path: fmt.Sprintf("%s/Engine/Shaders", output.Dirs.Root),
-	})
-	if errors.Is(err, &exec.ExitError{}) {
+	// main target
+	if err := module.Build(target); err == nil {
+		return nil
+	} else if errors.Is(err, &exec.ExitError{}) {
 		fmt.Printf("An error occured in build process. See previous errors for details\n")
 		return nil
-	} else if err != nil {
+	} else {
 		return err
 	}
-
-	// main target
-	err = module.Build(target)
-	if err == nil {
-		return nil
-	}
-	if errors.Is(err, &exec.ExitError{}) {
-		fmt.Printf("An error occured in build process. See previous errors for details\n")
-		return nil
-	}
-	return err
 }
 
 func searchDir(path string) (map[string]*module.ModuleConfig, error) {
-	entries, err := os.ReadDir(output.Dirs.Source)
+	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
@@ -121,6 +119,8 @@ func getMod(path, name string) (*module.ModuleConfig, error) {
 			if config.Target == "" {
 				config.Target = config.Name
 			}
+
+			config.Path = path
 
 			return config, nil
 		}
