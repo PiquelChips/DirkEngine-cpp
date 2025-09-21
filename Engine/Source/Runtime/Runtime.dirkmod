@@ -14,7 +14,7 @@
     "defines": [
         "GLFW_INCLUDE_NONE",
         "GLFW_INCLUDE_VLUKAN",
-        "LOG_PATH=\\\".\\\"",
+        "LOG_PATH=\\\"Saved\\\"",
         "RESOURCE_PATH=\\\".\\\"",
         "SHADER_PATH=\\\"Intermediate/Shaders\\\""
     ]
