@@ -24,14 +24,28 @@ type ModuleConfig struct {
 	Defines []string `json:"defines"`
 }
 
+func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
+	return &EngineModule{
+		Name:   c.Name,
+		Target: c.Target,
+		Path:   fmt.Sprintf("%s/%s", output.Dirs.Source, c.Name),
+		Std:    c.Std,
+		IsLib:  c.IsLib,
+		Deps:   nil,
+		Ext:    nil,
+		Config: c,
+		build:  buildConfig,
+	}
+}
+
 // constructed for building
-type Module struct {
+type EngineModule struct {
 	Name       string
 	Target     string
 	Path       string
 	Std        string
 	IsLib      bool
-	Deps       []*Module
+	Deps       []Module
 	Ext        []*models.Dependency
 	Dependants []*models.Dependency
 	Config     *ModuleConfig
@@ -39,7 +53,17 @@ type Module struct {
 	build      *setup.BuildConfig
 }
 
-func (m *Module) ToMakefile() *make.Makefile {
+type Module interface {
+	ToMakefile() make.Makefile
+	toDep() *models.Dependency
+	getDeps() []*models.Dependency
+	writeIntFile(name string, data []byte, overwrite bool) error
+	intDir() (string, error)
+	Build() error
+	ResolveDependencies(modules map[string]Module, dependants []*models.Dependency)
+}
+
+func (m *EngineModule) ToMakefile() make.Makefile {
 	log.Printf("Generating Makefile for %s", m.Name)
 	var ldFlags string
 
@@ -68,7 +92,7 @@ func (m *Module) ToMakefile() *make.Makefile {
 		}
 	}
 
-	return &make.Makefile{
+	return &make.CppMakefile{
 		Name:      m.Name,
 		Target:    m.Target,
 		BuildType: m.build.Type.Name,
@@ -84,7 +108,7 @@ func (m *Module) ToMakefile() *make.Makefile {
 	}
 }
 
-func (m *Module) toDep() *models.Dependency {
+func (m *EngineModule) toDep() *models.Dependency {
 	if m.selfDep != nil {
 		return m.selfDep
 	}
@@ -97,7 +121,7 @@ func (m *Module) toDep() *models.Dependency {
 	}
 }
 
-func (m *Module) getDeps() []*models.Dependency {
+func (m *EngineModule) getDeps() []*models.Dependency {
 	deps := m.Ext
 
 	for _, mod := range m.Deps {
@@ -108,7 +132,7 @@ func (m *Module) getDeps() []*models.Dependency {
 	return deps
 }
 
-func (m *Module) writeIntFile(name string, data []byte, overwrite bool) error {
+func (m *EngineModule) writeIntFile(name string, data []byte, overwrite bool) error {
 	intDir, err := m.intDir()
 	if err != nil {
 		return err
@@ -131,12 +155,12 @@ func (m *Module) writeIntFile(name string, data []byte, overwrite bool) error {
 	return nil
 }
 
-func (m *Module) intDir() (string, error) {
+func (m *EngineModule) intDir() (string, error) {
 	modDir := fmt.Sprintf("%s/%s", output.Dirs.Intermediate, m.Name)
 	return modDir, os.MkdirAll(modDir, output.DirPerm)
 }
 
-func (m *Module) Build() error {
+func (m *EngineModule) Build() error {
 	for _, dep := range m.Deps {
 		if err := dep.Build(); err != nil {
 			return err
@@ -172,21 +196,7 @@ func (m *Module) Build() error {
 	return nil
 }
 
-func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) *Module {
-	return &Module{
-		Name:   c.Name,
-		Target: c.Target,
-		Path:   fmt.Sprintf("%s/%s", output.Dirs.Source, c.Name),
-		Std:    c.Std,
-		IsLib:  c.IsLib,
-		Deps:   nil,
-		Ext:    nil,
-		Config: c,
-		build:  buildConfig,
-	}
-}
-
-func (m *Module) ResolveDependencies(modules map[string]*Module, dependants []*models.Dependency) {
+func (m *EngineModule) ResolveDependencies(modules map[string]Module, dependants []*models.Dependency) {
 	if slices.Contains(dependants, m.toDep()) {
 		fmt.Printf("Circular dependency detected. Module %s has already been included\n", m.Name)
 		return

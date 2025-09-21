@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-type Makefile struct {
+type CppMakefile struct {
 	Name, Target       string
 	BuildType, RootDir string
 	IncDirs            []string
@@ -17,10 +17,17 @@ type Makefile struct {
 	buffer             *bytes.Buffer
 }
 
+type Makefile interface {
+	ToBytes() ([]byte, error)
+	writeVar(key string, values ...string)
+	newLine()
+	writeBase(name string)
+}
+
 //go:embed makefiles
 var makefiles embed.FS
 
-func (m *Makefile) ToBytes() ([]byte, error) {
+func (m *CppMakefile) ToBytes() ([]byte, error) {
 	m.buffer = bytes.NewBuffer(nil)
 
 	m.writeVar("NAME", m.Name)
@@ -88,7 +95,7 @@ func (m *Makefile) ToBytes() ([]byte, error) {
 	return m.buffer.Bytes(), nil
 }
 
-func (m *Makefile) writeVar(key string, values ...string) {
+func (m *CppMakefile) writeVar(key string, values ...string) {
 	m.buffer.WriteString(key)
 	m.buffer.WriteString("=")
 	if len(values) == 1 {
@@ -102,9 +109,9 @@ func (m *Makefile) writeVar(key string, values ...string) {
 	m.newLine()
 }
 
-func (m *Makefile) newLine() { m.buffer.WriteString("\n") }
+func (m *CppMakefile) newLine() { m.buffer.WriteString("\n") }
 
-func (m *Makefile) writeBase(name string) {
+func (m *CppMakefile) writeBase(name string) {
 	data, err := makefiles.ReadFile(fmt.Sprintf("makefiles/%s.make", name))
 	if err != nil {
 		panic(err)

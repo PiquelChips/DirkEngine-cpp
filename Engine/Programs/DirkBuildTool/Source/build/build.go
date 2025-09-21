@@ -19,7 +19,7 @@ func Build(buildConfig *setup.BuildConfig) error {
 		return err
 	}
 
-	modules := map[string]*module.Module{}
+	modules := map[string]module.Module{}
 	for name, config := range configs {
 		modules[name] = config.ToModule(buildConfig)
 	}
