@@ -2,7 +2,6 @@ package make
 
 import (
 	"bytes"
-	"embed"
 	"fmt"
 )
 
@@ -16,16 +15,6 @@ type CppMakefile struct {
 	Optimize           bool
 	buffer             *bytes.Buffer
 }
-
-type Makefile interface {
-	ToBytes() ([]byte, error)
-	writeVar(key string, values ...string)
-	newLine()
-	writeBase(name string)
-}
-
-//go:embed makefiles
-var makefiles embed.FS
 
 func (m *CppMakefile) ToBytes() ([]byte, error) {
 	m.buffer = bytes.NewBuffer(nil)

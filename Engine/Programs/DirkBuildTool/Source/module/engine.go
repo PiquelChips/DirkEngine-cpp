@@ -1,0 +1,215 @@
+package module
+
+import (
+	"DirkBuildTool/make"
+	"DirkBuildTool/models"
+	"DirkBuildTool/output"
+	"DirkBuildTool/setup"
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"slices"
+	"strings"
+)
+
+// read from .dirkmod files
+type ModuleConfig struct {
+	Name    string   `json:"name"`
+	Target  string   `json:"target"`
+	Std     string   `json:"c_standard"`
+	IsLib   bool     `json:"is_lib"`
+	Deps    []string `json:"dependencies"` // project modules
+	Ext     []string `json:"external"`     // thirdparty modules
+	Defines []string `json:"defines"`
+}
+
+func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
+	return &EngineModule{
+		Name:   c.Name,
+		Target: c.Target,
+		Path:   fmt.Sprintf("%s/%s", output.Dirs.Source, c.Name),
+		Std:    c.Std,
+		IsLib:  c.IsLib,
+		Deps:   nil,
+		Ext:    nil,
+		Config: c,
+		build:  buildConfig,
+	}
+}
+
+// constructed for building
+type EngineModule struct {
+	Name       string
+	Target     string
+	Path       string
+	Std        string
+	IsLib      bool
+	Deps       []Module
+	Ext        []*models.Dependency
+	Dependants []*models.Dependency
+	Config     *ModuleConfig
+	selfDep    *models.Dependency // itself represented as a dependency
+	build      *setup.BuildConfig
+}
+
+func (m *EngineModule) ToMakefile() make.Makefile {
+	log.Printf("Generating Makefile for %s", m.Name)
+	var ldFlags string
+
+	incDirs := []string{}
+	libs := []string{}
+	defines := m.Config.Defines
+	for _, dep := range m.getDeps() {
+		if dep.IncludeDir != "" {
+			incDirs = append(incDirs, dep.IncludeDir)
+		}
+
+		if dep.IsHeaderOnly {
+			continue
+		}
+
+		libs = append(libs, dep.Name)
+
+		if defines != nil {
+			defines = append(defines, dep.Defines...)
+		}
+	}
+
+	for _, dep := range m.Dependants {
+		if dep.Defines != nil {
+			defines = append(defines, dep.Defines...)
+		}
+	}
+
+	return &make.CppMakefile{
+		Name:      m.Name,
+		Target:    m.Target,
+		BuildType: m.build.Type.Name,
+		RootDir:   output.Dirs.Root,
+		IncDirs:   incDirs,
+		Libs:      libs,
+		Defines:   defines,
+		LdFlags:   ldFlags,
+		IsLib:     m.IsLib,
+		IsStatic:  m.build.Type.Compact,
+		Optimize:  m.build.Type.Optimize,
+		CFlags:    fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
+	}
+}
+
+func (m *EngineModule) toDep() *models.Dependency {
+	if m.selfDep != nil {
+		return m.selfDep
+	}
+
+	return &models.Dependency{
+		Name:         m.Name,
+		IsHeaderOnly: false,
+		IncludeDir:   fmt.Sprintf("%s/include", m.Path),
+		Defines:      m.Config.Defines,
+	}
+}
+
+func (m *EngineModule) getDeps() []*models.Dependency {
+	deps := m.Ext
+
+	for _, mod := range m.Deps {
+		deps = append(deps, mod.toDep())
+		deps = append(deps, mod.getDeps()...)
+	}
+
+	return deps
+}
+
+func (m *EngineModule) writeIntFile(name string, data []byte, overwrite bool) error {
+	intDir, err := m.intDir()
+	if err != nil {
+		return err
+	}
+
+	name = strings.Trim(name, "/")
+	name = fmt.Sprintf("%s/%s", intDir, name)
+
+	if overwrite {
+		return os.WriteFile(name, data, output.FilePerm)
+	}
+
+	f, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE, output.FilePerm)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	f.Write(data)
+	return nil
+}
+
+func (m *EngineModule) intDir() (string, error) {
+	modDir := fmt.Sprintf("%s/%s", output.Dirs.Intermediate, m.Name)
+	return modDir, os.MkdirAll(modDir, output.DirPerm)
+}
+
+func (m *EngineModule) Build() error {
+	for _, dep := range m.Deps {
+		if err := dep.Build(); err != nil {
+			return err
+		}
+	}
+	log.Printf("Building target %s", m.Name)
+	makefile, err := m.ToMakefile().ToBytes()
+	if err != nil {
+		return err
+	}
+
+	if err := m.writeIntFile("Makefile", makefile, true); err != nil {
+		return err
+	}
+
+	intDir, err := m.intDir()
+	if err != nil {
+		return err
+	}
+
+	makefilePath := fmt.Sprintf("%s/Makefile", intDir)
+	cmd := exec.Command("make", "-f", makefilePath, "-j", "8")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = m.Path
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("There was an error building %s", m.Name)
+		return err
+	}
+
+	log.Printf("Successfully built %s", m.Name)
+	return nil
+}
+
+func (m *EngineModule) ResolveDependencies(modules map[string]Module, dependants []*models.Dependency) {
+	if slices.Contains(dependants, m.toDep()) {
+		fmt.Printf("Circular dependency detected. Module %s has already been included\n", m.Name)
+		return
+	}
+
+	m.Dependants = dependants
+	for _, moduleName := range m.Config.Deps {
+		mod, ok := modules[moduleName]
+		if !ok {
+			log.Printf("Module %s required by module %s does not exist\n", moduleName, m.Name)
+			continue
+		}
+		m.Deps = append(m.Deps, mod)
+		mod.ResolveDependencies(modules, append(dependants, m.toDep()))
+	}
+
+	// external dependencies
+	for _, depName := range m.Config.Ext {
+		dep, ok := setup.Config.Thirdparty[depName]
+		if !ok {
+			log.Printf("External dependency %s required by module %s does not exist\n", depName, m.Name)
+			continue
+		}
+		m.Ext = append(m.Ext, dep)
+	}
+}
