@@ -14,6 +14,6 @@
         "GLFW_INCLUDE_VLUKAN",
         "LOG_PATH=\\\".\\\"",
         "RESOURCE_PATH=\\\".\\\"",
-        "SHADER_PATH=\\\".\\\""
+        "SHADER_PATH=\\\"Intermediate/Shaders\\\""
     ]
 }

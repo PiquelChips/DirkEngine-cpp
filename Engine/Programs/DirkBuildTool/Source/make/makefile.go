@@ -117,12 +117,14 @@ func (m *CppMakefile) ToBytes() ([]byte, error) {
 }
 
 type ShaderMakefile struct {
+	Name    string
 	Path    string
 	RootDir string
 }
 
 func (m *ShaderMakefile) ToBytes() ([]byte, error) {
 	buffer := bytes.NewBuffer(nil)
+	writeVar(buffer, "NAME", m.Name)
 	writeVar(buffer, "ROOT_DIR", m.RootDir)
 	writeVar(buffer, "SHADER_DIR", m.Path)
 	writeBase(buffer, "shaders")

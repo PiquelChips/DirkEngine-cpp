@@ -7,10 +7,7 @@ import (
 	"DirkBuildTool/setup"
 	"fmt"
 	"log"
-	"os"
-	"os/exec"
 	"slices"
-	"strings"
 )
 
 // read from .dirkmod files
@@ -25,7 +22,7 @@ type ModuleConfig struct {
 }
 
 func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
-	return &EngineModule{
+	return &CppModule{
 		Name:   c.Name,
 		Target: c.Target,
 		Path:   fmt.Sprintf("%s/%s", output.Dirs.Source, c.Name),
@@ -39,7 +36,7 @@ func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
 }
 
 // constructed for building
-type EngineModule struct {
+type CppModule struct {
 	Name       string
 	Target     string
 	Path       string
@@ -53,7 +50,7 @@ type EngineModule struct {
 	build      *setup.BuildConfig
 }
 
-func (m *EngineModule) ToMakefile() make.Makefile {
+func (m *CppModule) ToMakefile() make.Makefile {
 	log.Printf("Generating Makefile for %s", m.Name)
 	var ldFlags string
 
@@ -98,7 +95,19 @@ func (m *EngineModule) ToMakefile() make.Makefile {
 	}
 }
 
-func (m *EngineModule) toDep() *models.Dependency {
+func (m *CppModule) getBuildDeps() []Module {
+	return m.Deps
+}
+
+func (m *CppModule) getName() string {
+	return m.Name
+}
+
+func (m *CppModule) getPath() string {
+	return m.Path
+}
+
+func (m *CppModule) toDep() *models.Dependency {
 	if m.selfDep != nil {
 		return m.selfDep
 	}
@@ -111,7 +120,7 @@ func (m *EngineModule) toDep() *models.Dependency {
 	}
 }
 
-func (m *EngineModule) getDeps() []*models.Dependency {
+func (m *CppModule) getDeps() []*models.Dependency {
 	deps := m.Ext
 
 	for _, mod := range m.Deps {
@@ -122,71 +131,7 @@ func (m *EngineModule) getDeps() []*models.Dependency {
 	return deps
 }
 
-func (m *EngineModule) writeIntFile(name string, data []byte, overwrite bool) error {
-	intDir, err := m.intDir()
-	if err != nil {
-		return err
-	}
-
-	name = strings.Trim(name, "/")
-	name = fmt.Sprintf("%s/%s", intDir, name)
-
-	if overwrite {
-		return os.WriteFile(name, data, output.FilePerm)
-	}
-
-	f, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE, output.FilePerm)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	f.Write(data)
-	return nil
-}
-
-func (m *EngineModule) intDir() (string, error) {
-	modDir := fmt.Sprintf("%s/%s", output.Dirs.Intermediate, m.Name)
-	return modDir, os.MkdirAll(modDir, output.DirPerm)
-}
-
-func (m *EngineModule) Build() error {
-	for _, dep := range m.Deps {
-		if err := dep.Build(); err != nil {
-			return err
-		}
-	}
-	log.Printf("Building target %s", m.Name)
-	makefile, err := m.ToMakefile().ToBytes()
-	if err != nil {
-		return err
-	}
-
-	if err := m.writeIntFile("Makefile", makefile, true); err != nil {
-		return err
-	}
-
-	intDir, err := m.intDir()
-	if err != nil {
-		return err
-	}
-
-	makefilePath := fmt.Sprintf("%s/Makefile", intDir)
-	cmd := exec.Command("make", "-f", makefilePath, "-j", "8")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Dir = m.Path
-
-	if err := cmd.Run(); err != nil {
-		log.Printf("There was an error building %s", m.Name)
-		return err
-	}
-
-	log.Printf("Successfully built %s", m.Name)
-	return nil
-}
-
-func (m *EngineModule) ResolveDependencies(modules map[string]Module, dependants []*models.Dependency) {
+func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []*models.Dependency) {
 	if slices.Contains(dependants, m.toDep()) {
 		fmt.Printf("Circular dependency detected. Module %s has already been included\n", m.Name)
 		return
@@ -200,7 +145,9 @@ func (m *EngineModule) ResolveDependencies(modules map[string]Module, dependants
 			continue
 		}
 		m.Deps = append(m.Deps, mod)
-		mod.ResolveDependencies(modules, append(dependants, m.toDep()))
+		if engineMod, ok := mod.(*CppModule); ok {
+			engineMod.ResolveDependencies(modules, append(dependants, m.toDep()))
+		}
 	}
 
 	// external dependencies

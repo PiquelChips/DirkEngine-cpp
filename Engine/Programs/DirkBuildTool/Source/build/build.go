@@ -30,14 +30,30 @@ func Build(buildConfig *setup.BuildConfig) error {
 		return nil
 	}
 
-	log.Printf("Resolving dependencies")
-	target.ResolveDependencies(modules, nil)
-	err = target.Build()
+	if cppTarget, ok := target.(*module.CppModule); ok {
+		log.Printf("Resolving dependencies")
+		cppTarget.ResolveDependencies(modules, nil)
+	}
+
+	// shaders
+	err = module.Build(&module.ShaderModule{
+		Name: "Shaders",
+		Path: fmt.Sprintf("%s/Engine/Shaders", output.Dirs.Root),
+	})
+	if errors.Is(err, &exec.ExitError{}) {
+		fmt.Printf("An error occured in build process. See previous errors for details\n")
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	// main target
+	err = module.Build(target)
 	if err == nil {
 		return nil
 	}
 	if errors.Is(err, &exec.ExitError{}) {
-		fmt.Printf("An error occured in build process. See previous errors for details")
+		fmt.Printf("An error occured in build process. See previous errors for details\n")
 		return nil
 	}
 	return err
