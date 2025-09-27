@@ -29,7 +29,7 @@ type Config struct {
 }
 
 var config *Config
-var configDir = "Engine/Programs/DirkBuildTool/Config"
+const configDir = "Engine/Programs/DirkBuildTool/Config"
 
 func Get() *Config {
 	if config == nil {
@@ -39,11 +39,11 @@ func Get() *Config {
 }
 
 func LoadConfig() {
-	log.Printf("Loading configuration")
+	log.Printf("Loading configuration\n")
 	config = &Config{}
 	// dirs
 	if err := loadConfig("dirs.json", &config.Dirs); err != nil {
-		fmt.Printf("%s", err.Error())
+		fmt.Printf("%s\n", err.Error())
 		os.Exit(1)
 		return
 	}

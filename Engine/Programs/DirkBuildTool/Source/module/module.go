@@ -39,10 +39,7 @@ func Build(m Module) error {
 		return err
 	}
 
-	intDir, err := intDir(m)
-	if err != nil {
-		return err
-	}
+	intDir, _ := intDir(m)
 
 	makefilePath := fmt.Sprintf("%s/Makefile", intDir)
 	cmd := exec.Command("make", "-f", makefilePath, "-j", "8")

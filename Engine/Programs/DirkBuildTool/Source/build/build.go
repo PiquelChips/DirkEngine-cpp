@@ -23,7 +23,7 @@ func Build(buildConfig *setup.BuildConfig) error {
 
 		for name, conf := range modConfigs {
 			if _, ok := configs[name]; ok {
-				fmt.Printf("Module %s is declared twice", name)
+				log.Printf("Module %s is declared twice\n", name)
 			} else {
 				configs[name] = conf
 			}
@@ -37,16 +37,15 @@ func Build(buildConfig *setup.BuildConfig) error {
 
 	target, ok := modules[buildConfig.Target]
 	if !ok {
-		log.Printf("Target %s does not exist, skipping", buildConfig.Target)
+		log.Printf("Target %s does not exist, skipping\n", buildConfig.Target)
 		return nil
 	}
 
 	if cppTarget, ok := target.(*module.CppModule); ok {
-		log.Printf("Resolving dependencies")
+		log.Printf("Resolving dependencies\n")
 		cppTarget.ResolveDependencies(modules, nil)
 	}
 
-	// main target
 	if err := module.Build(target); err == nil {
 		return nil
 	} else if errors.Is(err, &exec.ExitError{}) {

@@ -17,8 +17,6 @@ INT_DIR=$(ROOT_DIR)/Intermediate/$(NAME)/$(BUILD_TYPE)
 
 OUT=$(BIN_DIR)/$(TARGET)
 
-COMPILE_COMMANDS_FILE=$(ROOT_DIR)/compile_commands.json
-
 SRC_DIR=src
 SRC_EXT=.cpp
 SRC=$(shell find $(SRC_DIR) -name '*$(SRC_EXT)')

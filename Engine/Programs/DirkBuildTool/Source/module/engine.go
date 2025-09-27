@@ -69,7 +69,6 @@ type CppModule struct {
 
 func (m *CppModule) ToMakefile() make.Makefile {
 	log.Printf("Generating Makefile for %s\n", m.Name)
-	var ldFlags string
 
 	incDirs := []string{}
 	libs := []string{}
@@ -104,7 +103,6 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,
-		LdFlags:   ldFlags,
 		IsLib:     m.IsLib,
 		IsStatic:  m.build.Type.Compact,
 		Optimize:  m.build.Type.Optimize,
@@ -129,12 +127,14 @@ func (m *CppModule) toDep() *models.Dependency {
 		return m.selfDep
 	}
 
-	return &models.Dependency{
+	m.selfDep = &models.Dependency{
 		Name:         m.Name,
 		IsHeaderOnly: false,
 		IncludeDir:   fmt.Sprintf("%s/include", m.Path),
 		Defines:      m.Config.Defines,
 	}
+
+	return m.selfDep
 }
 
 func (m *CppModule) getDeps() []*models.Dependency {
