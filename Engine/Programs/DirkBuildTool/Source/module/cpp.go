@@ -95,7 +95,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		}
 	}
 
-	warningFlags := "-Wall -Wextra"
+	warningFlags := "" //"-Wall -Wextra"
 
 	return &make.CppMakefile{
 		Name:      m.Name,
