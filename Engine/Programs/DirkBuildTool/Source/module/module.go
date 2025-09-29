@@ -48,7 +48,7 @@ func Build(m Module) error {
 	cmd.Dir = m.getPath()
 
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("There was an error building %s: %s\n", m.getName(), err.Error())
+		fmt.Printf("There was an error building %s, see logs for details\n", m.getName())
 		return err
 	}
 

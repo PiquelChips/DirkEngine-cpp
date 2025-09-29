@@ -5,7 +5,6 @@ import (
 	"DirkBuildTool/module"
 	"DirkBuildTool/setup"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -48,8 +47,8 @@ func Build(buildConfig *setup.BuildConfig) error {
 
 	if err := module.Build(target); err == nil {
 		return nil
-	} else if errors.Is(err, &exec.ExitError{}) {
-		fmt.Printf("An error occured in build process. See previous errors for details\n")
+	} else if _, ok := err.(*exec.ExitError); ok {
+		fmt.Printf("An error occured in build process\n")
 		return nil
 	} else {
 		return err
