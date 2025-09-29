@@ -23,64 +23,64 @@ type DirsConfig struct {
 	Modules      []string `json:"modules"` // dirs that will be searched for modules
 }
 
-type Config struct {
-	BuildTypes map[string]*BuildType
-	Dirs       DirsConfig
-}
+var BuildTypes map[string]*BuildType
+var Dirs DirsConfig
 
-var config *Config
 const configDir = "Engine/Programs/DirkBuildTool/Config"
-
-func Get() *Config {
-	if config == nil {
-		LoadConfig()
-	}
-	return config
-}
 
 func LoadConfig() {
 	log.Printf("Loading configuration\n")
-	config = &Config{}
-	// dirs
-	if err := loadConfig("dirs.json", &config.Dirs); err != nil {
+	Dirs = loadDirsConfig()
+	BuildTypes = loadBuildTypes()
+}
+
+func loadBuildTypes() map[string]*BuildType {
+	buildTypes := map[string]*BuildType{}
+	if err := loadConfig("build_configs.json", &buildTypes); err != nil {
 		fmt.Printf("%s\n", err.Error())
 		os.Exit(1)
-		return
+		return nil
 	}
 
-	config.Dirs.Root, _ = filepath.Abs(".")
-	config.Dirs.Intermediate, _ = filepath.Abs(config.Dirs.Intermediate)
-	config.Dirs.Binaries, _ = filepath.Abs(config.Dirs.Binaries)
-	config.Dirs.Thirdparty, _ = filepath.Abs(config.Dirs.Thirdparty)
-	for i, module := range config.Dirs.Modules {
-		config.Dirs.Modules[i], _ = filepath.Abs(module)
+	if len(buildTypes) < 1 {
+		fmt.Printf("Config must have at least one build type\n")
+		os.Exit(1)
+		return nil
+	}
+
+	for name, conf := range buildTypes {
+		conf.Name = name
+	}
+
+	return buildTypes
+}
+
+func loadDirsConfig() DirsConfig {
+	dirs := DirsConfig{}
+	if err := loadConfig("dirs.json", &dirs); err != nil {
+		fmt.Printf("%s\n", err.Error())
+		os.Exit(1)
+		return DirsConfig{}
+	}
+
+	dirs.Root, _ = filepath.Abs(".")
+	dirs.Intermediate, _ = filepath.Abs(dirs.Intermediate)
+	dirs.Binaries, _ = filepath.Abs(dirs.Binaries)
+	dirs.Thirdparty, _ = filepath.Abs(dirs.Thirdparty)
+	for i, module := range dirs.Modules {
+		dirs.Modules[i], _ = filepath.Abs(module)
 	}
 
 	const DirPerm = 0755
 
-	if err := os.MkdirAll(config.Dirs.Intermediate, DirPerm); err != nil {
+	if err := os.MkdirAll(dirs.Intermediate, DirPerm); err != nil {
 		panic(err)
 	}
-	if err := os.MkdirAll(config.Dirs.Binaries, DirPerm); err != nil {
+	if err := os.MkdirAll(dirs.Binaries, DirPerm); err != nil {
 		panic(err)
 	}
 
-	// build types
-	if err := loadConfig("build_configs.json", &config.BuildTypes); err != nil {
-		fmt.Printf("%s\n", err.Error())
-		os.Exit(1)
-		return
-	}
-
-	if len(config.BuildTypes) < 1 {
-		fmt.Printf("Config must have at least one build type\n")
-		os.Exit(1)
-		return
-	}
-
-	for name, conf := range config.BuildTypes {
-		conf.Name = name
-	}
+	return dirs
 }
 
 func loadConfig(file string, out any) error {

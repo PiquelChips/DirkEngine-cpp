@@ -80,6 +80,6 @@ func writeIntFile(m Module, name string, data []byte, overwrite bool) error {
 }
 
 func intDir(m Module) (string, error) {
-	modDir := fmt.Sprintf("%s/%s", config.Get().Dirs.Intermediate, m.getName())
+	modDir := fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.getName())
 	return modDir, os.MkdirAll(modDir, output.DirPerm)
 }

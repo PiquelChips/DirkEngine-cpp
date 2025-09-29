@@ -99,7 +99,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		Name:      m.Name,
 		Target:    m.Target,
 		BuildType: m.build.Type.Name,
-		RootDir:   config.Get().Dirs.Root,
+		RootDir:   config.Dirs.Root,
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,

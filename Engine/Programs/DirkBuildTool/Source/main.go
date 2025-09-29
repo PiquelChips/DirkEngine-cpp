@@ -35,7 +35,7 @@ func main() {
 		return
 	}
 
-	buildConf, ok := config.Get().BuildTypes[buildType]
+	buildConf, ok := config.BuildTypes[buildType]
 	if !ok {
 		fmt.Printf("Build type %s does not exist. Defaulting to Development\n", buildType)
 		os.Exit(1)

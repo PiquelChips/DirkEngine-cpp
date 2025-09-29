@@ -14,7 +14,7 @@ func (m *ShaderModule) ToMakefile() make.Makefile {
 	return &make.ShaderMakefile{
 		Name:    m.Name,
 		Path:    m.Path,
-		RootDir: config.Get().Dirs.Root,
+		RootDir: config.Dirs.Root,
 	}
 }
 

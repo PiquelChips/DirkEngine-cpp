@@ -14,7 +14,7 @@ import (
 func Build(buildConfig *setup.BuildConfig) error {
 	log.Printf("Building %s for %s\n", buildConfig.Target, buildConfig.Type.Name)
 	configs := map[string]*module.ModuleConfig{}
-	for _, dir := range config.Get().Dirs.Modules {
+	for _, dir := range config.Dirs.Modules {
 		modConfigs, err := searchDir(dir)
 		if err != nil {
 			return err

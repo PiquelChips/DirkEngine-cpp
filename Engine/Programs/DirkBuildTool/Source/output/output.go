@@ -12,7 +12,7 @@ const FilePerm = 0644
 
 func WriteIntFile(name string, data []byte, overwrite bool) error {
 	name = strings.Trim(name, "/")
-	name = fmt.Sprintf("%s/%s", config.Get().Dirs.Intermediate, name)
+	name = fmt.Sprintf("%s/%s", config.Dirs.Intermediate, name)
 
 	if overwrite {
 		return os.WriteFile(name, data, FilePerm)
@@ -30,13 +30,13 @@ func WriteIntFile(name string, data []byte, overwrite bool) error {
 
 func ReadIntFile(name string) ([]byte, error) {
 	name = strings.Trim(name, "/")
-	name = fmt.Sprintf("%s/%s", config.Get().Dirs.Intermediate, name)
+	name = fmt.Sprintf("%s/%s", config.Dirs.Intermediate, name)
 	return os.ReadFile(name)
 }
 
 func GetIntFileInfo(name string) (os.FileInfo, error) {
 	name = strings.Trim(name, "/")
-	name = fmt.Sprintf("%s/%s", config.Get().Dirs.Intermediate, name)
+	name = fmt.Sprintf("%s/%s", config.Dirs.Intermediate, name)
 
 	return os.Stat(name)
 }
