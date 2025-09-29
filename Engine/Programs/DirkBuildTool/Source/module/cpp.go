@@ -95,6 +95,8 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		}
 	}
 
+	warningFlags := "-Wall -Wextra"
+
 	return &make.CppMakefile{
 		Name:      m.Name,
 		Target:    m.Target,
@@ -106,7 +108,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		IsLib:     m.IsLib,
 		IsStatic:  m.build.Type.Compact,
 		Optimize:  m.build.Type.Optimize,
-		CFlags:    fmt.Sprintf("-fPIC -Wall -Wextra -std=%s", m.Std),
+		CFlags:    fmt.Sprintf("-fPIC %s -std=%s", warningFlags, m.Std),
 	}
 }
 
