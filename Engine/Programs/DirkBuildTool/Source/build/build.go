@@ -86,44 +86,24 @@ func searchDir(path string) (map[string]*module.ModuleConfig, error) {
 }
 
 func getMod(path, name string) (*module.ModuleConfig, error) {
-	path = fmt.Sprintf("%s/%s", path, name)
-	entries, err := os.ReadDir(path)
+	path = fmt.Sprintf("%s/%s/%s.dirkmod", path, name, name)
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
 
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-
-		info, err := entry.Info()
-		if err != nil {
-			return nil, err
-		}
-
-		if info.Name() == fmt.Sprintf("%s.dirkmod", name) {
-			data, err := os.ReadFile(fmt.Sprintf("%s/%s.dirkmod", path, name))
-			if err != nil {
-				return nil, err
-			}
-
-			config := &module.ModuleConfig{}
-			err = json.Unmarshal(data, config)
-			if err != nil {
-				log.Printf("Error loading module %s: %s\n", name, err.Error())
-				return nil, nil
-			}
-
-			if config.Target == "" {
-				config.Target = config.Name
-			}
-
-			config.Path = path
-
-			return config, nil
-		}
+	config := &module.ModuleConfig{}
+	err = json.Unmarshal(data, config)
+	if err != nil {
+		log.Printf("Error loading module %s: %s\n", name, err.Error())
+		return nil, nil
 	}
 
-	return nil, nil
+	if config.Target == "" {
+		config.Target = config.Name
+	}
+
+	config.Path = path
+
+	return config, nil
 }
