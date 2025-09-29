@@ -14,10 +14,8 @@ Any contribution/feedback is greatly appreciated!
 ## Build
 
 > [!IMPORTANT]
-> I have only tested this project on my own machine which runs [NixOS](https://nixos.org) with
-> [this configuration](https://github.com/PiquelChips/dotfiles). If you would like to test and
-> adapt it for other **Linux distributions** or even **Windows** (ewww), I would be happy to 
-> review your contributions!
+> The **DirkEngine** uses a custom build system. This build system is only available on Linux.
+> Feel free to add compatibility with another platform.
 
 ### Prerequisits
 
