@@ -21,10 +21,10 @@ Any contribution/feedback is greatly appreciated!
 
 1. The [**gcc**](https://gcc.gnu.org/) compiler toolchain.
 2. The [**Go**](https://go.dev/) compiler.
-3. [**Make**](https://www.gnu.org/software/make/).
+3. GUN [**Make**](https://www.gnu.org/software/make/).
 4. The [**Vulkan SDK**](https://vulkan.lunarg.com/) that we use for the renderer backend. You can follow [this](https://vulkan.lunarg.com/doc/view/latest/windows/getting_started.html) tutorial for SDK instalation.
    The SDK should be in the `VULKAN_SDK` environmment variable.
-6. [**GLFW**](https://www.glfw.org/). Binaries and includes in the `GLFW` environment variable (includes in `include` subdirectory & shared libraries in `lib` subdirectory).
+6. [**GLFW**](https://www.glfw.org/) in the `GLFW` environment variable. Includes in `include` subdirectory & shared libraries in `lib` subdirectory. (this will be made better in the future).
 
 ### Building the project
 
