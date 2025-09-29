@@ -86,8 +86,9 @@ func searchDir(path string) (map[string]*module.ModuleConfig, error) {
 }
 
 func getMod(path, name string) (*module.ModuleConfig, error) {
-	path = fmt.Sprintf("%s/%s/%s.dirkmod", path, name, name)
-	data, err := os.ReadFile(path)
+	path = fmt.Sprintf("%s/%s", path, name)
+	modFile := fmt.Sprintf("%s/%s.dirkmod", path, name)
+	data, err := os.ReadFile(modFile)
 	if err != nil {
 		return nil, nil
 	}

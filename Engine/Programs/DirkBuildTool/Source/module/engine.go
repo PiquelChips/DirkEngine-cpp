@@ -144,7 +144,14 @@ func (m *CppModule) getDeps() []*models.Dependency {
 		if cppMod, ok := mod.(*CppModule); ok {
 			deps = append(deps, cppMod.toDep())
 		}
-		deps = append(deps, mod.getDeps()...)
+
+		modDeps := mod.getDeps()
+		// cleaning duplicates
+		for _, modDep := range modDeps {
+			if !slices.Contains(deps, modDep) {
+				deps = append(deps, modDep)
+			}
+		}
 	}
 
 	return deps
