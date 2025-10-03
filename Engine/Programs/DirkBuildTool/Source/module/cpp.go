@@ -10,48 +10,6 @@ import (
 	"slices"
 )
 
-// read from .dirkmod files
-type ModuleConfig struct {
-	Name    string   `json:"name"`
-	Target  string   `json:"target"`
-	Type    string   `json:"type"`
-	Path    string   `json:"-"`
-	Std     string   `json:"c_standard"`
-	IsLib   bool     `json:"is_lib"`
-	Deps    []string `json:"dependencies"` // project modules
-	Ext     []string `json:"external"`     // thirdparty modules
-	Defines []string `json:"defines"`
-}
-
-func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
-	if c.Type == "" {
-		c.Type = "cpp"
-	}
-
-	switch c.Type {
-	case "shaders":
-		return &ShaderModule{
-			Name: c.Name,
-			Path: c.Path,
-		}
-	case "cpp":
-		return &CppModule{
-			Name:   c.Name,
-			Target: c.Target,
-			Path:   c.Path,
-			Std:    c.Std,
-			IsLib:  c.IsLib,
-			Deps:   nil,
-			Ext:    nil,
-			Config: c,
-			build:  buildConfig,
-		}
-	default:
-		log.Printf("Module type %s used by module %s does not exist. Please use \"shaders\" or \"cpp\"\n", c.Type, c.Name)
-		return nil
-	}
-}
-
 // constructed for building
 type CppModule struct {
 	Name       string
