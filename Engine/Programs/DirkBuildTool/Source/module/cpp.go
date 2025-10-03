@@ -36,15 +36,15 @@ func (m *CppModule) ToMakefile() make.Makefile {
 			incDirs = append(incDirs, dep.IncludeDir)
 		}
 
+		if defines != nil {
+			defines = append(defines, dep.Defines...)
+		}
+
 		if dep.IsHeaderOnly {
 			continue
 		}
 
 		libs = append(libs, dep.Name)
-
-		if defines != nil {
-			defines = append(defines, dep.Defines...)
-		}
 	}
 
 	for _, dep := range m.Dependants {
