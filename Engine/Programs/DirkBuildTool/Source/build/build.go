@@ -13,7 +13,7 @@ import (
 
 func Build(buildConfig *setup.BuildConfig) error {
 	log.Printf("Building %s for %s\n", buildConfig.Target, buildConfig.Type.Name)
-	configs := map[string]*module.ModuleConfig{}
+	modules := map[string]module.Module{}
 	for _, dir := range config.Dirs.Modules {
 		modConfigs, err := searchDir(dir)
 		if err != nil {
@@ -21,17 +21,12 @@ func Build(buildConfig *setup.BuildConfig) error {
 		}
 
 		for name, conf := range modConfigs {
-			if _, ok := configs[name]; ok {
+			if _, ok := modules[name]; ok {
 				log.Printf("Module %s is declared twice\n", name)
 			} else {
-				configs[name] = conf
+				modules[name] = conf.ToModule(buildConfig)
 			}
 		}
-	}
-
-	modules := map[string]module.Module{}
-	for name, config := range configs {
-		modules[name] = config.ToModule(buildConfig)
 	}
 
 	target, ok := modules[buildConfig.Target]
