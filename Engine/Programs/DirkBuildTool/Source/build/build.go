@@ -43,7 +43,7 @@ func Build(buildConfig *setup.BuildConfig) error {
 	if err := module.Build(target); err == nil {
 		return nil
 	} else if _, ok := err.(*exec.ExitError); ok {
-		fmt.Printf("An error occured in build process\n")
+		fmt.Printf("An error occured in the build process\n")
 		return nil
 	} else {
 		return err
