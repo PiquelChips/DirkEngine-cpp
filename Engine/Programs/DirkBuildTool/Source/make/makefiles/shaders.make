@@ -1,0 +1,19 @@
+# COMPILES SHADERS
+
+## NAME -- the name of the module
+## ROOT_DIR -- engine root dir
+## SHADER_DIR -- the shader's source code
+
+INT_DIR=$(ROOT_DIR)/Intermediate/$(NAME)
+
+SHADER_SRC=$(SHADER_DIR)/Source
+SHADERS=$(shell find $(SHADER_SRC) -type f)
+SPV=$(SHADERS:$(SHADER_SRC)/%=$(INT_DIR)/%.spv)
+
+.PHONY: all
+all: $(SPV)
+
+$(INT_DIR)/%.spv: $(SHADER_SRC)/%
+	@echo Compiling shader $*...
+	@mkdir -p $(dir $@)
+	@glslc $< -o $@

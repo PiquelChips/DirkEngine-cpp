@@ -4,10 +4,11 @@
 #include <memory>
 #include <vector>
 
-#include "GLFW/glfw3.h"
-
 #include "actor.hpp"
+#include "core/globals.hpp"
 #include "render/vulkan_types.hpp"
+
+#include "GLFW/glfw3.h"
 
 namespace dirk {
 

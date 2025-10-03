@@ -1,17 +1,17 @@
-BUILD_DIR=Engine/Build
+BUILD_TOOL=Binaries/DirkBuildTool
+BUILD_TOOL_DIR=Engine/Programs/DirkBuildTool
+BUILD_TOOL_SRC=$(shell find $(BUILD_TOOL_DIR)/Source -type f -name '*')
 
-BIN_DIR=Binaries
-INT_DIR=Intermediate
-SAVED_DIR=Saved
+EDITOR=Binaries/DirkEditor
 
-.PHONY: run build clean
-run: build
-	@echo Running Editor...
-	@Binaries/Editor
-
-build:
-	@$(MAKE) -C $(BUILD_DIR) Editor
+.PHONY: clean run
+run: $(BUILD_TOOL)
+	@$(BUILD_TOOL)
+	@$(EDITOR)
 
 clean:
-	@echo Cleaning...
-	@rm -rf $(BIN_DIR) $(INT_DIR) $(SAVED_DIR)
+	@rm -rf Intermediate Saved Binaries compile_commands.json
+
+$(BUILD_TOOL): $(BUILD_TOOL_SRC)
+	@echo Building build tool...
+	@go build -C $(BUILD_TOOL_DIR)/Source -o ../../../../$@ main.go

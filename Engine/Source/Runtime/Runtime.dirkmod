@@ -1,0 +1,21 @@
+{
+    "name": "Runtime",
+    "c_standard": "c++23",
+    "is_lib": true,
+    "dependencies": [
+        "Shaders"
+    ],
+    "external": [
+        "glfw",
+        "glm",
+        "tinygltf",
+        "vulkan"
+    ],
+    "defines": [
+        "GLFW_INCLUDE_NONE",
+        "GLFW_INCLUDE_VLUKAN",
+        "LOG_PATH=\\\"Saved\\\"",
+        "RESOURCE_PATH=\\\"Engine/Assets\\\"",
+        "SHADER_PATH=\\\"Intermediate/Shaders\\\""
+    ]
+}

@@ -3,3 +3,6 @@ Binaries/
 Intermediate/
 Saved/
 compile_commands.json
+
+# clangd files
+.cache/

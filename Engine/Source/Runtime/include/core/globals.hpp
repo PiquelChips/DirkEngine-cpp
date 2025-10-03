@@ -7,5 +7,7 @@
 #define GLM_ENABLE_EXPERIMENTAL            // for the glm hash functions
 #include "glm/glm.hpp"
 
+#include "vulkan/vulkan.hpp"
+
 #include "asserts.hpp"
 #include "logging.hpp"

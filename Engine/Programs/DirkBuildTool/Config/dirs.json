@@ -1,0 +1,9 @@
+{
+    "intermediate": "Intermediate",
+    "binaries": "Binaries",
+    "thirdparty": "Engine/Source/Thirdparty",
+    "modules": [
+        "Engine",
+        "Engine/Source"
+    ]
+}

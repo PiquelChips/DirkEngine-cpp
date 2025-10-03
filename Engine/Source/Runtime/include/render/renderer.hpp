@@ -5,11 +5,11 @@
 #include "render_types.hpp"
 #include "vulkan_types.hpp"
 
-#include "GLFW/glfw3.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
+#include "GLFW/glfw3.h"
 
 #include <cstdint>
 #include <memory>
