@@ -37,7 +37,9 @@ func Build(buildConfig *setup.BuildConfig) error {
 
 	if cppTarget, ok := target.(*module.CppModule); ok {
 		log.Printf("Resolving dependencies\n")
-		cppTarget.ResolveDependencies(modules, nil)
+		if err := cppTarget.ResolveDependencies(modules, nil); err != nil {
+			return err
+		}
 	}
 
 	if err := module.Build(target); err == nil {

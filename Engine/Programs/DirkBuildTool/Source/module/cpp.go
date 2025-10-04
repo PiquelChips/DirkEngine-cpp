@@ -114,10 +114,9 @@ func (m *CppModule) getDeps() []*models.Dependency {
 	return deps
 }
 
-func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []*models.Dependency) {
+func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []*models.Dependency) error {
 	if slices.Contains(dependants, m.toDep()) {
-		fmt.Printf("Circular dependency detected. Module %s has already been included\n", m.Name)
-		return
+		return fmt.Errorf("Circular dependency detected. Module %s has already been included\n", m.Name)
 	}
 
 	m.Dependants = dependants
@@ -142,4 +141,6 @@ func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []
 		}
 		m.Ext = append(m.Ext, dep)
 	}
+
+	return nil
 }
