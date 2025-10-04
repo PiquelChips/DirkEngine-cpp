@@ -36,8 +36,8 @@ func (m *CppModule) ToMakefile() make.Makefile {
 			incDirs = append(incDirs, dep.IncludeDir)
 		}
 
-		if defines != nil {
-			defines = append(defines, dep.Defines...)
+		for key, value := range dep.Defines {
+			defines[key] = value
 		}
 
 		if dep.IsHeaderOnly {
@@ -48,8 +48,8 @@ func (m *CppModule) ToMakefile() make.Makefile {
 	}
 
 	for _, dep := range m.Dependants {
-		if dep.Defines != nil {
-			defines = append(defines, dep.Defines...)
+		for key, value := range dep.Defines {
+			defines[key] = value
 		}
 	}
 

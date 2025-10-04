@@ -87,15 +87,15 @@ func intDir(m Module) (string, error) {
 
 // read from .dirkmod files
 type ModuleConfig struct {
-	Name    string   `json:"name"`
-	Target  string   `json:"target"`
-	Type    string   `json:"type"`
-	Path    string   `json:"-"`
-	Std     string   `json:"c_standard"`
-	IsLib   bool     `json:"is_lib"`
-	Deps    []string `json:"dependencies"` // project modules
-	Ext     []string `json:"external"`     // thirdparty modules
-	Defines []string `json:"defines"`
+	Name    string            `json:"name"`
+	Target  string            `json:"target"`
+	Type    string            `json:"type"`
+	Path    string            `json:"-"`
+	Std     string            `json:"c_standard"`
+	IsLib   bool              `json:"is_lib"`
+	Deps    []string          `json:"dependencies"` // project modules
+	Ext     []string          `json:"external"`     // thirdparty modules
+	Defines map[string]string `json:"defines"`
 }
 
 func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
