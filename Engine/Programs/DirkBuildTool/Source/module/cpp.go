@@ -7,6 +7,7 @@ import (
 	"DirkBuildTool/setup"
 	"fmt"
 	"log"
+	"maps"
 	"slices"
 )
 
@@ -36,9 +37,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 			incDirs = append(incDirs, dep.IncludeDir)
 		}
 
-		for key, value := range dep.Defines {
-			defines[key] = value
-		}
+		maps.Copy(defines, dep.Defines)
 
 		if dep.IsHeaderOnly {
 			continue
@@ -48,9 +47,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 	}
 
 	for _, dep := range m.Dependants {
-		for key, value := range dep.Defines {
-			defines[key] = value
-		}
+		maps.Copy(defines, dep.Defines)
 	}
 
 	warningFlags := "" // "-Wall -Wextra"
