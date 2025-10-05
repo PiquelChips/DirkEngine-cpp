@@ -47,16 +47,23 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 
 		incDirs := []string{"include"}
 		defines := m.Config.Defines
+		if defines == nil {
+			defines = map[string]string{}
+		}
 		for _, dep := range m.getDeps() {
 			if dep.IncludeDir != "" {
 				incDirs = append(incDirs, dep.IncludeDir)
 			}
 
-			maps.Copy(defines, dep.Defines)
+			if dep.Defines != nil {
+				maps.Copy(defines, dep.Defines)
+			}
 		}
 
 		for _, dep := range m.Dependants {
-			maps.Copy(defines, dep.Defines)
+			if dep.Defines != nil {
+				maps.Copy(defines, dep.Defines)
+			}
 		}
 
 		command := []string{"g++", "-fPIC", fmt.Sprintf("-std=%s", m.Std)}
@@ -106,12 +113,17 @@ func (m *CppModule) ToMakefile() make.Makefile {
 	incDirs := []string{}
 	libs := []string{}
 	defines := m.Config.Defines
+	if defines == nil {
+		defines = map[string]string{}
+	}
 	for _, dep := range m.getDeps() {
 		if dep.IncludeDir != "" {
 			incDirs = append(incDirs, dep.IncludeDir)
 		}
 
-		maps.Copy(defines, dep.Defines)
+		if dep.Defines != nil {
+			maps.Copy(defines, dep.Defines)
+		}
 
 		if dep.IsHeaderOnly {
 			continue
@@ -121,7 +133,9 @@ func (m *CppModule) ToMakefile() make.Makefile {
 	}
 
 	for _, dep := range m.Dependants {
-		maps.Copy(defines, dep.Defines)
+		if dep.Defines != nil {
+			maps.Copy(defines, dep.Defines)
+		}
 	}
 
 	warningFlags := "" // "-Wall -Wextra"
