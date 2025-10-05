@@ -29,7 +29,7 @@ public:
     // Basic window operations
     bool shouldClose() const;
     void pollEvents();
-    void getSize(int& width, int& height) const;
+    glm::vec2 getSize() const;
     vk::SurfaceKHR createSruface(vk::Instance instance);
 
     // Input
