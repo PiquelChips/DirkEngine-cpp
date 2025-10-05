@@ -2,16 +2,13 @@
 
 #include "glm/glm.hpp"
 
-namespace dirk {
+namespace dirk::Input {
 
-class Input {
-public:
-    static bool isKeyDown(Key key);
-    static bool isMouseButtonDown(MouseButton button);
+bool isKeyDown(Key key);
+bool isMouseButtonDown(MouseButton button);
 
-    static glm::vec2 getMousePosition();
+glm::vec2 getMousePosition();
 
-    static void setCursorMode(CursorMode mode);
-};
+void setCursorMode(CursorMode mode);
 
-} // namespace dirk
+} // namespace dirk::Input

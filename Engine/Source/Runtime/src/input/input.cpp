@@ -6,21 +6,21 @@
 #include "GLFW/glfw3.h"
 #include "glm/fwd.hpp"
 
-namespace dirk {
+namespace dirk::Input {
 
-bool Input::isKeyDown(Key key) {
+bool isKeyDown(Key key) {
     GLFWwindow* window = Renderer::get()->getWindow();
     int state = glfwGetKey(window, (int) key);
     return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
 
-bool Input::isMouseButtonDown(MouseButton button) {
+bool isMouseButtonDown(MouseButton button) {
     GLFWwindow* window = Renderer::get()->getWindow();
     int state = glfwGetMouseButton(window, (int) button);
     return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
 
-glm::vec2 Input::getMousePosition() {
+glm::vec2 getMousePosition() {
     GLFWwindow* window = Renderer::get()->getWindow();
 
     double x, y;
@@ -28,9 +28,9 @@ glm::vec2 Input::getMousePosition() {
     return glm::vec2(x, y);
 }
 
-void Input::setCursorMode(CursorMode mode) {
+void setCursorMode(CursorMode mode) {
     GLFWwindow* window = Renderer::get()->getWindow();
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL + (int) mode);
 }
 
-} // namespace dirk
+} // namespace dirk::Input
