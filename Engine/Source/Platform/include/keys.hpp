@@ -1,11 +1,10 @@
-#pragma once
-
 #include <cstdint>
 
-namespace dirk {
+namespace dirk::Platform::Input {
 
 enum Key : std::uint16_t {
-    // From glfw3.h
+    Unknown = 0,
+
     Space = 32,
     Apostrophe = 39, /* ' */
     Comma = 44,      /* , */
@@ -163,4 +162,4 @@ enum class MouseButton : uint16_t {
     Middle = Button2
 };
 
-} // namespace dirk
+} // namespace dirk::Platform::Input
