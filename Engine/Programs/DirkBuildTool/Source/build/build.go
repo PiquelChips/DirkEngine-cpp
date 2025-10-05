@@ -52,7 +52,9 @@ func Build(buildConfig *setup.BuildConfig) error {
 			return err
 		}
 
-		output.WriteIntFile("compile_commands.json", data, true)
+		if err := output.WriteIntFile("compile_commands.json", data, true); err != nil {
+			return err
+		}
 	}
 
 	if err := module.Build(target); err == nil {
