@@ -84,7 +84,11 @@ func (m *CppMakefile) ToBytes() ([]byte, error) {
 
 	defines := []string{}
 	for key, value := range m.Defines {
-		defines = append(defines, fmt.Sprintf("-D%s=\\\"%s\\\"", key, value))
+		if value == "" {
+			defines = append(defines, fmt.Sprintf("-D%s", key))
+		} else {
+			defines = append(defines, fmt.Sprintf("-D%s=\\\"%s\\\"", key, value))
+		}
 	}
 	writeVar(buffer, "DEFINES", defines...)
 
