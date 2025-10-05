@@ -34,7 +34,6 @@ DEFINE_LOG_CATEGORY(LogVulkanValidation)
 DEFINE_LOG_CATEGORY(LogRenderer)
 
 Renderer::Renderer(RendererCreateInfo& createInfo) {
-    properties = createInfo;
     // actual engine intialization happens later as it relies on
     // the engine's `renderer` variable which is not initialized
     // at this time
@@ -44,31 +43,9 @@ Renderer::~Renderer() {
     // make sure all device ops are finished
     device.waitIdle();
     DIRK_LOG(LogVulkan, INFO, "cleaning up renderer");
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
 }
 
 int Renderer::init() {
-    if (glfwInit() == GLFW_FALSE) {
-        DIRK_LOG(LogVulkan, FATAL, "unable to initialize GLFW");
-        return EXIT_FAILURE;
-    }
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-    this->window = glfwCreateWindow(
-        getProperties().windowWidth,
-        getProperties().windowHeight,
-        getProperties().applicationName.c_str(), nullptr, nullptr);
-    if (!this->window) {
-        DIRK_LOG(LogVulkan, FATAL, "error creating GLFW window");
-        return EXIT_FAILURE;
-    }
-
-    glfwSetFramebufferSizeCallback(window, Renderer::frameBufferResizeCallback);
-    DIRK_LOG(LogVulkan, DEBUG, "successfully setup GLFW window")
-
     DIRK_LOG(LogVulkan, INFO, "initlializing Vulkan...");
     this->instance = createVulkanInstance();
     if (!this->instance) {
@@ -152,11 +129,6 @@ int Renderer::init() {
 }
 
 void Renderer::draw(float deltaTime) {
-    if (glfwWindowShouldClose(window)) {
-        DirkEngine::get()->exit("GLFW close event");
-        return;
-    }
-
     // TODO: find when can be removed
     for (uint32_t i = 0; i < UINT32_MAX / 512; i++) {
         deltaTime = deltaTime + 0;
@@ -226,12 +198,6 @@ bool Renderer::checkRequiredInstanceExtensions(std::vector<const char*>& extensi
     }
 
     return true;
-}
-
-vk::SurfaceKHR Renderer::createSurface() {
-    VkSurfaceKHR surfaceTmp;
-    glfwCreateWindowSurface(instance, window, nullptr, &surfaceTmp);
-    return vk::SurfaceKHR(surfaceTmp);
 }
 
 vk::PhysicalDevice Renderer::selectPhysicalDevice() {
@@ -479,6 +445,7 @@ vk::Extent2D Renderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabi
     return actualExent;
 }
 
+// move to viewport
 void Renderer::recreateSwapChain() {
     // wait if window has been minimized
     int width = 0, height = 0;
@@ -944,6 +911,7 @@ vk::DebugUtilsMessengerEXT Renderer::setupDebugMessenger() {
 }
 #endif
 
+// move to viewport
 void Renderer::frameBufferResizeCallback(GLFWwindow* window, int width, int height) {
     Renderer::get()->framebufferResized = true;
 }
@@ -1104,15 +1072,15 @@ std::tuple<vk::Image, vk::DeviceMemory> Renderer::createImage(
     imageInfo.sharingMode = vk::SharingMode::eExclusive;
     imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
-    vk::Image image = get()->device.createImage(imageInfo);
+    vk::Image image = device.createImage(imageInfo);
 
-    vk::MemoryRequirements memRequirements = get()->device.getImageMemoryRequirements(image);
+    vk::MemoryRequirements memRequirements = device.getImageMemoryRequirements(image);
     vk::MemoryAllocateInfo allocInfo{};
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-    vk::DeviceMemory imageMemory = get()->device.allocateMemory(allocInfo);
-    get()->device.bindImageMemory(image, imageMemory, 0);
+    vk::DeviceMemory imageMemory = device.allocateMemory(allocInfo);
+    device.bindImageMemory(image, imageMemory, 0);
 
     return std::tuple(image, imageMemory);
 }
@@ -1133,7 +1101,7 @@ vk::ImageView Renderer::createImageView(vk::Image& image, vk::Format format, vk:
     createInfo.components.b = vk::ComponentSwizzle::eIdentity;
     createInfo.components.a = vk::ComponentSwizzle::eIdentity;
 
-    return get()->device.createImageView(createInfo);
+    return device.createImageView(createInfo);
 }
 
 std::tuple<vk::Buffer, vk::DeviceMemory> Renderer::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
@@ -1144,25 +1112,25 @@ std::tuple<vk::Buffer, vk::DeviceMemory> Renderer::createBuffer(vk::DeviceSize s
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = vk::SharingMode::eExclusive;
 
-    vk::Buffer buffer = get()->device.createBuffer(bufferInfo);
+    vk::Buffer buffer = device.createBuffer(bufferInfo);
 
     // buffer memory
-    vk::MemoryRequirements memRequirements = get()->device.getBufferMemoryRequirements(buffer);
+    vk::MemoryRequirements memRequirements = device.getBufferMemoryRequirements(buffer);
 
     vk::MemoryAllocateInfo memoryAllocateInfo{};
     memoryAllocateInfo.sType = vk::StructureType::eMemoryAllocateInfo;
     memoryAllocateInfo.allocationSize = memRequirements.size;
-    memoryAllocateInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+    memoryAllocateInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
-    vk::DeviceMemory bufferMemory = get()->device.allocateMemory(memoryAllocateInfo);
+    vk::DeviceMemory bufferMemory = device.allocateMemory(memoryAllocateInfo);
 
-    get()->device.bindBufferMemory(buffer, bufferMemory, 0);
+    device.bindBufferMemory(buffer, bufferMemory, 0);
 
     return std::tuple(buffer, bufferMemory);
 }
 
-uint32_t Renderer::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
-    vk::PhysicalDeviceMemoryProperties memProperties = get()->physicalDevice.getMemoryProperties();
+uint32_t Renderer::findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
+    vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
 
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
         if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
@@ -1176,7 +1144,7 @@ uint32_t Renderer::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags p
 
 vk::Format Renderer::findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features) {
     for (const auto format : candidates) {
-        vk::FormatProperties props = get()->physicalDevice.getFormatProperties(format);
+        vk::FormatProperties props = physicalDevice.getFormatProperties(format);
 
         if (tiling == vk::ImageTiling::eLinear && (props.linearTilingFeatures & features) == features) {
             return format;
@@ -1205,20 +1173,20 @@ vk::SampleCountFlagBits Renderer::getMaxUsableSampleCount(vk::PhysicalDevice phy
 }
 
 vk::CommandBuffer Renderer::beginSingleTimeCommands() {
-    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(get()->physicalDevice);
+    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
     vk::CommandPoolCreateInfo poolInfo{};
     poolInfo.flags = vk::CommandPoolCreateFlagBits::eTransient;
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-    vk::CommandPool commandPool = get()->device.createCommandPool(poolInfo);
+    vk::CommandPool commandPool = device.createCommandPool(poolInfo);
 
     vk::CommandBufferAllocateInfo allocInfo{};
     allocInfo.commandPool = commandPool;
     allocInfo.level = vk::CommandBufferLevel::ePrimary;
     allocInfo.commandBufferCount = 1;
 
-    vk::CommandBuffer commandBuffer = get()->device.allocateCommandBuffers(allocInfo).front();
+    vk::CommandBuffer commandBuffer = device.allocateCommandBuffers(allocInfo).front();
 
     vk::CommandBufferBeginInfo beginInfo{};
     beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
@@ -1295,7 +1263,7 @@ void Renderer::copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& bu
 }
 
 void Renderer::generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) {
-    vk::FormatProperties formatPropertes = get()->physicalDevice.getFormatProperties(imageFormat);
+    vk::FormatProperties formatPropertes = physicalDevice.getFormatProperties(imageFormat);
     if (!(formatPropertes.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear)) {
         DIRK_LOG(LogVulkan, FATAL, "texture image format does not support linear blitting");
         return;
@@ -1381,7 +1349,7 @@ vk::ShaderModule Renderer::loadShaderModule(const std::string& shaderName) {
     createInfo.codeSize = shader->size;
     createInfo.pCode = reinterpret_cast<const uint32_t*>(shader->shader.data());
 
-    return get()->device.createShaderModule(createInfo);
+    return device.createShaderModule(createInfo);
 };
 
 QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device) {
@@ -1396,7 +1364,7 @@ QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device) {
             indices.graphicsFamily = i;
 
         // present queue
-        vk::Bool32 presentSupport = device.getSurfaceSupportKHR(i, get()->surface);
+        vk::Bool32 presentSupport = device.getSurfaceSupportKHR(i, surface);
 
         if (presentSupport)
             indices.presentFamily = i;

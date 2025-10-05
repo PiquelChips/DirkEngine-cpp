@@ -14,17 +14,7 @@ namespace dirk {
 
 class DirkEngine;
 
-struct RendererProperties {
-    std::string applicationName;
-    uint32_t windowWidth, windowHeight;
-};
-
-struct RendererCreateInfo {
-    std::string applicationName;
-    uint32_t windowWidth, windowHeight;
-
-    operator RendererProperties();
-};
+struct RendererCreateInfo {};
 
 struct RendererFeatures {
     bool anisotropy = false;

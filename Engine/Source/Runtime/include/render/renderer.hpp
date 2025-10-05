@@ -9,7 +9,6 @@
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
-#include "GLFW/glfw3.h"
 
 #include <cstdint>
 #include <memory>
@@ -40,10 +39,7 @@ public:
     void draw(float deltaTime);
     int init();
 
-    const RendererProperties& getProperties() const noexcept { return properties; }
     const RendererFeatures& getFeatures() const noexcept { return features; }
-
-    static std::shared_ptr<Renderer> get() { return DirkEngine::getRenderer(); }
 
 private:
     vk::Instance createVulkanInstance();
@@ -83,7 +79,6 @@ private:
     std::vector<InFlightImage> createInFlightImages(const int imageCount);
 
 public:
-    GLFWwindow* getWindow() { return window; }
     vk::Device getLogicalDevice() { return device; }
     vk::PhysicalDevice getPhysicalDevice() { return physicalDevice; }
     Queues getQueues() { return queues; }
@@ -112,7 +107,7 @@ private:
     // vulkan stuff
 
     // base required objects
-    GLFWwindow* window = nullptr;
+    std::shared_ptr<Platform::Window> window;
     vk::Instance instance;
 
     Queues queues;
@@ -162,40 +157,39 @@ private:
     const int MAX_DESCRIPTOR_SET_COUNT = 20; // incrementally increase as scenes get bigger
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
-    RendererProperties properties;
     RendererFeatures features;
 
 public:
     // some static utility functions
-    static ImageMemoryView createImageMemoryView(CreateImageMemoryViewInfo& createInfo);
+    ImageMemoryView createImageMemoryView(CreateImageMemoryViewInfo& createInfo);
 
-    static std::tuple<vk::Image, vk::DeviceMemory> createImage(
+    std::tuple<vk::Image, vk::DeviceMemory> createImage(
         uint32_t width, uint32_t height, vk::Format format,
         vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
         vk::SampleCountFlagBits numSamples = vk::SampleCountFlagBits::e1,
         uint32_t mipLevels = 1);
 
-    static vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor, uint32_t mipLevels = 1);
+    vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor, uint32_t mipLevels = 1);
 
-    static std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
-    static uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+    std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
+    static uint32_t findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
     static vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
     static vk::SampleCountFlagBits getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice);
-    static QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
+    QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
 
-    static vk::CommandBuffer beginSingleTimeCommands();
-    static void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue);
+    vk::CommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue);
 
     static void transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels = 1);
     static void copyBuffer(vk::CommandBuffer commandBuffer, vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size);
     static void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
-    static void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels);
+    void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels);
 
     static bool hasStencilComponent(vk::Format format);
 
     static RendererFeatures getRendererFeatures(vk::PhysicalDevice physicalDevice);
 
-    static vk::ShaderModule loadShaderModule(const std::string& shaderName);
+    vk::ShaderModule loadShaderModule(const std::string& shaderName);
 };
 
 } // namespace dirk
