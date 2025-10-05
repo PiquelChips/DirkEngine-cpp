@@ -23,6 +23,7 @@ type SetupConfig struct {
 	Thirdparty  map[string]*models.Dependency `json:"thirdparty"`
 	LastSetup   time.Time                     `json:"last_setup"`
 	BuildConfig *BuildConfig                  `json:"build_config"`
+	Platform    string                        `json:"platform"`
 }
 
 var Config *SetupConfig
@@ -66,7 +67,7 @@ func Setup(buildConfig *BuildConfig) error {
 
 	Config.LastSetup = time.Now()
 	Config.BuildConfig = buildConfig
-	// TODO: build glfw
+	Config.Platform = "Linux"
 
 	os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Intermediate), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Root))
 

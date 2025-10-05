@@ -110,6 +110,16 @@ func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
 			Path: c.Path,
 		}
 	case "cpp":
+
+		if c.Defines == nil {
+			c.Defines = map[string]string{}
+		}
+
+		switch setup.Config.Platform {
+		case "Linux":
+			c.Defines["PLATFORM_LINUX"] = ""
+		}
+
 		return &CppModule{
 			Name:   c.Name,
 			Target: c.Target,
