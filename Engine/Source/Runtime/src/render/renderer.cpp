@@ -445,7 +445,7 @@ vk::Extent2D Renderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabi
     return actualExent;
 }
 
-// move to viewport
+// TODO: move to viewport
 void Renderer::recreateSwapChain() {
     // wait if window has been minimized
     int width = 0, height = 0;
@@ -911,7 +911,7 @@ vk::DebugUtilsMessengerEXT Renderer::setupDebugMessenger() {
 }
 #endif
 
-// move to viewport
+// TODO: move to viewport
 void Renderer::frameBufferResizeCallback(GLFWwindow* window, int width, int height) {
     Renderer::get()->framebufferResized = true;
 }

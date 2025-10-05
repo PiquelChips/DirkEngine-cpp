@@ -20,6 +20,7 @@ struct WindowCreateInfo {
     operator WindowProperties();
 };
 
+// representation of a system window
 class Window {
 public:
     Window(const WindowCreateInfo&);
