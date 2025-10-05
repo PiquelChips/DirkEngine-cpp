@@ -6,8 +6,12 @@ import (
 	"DirkBuildTool/models"
 	"DirkBuildTool/setup"
 	"fmt"
+	"io/fs"
 	"log"
+	"maps"
+	"path/filepath"
 	"slices"
+	"strings"
 )
 
 // constructed for building
@@ -25,6 +29,77 @@ type CppModule struct {
 	build      *setup.BuildConfig
 }
 
+func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
+	compileCommands := models.CompileCommands{}
+
+	if err := filepath.WalkDir(fmt.Sprintf("%s/src", m.Path), func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+
+		in := strings.Replace(path, m.Path, "", 1)
+		in = strings.Trim(in, "/")
+
+		intDir, _ := intDir(m)
+		out := fmt.Sprintf("%s/%s/%s", intDir, m.build.Type.Name, in)
+		out = strings.Replace(out, "/src/", "/obj/", 1)
+		out = strings.Replace(out, ".cpp", ".o", 1)
+
+		incDirs := []string{"include"}
+		defines := m.Config.Defines
+		for _, dep := range m.getDeps() {
+			if dep.IncludeDir != "" {
+				incDirs = append(incDirs, dep.IncludeDir)
+			}
+
+			maps.Copy(defines, dep.Defines)
+		}
+
+		for _, dep := range m.Dependants {
+			maps.Copy(defines, dep.Defines)
+		}
+
+		command := []string{"g++", "-fPIC", fmt.Sprintf("-std=%s", m.Std)}
+
+		for _, dir := range incDirs {
+			command = append(command, fmt.Sprintf("-I%s", dir))
+		}
+
+		for key, value := range defines {
+			if value == "" {
+				command = append(command, fmt.Sprintf("-D%s", key))
+			} else {
+				command = append(command, fmt.Sprintf("-D%s=\"%s\"", key, value))
+			}
+		}
+
+		command = append(command, "-c", in, "-o", out)
+
+		compileCommands = append(compileCommands, &models.CompileCommand{
+			Directory: m.Path,
+			Arguments: command,
+			File:      in,
+			Output:    out,
+		})
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	for _, dep := range m.Deps {
+		if cppModule, ok := dep.(*CppModule); ok {
+			modCommands, err := cppModule.GenerateCompileCommands()
+			if err != nil {
+				return nil, err
+			}
+			compileCommands = append(compileCommands, modCommands...)
+		}
+	}
+
+	return compileCommands, nil
+}
+
 func (m *CppModule) ToMakefile() make.Makefile {
 	log.Printf("Generating Makefile for %s\n", m.Name)
 
@@ -36,9 +111,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 			incDirs = append(incDirs, dep.IncludeDir)
 		}
 
-		if defines != nil {
-			defines = append(defines, dep.Defines...)
-		}
+		maps.Copy(defines, dep.Defines)
 
 		if dep.IsHeaderOnly {
 			continue
@@ -48,9 +121,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 	}
 
 	for _, dep := range m.Dependants {
-		if dep.Defines != nil {
-			defines = append(defines, dep.Defines...)
-		}
+		maps.Copy(defines, dep.Defines)
 	}
 
 	warningFlags := "" // "-Wall -Wextra"
@@ -117,10 +188,9 @@ func (m *CppModule) getDeps() []*models.Dependency {
 	return deps
 }
 
-func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []*models.Dependency) {
+func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []*models.Dependency) error {
 	if slices.Contains(dependants, m.toDep()) {
-		fmt.Printf("Circular dependency detected. Module %s has already been included\n", m.Name)
-		return
+		return fmt.Errorf("Circular dependency detected. Module %s has already been included\n", m.Name)
 	}
 
 	m.Dependants = dependants
@@ -145,4 +215,6 @@ func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []
 		}
 		m.Ext = append(m.Ext, dep)
 	}
+
+	return nil
 }

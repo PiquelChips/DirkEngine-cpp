@@ -7,7 +7,7 @@
         "Runtime"
     ],
     "external": [],
-    "defines": [
-        "WITH_EDITOR"
-    ]
+    "defines": {
+        "WITH_EDITOR": ""
+    }
 }

@@ -4,10 +4,12 @@ BUILD_TOOL_SRC=$(shell find $(BUILD_TOOL_DIR)/Source -type f -name '*')
 
 EDITOR=Binaries/DirkEditor
 
-.PHONY: clean run
-run: $(BUILD_TOOL)
-	@$(BUILD_TOOL)
+.PHONY: clean run build
+run: build
 	@$(EDITOR)
+
+build: $(BUILD_TOOL)
+	@$(BUILD_TOOL)
 
 clean:
 	@rm -rf Intermediate Saved Binaries compile_commands.json

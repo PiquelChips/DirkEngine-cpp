@@ -42,7 +42,8 @@ type CppMakefile struct {
 	Name, Target       string
 	BuildType, RootDir string
 	IncDirs            []string
-	Libs, Defines      []string
+	Libs               []string
+	Defines            map[string]string
 	LdFlags, CFlags    string
 	IsLib, IsStatic    bool
 	Optimize           bool
@@ -82,8 +83,12 @@ func (m *CppMakefile) ToBytes() ([]byte, error) {
 	writeVar(buffer, "CXXFLAGS", cxxFlags...)
 
 	defines := []string{}
-	for _, define := range m.Defines {
-		defines = append(defines, fmt.Sprintf("-D%s", define))
+	for key, value := range m.Defines {
+		if value == "" {
+			defines = append(defines, fmt.Sprintf("-D%s", key))
+		} else {
+			defines = append(defines, fmt.Sprintf("-D%s=\\\"%s\\\"", key, value))
+		}
 	}
 	writeVar(buffer, "DEFINES", defines...)
 

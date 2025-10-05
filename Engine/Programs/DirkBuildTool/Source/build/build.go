@@ -3,6 +3,7 @@ package build
 import (
 	"DirkBuildTool/config"
 	"DirkBuildTool/module"
+	"DirkBuildTool/output"
 	"DirkBuildTool/setup"
 	"encoding/json"
 	"fmt"
@@ -37,7 +38,23 @@ func Build(buildConfig *setup.BuildConfig) error {
 
 	if cppTarget, ok := target.(*module.CppModule); ok {
 		log.Printf("Resolving dependencies\n")
-		cppTarget.ResolveDependencies(modules, nil)
+		if err := cppTarget.ResolveDependencies(modules, nil); err != nil {
+			return err
+		}
+
+		compileCommands, err := cppTarget.GenerateCompileCommands()
+		if err != nil {
+			return err
+		}
+
+		data, err := json.Marshal(compileCommands)
+		if err != nil {
+			return err
+		}
+
+		if err := output.WriteIntFile("compile_commands.json", data, true); err != nil {
+			return err
+		}
 	}
 
 	if err := module.Build(target); err == nil {

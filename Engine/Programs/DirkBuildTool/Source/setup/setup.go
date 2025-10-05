@@ -68,6 +68,8 @@ func Setup(buildConfig *BuildConfig) error {
 	Config.BuildConfig = buildConfig
 	// TODO: build glfw
 
+	os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Intermediate), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Root))
+
 	glfwDir := os.Getenv("GLFW")
 	os.Symlink(fmt.Sprintf("%s/lib/libglfw.so", glfwDir), fmt.Sprintf("%s/libglfw.so", config.Dirs.Binaries))
 	os.Symlink(fmt.Sprintf("%s/lib/libglfw.so.3", glfwDir), fmt.Sprintf("%s/libglfw.so.3", config.Dirs.Binaries))
