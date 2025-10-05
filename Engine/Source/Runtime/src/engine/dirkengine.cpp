@@ -17,7 +17,7 @@ namespace dirk {
 
 DEFINE_LOG_CATEGORY(LogEngine)
 
-DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
+DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     engine = this;
 
     renderer = std::make_shared<Renderer>(createInfo.rendererInfo);
@@ -27,6 +27,7 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
     }
     world = std::make_shared<World>(createInfo.actorCreateInfos);
     camera = std::make_shared<Camera>(glm::vec3(0.f, 1000.f, 1000.f), glm::vec3(0.f, -1.f, -1.f), glm::radians(45.f), .1f, 100000.f);
+    window = std::make_shared<Platform::Window>();
 
     lastTick = std::chrono::high_resolution_clock::now();
 
@@ -36,7 +37,7 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
         if (isRequestingExit())
             break;
 
-        glfwPollEvents();
+        window->pollEvents();
 
         tick(deltaTime);
     }
@@ -56,10 +57,15 @@ void DirkEngine::exit(const std::string& reason) {
 }
 
 void DirkEngine::tick(float deltaTime) {
-    World::get()->tick(deltaTime);
-    Camera::get()->tick(deltaTime);
+    if (window->shouldClose()) {
+        exit("window closed");
+        return;
+    }
 
-    Renderer::get()->draw(deltaTime);
+    world->tick(deltaTime);
+    camera->tick(deltaTime);
+
+    renderer->draw(deltaTime);
 }
 
 float DirkEngine::captureDeltaTime() {
