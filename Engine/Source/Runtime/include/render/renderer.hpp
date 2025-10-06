@@ -40,7 +40,6 @@ public:
     ~Renderer();
 
     void renderFrame();
-    int init();
 
     const RendererFeatures& getFeatures() const noexcept { return features; }
 

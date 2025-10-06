@@ -17,13 +17,7 @@ namespace dirk {
 DEFINE_LOG_CATEGORY(LogEngine)
 
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
-
     renderer = std::make_shared<Renderer>(createInfo.rendererInfo);
-    // TODO: remove & do init in constructor
-    if (renderer->init() != EXIT_SUCCESS) {
-        DIRK_LOG(LogEngine, FATAL, "unable to initialize renderer");
-        return;
-    }
     world = std::make_shared<World>(createInfo.actorCreateInfos);
 
     auto window = createWindow(WindowCreateInfo{

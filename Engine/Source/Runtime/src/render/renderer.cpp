@@ -34,23 +34,10 @@ DEFINE_LOG_CATEGORY(LogVulkanValidation)
 DEFINE_LOG_CATEGORY(LogRenderer)
 
 Renderer::Renderer(const RendererCreateInfo& createInfo) {
-    // actual engine intialization happens later as it relies on
-    // the engine's `renderer` variable which is not initialized
-    // at this time
-}
-
-Renderer::~Renderer() {
-    // make sure all device ops are finished
-    device.waitIdle();
-    DIRK_LOG(LogVulkan, INFO, "cleaning up renderer");
-}
-
-int Renderer::init() {
     DIRK_LOG(LogVulkan, INFO, "initlializing Vulkan...");
     this->instance = createVulkanInstance();
     if (!this->instance) {
         DIRK_LOG(LogVulkan, FATAL, "instance creation failed");
-        return EXIT_FAILURE;
     }
 #ifdef ENABLE_VALIDATION_LAYERS
     this->debugMessenger = setupDebugMessenger();
@@ -60,13 +47,11 @@ int Renderer::init() {
     this->physicalDevice = selectPhysicalDevice();
     if (!this->physicalDevice) {
         DIRK_LOG(LogVulkan, FATAL, "failed to get a physical device");
-        return EXIT_FAILURE;
     }
 
     this->device = createLogicalDevice();
     if (!this->device) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create logical device");
-        return EXIT_FAILURE;
     }
 
     this->queues = createQueues();
@@ -76,50 +61,48 @@ int Renderer::init() {
     this->commandPool = createCommandPool();
     if (!this->commandPool) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create command pool");
-        return EXIT_FAILURE;
     }
 
     this->descriptorSetLayout = createDescriptorSetLayout();
     if (!this->descriptorSetLayout) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create descriptor set layout");
-        return EXIT_FAILURE;
     }
 
     this->descriptorPool = createDescriptorPool();
     if (!this->descriptorPool) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create descriptor pool");
-        return EXIT_FAILURE;
     }
 
     this->colorImageMemoryView = createColorResources();
     if (!this->colorImageMemoryView) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create color image");
-        return EXIT_FAILURE;
     }
 
     this->depthImageMemoryView = createDepthResources();
     if (!this->depthImageMemoryView) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create depth image");
-        return EXIT_FAILURE;
     }
 
     this->renderPass = createRenderPass();
     if (!this->renderPass) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create render pass");
-        return EXIT_FAILURE;
     }
 
     this->graphicsPipeline = createGraphicsPipeline();
     if (!this->graphicsPipeline) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create graphics pipeline");
-        return EXIT_FAILURE;
     }
 
     this->swapChainImages = createSwapChainImages(swapChainImages);
     this->inFlightImages = createInFlightImages(MAX_FRAMES_IN_FLIGHT);
 
     DIRK_LOG(LogVulkan, INFO, "vulkan initialized successfully");
-    return EXIT_SUCCESS;
+}
+
+Renderer::~Renderer() {
+    // make sure all device ops are finished
+    device.waitIdle();
+    DIRK_LOG(LogVulkan, INFO, "cleaning up renderer");
 }
 
 void Renderer::renderFrame() {
