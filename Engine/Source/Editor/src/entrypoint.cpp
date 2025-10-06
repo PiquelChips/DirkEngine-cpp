@@ -1,10 +1,11 @@
 #include "engine/dirkengine.hpp"
 
 dirk::DirkEngineCreateInfo engineCreateInfo{
-    .rendererInfo = dirk::RendererCreateInfo{
-        .applicationName = "DirkEngine",
-        .windowWidth = 1200,
-        .windowHeight = 800,
+    .rendererInfo = dirk::RendererCreateInfo{},
+    .windowInfo = dirk::Platform::WindowCreateInfo{
+        .title = "DirkEngine",
+        .width = 1200,
+        .height = 800,
     },
     .actorCreateInfos{
         dirk::ActorCreateInfo{

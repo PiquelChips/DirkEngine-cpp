@@ -33,7 +33,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 class Renderer {
 
 public:
-    Renderer(RendererCreateInfo& createInfo);
+    Renderer(const RendererCreateInfo& createInfo);
     ~Renderer();
 
     void draw(float deltaTime);
@@ -173,7 +173,7 @@ public:
 
     std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
     static uint32_t findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
-    static vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
+    static vk::Format findSupportedFormat(vk::PhysicalDevice physicalDevice, const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
     static vk::SampleCountFlagBits getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice);
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
 

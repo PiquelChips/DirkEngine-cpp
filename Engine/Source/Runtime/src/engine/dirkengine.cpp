@@ -26,8 +26,8 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         return;
     }
     world = std::make_shared<World>(createInfo.actorCreateInfos);
+    window = std::make_shared<Platform::Window>(createInfo.windowInfo);
     camera = std::make_shared<Camera>(glm::vec3(0.f, 1000.f, 1000.f), glm::vec3(0.f, -1.f, -1.f), glm::radians(45.f), .1f, 100000.f);
-    window = std::make_shared<Platform::Window>();
 
     lastTick = std::chrono::high_resolution_clock::now();
 

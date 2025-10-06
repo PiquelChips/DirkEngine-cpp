@@ -23,7 +23,7 @@ struct WindowCreateInfo {
 // representation of a system window
 class Window {
 public:
-    Window(const WindowCreateInfo&);
+    Window(const WindowCreateInfo& createInfo);
     ~Window();
 
     // Basic window operations

@@ -33,7 +33,7 @@ DEFINE_LOG_CATEGORY(LogVulkan)
 DEFINE_LOG_CATEGORY(LogVulkanValidation)
 DEFINE_LOG_CATEGORY(LogRenderer)
 
-Renderer::Renderer(RendererCreateInfo& createInfo) {
+Renderer::Renderer(const RendererCreateInfo& createInfo) {
     // actual engine intialization happens later as it relies on
     // the engine's `renderer` variable which is not initialized
     // at this time
@@ -435,7 +435,8 @@ vk::Extent2D Renderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabi
 
     int width, height;
 
-    glfwGetFramebufferSize(window, &width, &height);
+    // TODO: move to viewport
+    // glfwGetFramebufferSize(window, &width, &height);
 
     vk::Extent2D actualExent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 
@@ -445,8 +446,8 @@ vk::Extent2D Renderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabi
     return actualExent;
 }
 
-// TODO: move to viewport
 void Renderer::recreateSwapChain() {
+    /**
     // wait if window has been minimized
     int width = 0, height = 0;
     while (width == 0 || height == 0) {
@@ -476,6 +477,7 @@ void Renderer::recreateSwapChain() {
     this->swapChainImages = createSwapChainImages(swapChainImages);
 
     Camera::get()->resize(swapChainExtent.width, swapChainExtent.height);
+    */
 }
 
 vk::RenderPass Renderer::createRenderPass() {
@@ -710,6 +712,7 @@ vk::Pipeline Renderer::createGraphicsPipeline() {
 
 ImageMemoryView Renderer::createDepthResources() {
     this->depthFormat = Renderer::findSupportedFormat(
+        physicalDevice,
         { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint },
         vk::ImageTiling::eOptimal,
         vk::FormatFeatureFlagBits::eDepthStencilAttachment);
@@ -911,11 +914,6 @@ vk::DebugUtilsMessengerEXT Renderer::setupDebugMessenger() {
 }
 #endif
 
-// TODO: move to viewport
-void Renderer::frameBufferResizeCallback(GLFWwindow* window, int width, int height) {
-    Renderer::get()->framebufferResized = true;
-}
-
 void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) {
     vk::CommandBufferBeginInfo beginInfo{};
     beginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
@@ -1077,7 +1075,7 @@ std::tuple<vk::Image, vk::DeviceMemory> Renderer::createImage(
     vk::MemoryRequirements memRequirements = device.getImageMemoryRequirements(image);
     vk::MemoryAllocateInfo allocInfo{};
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+    allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
     vk::DeviceMemory imageMemory = device.allocateMemory(allocInfo);
     device.bindImageMemory(image, imageMemory, 0);
@@ -1142,7 +1140,7 @@ uint32_t Renderer::findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t ty
     return -1;
 }
 
-vk::Format Renderer::findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features) {
+vk::Format Renderer::findSupportedFormat(vk::PhysicalDevice physicalDevice, const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features) {
     for (const auto format : candidates) {
         vk::FormatProperties props = physicalDevice.getFormatProperties(format);
 
