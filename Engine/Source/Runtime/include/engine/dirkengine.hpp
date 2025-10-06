@@ -9,8 +9,6 @@
 #include "render/vulkan_types.hpp"
 #include "render/window.hpp"
 
-#include "GLFW/glfw3.h"
-
 namespace dirk {
 
 DECLARE_LOG_CATEGORY_EXTERN(LogEngine)

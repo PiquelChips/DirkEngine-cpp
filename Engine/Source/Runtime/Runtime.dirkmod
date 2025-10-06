@@ -7,7 +7,6 @@
         "Platform"
     ],
     "external": [
-        "glfw",
         "glm",
         "tinygltf",
         "vulkan"

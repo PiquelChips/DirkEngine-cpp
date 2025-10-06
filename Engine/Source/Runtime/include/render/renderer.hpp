@@ -115,8 +115,6 @@ private:
     vk::DebugUtilsMessengerEXT debugMessenger;
 #endif
 
-    static void frameBufferResizeCallback(GLFWwindow* window, int width, int height);
-
 private:
     // vulkan stuff
 

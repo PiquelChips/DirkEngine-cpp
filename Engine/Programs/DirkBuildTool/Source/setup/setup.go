@@ -71,10 +71,6 @@ func Setup(buildConfig *BuildConfig) error {
 
 	os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Intermediate), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Root))
 
-	glfwDir := os.Getenv("GLFW")
-	os.Symlink(fmt.Sprintf("%s/lib/libglfw.so", glfwDir), fmt.Sprintf("%s/libglfw.so", config.Dirs.Binaries))
-	os.Symlink(fmt.Sprintf("%s/lib/libglfw.so.3", glfwDir), fmt.Sprintf("%s/libglfw.so.3", config.Dirs.Binaries))
-
 	vulkanDir := os.Getenv("VULKAN_SDK")
 	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so", vulkanDir), fmt.Sprintf("%s/libvulkan.so", config.Dirs.Binaries))
 	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so.1", vulkanDir), fmt.Sprintf("%s/libvulkan.so.1", config.Dirs.Binaries))
@@ -90,11 +86,6 @@ func Setup(buildConfig *BuildConfig) error {
 			Name:         "tinygltf",
 			IsHeaderOnly: true,
 			IncludeDir:   ".", // relative to thirdparty dir
-		},
-		"glfw": {
-			Name:         "glfw",
-			IsHeaderOnly: false,
-			IncludeDir:   fmt.Sprintf("%s/include", glfwDir),
 		},
 		"vulkan": {
 			Name:         "vulkan",

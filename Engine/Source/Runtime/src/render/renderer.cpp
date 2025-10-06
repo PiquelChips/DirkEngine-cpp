@@ -220,6 +220,8 @@ vk::Instance Renderer::createVulkanInstance() {
 }
 
 std::vector<const char*> Renderer::getRequiredInstanceExtensions() {
+    // TODO: get required instance extensions from platform
+    /**
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
@@ -230,6 +232,8 @@ std::vector<const char*> Renderer::getRequiredInstanceExtensions() {
 #endif
 
     return extensions;
+    */
+    return std::vector<const char*>();
 }
 
 bool Renderer::checkRequiredInstanceExtensions(std::vector<const char*>& extensions) {
