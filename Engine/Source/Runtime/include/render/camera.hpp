@@ -1,9 +1,11 @@
 #pragma once
 
 #include "core/globals.hpp"
-
 #include "engine/dirkengine.hpp"
+#include "viewport.hpp"
+
 #include "glm/glm.hpp"
+
 #include <cstdint>
 #include <memory>
 
@@ -49,6 +51,8 @@ private:
     static constexpr float SENSITIVITY = .002f;
     static constexpr float ROTATION_SPEED = .3f;
     static constexpr float MOVEMENT_SPEED = 1000.f;
+
+    std::shared_ptr<Viewport> viewport;
 };
 
 } // namespace dirk

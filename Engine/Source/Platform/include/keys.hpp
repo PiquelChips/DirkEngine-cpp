@@ -1,6 +1,8 @@
 #include <cstdint>
 
-namespace dirk::Platform::Input {
+#pragma once
+
+namespace dirk::Input {
 
 enum Key : std::uint16_t {
     Unknown = 0,
@@ -162,4 +164,4 @@ enum class MouseButton : uint16_t {
     Middle = Button2
 };
 
-} // namespace dirk::Platform::Input
+} // namespace dirk::Input

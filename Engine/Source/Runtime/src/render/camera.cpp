@@ -5,8 +5,7 @@
 #include "glm/gtx/quaternion.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
-#include "input/input.hpp"
-#include "input/keys.hpp"
+#include "keys.hpp"
 #include "render/renderer.hpp"
 
 #include <cstdint>
@@ -27,11 +26,11 @@ Camera::Camera(glm::vec3 position, glm::vec3 forwardDirection, float fov, float 
 }
 
 void Camera::tick(float deltaTime) {
-    glm::vec2 mousePos = Input::getMousePosition();
+    glm::vec2 mousePos = viewport->getMousePosition();
     glm::vec2 delta = (mousePos - lastMousePosition) * SENSITIVITY;
     lastMousePosition = mousePos;
 
-    if (!Input::isMouseButtonDown(MouseButton::Right)) {
+    if (!Input::isMouseButtonDown(Input::MouseButton::Right)) {
         Input::setCursorMode(CursorMode::Normal);
         return;
     }

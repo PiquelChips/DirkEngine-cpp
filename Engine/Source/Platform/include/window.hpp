@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <string>
 
+#pragma once
+
 namespace dirk::Platform {
 
 struct WindowProperties {
@@ -31,12 +33,6 @@ public:
     void pollEvents();
     glm::vec2 getSize() const;
     vk::SurfaceKHR createSruface(vk::Instance instance);
-
-    // Input
-    bool isKeyDown(Input::Key key);
-    bool isMouseButtonDown(Input::MouseButton button);
-    glm::vec2 getMousePosition();
-    void setCursorMode(Input::CursorMode mode);
 };
 
 } // namespace dirk::Platform
