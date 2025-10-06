@@ -3,7 +3,9 @@
 #include "core/logging.hpp"
 #include "engine/world.hpp"
 #include "render/renderer.hpp"
+#include "render/viewport.hpp"
 #include "render/window.hpp"
+#include "vulkan/vulkan_structs.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -23,6 +25,15 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         return;
     }
     world = std::make_shared<World>(createInfo.actorCreateInfos);
+
+    auto window = createWindow(WindowCreateInfo{
+        .title = createInfo.appName,
+        .width = 1200,
+        .height = 800,
+    });
+
+    auto viewport = renderer->createViewport(ViewportCreateInfo{});
+    window->addViewport(viewport, vk::Rect2D{ { 0, 0 }, { 1, 1 } }, 0);
 
     lastTick = std::chrono::high_resolution_clock::now();
 
