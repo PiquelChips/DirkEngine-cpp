@@ -26,7 +26,7 @@ struct ActorCreateInfo {
 class Actor {
 
 public:
-    Actor(ActorCreateInfo& spawnInfo);
+    Actor(ActorCreateInfo& spawnInfo, World* world);
 
     void tick(float deltaTime);
     void destroy();
@@ -53,7 +53,7 @@ public:
     inline const glm::vec3& getScale() const { return transform.scale; }
     inline void setScale(const glm::vec3& inScale);
 
-    inline std::shared_ptr<World> getWorld();
+    inline World* getWorld() { return world; }
 
 private:
     void updateTransformMatrix();
@@ -71,6 +71,7 @@ private:
     void updateData();
 
     std::shared_ptr<const Model> model;
+    World* world;
 
     vk::DescriptorSet descriptorSet;
 

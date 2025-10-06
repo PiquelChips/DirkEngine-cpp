@@ -3,6 +3,7 @@
 #include "core/logging.hpp"
 #include "engine/world.hpp"
 #include "render/renderer.hpp"
+#include "render/window.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -50,6 +51,13 @@ void DirkEngine::exit() {
 void DirkEngine::exit(const std::string& reason) {
     DIRK_LOG(LogEngine, INFO, "engine exit has been requested with reason: " << reason);
     this->exit();
+}
+
+std::shared_ptr<Window> DirkEngine::createWindow(const WindowCreateInfo& createInfo) {
+    auto window = std::make_shared<Window>(createInfo);
+    // TODO: properly assign window IDs
+    windows[windows.size()] = window;
+    return window;
 }
 
 void DirkEngine::tick(float deltaTime) {

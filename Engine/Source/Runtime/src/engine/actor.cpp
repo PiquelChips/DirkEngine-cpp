@@ -12,11 +12,13 @@
 #include "vulkan/vulkan_handles.hpp"
 
 #include <cstring>
+#include <memory>
 
 namespace dirk {
 
-Actor::Actor(ActorCreateInfo& spawnInfo)
-    : name(spawnInfo.name),
+Actor::Actor(ActorCreateInfo& spawnInfo, World* world)
+    : world(world),
+      name(spawnInfo.name),
       transform(spawnInfo.transform),
       transformMatrix(transform.getMatrix()) {
     setModel(spawnInfo.modelName);

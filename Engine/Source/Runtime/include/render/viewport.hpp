@@ -19,21 +19,20 @@ public:
     Viewport(const ViewportCreateInfo& createInfo);
     ~Viewport();
 
-    std::shared_ptr<Camera> getCamera();
+    std::shared_ptr<Camera> getCamera() { return camera; }
 
-    vk::Extent2D getSize();
+    vk::Extent2D getSize() const { return size; }
 
     void setClearColor(glm::vec3 color);
-    void setClearDepth(float depth);
-    glm::vec3 getClearColor() const;
+    glm::vec3 getClearColor() const { return clearColor; }
 
     static glm::vec2 screenToViewport(glm::vec2 screenPos, vk::Rect2D viewportRegion);
     static glm::vec2 viewportToScreen(glm::vec2 veiwportPos, vk::Rect2D viewportRegion);
 
 private:
+    vk::Extent2D size;
     std::shared_ptr<Camera> camera;
     glm::vec3 clearColor;
-    float clearDepth;
 };
 
 } // namespace dirk

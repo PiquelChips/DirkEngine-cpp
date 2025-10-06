@@ -57,14 +57,8 @@ int Renderer::init() {
     if (!this->debugMessenger)
         DIRK_LOG(LogVulkan, ERROR, "failed to create vulkan layer validation debug messenger");
 #endif
-    this->surface = createSurface();
-    if (!this->surface) {
-        DIRK_LOG(LogVulkan, FATAL, "surface creation failed");
-        return EXIT_FAILURE;
-    }
-
     this->physicalDevice = selectPhysicalDevice();
-    if (!this->surface) {
+    if (!this->physicalDevice) {
         DIRK_LOG(LogVulkan, FATAL, "failed to get a physical device");
         return EXIT_FAILURE;
     }

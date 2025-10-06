@@ -36,7 +36,7 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    std::unique_ptr<Window>& createWindow();
+    std::shared_ptr<Window> createWindow(const WindowCreateInfo& createInfo);
 
 private:
     std::shared_ptr<Renderer> renderer;
