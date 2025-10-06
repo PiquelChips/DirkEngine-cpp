@@ -12,6 +12,7 @@
 namespace dirk {
 
 class DirkEngine;
+class World;
 
 struct ActorCreateInfo {
     const std::string_view name;
@@ -51,6 +52,8 @@ public:
 
     inline const glm::vec3& getScale() const { return transform.scale; }
     inline void setScale(const glm::vec3& inScale);
+
+    inline std::shared_ptr<World> getWorld();
 
 private:
     void updateTransformMatrix();

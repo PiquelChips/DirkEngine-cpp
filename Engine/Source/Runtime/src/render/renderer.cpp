@@ -128,13 +128,69 @@ int Renderer::init() {
     return EXIT_SUCCESS;
 }
 
-void Renderer::draw(float deltaTime) {
-    // TODO: find when can be removed
-    for (uint32_t i = 0; i < UINT32_MAX / 512; i++) {
-        deltaTime = deltaTime + 0;
+void Renderer::renderFrame() {
+    InFlightImage image = inFlightImages[currentFrame];
+    check(image);
+
+    auto [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[currentSemaphore];
+
+    // wait for previous frame
+    checkVulkan(device.waitForFences(1, &image.inFlightFence, vk::True, UINT64_MAX));
+
+    // acquire image from swapChain
+    auto [result, imageIndex] = device.acquireNextImageKHR(swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE);
+    if (result == vk::Result::eErrorOutOfDateKHR) {
+        recreateSwapChain();
+        return;
     }
 
-    drawFrame();
+    // only reset after or we risk blocking with an unsignalled fence
+    checkVulkan(device.resetFences(1, &image.inFlightFence));
+
+    // record the command buffer
+    image.commandBuffer.reset();
+    recordCommandBuffer(image.commandBuffer, imageIndex);
+
+    // submit the command buffer
+    vk::SubmitInfo submitInfo{};
+    submitInfo.sType = vk::StructureType::eSubmitInfo;
+
+    // wait semaphores
+    vk::PipelineStageFlags waitStage{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
+    submitInfo.pWaitDstStageMask = &waitStage;
+    // signal semaphores
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
+
+    // command buffers
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &image.commandBuffer;
+
+    checkVulkan(queues.graphicsQueue.submit(1, &submitInfo, image.inFlightFence));
+
+    vk::PresentInfoKHR presentInfo{};
+    presentInfo.sType = vk::StructureType::ePresentInfoKHR;
+
+    // make sure to wait for the image to be rendered
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
+
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &swapChain;
+    presentInfo.pImageIndices = &imageIndex;
+    presentInfo.pResults = nullptr; // only have one swap chain
+
+    result = queues.presentQueue.presentKHR(&presentInfo);
+    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || framebufferResized) {
+        framebufferResized = false;
+        recreateSwapChain();
+        return;
+    }
+
+    currentFrame = (++currentFrame) % MAX_FRAMES_IN_FLIGHT;
+    currentSemaphore = (++currentSemaphore) % semaphores.size();
 }
 
 vk::Instance Renderer::createVulkanInstance() {
@@ -915,6 +971,8 @@ vk::DebugUtilsMessengerEXT Renderer::setupDebugMessenger() {
 #endif
 
 void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) {
+    // TODO: record command buffer for scene in viewport
+    /**
     vk::CommandBufferBeginInfo beginInfo{};
     beginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
     beginInfo.pInheritanceInfo = nullptr;
@@ -961,73 +1019,8 @@ void Renderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t ima
 
     commandBuffer.endRenderPass();
 
-    // TODO: how to error handling in command buffer
     commandBuffer.end();
-}
-
-void Renderer::drawFrame() {
-    InFlightImage image = inFlightImages[currentFrame];
-    check(image);
-
-    auto [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[currentSemaphore];
-
-    // wait for previous frame
-    checkVulkan(device.waitForFences(1, &image.inFlightFence, vk::True, UINT64_MAX));
-
-    // acquire image from swapChain
-    auto [result, imageIndex] = device.acquireNextImageKHR(swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE);
-    if (result == vk::Result::eErrorOutOfDateKHR) {
-        recreateSwapChain();
-        return;
-    }
-
-    // only reset after or we risk blocking with an unsignalled fence
-    checkVulkan(device.resetFences(1, &image.inFlightFence));
-
-    // record the command buffer
-    image.commandBuffer.reset();
-    recordCommandBuffer(image.commandBuffer, imageIndex);
-
-    // submit the command buffer
-    vk::SubmitInfo submitInfo{};
-    submitInfo.sType = vk::StructureType::eSubmitInfo;
-
-    // wait semaphores
-    vk::PipelineStageFlags waitStage{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
-    submitInfo.pWaitDstStageMask = &waitStage;
-    // signal semaphores
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
-
-    // command buffers
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &image.commandBuffer;
-
-    checkVulkan(queues.graphicsQueue.submit(1, &submitInfo, image.inFlightFence));
-
-    vk::PresentInfoKHR presentInfo{};
-    presentInfo.sType = vk::StructureType::ePresentInfoKHR;
-
-    // make sure to wait for the image to be rendered
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
-
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = &swapChain;
-    presentInfo.pImageIndices = &imageIndex;
-    presentInfo.pResults = nullptr; // only have one swap chain
-
-    result = queues.presentQueue.presentKHR(&presentInfo);
-    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || framebufferResized) {
-        framebufferResized = false;
-        recreateSwapChain();
-        return;
-    }
-
-    currentFrame = (++currentFrame) % MAX_FRAMES_IN_FLIGHT;
-    currentSemaphore = (++currentSemaphore) % semaphores.size();
+    */
 }
 
 ImageMemoryView Renderer::createImageMemoryView(CreateImageMemoryViewInfo& createInfo) {

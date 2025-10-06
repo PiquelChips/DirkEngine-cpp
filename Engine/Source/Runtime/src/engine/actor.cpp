@@ -30,7 +30,7 @@ void Actor::setModel(const std::string_view name) {
 void Actor::tick(float deltaTime) {}
 
 void Actor::destroy() {
-    World::get()->destroyActor(this);
+    getWorld()->destroyActor(this);
 }
 
 void Actor::setTransform(const Transform& inTransform) {
@@ -55,6 +55,8 @@ void Actor::updateTransformMatrix() {
 }
 
 void Actor::updateData() {
+    // TODO: figure out how to access renderer in actor class
+    /**
     vk::Device device = Renderer::get()->getLogicalDevice();
     vk::PhysicalDevice physicalDevice = Renderer::get()->getPhysicalDevice();
     vk::CommandBuffer commandBuffer = Renderer::beginSingleTimeCommands();
@@ -183,9 +185,12 @@ void Actor::updateData() {
     descriptorSet = Renderer::get()->createDescriptorSets(uniformBuffer, textureSampler, textureImageMemoryView.view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
     Renderer::endSingleTimeCommands(commandBuffer, Renderer::get()->getQueues().graphicsQueue);
+    */
 }
 
 void Actor::recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout) {
+    // TODO: command buffer recording should not be done by actors but by the viewport (which takes all the mesh actors of the world and records for them. thus, actor would only need access to its own matrices
+    /**
     ModelViewProjection mvp{
         .model = getTransformMatrix(),
         .view = Camera::get()->getView(),
@@ -198,6 +203,7 @@ void Actor::recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLay
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, nullptr);
 
     commandBuffer.drawIndexed(model->indices.size(), 1, 0, 0, 0);
+    */
 }
 
 } // namespace dirk

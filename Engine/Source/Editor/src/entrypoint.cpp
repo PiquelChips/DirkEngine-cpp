@@ -1,12 +1,8 @@
 #include "engine/dirkengine.hpp"
 
 dirk::DirkEngineCreateInfo engineCreateInfo{
+    .appName = "DirkEngine",
     .rendererInfo = dirk::RendererCreateInfo{},
-    .windowInfo = dirk::Platform::WindowCreateInfo{
-        .title = "DirkEngine",
-        .width = 1200,
-        .height = 800,
-    },
     .actorCreateInfos{
         dirk::ActorCreateInfo{
             .name = "Shrek",
@@ -48,6 +44,5 @@ dirk::DirkEngineCreateInfo engineCreateInfo{
 };
 
 int main(int, char**) {
-    auto engine = dirk::DirkEngine(engineCreateInfo);
-    return 0;
+    dirk::DirkEngine engine = dirk::DirkEngine(engineCreateInfo);
 }

@@ -7,7 +7,7 @@
 #include "actor.hpp"
 #include "core/globals.hpp"
 #include "render/vulkan_types.hpp"
-#include "window.hpp"
+#include "render/window.hpp"
 
 #include "GLFW/glfw3.h"
 
@@ -20,8 +20,8 @@ class World;
 class Camera;
 
 struct DirkEngineCreateInfo {
+    const std::string& appName;
     RendererCreateInfo rendererInfo;
-    Platform::WindowCreateInfo windowInfo;
     std::vector<ActorCreateInfo> actorCreateInfos;
 };
 
@@ -36,19 +36,13 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-public:
-    static DirkEngine* get() { return engine; }
-    static std::shared_ptr<Renderer> getRenderer() { return get()->renderer; }
-    static std::shared_ptr<World> getWorld() { return get()->world; }
-    static std::shared_ptr<Camera> getCamera() { return get()->camera; }
-    static std::shared_ptr<Platform::Window> getWindow() { return get()->window; }
+    std::unique_ptr<Window>& createWindow();
 
 private:
-    inline static DirkEngine* engine;
     std::shared_ptr<Renderer> renderer;
     std::shared_ptr<World> world;
-    std::shared_ptr<Camera> camera;
-    std::shared_ptr<Platform::Window> window;
+
+    std::unordered_map<WindowId, std::shared_ptr<Window>> windows;
 
 private:
     void tick(float deltaTime);

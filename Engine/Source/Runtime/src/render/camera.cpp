@@ -5,9 +5,6 @@
 #include "glm/gtx/quaternion.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
-#include "keys.hpp"
-#include "render/renderer.hpp"
-
 #include <cstdint>
 
 namespace dirk {
@@ -17,7 +14,7 @@ DEFINE_LOG_CATEGORY(LogCamera);
 Camera::Camera(glm::vec3 position, glm::vec3 forwardDirection, float fov, float nearClip, float farClip)
     : position(position), forwardDirection(glm::normalize(forwardDirection)), fov(fov), nearClip(nearClip), farClip(farClip) {
 
-    vk::Extent2D extent = Renderer::get()->getSwapChainExtent();
+    vk::Extent2D extent = viewport->getSize();
     width = extent.width;
     height = extent.height;
 
@@ -26,6 +23,8 @@ Camera::Camera(glm::vec3 position, glm::vec3 forwardDirection, float fov, float 
 }
 
 void Camera::tick(float deltaTime) {
+    // TODO: move to event based system for input
+    /**
     glm::vec2 mousePos = viewport->getMousePosition();
     glm::vec2 delta = (mousePos - lastMousePosition) * SENSITIVITY;
     lastMousePosition = mousePos;
@@ -83,6 +82,7 @@ void Camera::tick(float deltaTime) {
     if (moved) {
         updateView();
     }
+    */
 }
 
 void Camera::resize(std::uint32_t width, std::uint32_t height) {

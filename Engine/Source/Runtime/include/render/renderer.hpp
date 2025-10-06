@@ -2,6 +2,8 @@
 
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
+#include "render/viewport.hpp"
+#include "render/window.hpp"
 #include "render_types.hpp"
 #include "vulkan_types.hpp"
 
@@ -13,6 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 #ifdef DEBUG_BUILD
@@ -36,10 +39,21 @@ public:
     Renderer(const RendererCreateInfo& createInfo);
     ~Renderer();
 
-    void draw(float deltaTime);
+    void renderFrame();
     int init();
 
     const RendererFeatures& getFeatures() const noexcept { return features; }
+
+    void registerWindow(std::shared_ptr<Window> window);
+    void unregisterWindow(std::shared_ptr<Window> window);
+
+    ViewportId createViewport(const ViewportCreateInfo& createInfo);
+    void destroyViewport(ViewportId id);
+    std::shared_ptr<Viewport> getViewport(ViewportId id);
+
+private:
+    std::unordered_map<WindowId, std::shared_ptr<Window>> windows;
+    std::unordered_map<ViewportId, std::shared_ptr<Viewport>> viewports;
 
 private:
     vk::Instance createVulkanInstance();
@@ -107,7 +121,7 @@ private:
     // vulkan stuff
 
     // base required objects
-    std::shared_ptr<Platform::Window> window;
+    std::shared_ptr<Window> window;
     vk::Instance instance;
 
     Queues queues;
@@ -147,7 +161,6 @@ private:
 private:
     // drawing, should be removed and improved later on
     void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
-    void drawFrame();
 
 private:
     // misc variables used by the renderer

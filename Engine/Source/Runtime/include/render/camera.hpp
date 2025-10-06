@@ -1,10 +1,9 @@
 #pragma once
 
 #include "core/globals.hpp"
-#include "engine/dirkengine.hpp"
-#include "viewport.hpp"
 
 #include "glm/glm.hpp"
+#include "render/viewport.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -24,8 +23,6 @@ public:
     inline const glm::mat4& getInverseProjection() const { return inverseProjection; }
     inline const glm::mat4& getView() const { return view; }
     inline const glm::mat4& getInverseView() const { return inverseView; }
-
-    static std::shared_ptr<Camera> get() { return DirkEngine::getCamera(); }
 
 private:
     void updateProjection();
@@ -47,12 +44,12 @@ private:
     glm::vec2 lastMousePosition{ 0.f };
     std::uint32_t width, height;
 
+    std::shared_ptr<Viewport> viewport;
+
     static constexpr glm::vec3 upDirection{ 0.f, 1.f, 0.f };
     static constexpr float SENSITIVITY = .002f;
     static constexpr float ROTATION_SPEED = .3f;
     static constexpr float MOVEMENT_SPEED = 1000.f;
-
-    std::shared_ptr<Viewport> viewport;
 };
 
 } // namespace dirk

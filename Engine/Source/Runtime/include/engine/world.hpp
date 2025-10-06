@@ -18,8 +18,6 @@ public:
 
     void tick(float deltaTime);
 
-    static std::shared_ptr<World> get() { return DirkEngine::getWorld(); }
-
     std::unordered_map<std::string_view, std::shared_ptr<Actor>>& getActors() { return actors; }
     std::shared_ptr<Actor> spawnActor(ActorCreateInfo spawnInfo);
     void destroyActor(Actor* actor);

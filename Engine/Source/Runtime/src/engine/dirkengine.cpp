@@ -2,11 +2,7 @@
 
 #include "core/logging.hpp"
 #include "engine/world.hpp"
-#include "glm/trigonometric.hpp"
-#include "render/camera.hpp"
 #include "render/renderer.hpp"
-
-#include "GLFW/glfw3.h"
 
 #include <chrono>
 #include <cstdlib>
@@ -18,16 +14,14 @@ namespace dirk {
 DEFINE_LOG_CATEGORY(LogEngine)
 
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
-    engine = this;
 
     renderer = std::make_shared<Renderer>(createInfo.rendererInfo);
+    // TODO: remove & do init in constructor
     if (renderer->init() != EXIT_SUCCESS) {
         DIRK_LOG(LogEngine, FATAL, "unable to initialize renderer");
         return;
     }
     world = std::make_shared<World>(createInfo.actorCreateInfos);
-    window = std::make_shared<Platform::Window>(createInfo.windowInfo);
-    camera = std::make_shared<Camera>(glm::vec3(0.f, 1000.f, 1000.f), glm::vec3(0.f, -1.f, -1.f), glm::radians(45.f), .1f, 100000.f);
 
     lastTick = std::chrono::high_resolution_clock::now();
 
@@ -37,7 +31,9 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         if (isRequestingExit())
             break;
 
-        window->pollEvents();
+        for (auto& [id, window] : windows) {
+            window->processPlatformEvents();
+        }
 
         tick(deltaTime);
     }
@@ -57,15 +53,9 @@ void DirkEngine::exit(const std::string& reason) {
 }
 
 void DirkEngine::tick(float deltaTime) {
-    if (window->shouldClose()) {
-        exit("window closed");
-        return;
-    }
-
     world->tick(deltaTime);
-    camera->tick(deltaTime);
 
-    renderer->draw(deltaTime);
+    renderer->renderFrame();
 }
 
 float DirkEngine::captureDeltaTime() {
