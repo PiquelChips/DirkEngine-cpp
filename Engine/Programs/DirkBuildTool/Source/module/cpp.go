@@ -33,6 +33,9 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 	compileCommands := models.CompileCommands{}
 
 	if err := filepath.WalkDir(fmt.Sprintf("%s/src", m.Path), func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
 		if d.IsDir() {
 			return nil
 		}
