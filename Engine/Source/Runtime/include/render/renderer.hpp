@@ -43,8 +43,8 @@ public:
 
     const RendererFeatures& getFeatures() const noexcept { return features; }
 
-    void registerWindow(std::shared_ptr<Window> window);
-    void unregisterWindow(std::shared_ptr<Window> window);
+    void registerWindow(Window* window);
+    void unregisterWindow(Window* window);
 
     ViewportId createViewport(const ViewportCreateInfo& createInfo);
     void destroyViewport(ViewportId id);

@@ -35,7 +35,7 @@ struct ViewportAssignement {
  */
 class Window {
 public:
-    Window(const WindowCreateInfo& createInfo);
+    Window(const WindowCreateInfo& createInfo, Renderer* renderer);
     ~Window();
 
     // viewport management
@@ -63,9 +63,9 @@ public:
 
 private:
     std::unique_ptr<PlatformWindow> platformWindow;
-    std::shared_ptr<Renderer> renderer;
+    Renderer* renderer;
 
-    std::vector<ViewportAssignement> viewportAssignements;
+    std::unordered_map<ViewportId, ViewportAssignement> viewportAssignements;
 
     vk::SwapchainKHR swapchain;
     std::vector<vk::Framebuffer> framebuffers;

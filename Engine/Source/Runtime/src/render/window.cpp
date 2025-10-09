@@ -1,21 +1,36 @@
 #include "render/window.hpp"
+#include "render/renderer.hpp"
+#include <memory>
 
 namespace dirk {
 
-Window::Window(const WindowCreateInfo& createInfo) {
-    // TODO: window constructor
+Window::Window(const WindowCreateInfo& createInfo, Renderer* renderer) : renderer(renderer) {
+    renderer->registerWindow(this);
 }
 
 Window::~Window() {
-    // TODO: window destructor
+    renderer->unregisterWindow(this);
 }
 
-// TODO: implement window functions
-void Window::addViewport(ViewportId id, vk::Rect2D region, int order) {}
-void Window::removeViewport(ViewportId id) {}
-void Window::updateViewportRegion(ViewportId id, vk::Rect2D newRegion) {}
-void Window::setViewportRenderOrder(ViewportId id, int order) {}
-void Window::setViewportEnabled(ViewportId id, bool enabled) {}
+void Window::addViewport(ViewportId id, vk::Rect2D region, int order) {
+    viewportAssignements[id] = ViewportAssignement(id, region, order, true);
+}
+
+void Window::removeViewport(ViewportId id) {
+    viewportAssignements.erase(id);
+}
+
+void Window::updateViewportRegion(ViewportId id, vk::Rect2D newRegion) {
+    viewportAssignements.at(id).region = newRegion;
+}
+
+void Window::setViewportRenderOrder(ViewportId id, int order) {
+    viewportAssignements.at(id).renderOrder = order;
+}
+
+void Window::setViewportEnabled(ViewportId id, bool enabled) {
+    viewportAssignements.at(id).enabled = enabled;
+}
 
 void Window::processPlatformEvents() {
     platformWindow->pollEvents();
