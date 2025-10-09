@@ -4,6 +4,7 @@
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
 #include "render/camera.hpp"
+#include "render/viewport.hpp"
 #include "render/vulkan_types.hpp"
 
 #include "glm/glm.hpp"
@@ -168,6 +169,17 @@ void Renderer::renderFrame() {
 
     currentFrame = (++currentFrame) % MAX_FRAMES_IN_FLIGHT;
     currentSemaphore = (++currentSemaphore) % semaphores.size();
+}
+
+ViewportId Renderer::createViewport(const ViewportCreateInfo& createInfo) {
+    // TODO: properly assign viewport IDs
+    ViewportId id = viewports.size();
+    viewports[id] = std::make_unique<Viewport>(createInfo);
+    return id;
+}
+
+void Renderer::destroyViewport(ViewportId id) {
+    viewports.erase(id);
 }
 
 vk::Instance Renderer::createVulkanInstance() {

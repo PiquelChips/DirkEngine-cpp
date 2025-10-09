@@ -4,14 +4,6 @@
 
 namespace dirk {
 
-Window::Window(const WindowCreateInfo& createInfo, Renderer* renderer) : renderer(renderer) {
-    renderer->registerWindow(this);
-}
-
-Window::~Window() {
-    renderer->unregisterWindow(this);
-}
-
 void Window::addViewport(ViewportId id, vk::Rect2D region, int order) {
     viewportAssignements[id] = ViewportAssignement(id, region, order, true);
 }

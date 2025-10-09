@@ -34,13 +34,14 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    std::shared_ptr<Window> createWindow(const WindowCreateInfo& createInfo);
+    WindowId createWindow(const WindowCreateInfo& createInfo);
+    void destroyWindow(WindowId id);
 
 private:
-    std::shared_ptr<Renderer> renderer;
-    std::shared_ptr<World> world;
+    std::unique_ptr<Renderer> renderer;
+    std::unique_ptr<World> world;
 
-    std::unordered_map<WindowId, std::shared_ptr<Window>> windows;
+    std::unordered_map<WindowId, std::unique_ptr<Window>> windows;
 
 private:
     void tick(float deltaTime);

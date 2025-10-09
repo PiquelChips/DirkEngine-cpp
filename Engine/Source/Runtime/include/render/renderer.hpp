@@ -43,16 +43,12 @@ public:
 
     const RendererFeatures& getFeatures() const noexcept { return features; }
 
-    void registerWindow(Window* window);
-    void unregisterWindow(Window* window);
-
     ViewportId createViewport(const ViewportCreateInfo& createInfo);
     void destroyViewport(ViewportId id);
-    std::shared_ptr<Viewport> getViewport(ViewportId id);
+    std::unique_ptr<Viewport>& getViewport(ViewportId id);
 
 private:
-    std::unordered_map<WindowId, std::shared_ptr<Window>> windows;
-    std::unordered_map<ViewportId, std::shared_ptr<Viewport>> viewports;
+    std::unordered_map<ViewportId, std::unique_ptr<Viewport>> viewports;
 
 private:
     vk::Instance createVulkanInstance();
