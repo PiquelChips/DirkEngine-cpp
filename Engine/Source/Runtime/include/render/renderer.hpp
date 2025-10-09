@@ -45,7 +45,7 @@ public:
 
     ViewportId createViewport(const ViewportCreateInfo& createInfo);
     void destroyViewport(ViewportId id);
-    std::unique_ptr<Viewport>& getViewport(ViewportId id);
+    std::unique_ptr<Viewport>& getViewport(ViewportId id) { return viewports[id]; }
 
 private:
     std::unordered_map<ViewportId, std::unique_ptr<Viewport>> viewports;

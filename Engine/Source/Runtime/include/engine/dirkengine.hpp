@@ -36,6 +36,7 @@ public:
 
     WindowId createWindow(const WindowCreateInfo& createInfo);
     void destroyWindow(WindowId id);
+    std::unique_ptr<Window>& getWindow(WindowId id) { return windows[id]; }
 
 private:
     std::unique_ptr<Renderer> renderer;
