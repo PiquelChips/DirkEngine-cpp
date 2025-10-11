@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace dirk {
+namespace dirk::Platform {
 
 // interface for all platform windows
 class PlatformWindow {
