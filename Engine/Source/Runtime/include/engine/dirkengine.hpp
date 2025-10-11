@@ -38,6 +38,8 @@ public:
     void destroyWindow(WindowId id);
     std::unique_ptr<Window>& getWindow(WindowId id) { return windows[id]; }
 
+    std::unique_ptr<Renderer>& getRenderer() { return renderer; }
+
 private:
     std::unique_ptr<Renderer> renderer;
     std::unique_ptr<World> world;
