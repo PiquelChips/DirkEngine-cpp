@@ -51,4 +51,4 @@ public:
     virtual bool shouldClose() = 0;
 };
 
-} // namespace dirk
+} // namespace dirk::Platform
