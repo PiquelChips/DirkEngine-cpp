@@ -13,6 +13,7 @@ namespace dirk {
 
 class DirkEngine;
 class World;
+class Camera;
 
 struct ActorCreateInfo {
     const std::string_view name;
@@ -63,7 +64,7 @@ private:
 public:
     inline const std::string_view getModelName() const noexcept { return model->name; }
     // record draw commands for this mesh
-    void recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout);
+    void recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, Camera* camera);
     void setModel(const std::string_view name);
 
 private:
