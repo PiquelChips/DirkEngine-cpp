@@ -60,7 +60,7 @@ void DirkEngine::exit(const std::string& reason) {
 WindowId DirkEngine::createWindow(const WindowCreateInfo& createInfo) {
     // TODO: properly assign window IDs
     WindowId id = windows.size();
-    windows[id] = std::make_unique<Window>();
+    windows[id] = std::make_unique<Window>(createInfo);
     return id;
 }
 

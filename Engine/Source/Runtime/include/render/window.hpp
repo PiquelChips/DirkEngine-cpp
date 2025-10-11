@@ -35,6 +35,9 @@ struct ViewportAssignement {
  */
 class Window {
 public:
+    Window(const WindowCreateInfo& createInfo);
+    ~Window();
+
     // viewport management
     void addViewport(ViewportId id, vk::Rect2D region, int order = 0);
     void removeViewport(ViewportId id);
@@ -59,7 +62,7 @@ public:
     void processPlatformEvents();
 
 private:
-    std::unique_ptr<PlatformWindow> platformWindow;
+    std::unique_ptr<Platform::PlatformWindow> platformWindow;
 
     std::unordered_map<ViewportId, ViewportAssignement> viewportAssignements;
 
