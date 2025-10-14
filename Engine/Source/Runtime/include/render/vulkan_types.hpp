@@ -16,11 +16,22 @@ class DirkEngine;
 
 struct RendererCreateInfo {};
 
+struct SwapChainSupportDetails {
+    vk::SurfaceCapabilitiesKHR capabilities;
+    std::vector<vk::SurfaceFormatKHR> formats;
+    std::vector<vk::PresentModeKHR> presentModes;
+};
+
 struct RendererFeatures {
     bool anisotropy = false;
     int msaaSamples = 1;
+    vk::Format swapChainImageFormat;
 
-    bool isComplete() { return anisotropy && msaaSamples > 1; }
+    bool isComplete() {
+        return anisotropy &&
+               msaaSamples > 1 &&
+               swapChainImageFormat != vk::Format::eUndefined;
+    }
 
     int getScore() {
         if (isComplete())
@@ -49,12 +60,6 @@ struct QueueFamilyIndices {
 struct Queues {
     vk::Queue graphicsQueue;
     vk::Queue presentQueue;
-};
-
-struct SwapChainSupportDetails {
-    vk::SurfaceCapabilitiesKHR capabilities;
-    std::vector<vk::SurfaceFormatKHR> formats;
-    std::vector<vk::PresentModeKHR> presentModes;
 };
 
 struct SwapChainCreateInfo {

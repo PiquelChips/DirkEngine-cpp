@@ -30,34 +30,34 @@ DECLARE_LOG_CATEGORY_EXTERN(LogRenderer)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkan)
 DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
+#define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
+
 /**
  * The vulkan implementation of the renderer
  */
 class Renderer {
 
 public:
-    Renderer(const RendererCreateInfo& createInfo);
+    Renderer(const RendererCreateInfo& createInfo, DirkEngine* engine);
     ~Renderer();
 
-    void renderFrame();
+    void render();
 
     const RendererFeatures& getFeatures() const noexcept { return features; }
 
-    ViewportId createViewport(const ViewportCreateInfo& createInfo);
-    void destroyViewport(ViewportId id);
-    std::unique_ptr<Viewport>& getViewport(ViewportId id) { return viewports[id]; }
+    std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);
+    void destroyViewport(std::shared_ptr<Viewport> viewport);
+
+    std::vector<SwapChainImage> createSwapChain(const SwapChainCreateInfo& createInfo);
 
 private:
-    std::unordered_map<ViewportId, std::unique_ptr<Viewport>> viewports;
+    std::vector<std::shared_ptr<Viewport>> viewports;
 
 private:
     vk::Instance createVulkanInstance();
     std::vector<const char*> getRequiredInstanceExtensions();
     bool checkRequiredInstanceExtensions(std::vector<const char*>& extensions);
 
-    vk::SurfaceKHR createSurface();
-
-    // selecting the physical device
     vk::PhysicalDevice selectPhysicalDevice();
     int getDeviceSuitability(vk::PhysicalDevice device);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
@@ -67,31 +67,21 @@ private:
     Queues createQueues();
 
     // swap chain
-    std::vector<vk::Image> createSwapChain();
     vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
     vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
-    std::vector<SwapChainImage> createSwapChainImages(std::vector<vk::Image>& images);
-
     void recreateSwapChain();
 
-    vk::RenderPass createRenderPass();
     vk::CommandPool createCommandPool();
     vk::Pipeline createGraphicsPipeline();
     vk::DescriptorSetLayout createDescriptorSetLayout();
     vk::DescriptorPool createDescriptorPool();
 
-    // improve overall image quality during rendering
-    ImageMemoryView createDepthResources();
-    ImageMemoryView createColorResources();
-
-    std::vector<InFlightImage> createInFlightImages(const int imageCount);
-
 public:
+    vk::Instance getVulkanInstance() { return instance; }
     vk::Device getLogicalDevice() { return device; }
     vk::PhysicalDevice getPhysicalDevice() { return physicalDevice; }
     Queues getQueues() { return queues; }
-    vk::Extent2D getSwapChainExtent() { return swapChainExtent; }
 
     vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
 
@@ -111,56 +101,26 @@ private:
 #endif
 
 private:
-    // vulkan stuff
-
-    // base required objects
-    std::shared_ptr<Window> window;
     vk::Instance instance;
 
-    Queues queues;
-    vk::SurfaceKHR surface;
-
-    // devices
     vk::PhysicalDevice physicalDevice;
     vk::Device device;
-
-    // swap chain
-    vk::SwapchainKHR swapChain;
-    vk::Format swapChainImageFormat;
-    vk::Extent2D swapChainExtent;
-
-    // rendering
-    vk::RenderPass renderPass;
-    vk::PipelineLayout pipelineLayout;
-    vk::Pipeline graphicsPipeline;
     vk::CommandPool commandPool;
-
-    ImageMemoryView depthImageMemoryView;
-    vk::Format depthFormat;
-
-    ImageMemoryView colorImageMemoryView;
+    Queues queues;
 
     vk::DescriptorSetLayout descriptorSetLayout;
     vk::DescriptorPool descriptorPool;
 
-    std::vector<SwapChainImage> swapChainImages;
-    std::vector<InFlightImage> inFlightImages;
-    std::vector<std::tuple<vk::Semaphore, vk::Semaphore>> semaphores;
+    vk::Fence inFlightFence;
 
     uint32_t currentFrame = 0;
-    uint32_t currentSemaphore = 0;
-    bool framebufferResized = false;
 
-private:
-    // drawing, should be removed and improved later on
-    void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
+    DirkEngine* engine;
 
 private:
     // misc variables used by the renderer
 
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
-    const int MAX_FRAMES_IN_FLIGHT = 2;      // dont make this too high or CPU will go faster than GPU, causing latency
-    const int MAX_DESCRIPTOR_SET_COUNT = 20; // incrementally increase as scenes get bigger
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
     RendererFeatures features;

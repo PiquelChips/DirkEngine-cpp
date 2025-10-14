@@ -1,4 +1,5 @@
 #include "render/viewport.hpp"
+#include "render/vulkan_types.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
@@ -14,6 +15,7 @@
 namespace dirk {
 
 class Renderer;
+class DirkEngine;
 
 typedef std::uint16_t WindowId;
 
@@ -22,38 +24,22 @@ struct WindowCreateInfo {
     std::uint32_t width, height;
 };
 
-struct ViewportAssignement {
-    ViewportId viewportId;
-    vk::Rect2D region;
-    int renderOrder;
-    bool enabled;
-};
-
 /**
  * Engine level abstration that handles converting platform level
  * windows to engine systems
  */
 class Window {
 public:
-    Window(const WindowCreateInfo& createInfo);
+    Window(const WindowCreateInfo& createInfo, DirkEngine* engine);
     ~Window();
 
-    // viewport management
-    void addViewport(ViewportId id, vk::Rect2D region, int order = 0);
-    void removeViewport(ViewportId id);
-    void updateViewportRegion(ViewportId id, vk::Rect2D newRegion);
-    void setViewportRenderOrder(ViewportId id, int order);
-    void setViewportEnabled(ViewportId id, bool enabled);
-
-    bool hasViewport(ViewportId id);
-    std::vector<const ViewportAssignement> getViewportAssignements() const;
-    ViewportId getViewportAt(glm::vec2 windowCoords) const;
+    void addViewport(std::shared_ptr<Viewport> inViewport);
+    void removeViewport(std::shared_ptr<Viewport> inViewport);
 
     // rendering interface
-    void beginFrame();
-    vk::Framebuffer getCurrentFramebuffer();
-    uint32_t getCurrentImageIndex();
-    void Present();
+    vk::SubmitInfo render();
+    vk::PresentInfoKHR present();
+    void resize(vk::Extent2D inSize);
 
     vk::Extent2D getSize() const;
     bool isMinimized() const;
@@ -64,11 +50,25 @@ public:
 private:
     std::unique_ptr<Platform::PlatformWindow> platformWindow;
 
-    std::unordered_map<ViewportId, ViewportAssignement> viewportAssignements;
+    vk::SurfaceKHR surface;
+    vk::SwapchainKHR swapChain;
+    std::vector<SwapChainImage> swapChainImages;
 
-    vk::SwapchainKHR swapchain;
-    std::vector<vk::Framebuffer> framebuffers;
-    uint32_t currentImageIndex;
+    vk::Semaphore imageAvailableSemaphore;
+    vk::Semaphore renderFinishedSemaphore;
+
+    vk::Format swapChainImageFormat;
+    vk::Extent2D swapChainExtent;
+
+    std::uint32_t currentFrame;
+
+    vk::CommandBuffer commandBuffer;
+
+    vk::RenderPass renderPass;
+
+    DirkEngine* engine;
+
+    std::vector<std::shared_ptr<Viewport>> viewports;
 };
 
 } // namespace dirk
