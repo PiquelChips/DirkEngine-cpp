@@ -48,8 +48,6 @@ private:
     glm::vec2 lastMousePosition{ 0.f };
     std::uint32_t width, height;
 
-    std::shared_ptr<Viewport> viewport;
-
     static constexpr glm::vec3 upDirection{ 0.f, 1.f, 0.f };
     static constexpr float SENSITIVITY = .002f;
     static constexpr float ROTATION_SPEED = .3f;

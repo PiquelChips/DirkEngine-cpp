@@ -14,9 +14,12 @@ DEFINE_LOG_CATEGORY(LogCamera);
 Camera::Camera(glm::vec3 position, glm::vec3 forwardDirection, float fov, float nearClip, float farClip)
     : position(position), forwardDirection(glm::normalize(forwardDirection)), fov(fov), nearClip(nearClip), farClip(farClip) {
 
+    // TODO: make sure camera always has the right size
+    /**
     vk::Extent2D extent = viewport->getSize();
     width = extent.width;
     height = extent.height;
+    */
 
     updateProjection();
     updateView();
