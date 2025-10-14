@@ -57,19 +57,22 @@ struct SwapChainSupportDetails {
     std::vector<vk::PresentModeKHR> presentModes;
 };
 
+struct SwapChainCreateInfo {
+    // OUTPUT
+    vk::SwapchainKHR& swapChain; // the output swapchain
+    vk::Format& swapChainImageFormat;
+    vk::Extent2D& swapChainExtent;
+
+    // INPUT
+    vk::RenderPass renderPass;
+    vk::SurfaceKHR surface;
+};
+
 struct SwapChainImage {
     vk::ImageView imageView;
     vk::Framebuffer frameBuffer;
 
     operator bool() const { return imageView && frameBuffer; }
-};
-
-struct InFlightImage {
-    vk::CommandBuffer commandBuffer;
-    // syncing
-    vk::Fence inFlightFence;
-
-    operator bool() const { return commandBuffer && inFlightFence; }
 };
 
 struct ImageMemoryView {

@@ -34,17 +34,17 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    WindowId createWindow(const WindowCreateInfo& createInfo);
-    void destroyWindow(WindowId id);
-    std::unique_ptr<Window>& getWindow(WindowId id) { return windows[id]; }
+    std::shared_ptr<Window>& createWindow(const WindowCreateInfo& createInfo);
+    void destroyWindow(std::shared_ptr<Window> window);
+    std::vector<std::shared_ptr<Window>>& getWindows() { return windows; }
 
-    std::unique_ptr<Renderer>& getRenderer() { return renderer; }
+    Renderer* getRenderer() { return renderer.get(); }
 
 private:
     std::unique_ptr<Renderer> renderer;
     std::unique_ptr<World> world;
 
-    std::unordered_map<WindowId, std::unique_ptr<Window>> windows;
+    std::vector<std::shared_ptr<Window>> windows;
 
 private:
     void tick(float deltaTime);

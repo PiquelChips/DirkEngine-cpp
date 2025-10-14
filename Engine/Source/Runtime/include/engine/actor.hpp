@@ -64,7 +64,7 @@ private:
 public:
     inline const std::string_view getModelName() const noexcept { return model->name; }
     // record draw commands for this mesh
-    void recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, Camera* camera);
+    void recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, std::shared_ptr<Camera> camera);
     void setModel(const std::string_view name);
 
 private:

@@ -2,6 +2,7 @@
 
 #include "core/globals.hpp"
 
+#include "engine/world.hpp"
 #include "glm/glm.hpp"
 #include "render/viewport.hpp"
 
@@ -18,6 +19,9 @@ public:
 
     void tick(float deltaTime);
     void resize(std::uint32_t width, std::uint32_t height);
+
+    // TODO: get world in camera
+    std::shared_ptr<World> getWorld() { return nullptr; }
 
     inline const glm::mat4& getProjection() const { return projection; }
     inline const glm::mat4& getInverseProjection() const { return inverseProjection; }

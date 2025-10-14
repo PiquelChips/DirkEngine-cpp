@@ -71,7 +71,7 @@ void DirkEngine::destroyWindow(WindowId id) {
 void DirkEngine::tick(float deltaTime) {
     world->tick(deltaTime);
 
-    renderer->renderFrame();
+    renderer->render();
 }
 
 float DirkEngine::captureDeltaTime() {

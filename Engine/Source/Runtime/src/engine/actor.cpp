@@ -187,7 +187,7 @@ void Actor::updateData() {
     world->getEngine()->getRenderer()->endSingleTimeCommands(commandBuffer, world->getEngine()->getRenderer()->getQueues().graphicsQueue);
 }
 
-void Actor::recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, Camera* camera) {
+void Actor::recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, std::shared_ptr<Camera> camera) {
     ModelViewProjection mvp{
         .model = getTransformMatrix(),
         .view = camera->getView(),
