@@ -2,7 +2,7 @@
 
 namespace dirk {
 
-World::World(const std::vector<ActorCreateInfo>& actors) {
+World::World(const std::vector<ActorCreateInfo>& actors, DirkEngine* engine) {
     for (auto createInfo : actors) {
         spawnActor(createInfo);
     }

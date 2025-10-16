@@ -116,13 +116,11 @@ void Renderer::render() {
 }
 
 std::shared_ptr<Viewport> Renderer::createViewport(const ViewportCreateInfo& createInfo) {
-    auto viewport = std::make_shared<Viewport>(createInfo);
-    viewports.emplace_back(viewport);
-    return viewport;
+    return viewports.emplace_back(std::make_shared<Viewport>(createInfo, engine));
 }
 
 void Renderer::destroyViewport(std::shared_ptr<Viewport> viewport) {
-    // TODO: destroy viewport
+    viewports.erase(std::find(viewports.begin(), viewports.end(), viewport));
 }
 
 std::vector<SwapChainImage> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {

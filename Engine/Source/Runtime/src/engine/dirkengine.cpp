@@ -17,16 +17,16 @@ namespace dirk {
 DEFINE_LOG_CATEGORY(LogEngine)
 
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
-    renderer = std::make_unique<Renderer>(createInfo.rendererInfo);
-    world = std::make_unique<World>(createInfo.actorCreateInfos);
+    renderer = std::make_unique<Renderer>(createInfo.rendererInfo, this);
+    world = std::make_unique<World>(createInfo.actorCreateInfos, this);
 
-    auto viewportId = renderer->createViewport(ViewportCreateInfo{});
-    auto windowId = createWindow(WindowCreateInfo{
+    auto viewport = renderer->createViewport(ViewportCreateInfo{});
+    auto window = createWindow(WindowCreateInfo{
         .title = createInfo.appName,
         .width = 1200,
         .height = 800,
     });
-    windows[windowId]->addViewport(viewportId, vk::Rect2D{ { 0, 0 }, { 1, 1 } }, 0);
+    window->addViewport(viewport);
 
     lastTick = std::chrono::high_resolution_clock::now();
 
@@ -36,7 +36,7 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         if (isRequestingExit())
             break;
 
-        for (auto& [id, window] : windows) {
+        for (auto& window : windows) {
             window->processPlatformEvents();
         }
 
@@ -57,15 +57,12 @@ void DirkEngine::exit(const std::string& reason) {
     this->exit();
 }
 
-WindowId DirkEngine::createWindow(const WindowCreateInfo& createInfo) {
-    // TODO: properly assign window IDs
-    WindowId id = windows.size();
-    windows[id] = std::make_unique<Window>(createInfo);
-    return id;
+std::shared_ptr<Window>& DirkEngine::createWindow(const WindowCreateInfo& createInfo) {
+    return windows.emplace_back(std::make_unique<Window>(createInfo, this));
 }
 
-void DirkEngine::destroyWindow(WindowId id) {
-    windows.erase(id);
+void DirkEngine::destroyWindow(std::shared_ptr<Window> window) {
+    windows.erase(std::find(windows.begin(), windows.end(), window));
 }
 
 void DirkEngine::tick(float deltaTime) {
