@@ -16,7 +16,7 @@ namespace dirk {
 Window::Window(const WindowCreateInfo& createInfo) {
     // TODO: create platform window
     auto renderer = gEngine->getRenderer();
-    surface = platformWindow->createVulkanSurface(renderer->getVulkanInstance());
+    surface = platformWindow->createVulkanSurface(renderer->getResources().instance);
 
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapChain,
@@ -65,7 +65,7 @@ vk::SubmitInfo Window::render() {
 
 vk::PresentInfoKHR Window::present() {
     auto renderer = gEngine->getRenderer();
-    auto device = renderer->getLogicalDevice();
+    auto device = renderer->getResources().device;
 
     // acquire image from swapChain
     auto imageIndex = device.acquireNextImageKHR(swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE).value;

@@ -1,5 +1,6 @@
 #include "engine/actor.hpp"
 
+#include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
 #include "render/camera.hpp"
@@ -57,37 +58,37 @@ void Actor::updateTransformMatrix() {
 }
 
 void Actor::updateData() {
-    vk::Device device = gEngine->getRenderer()->getLogicalDevice();
-    vk::PhysicalDevice physicalDevice = gEngine->getRenderer()->getPhysicalDevice();
-    vk::CommandBuffer commandBuffer = gEngine->getRenderer()->beginSingleTimeCommands();
+    auto renderer = gEngine->getRenderer();
+    auto resources = renderer->getResources();
+    vk::CommandBuffer commandBuffer = renderer->beginSingleTimeCommands();
 
     // ubo
     {
         vk::DeviceSize bufferSize = sizeof(ModelViewProjection);
-        auto [buffer, bufferMemory] = gEngine->getRenderer()->createBuffer(
+        auto [buffer, bufferMemory] = renderer->createBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eUniformBuffer,
             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
         uniformBuffer = buffer;
         uniformBufferMemory = bufferMemory;
-        uniformBufferMapped = device.mapMemory(uniformBufferMemory, 0, bufferSize);
+        uniformBufferMapped = resources.device.mapMemory(uniformBufferMemory, 0, bufferSize);
     }
 
     // vertex buffer
     {
         vk::DeviceSize bufferSize = sizeof(model->vertices[0]) * model->vertices.size();
 
-        auto [stagingBuffer, stagingBufferMemory] = gEngine->getRenderer()->createBuffer(
+        auto [stagingBuffer, stagingBufferMemory] = renderer->createBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eTransferSrc,
             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-        void* dataStaging = device.mapMemory(stagingBufferMemory, 0, bufferSize);
+        void* dataStaging = resources.device.mapMemory(stagingBufferMemory, 0, bufferSize);
         memcpy(dataStaging, model->vertices.data(), bufferSize);
-        device.unmapMemory(stagingBufferMemory);
+        resources.device.unmapMemory(stagingBufferMemory);
 
-        auto [buffer, bufferMemory] = gEngine->getRenderer()->createBuffer(
+        auto [buffer, bufferMemory] = renderer->createBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
             vk::MemoryPropertyFlagBits::eDeviceLocal);
@@ -101,16 +102,16 @@ void Actor::updateData() {
     {
         vk::DeviceSize bufferSize = sizeof(model->indices[0]) * model->indices.size();
 
-        auto [stagingBuffer, stagingBufferMemory] = gEngine->getRenderer()->createBuffer(
+        auto [stagingBuffer, stagingBufferMemory] = renderer->createBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eTransferSrc,
             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-        void* data = device.mapMemory(stagingBufferMemory, 0, bufferSize);
+        void* data = resources.device.mapMemory(stagingBufferMemory, 0, bufferSize);
         memcpy(data, model->indices.data(), bufferSize);
-        device.unmapMemory(stagingBufferMemory);
+        resources.device.unmapMemory(stagingBufferMemory);
 
-        auto [buffer, bufferMemory] = gEngine->getRenderer()->createBuffer(
+        auto [buffer, bufferMemory] = renderer->createBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
             vk::MemoryPropertyFlagBits::eDeviceLocal);
@@ -129,14 +130,14 @@ void Actor::updateData() {
 
         vk::Format format = vk::Format::eR8G8B8A8Srgb;
 
-        auto [stagingBuffer, stagingBufferMemory] = gEngine->getRenderer()->createBuffer(
+        auto [stagingBuffer, stagingBufferMemory] = renderer->createBuffer(
             imageSize,
             vk::BufferUsageFlagBits::eTransferSrc,
             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-        void* data = device.mapMemory(stagingBufferMemory, 0, imageSize);
+        void* data = resources.device.mapMemory(stagingBufferMemory, 0, imageSize);
         memcpy(data, texture.texture.data(), imageSize);
-        device.unmapMemory(stagingBufferMemory);
+        resources.device.unmapMemory(stagingBufferMemory);
 
         CreateImageMemoryViewInfo createInfo{
             .width = static_cast<uint32_t>(model->texture.width),
@@ -147,17 +148,17 @@ void Actor::updateData() {
             .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
             .mipLevels = mipLevels,
         };
-        textureImageMemoryView = gEngine->getRenderer()->createImageMemoryView(createInfo);
+        textureImageMemoryView = renderer->createImageMemoryView(createInfo);
 
-        gEngine->getRenderer()->transitionImageLayout(commandBuffer, textureImageMemoryView.image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
-        gEngine->getRenderer()->copyBufferToImage(commandBuffer, stagingBuffer, textureImageMemoryView.image, texture.width, texture.height);
-        gEngine->getRenderer()->generateMipmaps(commandBuffer, textureImageMemoryView.image, format, texture.width, texture.height, mipLevels);
+        renderer->transitionImageLayout(commandBuffer, textureImageMemoryView.image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
+        renderer->copyBufferToImage(commandBuffer, stagingBuffer, textureImageMemoryView.image, texture.width, texture.height);
+        renderer->generateMipmaps(commandBuffer, textureImageMemoryView.image, format, texture.width, texture.height, mipLevels);
         // transitions to vk::ImageLayout::eShaderReadOnlyOptimal while generating mipmaps
     }
 
     // sampler
     {
-        vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
+        vk::PhysicalDeviceProperties properties = resources.physicalDevice.getProperties();
         vk::SamplerCreateInfo samplerInfo{};
 
         samplerInfo.magFilter = vk::Filter::eLinear;
@@ -172,19 +173,19 @@ void Actor::updateData() {
         samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
         samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
 
-        samplerInfo.anisotropyEnable = gEngine->getRenderer()->getFeatures().anisotropy ? vk::True : vk::False;
+        samplerInfo.anisotropyEnable = renderer->getProperties().anisotropy ? vk::True : vk::False;
         samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
 
         samplerInfo.compareEnable = vk::False;
         samplerInfo.compareOp = vk::CompareOp::eAlways;
         samplerInfo.unnormalizedCoordinates = vk::False; // the tex coords are normalized
 
-        textureSampler = device.createSampler(samplerInfo);
+        textureSampler = resources.device.createSampler(samplerInfo);
     }
 
-    descriptorSet = gEngine->getRenderer()->createDescriptorSets(uniformBuffer, textureSampler, textureImageMemoryView.view, vk::ImageLayout::eShaderReadOnlyOptimal);
+    descriptorSet = renderer->createDescriptorSets(uniformBuffer, textureSampler, textureImageMemoryView.view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-    gEngine->getRenderer()->endSingleTimeCommands(commandBuffer, gEngine->getRenderer()->getQueues().graphicsQueue);
+    renderer->endSingleTimeCommands(commandBuffer, resources.queues.graphicsQueue);
 }
 
 void Actor::recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, std::unique_ptr<Camera>& camera) {
