@@ -15,40 +15,38 @@ namespace dirk::Platform {
 // interface for all platform windows
 class PlatformWindow {
 public:
-    virtual ~PlatformWindow() = default;
-
     /**
      * Get platform native window handle
      */
-    virtual void* getNativeHandle() = 0;
+    void* getNativeHandle();
 
     /**
      * Creates the vulkan surface for this window
      */
-    virtual vk::SurfaceKHR createVulkanSurface(vk::Instance instance) = 0;
+    vk::SurfaceKHR createVulkanSurface(vk::Instance instance);
 
     /**
      * Polls all platform events such as resize and input
      */
-    virtual void pollEvents() = 0;
+    void pollEvents();
 
     /**
      * Sets the event callback function.
      * This will be used downstream to handle platform events
      */
     // TODO: setup event system
-    virtual void setEventCallback() = 0;
+    void setEventCallback();
 
     /**
      * Returns the size of the vulkan framebuffer linked to this window
      */
-    virtual vk::Extent2D getFramebufferSize() = 0;
+    vk::Extent2D getFramebufferSize();
 
     /**
      * Will return true if the operating system has requested
      * to close the window
      */
-    virtual bool shouldClose() = 0;
+    bool shouldClose();
 };
 
 } // namespace dirk::Platform
