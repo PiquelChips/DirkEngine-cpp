@@ -17,7 +17,7 @@ namespace dirk {
 DEFINE_LOG_CATEGORY(LogEngine)
 
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
-    renderer = std::make_unique<Renderer>(createInfo.rendererInfo, this);
+    renderer = std::make_unique<Renderer>(this);
     world = std::make_unique<World>(createInfo.actorCreateInfos, this);
 
     auto viewport = renderer->createViewport(ViewportCreateInfo{});
@@ -61,7 +61,7 @@ std::shared_ptr<Window>& DirkEngine::createWindow(const WindowCreateInfo& create
     return windows.emplace_back(std::make_unique<Window>(createInfo, this));
 }
 
-void DirkEngine::destroyWindow(std::shared_ptr<Window> window) {
+void DirkEngine::destroyWindow(std::shared_ptr<Window>& window) {
     windows.erase(std::find(windows.begin(), windows.end(), window));
 }
 
