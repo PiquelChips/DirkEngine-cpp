@@ -51,6 +51,14 @@ Renderer::Renderer() {
         DIRK_LOG(LogVulkan, FATAL, "failed to get a physical device");
     }
 
+    auto features = getDeviceFeatures();
+
+    this->properties = RendererProperties{
+        .msaaSamples = features.msaaSamples,
+        .anisotropy = features.anisotropy,
+        // TODO: set swapchain format
+    };
+
     this->device = createLogicalDevice();
     if (!this->device) {
         DIRK_LOG(LogVulkan, FATAL, "failed to create logical device");
@@ -291,7 +299,7 @@ vk::PhysicalDevice Renderer::selectPhysicalDevice() {
 
     if (candidates.rbegin()->first > 0) {
         physicalDevice = candidates.rbegin()->second;
-        msaaSamples = getMaxUsableSampleCount(physicalDevice);
+        properties.msaaSamples = getMaxUsableSampleCount(physicalDevice);
     } else {
         return nullptr;
     }
@@ -306,8 +314,6 @@ vk::PhysicalDevice Renderer::selectPhysicalDevice() {
                  //<< "\n\tdevice type: " << deviceProperties.deviceType
                  << "\n\tapi version: " << deviceProperties.apiVersion
                  << "\n\tdriver version: " << deviceProperties.driverVersion);
-
-    this->features = Renderer::getRendererFeatures(physicalDevice);
 
     return physicalDevice;
 }
@@ -351,7 +357,7 @@ int Renderer::getDeviceSuitability(vk::PhysicalDevice device) {
     score += swapChainSupport.formats.size();
     score += swapChainSupport.presentModes.size();
 
-    score += Renderer::getRendererFeatures(device).getScore();
+    score += getDeviceFeatures(device).getScore();
 
     return score;
 }
@@ -933,11 +939,11 @@ bool Renderer::hasStencilComponent(vk::Format format) {
     return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
 }
 
-RendererFeatures Renderer::getRendererFeatures(vk::PhysicalDevice physicalDevice) {
+DeviceFeatures Renderer::getDeviceFeatures(vk::PhysicalDevice physicalDevice) {
     vk::PhysicalDeviceFeatures deviceFeatures = physicalDevice.getFeatures();
-    return RendererFeatures{
+    return DeviceFeatures{
         .anisotropy = deviceFeatures.samplerAnisotropy == vk::True,
-        .msaaSamples = static_cast<int>(Renderer::getMaxUsableSampleCount(physicalDevice)),
+        .msaaSamples = getMaxUsableSampleCount(physicalDevice),
     };
 }
 

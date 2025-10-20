@@ -44,14 +44,17 @@ struct RendererResources {
 };
 
 struct RendererProperties {
+    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
+    bool anisotropy = false;
+    vk::Format swapChainFromat = vk::Format::eUndefined;
 };
 
-struct RendererFeatures {
+struct DeviceFeatures {
     bool anisotropy = false;
-    int msaaSamples = 1;
+    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
     bool isComplete() {
-        return anisotropy && msaaSamples > 1;
+        return anisotropy && static_cast<int>(msaaSamples) > 1;
     }
 
     int getScore() {
@@ -63,7 +66,7 @@ struct RendererFeatures {
         if (anisotropy)
             score += 10;
 
-        score += msaaSamples;
+        score += static_cast<int>(msaaSamples);
 
         return score;
     }

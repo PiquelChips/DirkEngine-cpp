@@ -61,7 +61,7 @@ public:
         .commandPool = commandPool,
     }; }
     inline RendererProperties getRendererProperties() { return properties; }
-    inline RendererFeatures getRendererFeatures() { return features; }
+    inline DeviceFeatures getDeviceFeatures() { return getDeviceFeatures(physicalDevice); }
 
 private:
     std::vector<std::shared_ptr<Viewport>> viewports;
@@ -125,10 +125,8 @@ private:
     // misc variables used by the renderer
 
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
-    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
     RendererProperties properties;
-    RendererFeatures features;
 
 public:
     // some static utility functions
@@ -158,7 +156,7 @@ public:
 
     static bool hasStencilComponent(vk::Format format);
 
-    static RendererFeatures getRendererFeatures(vk::PhysicalDevice physicalDevice);
+    static DeviceFeatures getDeviceFeatures(vk::PhysicalDevice physicalDevice);
 };
 
 } // namespace dirk
