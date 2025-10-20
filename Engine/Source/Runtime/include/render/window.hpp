@@ -30,7 +30,7 @@ struct WindowCreateInfo {
  */
 class Window {
 public:
-    Window(const WindowCreateInfo& createInfo, DirkEngine* engine);
+    Window(const WindowCreateInfo& createInfo);
 
     void addViewport(std::shared_ptr<Viewport> inViewport);
     void removeViewport(std::shared_ptr<Viewport> inViewport);
@@ -64,8 +64,6 @@ private:
     vk::CommandBuffer commandBuffer;
 
     vk::RenderPass renderPass;
-
-    DirkEngine* engine;
 
     std::vector<std::shared_ptr<Viewport>> viewports;
 };

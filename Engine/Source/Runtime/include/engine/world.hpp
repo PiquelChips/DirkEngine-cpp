@@ -13,7 +13,7 @@ namespace dirk {
 class World {
 
 public:
-    World(const std::vector<ActorCreateInfo>& actors, DirkEngine* engine);
+    World(const std::vector<ActorCreateInfo>& actors);
     ~World();
 
     void tick(float deltaTime);
@@ -22,12 +22,8 @@ public:
     std::shared_ptr<Actor>& spawnActor(const ActorCreateInfo& spawnInfo);
     void destroyActor(Actor* actor);
 
-    DirkEngine* getEngine() { return engine; }
-
 private:
     std::unordered_map<std::string_view, std::shared_ptr<Actor>> actors;
-
-    DirkEngine* engine;
 };
 
 } // namespace dirk

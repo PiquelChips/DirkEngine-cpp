@@ -9,8 +9,8 @@
 
 namespace dirk {
 
-Viewport::Viewport(const ViewportCreateInfo& createInfo, DirkEngine* engine)
-    : engine(engine), world(createInfo.world) {
+Viewport::Viewport(const ViewportCreateInfo& createInfo)
+    : world(createInfo.world) {
     camera = std::make_unique<Camera>(
         CameraCreateInfo{
             .positon = { 0.f, 1000.f, 1000.f },
@@ -21,7 +21,7 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo, DirkEngine* engine)
         },
         this);
 
-    auto renderer = engine->getRenderer();
+    auto renderer = gEngine->getRenderer();
     auto device = renderer->getLogicalDevice();
     renderFinishedSemaphore = renderer->createSemaphore();
 
@@ -38,7 +38,7 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo, DirkEngine* engine)
 }
 
 void Viewport::createRenderResources() {
-    auto renderer = engine->getRenderer();
+    auto renderer = gEngine->getRenderer();
     auto device = renderer->getLogicalDevice();
     auto physicalDevice = renderer->getPhysicalDevice();
     auto queues = renderer->getQueues();

@@ -38,7 +38,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 class Renderer {
 
 public:
-    Renderer(DirkEngine* engine);
+    Renderer();
     ~Renderer();
 
     void render();
@@ -115,8 +115,6 @@ private:
     vk::DescriptorPool descriptorPool;
 
     vk::Fence inFlightFence;
-
-    DirkEngine* engine;
 
 private:
     // misc variables used by the renderer

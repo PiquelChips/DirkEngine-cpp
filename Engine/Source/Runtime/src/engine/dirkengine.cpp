@@ -20,8 +20,8 @@ DEFINE_LOG_CATEGORY(LogEngine)
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     gEngine = this;
 
-    renderer = std::make_unique<Renderer>(this);
-    world = std::make_unique<World>(createInfo.actorCreateInfos, this);
+    renderer = std::make_unique<Renderer>();
+    world = std::make_unique<World>(createInfo.actorCreateInfos);
 
     auto viewport = renderer->createViewport(ViewportCreateInfo{ .world = world.get() });
     auto window = createWindow(WindowCreateInfo{
@@ -61,7 +61,7 @@ void DirkEngine::exit(const std::string& reason) {
 }
 
 std::shared_ptr<Window>& DirkEngine::createWindow(const WindowCreateInfo& createInfo) {
-    return windows.emplace_back(std::make_unique<Window>(createInfo, this));
+    return windows.emplace_back(std::make_unique<Window>(createInfo));
 }
 
 void DirkEngine::destroyWindow(std::shared_ptr<Window>& window) {

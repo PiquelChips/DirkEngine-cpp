@@ -13,9 +13,9 @@
 
 namespace dirk {
 
-Window::Window(const WindowCreateInfo& createInfo, DirkEngine* engine) : engine(engine) {
+Window::Window(const WindowCreateInfo& createInfo) {
     // TODO: create platform window
-    auto renderer = engine->getRenderer();
+    auto renderer = gEngine->getRenderer();
     surface = platformWindow->createVulkanSurface(renderer->getVulkanInstance());
 
     SwapChainCreateInfo swapChainInfo{
@@ -64,7 +64,7 @@ vk::SubmitInfo Window::render() {
 }
 
 vk::PresentInfoKHR Window::present() {
-    auto renderer = engine->getRenderer();
+    auto renderer = gEngine->getRenderer();
     auto device = renderer->getLogicalDevice();
 
     // acquire image from swapChain

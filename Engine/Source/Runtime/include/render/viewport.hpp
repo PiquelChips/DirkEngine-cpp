@@ -27,7 +27,7 @@ struct ViewportCreateInfo {
 
 class Viewport {
 public:
-    Viewport(const ViewportCreateInfo& createInfo, DirkEngine* engine);
+    Viewport(const ViewportCreateInfo& createInfo);
 
     std::unique_ptr<Camera>& getCamera() { return camera; }
     vk::Extent2D getSize() const { return size; }
@@ -63,7 +63,7 @@ private:
 
     vk::Semaphore renderFinishedSemaphore;
 
-    DirkEngine* engine;
+    // TODO: world should not be raw as viewport owned by renderer
     World* world;
 };
 

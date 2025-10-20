@@ -34,9 +34,7 @@ DEFINE_LOG_CATEGORY(LogVulkan)
 DEFINE_LOG_CATEGORY(LogVulkanValidation)
 DEFINE_LOG_CATEGORY(LogRenderer)
 
-Renderer::Renderer(DirkEngine* engine) {
-    this->engine = engine;
-
+Renderer::Renderer() {
     DIRK_LOG(LogVulkan, INFO, "initlializing Vulkan...");
     this->instance = createVulkanInstance();
     if (!this->instance) {
@@ -95,7 +93,7 @@ void Renderer::render() {
     // only reset after or we risk blocking with an unsignalled fence
     checkVulkan(device.resetFences(1, &inFlightFence));
 
-    auto& windows = engine->getWindows();
+    auto& windows = gEngine->getWindows();
     std::vector<vk::SubmitInfo> submitInfos(viewports.size() + windows.size());
     std::vector<vk::PresentInfoKHR> presentInfos(windows.size());
 
@@ -116,7 +114,7 @@ void Renderer::render() {
 }
 
 std::shared_ptr<Viewport> Renderer::createViewport(const ViewportCreateInfo& createInfo) {
-    return viewports.emplace_back(std::make_shared<Viewport>(createInfo, engine));
+    return viewports.emplace_back(std::make_shared<Viewport>(createInfo));
 }
 
 void Renderer::destroyViewport(std::shared_ptr<Viewport> viewport) {
