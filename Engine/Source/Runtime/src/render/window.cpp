@@ -24,6 +24,7 @@ Window::Window(const WindowCreateInfo& createInfo, DirkEngine* engine) : engine(
         .swapChainExtent = swapChainExtent,
         .renderPass = renderPass,
         .surface = surface,
+        .windowSize = platformWindow->getFramebufferSize()
     };
     swapChainImages = renderer->createSwapChain(swapChainInfo);
 }

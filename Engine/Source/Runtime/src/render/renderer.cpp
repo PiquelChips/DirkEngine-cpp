@@ -128,7 +128,7 @@ std::vector<SwapChainImage> Renderer::createSwapChain(const SwapChainCreateInfo&
 
     vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-    vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+    vk::Extent2D extent = chooseSwapExtent(createInfo.windowSize, swapChainSupport.capabilities);
 
     uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 
@@ -445,21 +445,14 @@ vk::PresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<vk::Present
     return vk::PresentModeKHR::eFifo;
 }
 
-vk::Extent2D Renderer::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities) {
+vk::Extent2D Renderer::chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities) {
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
         return capabilities.currentExtent;
 
-    int width, height;
+    windowSize.width = std::clamp(windowSize.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+    windowSize.height = std::clamp(windowSize.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
-    // TODO: move to window
-    // glfwGetFramebufferSize(window, &width, &height);
-
-    vk::Extent2D actualExent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
-
-    actualExent.width = std::clamp(actualExent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-    actualExent.height = std::clamp(actualExent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-
-    return actualExent;
+    return windowSize;
 }
 
 void Renderer::recreateSwapChain() {

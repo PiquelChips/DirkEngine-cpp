@@ -69,6 +69,7 @@ struct SwapChainCreateInfo {
     // INPUT
     vk::RenderPass renderPass;
     vk::SurfaceKHR surface;
+    vk::Extent2D windowSize;
 };
 
 struct SwapChainImage {

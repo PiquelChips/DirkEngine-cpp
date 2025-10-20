@@ -35,7 +35,7 @@ public:
     bool isRequestingExit() const noexcept { return requestingExit; }
 
     std::shared_ptr<Window>& createWindow(const WindowCreateInfo& createInfo);
-    void destroyWindow(std::shared_ptr<Window> window);
+    void destroyWindow(std::shared_ptr<Window>& window);
     std::vector<std::shared_ptr<Window>>& getWindows() { return windows; }
 
     Renderer* getRenderer() { return renderer.get(); }
