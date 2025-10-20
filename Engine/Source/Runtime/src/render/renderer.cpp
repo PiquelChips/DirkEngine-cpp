@@ -953,11 +953,14 @@ QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device) {
         if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
             indices.graphicsFamily = i;
 
+        // TODO: use temp surface to query for device support
+        /**
         // present queue
         vk::Bool32 presentSupport = device.getSurfaceSupportKHR(i, surface);
 
         if (presentSupport)
             indices.presentFamily = i;
+        */
 
         // dont loop over every possible queue if we have the required ones already
         if (indices.isComplete())
