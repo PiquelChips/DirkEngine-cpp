@@ -16,7 +16,7 @@
 
 namespace dirk {
 
-Actor::Actor(ActorCreateInfo& spawnInfo, World* world)
+Actor::Actor(const ActorCreateInfo& spawnInfo, World* world)
     : world(world),
       name(spawnInfo.name),
       transform(spawnInfo.transform),

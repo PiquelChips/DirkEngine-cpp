@@ -34,7 +34,7 @@ DEFINE_LOG_CATEGORY(LogVulkan)
 DEFINE_LOG_CATEGORY(LogVulkanValidation)
 DEFINE_LOG_CATEGORY(LogRenderer)
 
-Renderer::Renderer(const RendererCreateInfo& createInfo, DirkEngine* engine) {
+Renderer::Renderer(DirkEngine* engine) {
     this->engine = engine;
 
     DIRK_LOG(LogVulkan, INFO, "initlializing Vulkan...");

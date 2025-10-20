@@ -15,7 +15,6 @@ namespace dirk {
 
 Window::Window(const WindowCreateInfo& createInfo, DirkEngine* engine) : engine(engine) {
     // TODO: create platform window
-    // TODO: create render pass and setup window for ImGUI
     auto renderer = engine->getRenderer();
     surface = platformWindow->createVulkanSurface(renderer->getVulkanInstance());
 
@@ -28,8 +27,6 @@ Window::Window(const WindowCreateInfo& createInfo, DirkEngine* engine) : engine(
     };
     swapChainImages = renderer->createSwapChain(swapChainInfo);
 }
-
-Window::~Window() {}
 
 void Window::addViewport(std::shared_ptr<Viewport> inViewport) {
     viewports.emplace_back(inViewport);

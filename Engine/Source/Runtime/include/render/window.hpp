@@ -20,7 +20,7 @@ class DirkEngine;
 typedef std::uint16_t WindowId;
 
 struct WindowCreateInfo {
-    const std::string& title;
+    std::string_view title;
     std::uint32_t width, height;
 };
 
@@ -31,7 +31,6 @@ struct WindowCreateInfo {
 class Window {
 public:
     Window(const WindowCreateInfo& createInfo, DirkEngine* engine);
-    ~Window();
 
     void addViewport(std::shared_ptr<Viewport> inViewport);
     void removeViewport(std::shared_ptr<Viewport> inViewport);

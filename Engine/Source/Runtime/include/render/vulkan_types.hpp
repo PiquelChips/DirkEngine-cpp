@@ -14,8 +14,6 @@ namespace dirk {
 
 class DirkEngine;
 
-struct RendererCreateInfo {};
-
 struct SwapChainSupportDetails {
     vk::SurfaceCapabilitiesKHR capabilities;
     std::vector<vk::SurfaceFormatKHR> formats;
@@ -25,7 +23,7 @@ struct SwapChainSupportDetails {
 struct RendererFeatures {
     bool anisotropy = false;
     int msaaSamples = 1;
-    vk::Format swapChainImageFormat;
+    vk::Format swapChainImageFormat = vk::Format::eUndefined;
 
     bool isComplete() {
         return anisotropy &&

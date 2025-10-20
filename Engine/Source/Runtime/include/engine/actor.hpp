@@ -27,7 +27,7 @@ struct ActorCreateInfo {
 class Actor {
 
 public:
-    Actor(ActorCreateInfo& spawnInfo, World* world);
+    Actor(const ActorCreateInfo& spawnInfo, World* world);
 
     void tick(float deltaTime);
     void destroy();

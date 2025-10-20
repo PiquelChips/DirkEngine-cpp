@@ -18,7 +18,7 @@ class World;
 class Camera;
 
 struct DirkEngineCreateInfo {
-    const std::string& appName;
+    std::string_view appName;
     RendererCreateInfo rendererInfo;
     std::vector<ActorCreateInfo> actorCreateInfos;
 };

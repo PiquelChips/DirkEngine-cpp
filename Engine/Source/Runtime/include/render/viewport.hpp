@@ -25,7 +25,6 @@ class DirkEngine;
 class Viewport {
 public:
     Viewport(const ViewportCreateInfo& createInfo, DirkEngine* engine);
-    ~Viewport();
 
     std::shared_ptr<Camera> getCamera() { return camera; }
     vk::Extent2D getSize() const { return size; }
@@ -33,9 +32,6 @@ public:
 
     vk::SubmitInfo render();
     void resize(vk::Extent2D inSize);
-
-    static glm::vec2 screenToViewport(glm::vec2 screenPos, vk::Rect2D viewportRegion);
-    static glm::vec2 viewportToScreen(glm::vec2 veiwportPos, vk::Rect2D viewportRegion);
 
 private:
     // this will create render pass, pipeline and all associated stuff. this should only be called

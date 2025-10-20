@@ -18,11 +18,11 @@ void World::tick(float deltaTime) {
     }
 }
 
-std::shared_ptr<Actor> World::spawnActor(ActorCreateInfo spawnInfo) {
+std::shared_ptr<Actor>& World::spawnActor(const ActorCreateInfo& spawnInfo) {
     DIRK_LOG(LogEngine, INFO, "spawning actor " << spawnInfo.name);
     std::shared_ptr<Actor> actor = std::make_shared<Actor>(spawnInfo, this);
     actors[actor->getName()] = actor;
-    return actor;
+    return actors[actor->getName()];
 }
 
 void World::destroyActor(Actor* actor) {

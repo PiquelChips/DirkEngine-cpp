@@ -283,8 +283,6 @@ void Viewport::createRenderResources() {
     framebuffer = device.createFramebuffer(framebufferInfo);
 }
 
-Viewport::~Viewport() {}
-
 vk::SubmitInfo Viewport::render() {
     commandBuffer.reset();
 
@@ -311,7 +309,6 @@ vk::SubmitInfo Viewport::render() {
     commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
 
-    // TODO: get all actors and record their command buffers
     for (auto pair : camera->getWorld()->getActors()) {
         pair.second->recordCommandBuffer(commandBuffer, pipelineLayout, camera);
     }
@@ -337,16 +334,7 @@ vk::SubmitInfo Viewport::render() {
     return submitInfo;
 }
 
+// TODO: resize viewport
 void Viewport::resize(vk::Extent2D inSize) {}
-
-glm::vec2 Viewport::screenToViewport(glm::vec2 screenPos, vk::Rect2D viewportRegion) {
-    // TODO: viewport::screenToViewport
-    return glm::vec2(0.f);
-}
-
-glm::vec2 Viewport::viewportToScreen(glm::vec2 veiwportPos, vk::Rect2D viewportRegion) {
-    // TODO: viewport::viewportToScreen
-    return glm::vec2(0.f);
-}
 
 } // namespace dirk

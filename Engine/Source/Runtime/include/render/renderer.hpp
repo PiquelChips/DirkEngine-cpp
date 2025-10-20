@@ -38,7 +38,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 class Renderer {
 
 public:
-    Renderer(const RendererCreateInfo& createInfo, DirkEngine* engine);
+    Renderer(DirkEngine* engine);
     ~Renderer();
 
     void render();
@@ -49,6 +49,8 @@ public:
     void destroyViewport(std::shared_ptr<Viewport> viewport);
 
     std::vector<SwapChainImage> createSwapChain(const SwapChainCreateInfo& createInfo);
+
+    vk::ShaderModule loadShaderModule(const std::string& shaderName);
 
 private:
     std::vector<std::shared_ptr<Viewport>> viewports;
@@ -113,8 +115,6 @@ private:
 
     vk::Fence inFlightFence;
 
-    uint32_t currentFrame = 0;
-
     DirkEngine* engine;
 
 private:
@@ -154,8 +154,6 @@ public:
     static bool hasStencilComponent(vk::Format format);
 
     static RendererFeatures getRendererFeatures(vk::PhysicalDevice physicalDevice);
-
-    vk::ShaderModule loadShaderModule(const std::string& shaderName);
 };
 
 } // namespace dirk
