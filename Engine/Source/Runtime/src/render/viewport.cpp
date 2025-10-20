@@ -1,12 +1,26 @@
 #include "render/viewport.hpp"
 #include "engine/dirkengine.hpp"
+#include "engine/world.hpp"
+#include "glm/trigonometric.hpp"
 #include "render/camera.hpp"
 #include "render/renderer.hpp"
 #include "vulkan/vulkan_handles.hpp"
+#include <memory>
 
 namespace dirk {
 
-Viewport::Viewport(const ViewportCreateInfo& createInfo, DirkEngine* engine) : engine(engine) {
+Viewport::Viewport(const ViewportCreateInfo& createInfo, DirkEngine* engine)
+    : engine(engine), world(createInfo.world) {
+    camera = std::make_unique<Camera>(
+        CameraCreateInfo{
+            .positon = { 0.f, 1000.f, 1000.f },
+            .forwardDirection = { 0.f, -1.f, -1.f },
+            .fov = glm::radians(45.f),
+            .nearClip = .1f,
+            .farClip = 100000.f,
+        },
+        this);
+
     auto renderer = engine->getRenderer();
     auto device = renderer->getLogicalDevice();
     renderFinishedSemaphore = renderer->createSemaphore();
@@ -298,7 +312,7 @@ vk::SubmitInfo Viewport::render() {
     commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
 
-    for (auto pair : camera->getWorld()->getActors()) {
+    for (auto pair : world->getActors()) {
         pair.second->recordCommandBuffer(commandBuffer, pipelineLayout, camera);
     }
 

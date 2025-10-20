@@ -11,15 +11,14 @@ namespace dirk {
 
 DEFINE_LOG_CATEGORY(LogCamera);
 
-Camera::Camera(glm::vec3 position, glm::vec3 forwardDirection, float fov, float nearClip, float farClip)
-    : position(position), forwardDirection(glm::normalize(forwardDirection)), fov(fov), nearClip(nearClip), farClip(farClip) {
-
-    // TODO: make sure camera always has the right size
-    /**
-    vk::Extent2D extent = viewport->getSize();
-    width = extent.width;
-    height = extent.height;
-    */
+Camera::Camera(const CameraCreateInfo& createInfo, Viewport* viewport)
+    : viewport(viewport),
+      size(viewport->getSize()),
+      position(createInfo.positon),
+      forwardDirection(glm::normalize(createInfo.forwardDirection)),
+      fov(createInfo.fov),
+      nearClip(createInfo.nearClip),
+      farClip(createInfo.farClip) {
 
     updateProjection();
     updateView();
@@ -88,15 +87,14 @@ void Camera::tick(float deltaTime) {
     */
 }
 
-void Camera::resize(std::uint32_t width, std::uint32_t height) {
-    this->width = width;
-    this->height = height;
+void Camera::resize(vk::Extent2D inSize) {
+    this->size = inSize;
 
     updateProjection();
 }
 
 void Camera::updateProjection() {
-    projection = glm::perspectiveFov(fov, (float) width, (float) height, nearClip, farClip);
+    projection = glm::perspectiveFov(fov, (float) size.width, (float) size.height, nearClip, farClip);
     projection[1][1] *= -1;
     inverseProjection = glm::inverse(projection);
 }

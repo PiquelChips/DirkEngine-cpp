@@ -20,7 +20,7 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     renderer = std::make_unique<Renderer>(this);
     world = std::make_unique<World>(createInfo.actorCreateInfos, this);
 
-    auto viewport = renderer->createViewport(ViewportCreateInfo{});
+    auto viewport = renderer->createViewport(ViewportCreateInfo{ .world = world.get() });
     auto window = createWindow(WindowCreateInfo{
         .title = createInfo.appName,
         .width = 1200,

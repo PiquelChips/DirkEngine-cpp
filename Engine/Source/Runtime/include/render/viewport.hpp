@@ -14,19 +14,22 @@ namespace dirk {
 
 typedef std::uint16_t ViewportId;
 
+class Camera;
+class DirkEngine;
+class World;
+
 struct ViewportCreateInfo {
     vk::Extent2D size;
     std::string_view name;
-};
 
-class Camera;
-class DirkEngine;
+    World* world;
+};
 
 class Viewport {
 public:
     Viewport(const ViewportCreateInfo& createInfo, DirkEngine* engine);
 
-    std::shared_ptr<Camera> getCamera() { return camera; }
+    std::unique_ptr<Camera>& getCamera() { return camera; }
     vk::Extent2D getSize() const { return size; }
     vk::Semaphore getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
 
@@ -38,7 +41,7 @@ private:
     // on resize
     void createRenderResources();
 
-    std::shared_ptr<Camera> camera;
+    std::unique_ptr<Camera> camera;
 
     // render settings
     std::string_view name;
@@ -61,6 +64,7 @@ private:
     vk::Semaphore renderFinishedSemaphore;
 
     DirkEngine* engine;
+    World* world;
 };
 
 } // namespace dirk
