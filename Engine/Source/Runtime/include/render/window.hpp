@@ -1,9 +1,9 @@
+#include "platform/window.hpp"
 #include "render/viewport.hpp"
 #include "render/vulkan_types.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
-#include "window/platform_window.hpp"
 
 #include <cstdint>
 #include <memory>

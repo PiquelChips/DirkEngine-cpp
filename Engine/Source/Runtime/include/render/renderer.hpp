@@ -67,7 +67,6 @@ private:
 
 private:
     vk::Instance createVulkanInstance();
-    std::vector<const char*> getRequiredInstanceExtensions();
     bool checkRequiredInstanceExtensions(std::vector<const char*>& extensions);
 
     vk::PhysicalDevice selectPhysicalDevice();

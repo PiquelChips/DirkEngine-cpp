@@ -3,6 +3,7 @@
 #include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
+#include "platform/platform.hpp"
 #include "render/camera.hpp"
 #include "render/viewport.hpp"
 #include "render/vulkan_types.hpp"
@@ -228,7 +229,7 @@ vk::Instance Renderer::createVulkanInstance() {
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = vk::ApiVersion14;
 
-    auto instanceExtensions = getRequiredInstanceExtensions();
+    auto instanceExtensions = Platform::getRequiredExtensions();
     if (!checkRequiredInstanceExtensions(instanceExtensions))
         return nullptr;
 
@@ -248,23 +249,6 @@ vk::Instance Renderer::createVulkanInstance() {
 #endif
 
     return vk::createInstance(createInfo);
-}
-
-std::vector<const char*> Renderer::getRequiredInstanceExtensions() {
-    // TODO: get required instance extensions from platform
-    /**
-    uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-    std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-
-#ifdef ENABLE_VALIDATION_LAYERS
-    extensions.push_back(vk::EXTDebugUtilsExtensionName);
-#endif
-
-    return extensions;
-    */
-    return std::vector<const char*>();
 }
 
 bool Renderer::checkRequiredInstanceExtensions(std::vector<const char*>& extensions) {
@@ -376,14 +360,13 @@ bool Renderer::checkDeviceExtensionSupport(vk::PhysicalDevice device) {
 
 SwapChainSupportDetails Renderer::querySwapChainSupport(vk::PhysicalDevice device) {
     // TODO: quert swap chain support
-    /**
     return SwapChainSupportDetails{
+        /**
         .capabilities = device.getSurfaceCapabilitiesKHR(surface),
         .formats = device.getSurfaceFormatsKHR(surface),
         .presentModes = device.getSurfacePresentModesKHR(surface),
+        */
     };
-    */
-    return SwapChainSupportDetails{};
 }
 
 vk::Device Renderer::createLogicalDevice() {
@@ -465,6 +448,7 @@ vk::Extent2D Renderer::chooseSwapExtent(vk::Extent2D windowSize, const vk::Surfa
 }
 
 void Renderer::recreateSwapChain() {
+    // TODO: move the swap chain recreation stuff
     /**
     // wait if window has been minimized
     int width = 0, height = 0;
