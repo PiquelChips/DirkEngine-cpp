@@ -7,20 +7,9 @@
 namespace dirk {
 
 Viewport::Viewport(const ViewportCreateInfo& createInfo, DirkEngine* engine) : engine(engine) {
-    // TODO: viewport constructor
-    /**
-     * create:
-     * + render pass
-     * + graphics pipeline
-     * + pipeline layout
-     * + command buffer
-     * + color resources
-     * + depth resources
-     * + framebuffer
-     * - semaphores
-     */
     auto renderer = engine->getRenderer();
     auto device = renderer->getLogicalDevice();
+    renderFinishedSemaphore = renderer->createSemaphore();
 
     // COMMAND BUFFER
 

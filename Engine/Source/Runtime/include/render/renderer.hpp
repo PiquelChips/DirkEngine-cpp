@@ -51,6 +51,7 @@ public:
     std::vector<SwapChainImage> createSwapChain(const SwapChainCreateInfo& createInfo);
 
     vk::ShaderModule loadShaderModule(const std::string& shaderName);
+    vk::Semaphore createSemaphore();
 
 private:
     std::vector<std::shared_ptr<Viewport>> viewports;

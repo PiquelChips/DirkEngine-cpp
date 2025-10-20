@@ -207,6 +207,11 @@ std::vector<SwapChainImage> Renderer::createSwapChain(const SwapChainCreateInfo&
     return swapImages;
 }
 
+vk::Semaphore Renderer::createSemaphore() {
+    vk::SemaphoreCreateInfo createInfo{};
+    return device.createSemaphore(createInfo);
+}
+
 vk::Instance Renderer::createVulkanInstance() {
     // vk app
     vk::ApplicationInfo appInfo{};
