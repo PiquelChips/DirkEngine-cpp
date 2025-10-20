@@ -1,4 +1,7 @@
 #include <vector>
+
+#ifdef PLATFORM_LINUX
+
 namespace dirk::Platform {
 
 std::vector<const char*> getRequiredExtensions() {
@@ -6,3 +9,5 @@ std::vector<const char*> getRequiredExtensions() {
 }
 
 } // namespace dirk::Platform
+
+#endif
