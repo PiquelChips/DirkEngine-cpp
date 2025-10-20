@@ -11,3 +11,8 @@
 
 #include "asserts.hpp"
 #include "logging.hpp"
+
+namespace dirk {
+class DirkEngine;
+DirkEngine* gEngine;
+} // namespace dirk

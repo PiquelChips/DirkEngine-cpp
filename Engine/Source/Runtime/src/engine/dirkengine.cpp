@@ -1,5 +1,6 @@
 #include "engine/dirkengine.hpp"
 
+#include "core/globals.hpp"
 #include "core/logging.hpp"
 #include "engine/world.hpp"
 #include "render/renderer.hpp"
@@ -17,6 +18,8 @@ namespace dirk {
 DEFINE_LOG_CATEGORY(LogEngine)
 
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
+    gEngine = this;
+
     renderer = std::make_unique<Renderer>(this);
     world = std::make_unique<World>(createInfo.actorCreateInfos, this);
 
