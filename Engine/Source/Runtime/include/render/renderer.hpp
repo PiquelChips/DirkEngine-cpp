@@ -43,8 +43,6 @@ public:
 
     void render();
 
-    const RendererFeatures& getFeatures() const noexcept { return features; }
-
     std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);
     void destroyViewport(std::shared_ptr<Viewport> viewport);
 
@@ -53,15 +51,16 @@ public:
     vk::ShaderModule loadShaderModule(const std::string& shaderName);
     vk::Semaphore createSemaphore();
 
-    inline RendererResources getRendererResources() { return RendererResources{
+    inline RendererResources getResources() { return RendererResources{
         .instance = instance,
         .physicalDevice = physicalDevice,
-        .logicalDevice = device,
+        .device = device,
         .queues = queues,
         .commandPool = commandPool,
+        .descriptorSetLayout = descriptorSetLayout,
     }; }
-    inline RendererProperties getRendererProperties() { return properties; }
-    inline DeviceFeatures getDeviceFeatures() { return getDeviceFeatures(physicalDevice); }
+    inline const RendererProperties& getProperties() { return properties; }
+    inline const DeviceFeatures getDeviceFeatures() { return getDeviceFeatures(physicalDevice); }
 
 private:
     std::vector<std::shared_ptr<Viewport>> viewports;

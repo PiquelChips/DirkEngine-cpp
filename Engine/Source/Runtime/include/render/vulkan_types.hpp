@@ -37,16 +37,17 @@ struct Queues {
 struct RendererResources {
     vk::Instance instance;
     vk::PhysicalDevice physicalDevice;
-    vk::Device logicalDevice;
+    vk::Device device;
 
     Queues queues;
     vk::CommandPool commandPool;
+    vk::DescriptorSetLayout descriptorSetLayout;
 };
 
 struct RendererProperties {
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
     bool anisotropy = false;
-    vk::Format swapChainFromat = vk::Format::eUndefined;
+    vk::Format swapChainImageFormat = vk::Format::eUndefined;
 };
 
 struct DeviceFeatures {

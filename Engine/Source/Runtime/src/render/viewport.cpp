@@ -22,32 +22,32 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
         this);
 
     auto renderer = gEngine->getRenderer();
-    auto device = renderer->getLogicalDevice();
+    auto resources = renderer->getResources();
+    auto properties = renderer->getProperties();
     renderFinishedSemaphore = renderer->createSemaphore();
 
     // COMMAND BUFFER
 
     vk::CommandBufferAllocateInfo cmdAllocInfo{};
     cmdAllocInfo.sType = vk::StructureType::eCommandBufferAllocateInfo;
-    cmdAllocInfo.commandPool = commandPool;
+    cmdAllocInfo.commandPool = resources.commandPool;
     cmdAllocInfo.level = vk::CommandBufferLevel::ePrimary;
     cmdAllocInfo.commandBufferCount = 1;
-    commandBuffer = device.allocateCommandBuffers(cmdAllocInfo)[0];
+    commandBuffer = resources.device.allocateCommandBuffers(cmdAllocInfo)[0];
 
     createRenderResources();
 }
 
 void Viewport::createRenderResources() {
     auto renderer = gEngine->getRenderer();
-    auto device = renderer->getLogicalDevice();
-    auto physicalDevice = renderer->getPhysicalDevice();
-    auto queues = renderer->getQueues();
+    auto resources = renderer->getResources();
+    auto properties = renderer->getProperties();
 
     // RENDER PASS
 
     vk::AttachmentDescription colorAttachment{};
-    colorAttachment.format = swapChainImageFormat;
-    colorAttachment.samples = msaaSamples;
+    colorAttachment.format = properties.swapChainImageFormat;
+    colorAttachment.samples = properties.msaaSamples;
     colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
     colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
     colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
@@ -59,7 +59,7 @@ void Viewport::createRenderResources() {
 
     vk::AttachmentDescription depthAttachment{};
     depthAttachment.format = depthFormat;
-    depthAttachment.samples = msaaSamples;
+    depthAttachment.samples = properties.msaaSamples;
     depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
     depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
     depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
@@ -72,7 +72,7 @@ void Viewport::createRenderResources() {
     depthAttachmentRef.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
     vk::AttachmentDescription colorAttachmentResolve{};
-    colorAttachmentResolve.format = swapChainImageFormat;
+    colorAttachmentResolve.format = properties.swapChainImageFormat;
     colorAttachmentResolve.samples = vk::SampleCountFlagBits::e1;
     colorAttachmentResolve.loadOp = vk::AttachmentLoadOp::eDontCare;
     colorAttachmentResolve.storeOp = vk::AttachmentStoreOp::eStore;
@@ -110,7 +110,7 @@ void Viewport::createRenderResources() {
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    renderPass = device.createRenderPass(renderPassInfo);
+    renderPass = resources.device.createRenderPass(renderPassInfo);
 
     // GRPAHICS PIPELINE
 
@@ -177,7 +177,7 @@ void Viewport::createRenderResources() {
     vk::PipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = vk::StructureType::ePipelineMultisampleStateCreateInfo;
     multisampling.sampleShadingEnable = vk::False;
-    multisampling.rasterizationSamples = msaaSamples;
+    multisampling.rasterizationSamples = properties.msaaSamples;
 
     // color blending
     vk::PipelineColorBlendAttachmentState colorBlendAttachment{};
@@ -198,10 +198,10 @@ void Viewport::createRenderResources() {
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = vk::StructureType::ePipelineLayoutCreateInfo;
     pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+    pipelineLayoutInfo.pSetLayouts = &resources.descriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
 
-    auto pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo);
+    auto pipelineLayout = resources.device.createPipelineLayout(pipelineLayoutInfo);
     // actually create the graphics pipeline
 
     vk::GraphicsPipelineCreateInfo pipelineInfo{};
@@ -226,28 +226,28 @@ void Viewport::createRenderResources() {
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
-    vk::Pipeline pipeline = device.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo).value;
+    vk::Pipeline pipeline = resources.device.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo).value;
 
-    device.destroyShaderModule(vert);
-    device.destroyShaderModule(frag);
+    resources.device.destroyShaderModule(vert);
+    resources.device.destroyShaderModule(frag);
 
     // COLOR RESOURCES
 
     CreateImageMemoryViewInfo colorInfo{
         .width = size.width,
         .height = size.height,
-        .format = swapChainImageFormat,
+        .format = properties.swapChainImageFormat,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
         .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
-        .numSamples = msaaSamples,
+        .numSamples = properties.msaaSamples,
     };
-    colorImageMemoryView = renderer->createImageMemoryView(createInfo);
+    colorImageMemoryView = renderer->createImageMemoryView(colorInfo);
 
     // DEPTH RESOURCES
 
     depthFormat = Renderer::findSupportedFormat(
-        physicalDevice,
+        resources.physicalDevice,
         { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint },
         vk::ImageTiling::eOptimal,
         vk::FormatFeatureFlagBits::eDepthStencilAttachment);
@@ -260,13 +260,13 @@ void Viewport::createRenderResources() {
         .usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
         .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
         .imageAspect = vk::ImageAspectFlagBits::eDepth,
-        .numSamples = msaaSamples,
+        .numSamples = properties.msaaSamples,
     };
     depthImageMemoryView = renderer->createImageMemoryView(imvInfo);
 
     vk::CommandBuffer commandBuffer = renderer->beginSingleTimeCommands();
     renderer->transitionImageLayout(commandBuffer, depthImageMemoryView.image, depthFormat, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal, 1);
-    renderer->endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
+    renderer->endSingleTimeCommands(commandBuffer, resources.queues.graphicsQueue);
 
     // TODO: out image memory view (resolve output of render pass)
     // TODO: out image sampler (to be used by ImGUI)
@@ -283,7 +283,7 @@ void Viewport::createRenderResources() {
     framebufferInfo.width = size.width;
     framebufferInfo.height = size.height;
     framebufferInfo.layers = 1;
-    framebuffer = device.createFramebuffer(framebufferInfo);
+    framebuffer = resources.device.createFramebuffer(framebufferInfo);
 }
 
 vk::SubmitInfo Viewport::render() {
