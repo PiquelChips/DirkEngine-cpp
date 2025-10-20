@@ -53,6 +53,16 @@ public:
     vk::ShaderModule loadShaderModule(const std::string& shaderName);
     vk::Semaphore createSemaphore();
 
+    inline RendererResources getRendererResources() { return RendererResources{
+        .instance = instance,
+        .physicalDevice = physicalDevice,
+        .logicalDevice = device,
+        .queues = queues,
+        .commandPool = commandPool,
+    }; }
+    inline RendererProperties getRendererProperties() { return properties; }
+    inline RendererFeatures getRendererFeatures() { return features; }
+
 private:
     std::vector<std::shared_ptr<Viewport>> viewports;
 
@@ -81,11 +91,6 @@ private:
     vk::DescriptorPool createDescriptorPool();
 
 public:
-    vk::Instance getVulkanInstance() { return instance; }
-    vk::Device getLogicalDevice() { return device; }
-    vk::PhysicalDevice getPhysicalDevice() { return physicalDevice; }
-    Queues getQueues() { return queues; }
-
     vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
 
 #ifdef ENABLE_VALIDATION_LAYERS
@@ -122,6 +127,7 @@ private:
     const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
+    RendererProperties properties;
     RendererFeatures features;
 
 public:

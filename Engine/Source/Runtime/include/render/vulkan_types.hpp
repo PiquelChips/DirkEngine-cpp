@@ -20,15 +20,38 @@ struct SwapChainSupportDetails {
     std::vector<vk::PresentModeKHR> presentModes;
 };
 
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
+
+    bool isComplete() {
+        return graphicsFamily.has_value() && presentFamily.has_value();
+    }
+};
+
+struct Queues {
+    vk::Queue graphicsQueue;
+    vk::Queue presentQueue;
+};
+
+struct RendererResources {
+    vk::Instance instance;
+    vk::PhysicalDevice physicalDevice;
+    vk::Device logicalDevice;
+
+    Queues queues;
+    vk::CommandPool commandPool;
+};
+
+struct RendererProperties {
+};
+
 struct RendererFeatures {
     bool anisotropy = false;
     int msaaSamples = 1;
-    vk::Format swapChainImageFormat = vk::Format::eUndefined;
 
     bool isComplete() {
-        return anisotropy &&
-               msaaSamples > 1 &&
-               swapChainImageFormat != vk::Format::eUndefined;
+        return anisotropy && msaaSamples > 1;
     }
 
     int getScore() {
@@ -44,20 +67,6 @@ struct RendererFeatures {
 
         return score;
     }
-};
-
-struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-
-    bool isComplete() {
-        return graphicsFamily.has_value() && presentFamily.has_value();
-    }
-};
-
-struct Queues {
-    vk::Queue graphicsQueue;
-    vk::Queue presentQueue;
 };
 
 struct SwapChainCreateInfo {
