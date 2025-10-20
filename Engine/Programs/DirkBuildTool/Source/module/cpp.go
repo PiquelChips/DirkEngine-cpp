@@ -50,9 +50,7 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 
 		incDirs := []string{"include"}
 		defines := m.Config.Defines
-		if defines == nil {
-			defines = map[string]string{}
-		}
+
 		for _, dep := range m.getDeps() {
 			if dep.IncludeDir != "" {
 				incDirs = append(incDirs, dep.IncludeDir)
@@ -116,9 +114,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 	incDirs := []string{}
 	libs := []string{}
 	defines := m.Config.Defines
-	if defines == nil {
-		defines = map[string]string{}
-	}
+
 	for _, dep := range m.getDeps() {
 		if dep.IncludeDir != "" {
 			incDirs = append(incDirs, dep.IncludeDir)

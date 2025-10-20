@@ -9,10 +9,10 @@ import (
 )
 
 type BuildType struct {
-	Name     string   `json:"-"`
-	Optimize bool     `json:"optimize"`
-	Compact  bool     `json:"compact"` // compact the output (essentially statically linking)
-	Defines  []string `json:"defines"`
+	Name     string            `json:"-"`
+	Optimize bool              `json:"optimize"`
+	Compact  bool              `json:"compact"` // compact the output (essentially statically linking)
+	Defines  map[string]string `json:"defines"`
 }
 
 type DirsConfig struct {

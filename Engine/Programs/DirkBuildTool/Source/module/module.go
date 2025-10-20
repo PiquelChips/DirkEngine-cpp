@@ -8,6 +8,7 @@ import (
 	"DirkBuildTool/setup"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"os/exec"
 	"strings"
@@ -118,6 +119,10 @@ func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
 		switch setup.Config.Platform {
 		case "Linux":
 			c.Defines["PLATFORM_LINUX"] = ""
+		}
+
+		if buildConfig.Type.Defines != nil {
+			maps.Copy(c.Defines, buildConfig.Type.Defines)
 		}
 
 		return &CppModule{

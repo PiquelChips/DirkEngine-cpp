@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <vector>
 
-#ifdef DEBUG_BUILD
+#ifdef DIRK_DEVELOPMENT_BUILD
 #ifndef DISABLE_VALIDATION_LAYERS
 #define ENABLE_VALIDATION_LAYERS
 #endif
