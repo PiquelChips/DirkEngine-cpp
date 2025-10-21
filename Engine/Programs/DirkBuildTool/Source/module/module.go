@@ -129,7 +129,6 @@ func (c *ModuleConfig) ToModule(buildConfig *models.BuildConfig) Module {
 			Target:       c.Target,
 			Path:         c.Path,
 			Std:          c.Std,
-			Lib:          c.IsLib,
 			BuildDeps:    nil,
 			Dependencies: nil,
 			Config:       c,

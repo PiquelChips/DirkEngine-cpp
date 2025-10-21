@@ -19,7 +19,6 @@ type CppModule struct {
 	Target       string
 	Path         string
 	Std          string
-	Lib          bool
 	BuildDeps    []Module
 	Dependencies []models.Dependency
 	Dependants   []models.Dependency
@@ -30,7 +29,7 @@ type CppModule struct {
 
 func (m *CppModule) GetIncludeDir() string      { return fmt.Sprintf("%s/include", m.Path) }
 func (m *CppModule) GetDefines() models.Defines { return m.Config.Defines }
-func (m *CppModule) IsLib() bool                { return m.Lib }
+func (m *CppModule) IsLib() bool                { return m.Config.IsLib }
 func (m *CppModule) GetName() string            { return m.Name }
 
 func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
@@ -151,7 +150,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,
-		IsLib:     m.Lib,
+		IsLib:     m.IsLib(),
 		IsStatic:  m.build.Type.Compact,
 		Optimize:  m.build.Type.Optimize,
 		CFlags:    fmt.Sprintf("-fPIC %s -std=%s", warningFlags, m.Std),
