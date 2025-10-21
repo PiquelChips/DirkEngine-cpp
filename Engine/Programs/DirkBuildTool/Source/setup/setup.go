@@ -80,17 +80,22 @@ func Setup(buildConfig *BuildConfig) error {
 		"glm": {
 			Name:         "glm",
 			IsHeaderOnly: true,
-			IncludeDir:   ".", // relative to thirdparty dir
+			IncludeDir:   ".",
 		},
 		"tinygltf": {
 			Name:         "tinygltf",
 			IsHeaderOnly: true,
-			IncludeDir:   ".", // relative to thirdparty dir
+			IncludeDir:   ".",
 		},
 		"vulkan": {
 			Name:         "vulkan",
 			IsHeaderOnly: false,
 			IncludeDir:   fmt.Sprintf("%s/include", vulkanDir),
+		},
+		"imgui": {
+			Name:         "imgui",
+			IsHeaderOnly: false,
+			IncludeDir:   ".",
 		},
 	}
 
@@ -109,6 +114,8 @@ func Setup(buildConfig *BuildConfig) error {
 			dep.IncludeDir = incDir
 		}
 	}
+
+	// TODO: build all required thirdparty libs
 
 	// write the file
 	data, err := json.Marshal(Config)

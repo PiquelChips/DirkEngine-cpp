@@ -10,7 +10,8 @@
     "external": [
         "glm",
         "tinygltf",
-        "vulkan"
+        "vulkan",
+        "imgui"
     ],
     "defines": {
         "GLFW_INCLUDE_NONE": "",
