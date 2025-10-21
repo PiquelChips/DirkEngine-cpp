@@ -78,11 +78,6 @@ func Setup(buildConfig *models.BuildConfig) error {
 			IsHeaderOnly: false,
 			IncludeDir:   fmt.Sprintf("%s/include", vulkanDir),
 		},
-		"imgui": {
-			Name:         "imgui",
-			IsHeaderOnly: false,
-			IncludeDir:   ".",
-		},
 	}
 
 	// make all paths absolute
@@ -100,8 +95,6 @@ func Setup(buildConfig *models.BuildConfig) error {
 			dep.IncludeDir = incDir
 		}
 	}
-
-	// TODO: build all required thirdparty libs
 
 	// write the file
 	data, err := json.Marshal(config.Setup)
