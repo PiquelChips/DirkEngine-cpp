@@ -4,7 +4,6 @@ import (
 	"DirkBuildTool/config"
 	"DirkBuildTool/make"
 	"DirkBuildTool/models"
-	"DirkBuildTool/setup"
 	"fmt"
 	"io/fs"
 	"log"
@@ -221,7 +220,7 @@ func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []
 
 	// external dependencies
 	for _, depName := range m.Config.Ext {
-		dep, ok := setup.Config.Thirdparty[depName]
+		dep, ok := config.Setup.Thirdparty[depName]
 		if !ok {
 			log.Printf("External dependency %s required by module %s does not exist\n", depName, m.Name)
 			continue

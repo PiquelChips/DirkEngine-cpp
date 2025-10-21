@@ -5,7 +5,6 @@ import (
 	"DirkBuildTool/make"
 	"DirkBuildTool/models"
 	"DirkBuildTool/output"
-	"DirkBuildTool/setup"
 	"fmt"
 	"log"
 	"maps"
@@ -116,7 +115,7 @@ func (c *ModuleConfig) ToModule(buildConfig *models.BuildConfig) Module {
 			c.Defines = map[string]string{}
 		}
 
-		switch setup.Config.Platform {
+		switch config.Setup.Platform {
 		case "Linux":
 			c.Defines["PLATFORM_LINUX"] = ""
 		}

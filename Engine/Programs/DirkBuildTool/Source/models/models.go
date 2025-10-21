@@ -1,6 +1,6 @@
 package models
 
-import "DirkBuildTool/config"
+import "time"
 
 type Dependency struct {
 	Name         string            `json:"name"`
@@ -19,6 +19,20 @@ type CompileCommand struct {
 }
 
 type BuildConfig struct {
-	Target string            `json:"target"`
-	Type   *config.BuildType `json:"build_type"`
+	Target string     `json:"target"`
+	Type   *BuildType `json:"build_type"`
+}
+
+type SetupConfig struct {
+	Thirdparty  map[string]*Dependency `json:"thirdparty"`
+	LastSetup   time.Time              `json:"last_setup"`
+	BuildConfig *BuildConfig           `json:"build_config"`
+	Platform    string                 `json:"platform"`
+}
+
+type BuildType struct {
+	Name     string            `json:"-"`
+	Optimize bool              `json:"optimize"`
+	Compact  bool              `json:"compact"` // compact the output (essentially statically linking)
+	Defines  map[string]string `json:"defines"`
 }

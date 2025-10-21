@@ -14,15 +14,6 @@ import (
 
 const setupFile = "setup.json"
 
-type SetupConfig struct {
-	Thirdparty  map[string]*models.Dependency `json:"thirdparty"`
-	LastSetup   time.Time                     `json:"last_setup"`
-	BuildConfig *models.BuildConfig           `json:"build_config"`
-	Platform    string                        `json:"platform"`
-}
-
-var Config *SetupConfig
-
 func isSetupValid(buildConfig *models.BuildConfig) bool {
 	// attempt to read setup file
 	data, err := output.ReadIntFile(setupFile)
@@ -31,7 +22,7 @@ func isSetupValid(buildConfig *models.BuildConfig) bool {
 	}
 
 	// check json is valid
-	if err := json.Unmarshal(data, Config); err != nil {
+	if err := json.Unmarshal(data, config.Setup); err != nil {
 		return false
 	}
 
@@ -42,11 +33,11 @@ func isSetupValid(buildConfig *models.BuildConfig) bool {
 	}
 
 	// check dif between LastSetup & last file update
-	if Config.LastSetup.Sub(info.ModTime()).Seconds() > 1 {
+	if config.Setup.LastSetup.Sub(info.ModTime()).Seconds() > 1 {
 		return false
 	}
 
-	if Config.BuildConfig != buildConfig {
+	if config.Setup.BuildConfig != buildConfig {
 		return false
 	}
 
@@ -54,15 +45,15 @@ func isSetupValid(buildConfig *models.BuildConfig) bool {
 }
 
 func Setup(buildConfig *models.BuildConfig) error {
-	Config = &SetupConfig{}
+	config.Setup = &models.SetupConfig{}
 	if isSetupValid(buildConfig) {
 		return nil
 	}
 	log.Printf("No valid setup file detected. Running setup\n")
 
-	Config.LastSetup = time.Now()
-	Config.BuildConfig = buildConfig
-	Config.Platform = "Linux"
+	config.Setup.LastSetup = time.Now()
+	config.Setup.BuildConfig = buildConfig
+	config.Setup.Platform = "Linux"
 
 	os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Intermediate), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Root))
 
@@ -71,7 +62,7 @@ func Setup(buildConfig *models.BuildConfig) error {
 	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so.1", vulkanDir), fmt.Sprintf("%s/libvulkan.so.1", config.Dirs.Binaries))
 
 	// hardcoded deps
-	Config.Thirdparty = map[string]*models.Dependency{
+	config.Setup.Thirdparty = map[string]*models.Dependency{
 		"glm": {
 			Name:         "glm",
 			IsHeaderOnly: true,
@@ -95,7 +86,7 @@ func Setup(buildConfig *models.BuildConfig) error {
 	}
 
 	// make all paths absolute
-	for _, dep := range Config.Thirdparty {
+	for _, dep := range config.Setup.Thirdparty {
 		if !filepath.IsAbs(dep.IncludeDir) {
 			dir, err := getDir(dep.Name)
 			if err != nil {
@@ -113,7 +104,7 @@ func Setup(buildConfig *models.BuildConfig) error {
 	// TODO: build all required thirdparty libs
 
 	// write the file
-	data, err := json.Marshal(Config)
+	data, err := json.Marshal(config.Setup)
 	if err != nil {
 		return nil
 	}

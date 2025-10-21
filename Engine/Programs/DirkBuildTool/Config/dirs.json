@@ -4,6 +4,7 @@
     "thirdparty": "Engine/Thirdparty",
     "modules": [
         "Engine",
-        "Engine/Source"
+        "Engine/Source",
+        "Engine/Thirdparty"
     ]
 }
