@@ -62,7 +62,7 @@ func Setup(buildConfig *models.BuildConfig) error {
 	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so.1", vulkanDir), fmt.Sprintf("%s/libvulkan.so.1", config.Dirs.Binaries))
 
 	// hardcoded deps
-	config.Setup.Thirdparty = map[string]*models.Dependency{
+	config.Setup.Thirdparty = map[string]*models.ThirdpartyDependency{
 		"glm": {
 			Name:         "glm",
 			IsHeaderOnly: true,

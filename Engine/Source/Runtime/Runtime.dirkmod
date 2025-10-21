@@ -5,13 +5,11 @@
     "dependencies": [
         "Common",
         "Shaders",
-        "Platform"
-    ],
-    "external": [
+        "Platform",
         "glm",
         "tinygltf",
         "vulkan",
-        "imgui"
+        "ImGUI"
     ],
     "defines": {
         "GLFW_INCLUDE_NONE": "",

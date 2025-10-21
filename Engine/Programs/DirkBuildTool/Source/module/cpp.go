@@ -15,18 +15,23 @@ import (
 
 // constructed for building
 type CppModule struct {
-	Name       string
-	Target     string
-	Path       string
-	Std        string
-	IsLib      bool
-	Deps       []Module
-	Ext        []*models.Dependency
-	Dependants []*models.Dependency
-	Config     *ModuleConfig
-	selfDep    *models.Dependency // itself represented as a dependency
-	build      *models.BuildConfig
+	Name         string
+	Target       string
+	Path         string
+	Std          string
+	Lib          bool
+	BuildDeps    []Module
+	Dependencies []models.Dependency
+	Dependants   []models.Dependency
+	Config       *ModuleConfig
+	selfDep      *models.Dependency // itself represented as a dependency
+	build        *models.BuildConfig
 }
+
+func (m *CppModule) GetIncludeDir() string      { return fmt.Sprintf("%s/include", m.Path) }
+func (m *CppModule) GetDefines() models.Defines { return m.Config.Defines }
+func (m *CppModule) IsLib() bool                { return m.Lib }
+func (m *CppModule) GetName() string            { return m.Name }
 
 func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 	compileCommands := models.CompileCommands{}
@@ -51,18 +56,18 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		defines := m.Config.Defines
 
 		for _, dep := range m.getDeps() {
-			if dep.IncludeDir != "" {
-				incDirs = append(incDirs, dep.IncludeDir)
+			if dep.GetIncludeDir() != "" {
+				incDirs = append(incDirs, dep.GetIncludeDir())
 			}
 
-			if dep.Defines != nil {
-				maps.Copy(defines, dep.Defines)
+			if dep.GetDefines() != nil {
+				maps.Copy(defines, dep.GetDefines())
 			}
 		}
 
 		for _, dep := range m.Dependants {
-			if dep.Defines != nil {
-				maps.Copy(defines, dep.Defines)
+			if dep.GetDefines() != nil {
+				maps.Copy(defines, dep.GetDefines())
 			}
 		}
 
@@ -94,7 +99,7 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		return nil, err
 	}
 
-	for _, dep := range m.Deps {
+	for _, dep := range m.BuildDeps {
 		if cppModule, ok := dep.(*CppModule); ok {
 			modCommands, err := cppModule.GenerateCompileCommands()
 			if err != nil {
@@ -115,24 +120,24 @@ func (m *CppModule) ToMakefile() make.Makefile {
 	defines := m.Config.Defines
 
 	for _, dep := range m.getDeps() {
-		if dep.IncludeDir != "" {
-			incDirs = append(incDirs, dep.IncludeDir)
+		if dep.GetIncludeDir() != "" {
+			incDirs = append(incDirs, dep.GetIncludeDir())
 		}
 
-		if dep.Defines != nil {
-			maps.Copy(defines, dep.Defines)
+		if dep.GetDefines() != nil {
+			maps.Copy(defines, dep.GetDefines())
 		}
 
-		if dep.IsHeaderOnly {
+		if !dep.IsLib() {
 			continue
 		}
 
-		libs = append(libs, dep.Name)
+		libs = append(libs, dep.GetName())
 	}
 
 	for _, dep := range m.Dependants {
-		if dep.Defines != nil {
-			maps.Copy(defines, dep.Defines)
+		if dep.GetDefines() != nil {
+			maps.Copy(defines, dep.GetDefines())
 		}
 	}
 
@@ -146,7 +151,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,
-		IsLib:     m.IsLib,
+		IsLib:     m.Lib,
 		IsStatic:  m.build.Type.Compact,
 		Optimize:  m.build.Type.Optimize,
 		CFlags:    fmt.Sprintf("-fPIC %s -std=%s", warningFlags, m.Std),
@@ -154,39 +159,18 @@ func (m *CppModule) ToMakefile() make.Makefile {
 }
 
 func (m *CppModule) getBuildDeps() []Module {
-	return m.Deps
-}
-
-func (m *CppModule) getName() string {
-	return m.Name
+	return m.BuildDeps
 }
 
 func (m *CppModule) getPath() string {
 	return m.Path
 }
 
-func (m *CppModule) toDep() *models.Dependency {
-	if m.selfDep != nil {
-		return m.selfDep
-	}
+func (m *CppModule) getDeps() []models.Dependency {
+	deps := m.Dependencies
 
-	m.selfDep = &models.Dependency{
-		Name:         m.Name,
-		IsHeaderOnly: false,
-		IncludeDir:   fmt.Sprintf("%s/include", m.Path),
-		Defines:      m.Config.Defines,
-	}
-
-	return m.selfDep
-}
-
-func (m *CppModule) getDeps() []*models.Dependency {
-	deps := m.Ext
-
-	for _, mod := range m.Deps {
-		if cppMod, ok := mod.(*CppModule); ok {
-			deps = append(deps, cppMod.toDep())
-		}
+	for _, mod := range m.BuildDeps {
+		deps = append(deps, mod)
 
 		modDeps := mod.getDeps()
 		// cleaning duplicates
@@ -200,32 +184,30 @@ func (m *CppModule) getDeps() []*models.Dependency {
 	return deps
 }
 
-func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []*models.Dependency) error {
-	if slices.Contains(dependants, m.toDep()) {
-		return fmt.Errorf("Circular dependency detected. Module %s has already been included\n", m.Name)
+func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []models.Dependency) error {
+	for _, dep := range dependants {
+		if m == dep {
+			return fmt.Errorf("Circular dependency detected. Module %s has already been included\n", m.Name)
+		}
 	}
 
 	m.Dependants = dependants
-	for _, moduleName := range m.Config.Deps {
-		mod, ok := modules[moduleName]
-		if !ok {
-			log.Printf("Module %s required by module %s does not exist\n", moduleName, m.Name)
+	for _, dep := range m.Config.Deps {
+		if mod, ok := modules[dep]; ok {
+			m.Dependencies = append(m.Dependencies, mod)
+			m.BuildDeps = append(m.BuildDeps, mod)
+			if engineMod, ok := mod.(*CppModule); ok {
+				engineMod.ResolveDependencies(modules, append(dependants, m))
+			}
 			continue
 		}
-		m.Deps = append(m.Deps, mod)
-		if engineMod, ok := mod.(*CppModule); ok {
-			engineMod.ResolveDependencies(modules, append(dependants, m.toDep()))
-		}
-	}
 
-	// external dependencies
-	for _, depName := range m.Config.Ext {
-		dep, ok := config.Setup.Thirdparty[depName]
-		if !ok {
-			log.Printf("External dependency %s required by module %s does not exist\n", depName, m.Name)
+		if mod, ok := config.Setup.Thirdparty[dep]; ok {
+			m.Dependencies = append(m.Dependencies, mod)
 			continue
 		}
-		m.Ext = append(m.Ext, dep)
+
+		log.Printf("Module %s required by module %s does not exist\n", dep, m.Name)
 	}
 
 	return nil
