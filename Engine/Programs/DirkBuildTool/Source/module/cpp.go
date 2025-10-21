@@ -26,7 +26,7 @@ type CppModule struct {
 	Dependants []*models.Dependency
 	Config     *ModuleConfig
 	selfDep    *models.Dependency // itself represented as a dependency
-	build      *setup.BuildConfig
+	build      *models.BuildConfig
 }
 
 func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {

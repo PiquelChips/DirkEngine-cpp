@@ -99,7 +99,7 @@ type ModuleConfig struct {
 	Defines map[string]string `json:"defines"`
 }
 
-func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
+func (c *ModuleConfig) ToModule(buildConfig *models.BuildConfig) Module {
 	if c.Type == "" {
 		c.Type = "cpp"
 	}

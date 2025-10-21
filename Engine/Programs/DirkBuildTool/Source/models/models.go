@@ -1,5 +1,7 @@
 package models
 
+import "DirkBuildTool/config"
+
 type Dependency struct {
 	Name         string            `json:"name"`
 	IsHeaderOnly bool              `json:"header_only"`
@@ -14,4 +16,9 @@ type CompileCommand struct {
 	Arguments []string `json:"arguments"`
 	File      string   `json:"file"`
 	Output    string   `json:"output"`
+}
+
+type BuildConfig struct {
+	Target string            `json:"target"`
+	Type   *config.BuildType `json:"build_type"`
 }

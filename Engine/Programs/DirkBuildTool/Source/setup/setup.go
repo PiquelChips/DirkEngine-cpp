@@ -14,21 +14,16 @@ import (
 
 const setupFile = "setup.json"
 
-type BuildConfig struct {
-	Target string            `json:"target"`
-	Type   *config.BuildType `json:"build_type"`
-}
-
 type SetupConfig struct {
 	Thirdparty  map[string]*models.Dependency `json:"thirdparty"`
 	LastSetup   time.Time                     `json:"last_setup"`
-	BuildConfig *BuildConfig                  `json:"build_config"`
+	BuildConfig *models.BuildConfig           `json:"build_config"`
 	Platform    string                        `json:"platform"`
 }
 
 var Config *SetupConfig
 
-func isSetupValid(buildConfig *BuildConfig) bool {
+func isSetupValid(buildConfig *models.BuildConfig) bool {
 	// attempt to read setup file
 	data, err := output.ReadIntFile(setupFile)
 	if err != nil {
@@ -58,7 +53,7 @@ func isSetupValid(buildConfig *BuildConfig) bool {
 	return true
 }
 
-func Setup(buildConfig *BuildConfig) error {
+func Setup(buildConfig *models.BuildConfig) error {
 	Config = &SetupConfig{}
 	if isSetupValid(buildConfig) {
 		return nil

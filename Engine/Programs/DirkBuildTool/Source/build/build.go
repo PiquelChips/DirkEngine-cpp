@@ -2,9 +2,9 @@ package build
 
 import (
 	"DirkBuildTool/config"
+	"DirkBuildTool/models"
 	"DirkBuildTool/module"
 	"DirkBuildTool/output"
-	"DirkBuildTool/setup"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,7 +12,7 @@ import (
 	"os/exec"
 )
 
-func Build(buildConfig *setup.BuildConfig) error {
+func Build(buildConfig *models.BuildConfig) error {
 	log.Printf("Building %s for %s\n", buildConfig.Target, buildConfig.Type.Name)
 	modules := map[string]module.Module{}
 	for _, dir := range config.Dirs.Modules {
