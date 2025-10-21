@@ -1,10 +1,8 @@
 {
-    "name": "Platform",
+    "name": "ImGUI",
     "c_standard": "c++23",
     "is_lib": true,
     "dependencies": [
-        "Common",
-        "vulkan",
-        "glm"
+        "vulkan"
     ]
 }
