@@ -21,9 +21,9 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     gEngine = this;
 
     renderer = std::make_unique<Renderer>();
-    world = std::make_unique<World>(createInfo.actorCreateInfos);
+    world = std::make_shared<World>(createInfo.actorCreateInfos);
 
-    auto viewport = renderer->createViewport(ViewportCreateInfo{ .world = world.get() });
+    auto viewport = renderer->createViewport(ViewportCreateInfo{ .world = world });
     auto window = createWindow(WindowCreateInfo{
         .title = createInfo.appName,
         .width = 1200,

@@ -41,7 +41,7 @@ public:
 
 private:
     std::unique_ptr<Renderer> renderer;
-    std::unique_ptr<World> world;
+    std::shared_ptr<World> world;
 
     std::vector<std::shared_ptr<Window>> windows;
 
