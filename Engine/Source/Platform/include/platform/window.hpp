@@ -2,8 +2,11 @@
 
 #include "glm/glm.hpp"
 #include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_handles.hpp"
+#include "vulkan/vulkan_structs.hpp"
 
 #include <memory>
+#include <string_view>
 
 #pragma once
 
@@ -11,6 +14,7 @@ namespace dirk::Platform {
 
 class Window;
 class PlatformWindowImpl;
+class Platform;
 
 struct SwapChainImage {
     vk::ImageView imageView;
@@ -21,7 +25,14 @@ struct SwapChainImage {
 
 struct WindowCreateInfo {
     std::string_view title;
-    std::uint32_t width, height;
+    vk::Extent2D size;
+
+    bool focused;
+    bool visible;
+    bool decorated;
+    bool floating;
+
+    Platform* platform;
 };
 
 /**
@@ -32,36 +43,23 @@ class Window {
 public:
     Window(const WindowCreateInfo& createInfo);
 
-    // rendering interface
-    vk::SubmitInfo render();
-    vk::PresentInfoKHR present();
-    void resize(vk::Extent2D inSize);
-
     vk::Extent2D getSize() const;
+    void setSize(vk::Extent2D inSize);
     glm::vec2 getPosition() const;
-    bool isMinimized() const;
-    bool shouldClose() const;
+    void setPosition(const glm::vec2& inPosition);
+    void setTitle(std::string_view inTitle);
+    std::string_view getTitle();
 
-    void processPlatformEvents();
+    bool isFocused();
+    bool isMinimized();
+
+    void updateVisibility(bool inVisible);
+
+    vk::SurfaceKHR createSurface(vk::Instance instance);
 
 private:
-    std::unique_ptr<Platform::PlatformWindowImpl> platformWindow;
-
-    vk::SurfaceKHR surface;
-    vk::SwapchainKHR swapChain;
-    std::vector<SwapChainImage> swapChainImages;
-
-    vk::Semaphore imageAvailableSemaphore;
-    vk::Semaphore renderFinishedSemaphore;
-
-    vk::Format swapChainImageFormat;
-    vk::Extent2D swapChainExtent;
-
-    std::uint32_t currentFrame;
-
-    vk::CommandBuffer commandBuffer;
-
-    vk::RenderPass renderPass;
+    Platform* platform;
+    std::unique_ptr<PlatformWindowImpl> platformWindow;
 };
 
 // interface for all platform windows

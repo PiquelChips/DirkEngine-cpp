@@ -15,6 +15,7 @@ struct PlatformCreateInfo {};
 
 struct ImGuiData {
     ImGuiContext* context;
+    Platform* platform;
     static constexpr std::string_view platformName = "imgui_impl_dirk";
     std::shared_ptr<Window> window;
     std::array<Cursor, ImGuiMouseCursor_COUNT> mouseCursors;
@@ -43,19 +44,19 @@ public:
 
 private:
     // platform funcs used by ImGui
-    static void CreateWindow(ImGuiViewport* vp);                    // . . U . .  // Create a new platform window for the given viewport
-    static void DestroyWindow(ImGuiViewport* vp);                   // N . U . D  //
-    static void ShowWindow(ImGuiViewport* vp);                      // . . U . .  // Newly created windows are initially hidden so SetWindowPos/Size/Title can be called on them before showing the window
-    static void SetWindowPos(ImGuiViewport* vp, ImVec2 pos);        // . . U . .  // Set platform window position (given the upper-left corner of client area)
-    static ImVec2 GetWindowPos(ImGuiViewport* vp);                  // N . . . .  //
-    static void SetWindowSize(ImGuiViewport* vp, ImVec2 size);      // . . U . .  // Set platform window client area size (ignoring OS decorations such as OS title bar etc.)
-    static ImVec2 GetWindowSize(ImGuiViewport* vp);                 // N . . . .  // Get platform window client area size
-    static ImVec2 GetWindowFramebufferScale(ImGuiViewport* vp);     // N . . . .  // Return viewport density. Always 1,1 on Windows, often 2,2 on Retina display on macOS/iOS. MUST BE INTEGER VALUES.
-    static void SetWindowFocus(ImGuiViewport* vp);                  // N . . . .  // Move window to front and set input focus
-    static bool GetWindowFocus(ImGuiViewport* vp);                  // . . U . .  //
-    static bool GetWindowMinimized(ImGuiViewport* vp);              // N . . . .  // Get platform window minimized state. When minimized, we generally won't attempt to get/set size and contents will be culled more easily
-    static void SetWindowTitle(ImGuiViewport* vp, const char* str); // . . U . .  // Set platform window title (given an UTF-8 string)
-    static int CreateVkSurface(ImGuiViewport* vp, ImU64 vk_inst, const void* vk_allocators, ImU64* out_vk_surface);
+    static void ImGui_CreateWindow(ImGuiViewport* viewport);                      // . . U . .  // Create a new platform window for the given viewport
+    static void ImGui_DestroyWindow(ImGuiViewport* viewport);                     // N . U . D  //
+    static void ImGui_ShowWindow(ImGuiViewport* viewport);                        // . . U . .  // Newly created windows are initially hidden so SetWindowPos/Size/Title can be called on them before showing the window
+    static void ImGui_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos);          // . . U . .  // Set platform window position (given the upper-left corner of client area)
+    static ImVec2 ImGui_GetWindowPos(ImGuiViewport* viewport);                    // N . . . .  //
+    static void ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size);        // . . U . .  // Set platform window client area size (ignoring OS decorations such as OS title bar etc.)
+    static ImVec2 ImGui_GetWindowSize(ImGuiViewport* viewport);                   // N . . . .  // Get platform window client area size
+    static ImVec2 ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport);       // N . . . .  // Return viewport density. Always 1,1 on Windows, often 2,2 on Retina display on macOS/iOS. MUST BE INTEGER VALUES.
+    static void ImGui_SetWindowFocus(ImGuiViewport* viewport);                    // N . . . .  // Move window to front and set input focus
+    static bool ImGui_GetWindowFocus(ImGuiViewport* viewport);                    // . . U . .  //
+    static bool ImGui_GetWindowMinimized(ImGuiViewport* viewport);                // N . . . .  // Get platform window minimized state. When minimized, we generally won't attempt to get/set size and contents will be culled more easily
+    static void ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title); // . . U . .  // Set platform window title (given an UTF-8 string)
+    static int ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface);
 
     // callbacks for platform events
     void focusWindowCallback(std::shared_ptr<Window> window, bool focused);
@@ -67,12 +68,16 @@ private:
     void charCallback(std::shared_ptr<Window> window, unsigned int c);
 
 private:
-    ImGuiData* getBackendData();
-    ImGuiData* getBackendData(std::shared_ptr<Window> window);
+    static ImGuiData* getBackendData();
+    static ImGuiData* getBackendData(std::shared_ptr<Window> window);
 
     void updateMonitors();
     void updateMouseData();
     void updateMouseCursor();
+
+    std::shared_ptr<Window> createWindow(const WindowCreateInfo& createInfo);
+    void destroyWindow(std::shared_ptr<Window> window);
+    void focusWindow(std::shared_ptr<Window> window);
 
     std::unordered_map<std::shared_ptr<Window>, ImGuiContext*> contextMap;
 
