@@ -2,7 +2,11 @@
 
 #include "imgui.h"
 #include "input/keys.hpp"
+#include "platform/window.hpp"
+#include "vulkan/vulkan_core.h"
+#include "vulkan/vulkan_enums.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace dirk::Platform {
@@ -25,26 +29,26 @@ Platform::Platform(const PlatformCreateInfo& createInfo) {
     io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can call io.AddMouseViewportEvent() with correct data (optional)
 
     bd->context = ImGui::GetCurrentContext();
-
+    bd->platform = this;
     bd->window = window;
 
     contextMap[window] = bd->context;
 
     // platform support
     ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
-    platformIO.Platform_CreateWindow = CreateWindow;
-    platformIO.Platform_DestroyWindow = DestroyWindow;
-    platformIO.Platform_ShowWindow = ShowWindow;
-    platformIO.Platform_SetWindowPos = SetWindowPos;
-    platformIO.Platform_GetWindowPos = GetWindowPos;
-    platformIO.Platform_SetWindowSize = SetWindowSize;
-    platformIO.Platform_GetWindowSize = GetWindowSize;
-    platformIO.Platform_GetWindowFramebufferScale = GetWindowFramebufferScale;
-    platformIO.Platform_SetWindowFocus = SetWindowFocus;
-    platformIO.Platform_GetWindowFocus = GetWindowFocus;
-    platformIO.Platform_GetWindowMinimized = GetWindowMinimized;
-    platformIO.Platform_SetWindowTitle = SetWindowTitle;
-    platformIO.Platform_CreateVkSurface = CreateVkSurface;
+    platformIO.Platform_CreateWindow = ImGui_CreateWindow;
+    platformIO.Platform_DestroyWindow = ImGui_DestroyWindow;
+    platformIO.Platform_ShowWindow = ImGui_ShowWindow;
+    platformIO.Platform_SetWindowPos = ImGui_SetWindowPos;
+    platformIO.Platform_GetWindowPos = ImGui_GetWindowPos;
+    platformIO.Platform_SetWindowSize = ImGui_SetWindowSize;
+    platformIO.Platform_GetWindowSize = ImGui_GetWindowSize;
+    platformIO.Platform_GetWindowFramebufferScale = ImGui_GetWindowFramebufferScale;
+    platformIO.Platform_SetWindowFocus = ImGui_SetWindowFocus;
+    platformIO.Platform_GetWindowFocus = ImGui_GetWindowFocus;
+    platformIO.Platform_GetWindowMinimized = ImGui_GetWindowMinimized;
+    platformIO.Platform_SetWindowTitle = ImGui_SetWindowTitle;
+    platformIO.Platform_CreateVkSurface = ImGui_CreateVkSurface;
 
     platformIO.Platform_GetClipboardTextFn = nullptr;
     platformIO.Platform_SetClipboardTextFn = nullptr;
@@ -114,22 +118,117 @@ void Platform::tick(float deltaTime) {
     updateMouseCursor();
 }
 
-// TODO: implement platform funcs
-void Platform::CreateWindow(ImGuiViewport* vp) {}
-void Platform::DestroyWindow(ImGuiViewport* vp) {}
-void Platform::ShowWindow(ImGuiViewport* vp) {}
-void Platform::SetWindowPos(ImGuiViewport* vp, ImVec2 pos) {}
-ImVec2 Platform::GetWindowPos(ImGuiViewport* vp) {}
-void Platform::SetWindowSize(ImGuiViewport* vp, ImVec2 size) {}
-ImVec2 Platform::GetWindowSize(ImGuiViewport* vp) {}
-ImVec2 Platform::GetWindowFramebufferScale(ImGuiViewport* vp) {}
-void Platform::SetWindowFocus(ImGuiViewport* vp) {}
-bool Platform::GetWindowFocus(ImGuiViewport* vp) {}
-bool Platform::GetWindowMinimized(ImGuiViewport* vp) {}
-void Platform::SetWindowTitle(ImGuiViewport* vp, const char* str) {}
-int Platform::CreateVkSurface(ImGuiViewport* vp, ImU64 vk_inst, const void* vk_allocators, ImU64* out_vk_surface) {}
+void Platform::ImGui_CreateWindow(ImGuiViewport* viewport) {
+    ImGuiData* bd = getBackendData();
+    ImGuiViewportData* vd = IM_NEW(ImGuiViewportData)();
+    viewport->PlatformUserData = vd;
 
-// TODO: implement platfrom event callbacks
+    // Workaround for Linux: ignore mouse up events corresponding to losing focus of the previously focused window (#7733, #3158, #7922)
+    bd->mouseIgnoreButtonUpWaitForFocusLoss = true;
+
+    WindowCreateInfo createInfo{
+        .title = "No Title Yet",
+        .size = { (uint32_t) viewport->Size.x, (uint32_t) viewport->Size.y },
+        .focused = false,
+        .visible = false,
+        .decorated = (viewport->Flags & ImGuiViewportFlags_NoDecoration) ? false : true,
+        .floating = (viewport->Flags & ImGuiViewportFlags_TopMost) ? true : false,
+    };
+
+    vd->window = bd->platform->createWindow(createInfo);
+    vd->windowOwned = true;
+    bd->platform->contextMap[vd->window] = bd->context;
+    viewport->PlatformHandle = (void*) vd->window.get();
+
+    vd->window->setPosition({ viewport->Pos.x, viewport->Pos.y });
+}
+
+void Platform::ImGui_DestroyWindow(ImGuiViewport* viewport) {
+    ImGuiData* bd = getBackendData();
+    if (ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData) {
+        if (vd->windowOwned) {
+            // Release any keys that were pressed in the window being destroyed and are still held down,
+            // because we will not receive any release events after window is destroyed.
+            for (int i = 0; i < bd->keyOwnerWindows.size(); i++)
+                if (bd->keyOwnerWindows[i] == vd->window)
+                    bd->platform->keyCallback(vd->window, (Input::Key) i, Input::KeyState::Released);
+
+            bd->platform->contextMap.erase(vd->window);
+            bd->platform->destroyWindow(vd->window);
+        }
+        vd->window = nullptr;
+        IM_DELETE(vd);
+    }
+    viewport->PlatformUserData = viewport->PlatformHandle = nullptr;
+}
+
+void Platform::ImGui_ShowWindow(ImGuiViewport* viewport) {
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    vd->window->updateVisibility(true);
+}
+
+void Platform::ImGui_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos) {
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    vd->ignoreWindowPosEventFrame = ImGui::GetFrameCount();
+    vd->window->setPosition({ pos.x, pos.y });
+}
+
+ImVec2 Platform::ImGui_GetWindowPos(ImGuiViewport* viewport) {
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    auto pos = vd->window->getPosition();
+    return ImVec2(pos.x, pos.y);
+}
+
+void Platform::ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size) {
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    vd->ignoreWindowSizeEventFrame = ImGui::GetFrameCount();
+    vd->window->setSize({ (uint32_t) size.x, (uint32_t) size.y });
+}
+
+ImVec2 Platform::ImGui_GetWindowSize(ImGuiViewport* viewport) {
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    auto size = vd->window->getSize();
+    return ImVec2(size.width, size.height);
+}
+
+ImVec2 Platform::ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport) {
+    // TODO: is this really necessary?
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    ImVec2 framebuffer_scale;
+    ImGui_ImplGlfw_GetWindowSizeAndFramebufferScale(vd->Window, nullptr, &framebuffer_scale);
+    return framebuffer_scale;
+}
+
+void Platform::ImGui_SetWindowFocus(ImGuiViewport* viewport) {
+    ImGuiData* bd = getBackendData();
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    bd->platform->focusWindow(vd->window);
+}
+
+bool Platform::ImGui_GetWindowFocus(ImGuiViewport* viewport) {
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    return vd->window->isFocused();
+}
+
+bool Platform::ImGui_GetWindowMinimized(ImGuiViewport* viewport) {
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    return vd->window->isMinimized();
+}
+
+void Platform::ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title) {
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    vd->window->setTitle(title);
+}
+
+int Platform::ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface) {
+    ImGuiData* bd = getBackendData();
+    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
+    IM_UNUSED(bd);
+
+    outSurface = (ImU64*) (VkSurfaceKHR) vd->window->createSurface((VkInstance) instance);
+    return (int) vk::Result::eSuccess;
+}
+
 void Platform::focusWindowCallback(std::shared_ptr<Window> window, bool focused) {
     ImGuiData* bd = getBackendData(window);
 
@@ -210,7 +309,8 @@ ImGuiData* Platform::getBackendData() {
 }
 
 ImGuiData* Platform::getBackendData(std::shared_ptr<Window> window) {
-    ImGuiContext* ctx = contextMap.at(window);
+    ImGuiData* bd = getBackendData(window);
+    ImGuiContext* ctx = bd->platform->contextMap.at(window);
     return (ImGuiData*) ImGui::GetIO(ctx).BackendPlatformUserData;
 }
 
@@ -256,7 +356,7 @@ void Platform::updateMonitors() {
 void Platform::updateMouseData() {
     // TODO: update mouse data
     /**
-    ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
+    ImGuiData* bd = ImGui_ImplGlfw_GetBackendData();
     ImGuiIO& io = ImGui::GetIO();
     ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
 
@@ -327,7 +427,7 @@ void Platform::updateMouseCursor() {
     // TODO: update mouse cursor
     /**
     ImGuiIO& io = ImGui::GetIO();
-    ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
+    ImGuiData* bd = ImGui_ImplGlfw_GetBackendData();
     if ((io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) || glfwGetInputMode(bd->Window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
         return;
 
@@ -353,126 +453,126 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
 {
     switch (key)
     {
-        case Input::Key::Tab: return ImGuiKey_Tab;
-        case Input::Key::Left: return ImGuiKey_LeftArrow;
-        case Input::Key::Right: return ImGuiKey_RightArrow;
-        case Input::Key::Up: return ImGuiKey_UpArrow;
-        case Input::Key::Down: return ImGuiKey_DownArrow;
-        case Input::Key::PageUp: return ImGuiKey_PageUp;
-        case Input::Key::PageDown: return ImGuiKey_PageDown;
-        case Input::Key::Home: return ImGuiKey_Home;
-        case Input::Key::End: return ImGuiKey_End;
-        case Input::Key::Insert: return ImGuiKey_Insert;
-        case Input::Key::Delete: return ImGuiKey_Delete;
-        case Input::Key::Backspace: return ImGuiKey_Backspace;
-        case Input::Key::Space: return ImGuiKey_Space;
-        case Input::Key::Enter: return ImGuiKey_Enter;
-        case Input::Key::Escape: return ImGuiKey_Escape;
-        case Input::Key::Apostrophe: return ImGuiKey_Apostrophe;
-        case Input::Key::Comma: return ImGuiKey_Comma;
-        case Input::Key::Minus: return ImGuiKey_Minus;
-        case Input::Key::Period: return ImGuiKey_Period;
-        case Input::Key::Slash: return ImGuiKey_Slash;
-        case Input::Key::Semicolon: return ImGuiKey_Semicolon;
-        case Input::Key::Equal: return ImGuiKey_Equal;
-        case Input::Key::LeftBracket: return ImGuiKey_LeftBracket;
-        case Input::Key::Backslash: return ImGuiKey_Backslash;
-        case Input::Key::World1: return ImGuiKey_Oem102;
-        case Input::Key::World2: return ImGuiKey_Oem102;
-        case Input::Key::RightBracket: return ImGuiKey_RightBracket;
-        case Input::Key::GraveAccent: return ImGuiKey_GraveAccent;
-        case Input::Key::CapsLock: return ImGuiKey_CapsLock;
-        case Input::Key::ScrollLock: return ImGuiKey_ScrollLock;
-        case Input::Key::NumLock: return ImGuiKey_NumLock;
-        case Input::Key::PrintScreen: return ImGuiKey_PrintScreen;
-        case Input::Key::Pause: return ImGuiKey_Pause;
-        case Input::Key::KP0: return ImGuiKey_Keypad0;
-        case Input::Key::KP1: return ImGuiKey_Keypad1;
-        case Input::Key::KP2: return ImGuiKey_Keypad2;
-        case Input::Key::KP3: return ImGuiKey_Keypad3;
-        case Input::Key::KP4: return ImGuiKey_Keypad4;
-        case Input::Key::KP5: return ImGuiKey_Keypad5;
-        case Input::Key::KP6: return ImGuiKey_Keypad6;
-        case Input::Key::KP7: return ImGuiKey_Keypad7;
-        case Input::Key::KP8: return ImGuiKey_Keypad8;
-        case Input::Key::KP9: return ImGuiKey_Keypad9;
-        case Input::Key::KPDecimal: return ImGuiKey_KeypadDecimal;
-        case Input::Key::KPDivide: return ImGuiKey_KeypadDivide;
-        case Input::Key::KPMultiply: return ImGuiKey_KeypadMultiply;
-        case Input::Key::KPSubtract: return ImGuiKey_KeypadSubtract;
-        case Input::Key::KPAdd: return ImGuiKey_KeypadAdd;
-        case Input::Key::KPEnter: return ImGuiKey_KeypadEnter;
-        case Input::Key::KPEqual: return ImGuiKey_KeypadEqual;
-        case Input::Key::LeftShift: return ImGuiKey_LeftShift;
-        case Input::Key::LeftControl: return ImGuiKey_LeftCtrl;
-        case Input::Key::LeftAlt: return ImGuiKey_LeftAlt;
-        case Input::Key::LeftSuper: return ImGuiKey_LeftSuper;
-        case Input::Key::RightShift: return ImGuiKey_RightShift;
-        case Input::Key::RightControl: return ImGuiKey_RightCtrl;
-        case Input::Key::RightAlt: return ImGuiKey_RightAlt;
-        case Input::Key::RightSuper: return ImGuiKey_RightSuper;
-        case Input::Key::Menu: return ImGuiKey_Menu;
-        case Input::Key::D0: return ImGuiKey_0;
-        case Input::Key::D1: return ImGuiKey_1;
-        case Input::Key::D2: return ImGuiKey_2;
-        case Input::Key::D3: return ImGuiKey_3;
-        case Input::Key::D4: return ImGuiKey_4;
-        case Input::Key::D5: return ImGuiKey_5;
-        case Input::Key::D6: return ImGuiKey_6;
-        case Input::Key::D7: return ImGuiKey_7;
-        case Input::Key::D8: return ImGuiKey_8;
-        case Input::Key::D9: return ImGuiKey_9;
-        case Input::Key::A: return ImGuiKey_A;
-        case Input::Key::B: return ImGuiKey_B;
-        case Input::Key::C: return ImGuiKey_C;
-        case Input::Key::D: return ImGuiKey_D;
-        case Input::Key::E: return ImGuiKey_E;
-        case Input::Key::F: return ImGuiKey_F;
-        case Input::Key::G: return ImGuiKey_G;
-        case Input::Key::H: return ImGuiKey_H;
-        case Input::Key::I: return ImGuiKey_I;
-        case Input::Key::J: return ImGuiKey_J;
-        case Input::Key::K: return ImGuiKey_K;
-        case Input::Key::L: return ImGuiKey_L;
-        case Input::Key::M: return ImGuiKey_M;
-        case Input::Key::N: return ImGuiKey_N;
-        case Input::Key::O: return ImGuiKey_O;
-        case Input::Key::P: return ImGuiKey_P;
-        case Input::Key::Q: return ImGuiKey_Q;
-        case Input::Key::R: return ImGuiKey_R;
-        case Input::Key::S: return ImGuiKey_S;
-        case Input::Key::T: return ImGuiKey_T;
-        case Input::Key::U: return ImGuiKey_U;
-        case Input::Key::V: return ImGuiKey_V;
-        case Input::Key::W: return ImGuiKey_W;
-        case Input::Key::X: return ImGuiKey_X;
-        case Input::Key::Y: return ImGuiKey_Y;
-        case Input::Key::Z: return ImGuiKey_Z;
-        case Input::Key::F1: return ImGuiKey_F1;
-        case Input::Key::F2: return ImGuiKey_F2;
-        case Input::Key::F3: return ImGuiKey_F3;
-        case Input::Key::F4: return ImGuiKey_F4;
-        case Input::Key::F5: return ImGuiKey_F5;
-        case Input::Key::F6: return ImGuiKey_F6;
-        case Input::Key::F7: return ImGuiKey_F7;
-        case Input::Key::F8: return ImGuiKey_F8;
-        case Input::Key::F9: return ImGuiKey_F9;
-        case Input::Key::F10: return ImGuiKey_F10;
-        case Input::Key::F11: return ImGuiKey_F11;
-        case Input::Key::F12: return ImGuiKey_F12;
-        case Input::Key::F13: return ImGuiKey_F13;
-        case Input::Key::F14: return ImGuiKey_F14;
-        case Input::Key::F15: return ImGuiKey_F15;
-        case Input::Key::F16: return ImGuiKey_F16;
-        case Input::Key::F17: return ImGuiKey_F17;
-        case Input::Key::F18: return ImGuiKey_F18;
-        case Input::Key::F19: return ImGuiKey_F19;
-        case Input::Key::F20: return ImGuiKey_F20;
-        case Input::Key::F21: return ImGuiKey_F21;
-        case Input::Key::F22: return ImGuiKey_F22;
-        case Input::Key::F23: return ImGuiKey_F23;
-        case Input::Key::F24: return ImGuiKey_F24;
-        default: return ImGuiKey_None;
+    case Input::Key::Tab: return ImGuiKey_Tab;
+    case Input::Key::Left: return ImGuiKey_LeftArrow;
+    case Input::Key::Right: return ImGuiKey_RightArrow;
+    case Input::Key::Up: return ImGuiKey_UpArrow;
+    case Input::Key::Down: return ImGuiKey_DownArrow;
+    case Input::Key::PageUp: return ImGuiKey_PageUp;
+    case Input::Key::PageDown: return ImGuiKey_PageDown;
+    case Input::Key::Home: return ImGuiKey_Home;
+    case Input::Key::End: return ImGuiKey_End;
+    case Input::Key::Insert: return ImGuiKey_Insert;
+    case Input::Key::Delete: return ImGuiKey_Delete;
+    case Input::Key::Backspace: return ImGuiKey_Backspace;
+    case Input::Key::Space: return ImGuiKey_Space;
+    case Input::Key::Enter: return ImGuiKey_Enter;
+    case Input::Key::Escape: return ImGuiKey_Escape;
+    case Input::Key::Apostrophe: return ImGuiKey_Apostrophe;
+    case Input::Key::Comma: return ImGuiKey_Comma;
+    case Input::Key::Minus: return ImGuiKey_Minus;
+    case Input::Key::Period: return ImGuiKey_Period;
+    case Input::Key::Slash: return ImGuiKey_Slash;
+    case Input::Key::Semicolon: return ImGuiKey_Semicolon;
+    case Input::Key::Equal: return ImGuiKey_Equal;
+    case Input::Key::LeftBracket: return ImGuiKey_LeftBracket;
+    case Input::Key::Backslash: return ImGuiKey_Backslash;
+    case Input::Key::World1: return ImGuiKey_Oem102;
+    case Input::Key::World2: return ImGuiKey_Oem102;
+    case Input::Key::RightBracket: return ImGuiKey_RightBracket;
+    case Input::Key::GraveAccent: return ImGuiKey_GraveAccent;
+    case Input::Key::CapsLock: return ImGuiKey_CapsLock;
+    case Input::Key::ScrollLock: return ImGuiKey_ScrollLock;
+    case Input::Key::NumLock: return ImGuiKey_NumLock;
+    case Input::Key::PrintScreen: return ImGuiKey_PrintScreen;
+    case Input::Key::Pause: return ImGuiKey_Pause;
+    case Input::Key::KP0: return ImGuiKey_Keypad0;
+    case Input::Key::KP1: return ImGuiKey_Keypad1;
+    case Input::Key::KP2: return ImGuiKey_Keypad2;
+    case Input::Key::KP3: return ImGuiKey_Keypad3;
+    case Input::Key::KP4: return ImGuiKey_Keypad4;
+    case Input::Key::KP5: return ImGuiKey_Keypad5;
+    case Input::Key::KP6: return ImGuiKey_Keypad6;
+    case Input::Key::KP7: return ImGuiKey_Keypad7;
+    case Input::Key::KP8: return ImGuiKey_Keypad8;
+    case Input::Key::KP9: return ImGuiKey_Keypad9;
+    case Input::Key::KPDecimal: return ImGuiKey_KeypadDecimal;
+    case Input::Key::KPDivide: return ImGuiKey_KeypadDivide;
+    case Input::Key::KPMultiply: return ImGuiKey_KeypadMultiply;
+    case Input::Key::KPSubtract: return ImGuiKey_KeypadSubtract;
+    case Input::Key::KPAdd: return ImGuiKey_KeypadAdd;
+    case Input::Key::KPEnter: return ImGuiKey_KeypadEnter;
+    case Input::Key::KPEqual: return ImGuiKey_KeypadEqual;
+    case Input::Key::LeftShift: return ImGuiKey_LeftShift;
+    case Input::Key::LeftControl: return ImGuiKey_LeftCtrl;
+    case Input::Key::LeftAlt: return ImGuiKey_LeftAlt;
+    case Input::Key::LeftSuper: return ImGuiKey_LeftSuper;
+    case Input::Key::RightShift: return ImGuiKey_RightShift;
+    case Input::Key::RightControl: return ImGuiKey_RightCtrl;
+    case Input::Key::RightAlt: return ImGuiKey_RightAlt;
+    case Input::Key::RightSuper: return ImGuiKey_RightSuper;
+    case Input::Key::Menu: return ImGuiKey_Menu;
+    case Input::Key::D0: return ImGuiKey_0;
+    case Input::Key::D1: return ImGuiKey_1;
+    case Input::Key::D2: return ImGuiKey_2;
+    case Input::Key::D3: return ImGuiKey_3;
+    case Input::Key::D4: return ImGuiKey_4;
+    case Input::Key::D5: return ImGuiKey_5;
+    case Input::Key::D6: return ImGuiKey_6;
+    case Input::Key::D7: return ImGuiKey_7;
+    case Input::Key::D8: return ImGuiKey_8;
+    case Input::Key::D9: return ImGuiKey_9;
+    case Input::Key::A: return ImGuiKey_A;
+    case Input::Key::B: return ImGuiKey_B;
+    case Input::Key::C: return ImGuiKey_C;
+    case Input::Key::D: return ImGuiKey_D;
+    case Input::Key::E: return ImGuiKey_E;
+    case Input::Key::F: return ImGuiKey_F;
+    case Input::Key::G: return ImGuiKey_G;
+    case Input::Key::H: return ImGuiKey_H;
+    case Input::Key::I: return ImGuiKey_I;
+    case Input::Key::J: return ImGuiKey_J;
+    case Input::Key::K: return ImGuiKey_K;
+    case Input::Key::L: return ImGuiKey_L;
+    case Input::Key::M: return ImGuiKey_M;
+    case Input::Key::N: return ImGuiKey_N;
+    case Input::Key::O: return ImGuiKey_O;
+    case Input::Key::P: return ImGuiKey_P;
+    case Input::Key::Q: return ImGuiKey_Q;
+    case Input::Key::R: return ImGuiKey_R;
+    case Input::Key::S: return ImGuiKey_S;
+    case Input::Key::T: return ImGuiKey_T;
+    case Input::Key::U: return ImGuiKey_U;
+    case Input::Key::V: return ImGuiKey_V;
+    case Input::Key::W: return ImGuiKey_W;
+    case Input::Key::X: return ImGuiKey_X;
+    case Input::Key::Y: return ImGuiKey_Y;
+    case Input::Key::Z: return ImGuiKey_Z;
+    case Input::Key::F1: return ImGuiKey_F1;
+    case Input::Key::F2: return ImGuiKey_F2;
+    case Input::Key::F3: return ImGuiKey_F3;
+    case Input::Key::F4: return ImGuiKey_F4;
+    case Input::Key::F5: return ImGuiKey_F5;
+    case Input::Key::F6: return ImGuiKey_F6;
+    case Input::Key::F7: return ImGuiKey_F7;
+    case Input::Key::F8: return ImGuiKey_F8;
+    case Input::Key::F9: return ImGuiKey_F9;
+    case Input::Key::F10: return ImGuiKey_F10;
+    case Input::Key::F11: return ImGuiKey_F11;
+    case Input::Key::F12: return ImGuiKey_F12;
+    case Input::Key::F13: return ImGuiKey_F13;
+    case Input::Key::F14: return ImGuiKey_F14;
+    case Input::Key::F15: return ImGuiKey_F15;
+    case Input::Key::F16: return ImGuiKey_F16;
+    case Input::Key::F17: return ImGuiKey_F17;
+    case Input::Key::F18: return ImGuiKey_F18;
+    case Input::Key::F19: return ImGuiKey_F19;
+    case Input::Key::F20: return ImGuiKey_F20;
+    case Input::Key::F21: return ImGuiKey_F21;
+    case Input::Key::F22: return ImGuiKey_F22;
+    case Input::Key::F23: return ImGuiKey_F23;
+    case Input::Key::F24: return ImGuiKey_F24;
+    default: return ImGuiKey_None;
     }
 }
 // clang-format on
