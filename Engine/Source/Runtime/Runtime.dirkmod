@@ -9,7 +9,7 @@
         "glm",
         "tinygltf",
         "vulkan",
-        "ImGUI"
+        "ImGui"
     ],
     "defines": {
         "GLFW_INCLUDE_NONE": "",
