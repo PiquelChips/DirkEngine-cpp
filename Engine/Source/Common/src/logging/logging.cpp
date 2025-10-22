@@ -1,5 +1,5 @@
-#include "core/logging.hpp"
-#include "core/asserts.hpp"
+#include "logging/logging.hpp"
+#include "common.hpp"
 
 #include <ctime>
 #include <filesystem>

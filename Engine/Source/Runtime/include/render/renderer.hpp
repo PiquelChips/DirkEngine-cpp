@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/globals.hpp"
+#include "common.hpp"
 #include "engine/dirkengine.hpp"
 #include "render/viewport.hpp"
 #include "render/window.hpp"

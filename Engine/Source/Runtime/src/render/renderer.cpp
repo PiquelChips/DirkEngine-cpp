@@ -1,6 +1,4 @@
 #include "render/renderer.hpp"
-#include "core/asserts.hpp"
-#include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
 #include "platform/platform.hpp"

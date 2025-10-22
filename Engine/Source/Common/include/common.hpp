@@ -7,12 +7,10 @@
 #define GLM_ENABLE_EXPERIMENTAL            // for the glm hash functions
 #include "glm/glm.hpp"
 
-#include "vulkan/vulkan.hpp"
-
 #include "asserts.hpp"
-#include "logging.hpp"
+#include "logging/logging.hpp"
 
 namespace dirk {
 class DirkEngine;
-DirkEngine* gEngine;
+extern DirkEngine* gEngine;
 } // namespace dirk

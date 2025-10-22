@@ -1,4 +1,4 @@
-#include "core/globals.hpp"
+#include "common.hpp"
 
 // TINY GLTF
 #define TINYGLTF_IMPLEMENTATION

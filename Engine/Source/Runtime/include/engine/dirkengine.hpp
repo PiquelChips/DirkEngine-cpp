@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "actor.hpp"
-#include "core/globals.hpp"
+#include "common.hpp"
 #include "render/vulkan_types.hpp"
 #include "render/window.hpp"
 

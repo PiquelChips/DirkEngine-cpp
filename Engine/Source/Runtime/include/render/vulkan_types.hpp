@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/globals.hpp"
+#include "common.hpp"
 
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
