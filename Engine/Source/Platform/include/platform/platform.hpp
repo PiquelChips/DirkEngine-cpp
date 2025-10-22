@@ -13,7 +13,7 @@ namespace dirk::Platform {
 struct Cursor {};
 struct PlatformCreateInfo {};
 
-struct ImGui_Data {
+struct ImGuiData {
     ImGuiContext* context;
     static constexpr std::string_view platformName = "imgui_impl_dirk";
     std::shared_ptr<Window> window;
@@ -26,10 +26,10 @@ struct ImGui_Data {
     bool mouseIgnoreButtonUpWaitForFocusLoss;
     bool mouseIgnoreButtonUp;
 
-    ImGui_Data() { memset((void*) this, 0, sizeof(*this)); }
+    ImGuiData() { memset((void*) this, 0, sizeof(*this)); }
 };
 
-struct ImGui_ViewportData {
+struct ImGuiViewportData {
     std::shared_ptr<Window> window;
     bool windowOwned;
 };
@@ -61,14 +61,14 @@ private:
     void focusWindowCallback(std::shared_ptr<Window> window, bool focused);
     void cursorEnterCallback(std::shared_ptr<Window> window, bool entered);
     void cursorPosCallback(std::shared_ptr<Window> window, glm::vec2 pos);
-    void mouseButtonCallback(std::shared_ptr<Window> window, int button, int action, int mods);
+    void mouseButtonCallback(std::shared_ptr<Window> window, Input::MouseButton button, Input::KeyState action);
     void mouseScrollCallback(std::shared_ptr<Window> window, glm::vec2 offset);
-    void keyCallback(std::shared_ptr<Window> window, int keycode, int scancode, int action, int mods);
+    void keyCallback(std::shared_ptr<Window> window, Input::Key key, Input::KeyState action);
     void charCallback(std::shared_ptr<Window> window, unsigned int c);
 
 private:
-    ImGui_Data* getBackendData();
-    ImGui_Data* getBackendData(std::shared_ptr<Window> window);
+    ImGuiData* getBackendData();
+    ImGuiData* getBackendData(std::shared_ptr<Window> window);
 
     void updateMonitors();
     void updateMouseData();
@@ -78,6 +78,7 @@ private:
 
 public:
     static std::vector<const char*> getRequiredExtensions();
+    static ImGuiKey keyToImGuiKey(Input::Key key);
 };
 
 } // namespace dirk::Platform

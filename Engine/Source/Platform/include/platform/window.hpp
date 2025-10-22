@@ -38,6 +38,7 @@ public:
     void resize(vk::Extent2D inSize);
 
     vk::Extent2D getSize() const;
+    glm::vec2 getPosition() const;
     bool isMinimized() const;
     bool shouldClose() const;
 
