@@ -5,6 +5,7 @@
     "dependencies": [
         "Common",
         "vulkan",
-        "glm"
+        "glm",
+        "ImGui"
     ]
 }

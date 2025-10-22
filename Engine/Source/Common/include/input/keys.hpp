@@ -139,6 +139,8 @@ enum Key : std::uint16_t {
     Menu = 348
 };
 
+const int KeyLast = Key::Menu;
+
 enum KeyState {
     None = -1,
     Pressed,
