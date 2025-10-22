@@ -1,6 +1,4 @@
 #include "resources/resource_manager.hpp"
-#include "core/asserts.hpp"
-#include "core/globals.hpp"
 
 #include "tinygltf.h"
 

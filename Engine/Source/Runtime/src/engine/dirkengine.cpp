@@ -1,7 +1,6 @@
 #include "engine/dirkengine.hpp"
 
-#include "core/globals.hpp"
-#include "core/logging.hpp"
+#include "common.hpp"
 #include "engine/world.hpp"
 #include "render/renderer.hpp"
 #include "render/viewport.hpp"
@@ -16,6 +15,8 @@
 namespace dirk {
 
 DEFINE_LOG_CATEGORY(LogEngine)
+
+DirkEngine* gEngine;
 
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     gEngine = this;

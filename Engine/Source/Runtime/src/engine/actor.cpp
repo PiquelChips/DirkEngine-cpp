@@ -1,6 +1,5 @@
 #include "engine/actor.hpp"
 
-#include "core/globals.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
 #include "render/camera.hpp"
