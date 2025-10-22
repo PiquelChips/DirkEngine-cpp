@@ -3,8 +3,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "backends/imgui_impl_vulkan.h"
-
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "input/keys.hpp"
@@ -15,11 +13,10 @@ namespace dirk::Platform {
 struct Cursor {};
 struct PlatformCreateInfo {};
 
-struct ImGui_ImplDirk_Data {
+struct ImGui_Data {
     ImGuiContext* context;
     static constexpr std::string_view platformName = "imgui_impl_dirk";
     std::shared_ptr<Window> window;
-    double deltaTime;
     std::array<Cursor, ImGuiMouseCursor_COUNT> mouseCursors;
 
     glm::vec2 lastValidMousePos;
@@ -29,10 +26,10 @@ struct ImGui_ImplDirk_Data {
     bool mouseIgnoreButtonUpWaitForFocusLoss;
     bool mouseIgnoreButtonUp;
 
-    ImGui_ImplDirk_Data() { memset((void*) this, 0, sizeof(*this)); }
+    ImGui_Data() { memset((void*) this, 0, sizeof(*this)); }
 };
 
-struct ImGui_ImplDirk_ViewportData {
+struct ImGui_ViewportData {
     std::shared_ptr<Window> window;
     bool windowOwned;
 };
@@ -40,9 +37,9 @@ struct ImGui_ImplDirk_ViewportData {
 class Platform {
 public:
     Platform(const PlatformCreateInfo& createInfo);
+    ~Platform();
 
-    void ImGui_Init();
-    void ImGui_Shutdown();
+    void tick(float deltaTime);
 
 private:
     // platform funcs used by ImGui
@@ -70,10 +67,12 @@ private:
     void charCallback(std::shared_ptr<Window> window, unsigned int c);
 
 private:
-    ImGui_ImplDirk_Data* ImGui_GetBackendData();
-    ImGui_ImplDirk_Data* ImGui_GetBackendData(std::shared_ptr<Window> window);
+    ImGui_Data* getBackendData();
+    ImGui_Data* getBackendData(std::shared_ptr<Window> window);
 
-    void ImGui_UpdateMonitors();
+    void updateMonitors();
+    void updateMouseData();
+    void updateMouseCursor();
 
     std::unordered_map<std::shared_ptr<Window>, ImGuiContext*> contextMap;
 
