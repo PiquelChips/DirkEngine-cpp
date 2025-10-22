@@ -340,4 +340,6 @@ vk::SubmitInfo Viewport::render() {
 // TODO: resize viewport
 void Viewport::resize(vk::Extent2D inSize) {}
 
+void Viewport::setWorld(std::shared_ptr<World> inWorld) { world = inWorld; }
+
 } // namespace dirk

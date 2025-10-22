@@ -85,13 +85,6 @@ struct SwapChainCreateInfo {
     vk::Extent2D windowSize;
 };
 
-struct SwapChainImage {
-    vk::ImageView imageView;
-    vk::Framebuffer frameBuffer;
-
-    operator bool() const { return imageView && frameBuffer; }
-};
-
 struct ImageMemoryView {
     vk::Image image;
     vk::DeviceMemory memory;

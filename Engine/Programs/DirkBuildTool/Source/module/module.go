@@ -5,7 +5,6 @@ import (
 	"DirkBuildTool/make"
 	"DirkBuildTool/models"
 	"DirkBuildTool/output"
-	"DirkBuildTool/setup"
 	"fmt"
 	"log"
 	"maps"
@@ -15,13 +14,14 @@ import (
 )
 
 type Module interface {
+	models.Dependency
+
 	ToMakefile() make.Makefile
 
 	getBuildDeps() []Module
-	getName() string
 	getPath() string
 
-	getDeps() []*models.Dependency
+	getDeps() []models.Dependency
 }
 
 func Build(m Module) error {
@@ -31,7 +31,7 @@ func Build(m Module) error {
 		}
 	}
 
-	log.Printf("Building module %s", m.getName())
+	log.Printf("Building module %s", m.GetName())
 	makefile, err := m.ToMakefile().ToBytes()
 	if err != nil {
 		return err
@@ -50,11 +50,11 @@ func Build(m Module) error {
 	cmd.Dir = m.getPath()
 
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("There was an error building %s, see logs for details\n", m.getName())
+		fmt.Printf("There was an error building %s, see logs for details\n", m.GetName())
 		return err
 	}
 
-	log.Printf("Successfully built %s", m.getName())
+	log.Printf("Successfully built %s", m.GetName())
 	return nil
 }
 
@@ -82,7 +82,7 @@ func writeIntFile(m Module, name string, data []byte, overwrite bool) error {
 }
 
 func intDir(m Module) (string, error) {
-	modDir := fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.getName())
+	modDir := fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.GetName())
 	return modDir, os.MkdirAll(modDir, output.DirPerm)
 }
 
@@ -94,12 +94,11 @@ type ModuleConfig struct {
 	Path    string            `json:"-"`
 	Std     string            `json:"c_standard"`
 	IsLib   bool              `json:"is_lib"`
-	Deps    []string          `json:"dependencies"` // project modules
-	Ext     []string          `json:"external"`     // thirdparty modules
+	Deps    []string          `json:"dependencies"`
 	Defines map[string]string `json:"defines"`
 }
 
-func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
+func (c *ModuleConfig) ToModule(buildConfig *models.BuildConfig) Module {
 	if c.Type == "" {
 		c.Type = "cpp"
 	}
@@ -116,7 +115,7 @@ func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
 			c.Defines = map[string]string{}
 		}
 
-		switch setup.Config.Platform {
+		switch config.Setup.Platform {
 		case "Linux":
 			c.Defines["PLATFORM_LINUX"] = ""
 		}
@@ -126,15 +125,14 @@ func (c *ModuleConfig) ToModule(buildConfig *setup.BuildConfig) Module {
 		}
 
 		return &CppModule{
-			Name:   c.Name,
-			Target: c.Target,
-			Path:   c.Path,
-			Std:    c.Std,
-			IsLib:  c.IsLib,
-			Deps:   nil,
-			Ext:    nil,
-			Config: c,
-			build:  buildConfig,
+			Name:         c.Name,
+			Target:       c.Target,
+			Path:         c.Path,
+			Std:          c.Std,
+			BuildDeps:    nil,
+			Dependencies: nil,
+			Config:       c,
+			build:        buildConfig,
 		}
 	default:
 		log.Printf("Module type %s used by module %s does not exist. Please use \"shaders\" or \"cpp\"\n", c.Type, c.Name)

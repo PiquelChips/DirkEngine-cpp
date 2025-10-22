@@ -22,13 +22,14 @@ struct ViewportCreateInfo {
     vk::Extent2D size;
     std::string_view name;
 
-    World* world;
+    std::shared_ptr<World> world;
 };
 
 class Viewport {
 public:
     Viewport(const ViewportCreateInfo& createInfo);
 
+    void setWorld(std::shared_ptr<World> inWorld);
     std::unique_ptr<Camera>& getCamera() { return camera; }
     vk::Extent2D getSize() const { return size; }
     vk::Semaphore getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
@@ -63,8 +64,7 @@ private:
 
     vk::Semaphore renderFinishedSemaphore;
 
-    // TODO: world should not be raw as viewport owned by renderer
-    World* world;
+    std::shared_ptr<World> world;
 };
 
 } // namespace dirk

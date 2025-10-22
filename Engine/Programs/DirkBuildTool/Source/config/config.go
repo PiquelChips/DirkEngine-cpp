@@ -1,19 +1,13 @@
 package config
 
 import (
+	"DirkBuildTool/models"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 )
-
-type BuildType struct {
-	Name     string            `json:"-"`
-	Optimize bool              `json:"optimize"`
-	Compact  bool              `json:"compact"` // compact the output (essentially statically linking)
-	Defines  map[string]string `json:"defines"`
-}
 
 type DirsConfig struct {
 	Root         string   `json:"-"`
@@ -23,8 +17,9 @@ type DirsConfig struct {
 	Modules      []string `json:"modules"` // dirs that will be searched for modules
 }
 
-var BuildTypes map[string]*BuildType
+var BuildTypes map[string]*models.BuildType
 var Dirs DirsConfig
+var Setup *models.SetupConfig
 
 const configDir = "Engine/Programs/DirkBuildTool/Config"
 
@@ -34,8 +29,8 @@ func LoadConfig() {
 	BuildTypes = loadBuildTypes()
 }
 
-func loadBuildTypes() map[string]*BuildType {
-	buildTypes := map[string]*BuildType{}
+func loadBuildTypes() map[string]*models.BuildType {
+	buildTypes := map[string]*models.BuildType{}
 	if err := loadConfig("build_configs.json", &buildTypes); err != nil {
 		fmt.Printf("%s\n", err.Error())
 		os.Exit(1)

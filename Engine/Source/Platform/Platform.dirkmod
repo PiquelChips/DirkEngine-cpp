@@ -3,10 +3,9 @@
     "c_standard": "c++23",
     "is_lib": true,
     "dependencies": [
-        "Common"
-    ],
-    "external": [
+        "Common",
         "vulkan",
-        "glm"
+        "glm",
+        "ImGui"
     ]
 }
