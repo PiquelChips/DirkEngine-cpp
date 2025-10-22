@@ -1,7 +1,6 @@
 #include "input/keys.hpp"
 
 #include "glm/glm.hpp"
-#include "render/vulkan_types.hpp"
 #include "vulkan/vulkan.hpp"
 
 #include <memory>
