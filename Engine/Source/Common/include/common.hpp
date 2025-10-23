@@ -6,6 +6,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE        // vulkan uses the 0.0 to 1.0 ranges; opengl uses the -1.0 to 1.0 range
 #define GLM_ENABLE_EXPERIMENTAL            // for the glm hash functions
 #include "glm/glm.hpp"
+#include "vulkan/vulkan.hpp"
 
 #include "asserts.hpp"
 #include "logging/logging.hpp"
@@ -13,4 +14,20 @@
 namespace dirk {
 class DirkEngine;
 extern DirkEngine* gEngine;
+
+struct Queues {
+    vk::Queue graphicsQueue;
+    vk::Queue presentQueue;
+};
+
+struct RendererResources {
+    vk::Instance instance;
+    vk::PhysicalDevice physicalDevice;
+    vk::Device device;
+
+    Queues queues;
+    vk::CommandPool commandPool;
+    vk::DescriptorSetLayout descriptorSetLayout;
+};
+
 } // namespace dirk

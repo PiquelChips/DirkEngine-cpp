@@ -4,6 +4,7 @@
     "is_lib": true,
     "dependencies": [
         "glm",
-        "tinygltf"
+        "tinygltf",
+        "vulkan"
     ]
 }
