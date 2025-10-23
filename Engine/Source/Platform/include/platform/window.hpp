@@ -10,11 +10,7 @@
 
 #pragma once
 
-namespace dirk::Platform {
-
-class Window;
-class PlatformWindowImpl;
-class Platform;
+namespace dirk {
 
 struct SwapChainImage {
     vk::ImageView imageView;
@@ -22,6 +18,12 @@ struct SwapChainImage {
 
     operator bool() const { return imageView && frameBuffer; }
 };
+
+namespace Platform {
+
+class Window;
+class PlatformWindowImpl;
+class Platform;
 
 struct WindowCreateInfo {
     std::string_view title;
@@ -102,4 +104,6 @@ public:
     virtual bool shouldClose() = 0;
 };
 
-} // namespace dirk::Platform
+} // namespace Platform
+
+} // namespace dirk

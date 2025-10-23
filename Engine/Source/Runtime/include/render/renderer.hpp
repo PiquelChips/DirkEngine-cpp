@@ -3,7 +3,6 @@
 #include "common.hpp"
 #include "engine/dirkengine.hpp"
 #include "render/viewport.hpp"
-#include "render/window.hpp"
 #include "render_types.hpp"
 #include "vulkan_types.hpp"
 
