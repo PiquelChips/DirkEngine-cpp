@@ -46,95 +46,219 @@ DEFINE_LOG_CATEGORY(LogRenderer)
 
 Renderer::Renderer() {
     DIRK_LOG(LogVulkan, INFO, "initlializing Vulkan...");
-    this->instance = createVulkanInstance();
-    if (!this->instance) {
-        DIRK_LOG(LogVulkan, FATAL, "instance creation failed");
-    }
+
+    // INSTANCE
+    {
+        vk::ApplicationInfo appInfo{};
+        appInfo.sType = vk::StructureType::eApplicationInfo;
+        appInfo.pApplicationName = "DirkEngine";
+        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+        appInfo.pEngineName = "DirkEngine";
+        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+        appInfo.apiVersion = vk::ApiVersion14;
+
+        auto instanceExtensions = Platform::getRequiredExtensions();
+        check(checkRequiredInstanceExtensions(instanceExtensions));
+
+        vk::InstanceCreateInfo createInfo{};
+        createInfo.sType = vk::StructureType::eInstanceCreateInfo;
+        createInfo.pApplicationInfo = &appInfo;
+        createInfo.enabledExtensionCount = instanceExtensions.size();
+        createInfo.ppEnabledExtensionNames = instanceExtensions.data();
+
 #ifdef ENABLE_VALIDATION_LAYERS
-    this->debugMessenger = setupDebugMessenger();
-    if (!this->debugMessenger)
-        DIRK_LOG(LogVulkan, ERROR, "failed to create vulkan layer validation debug messenger");
+        check(checkValidationLayerSupport());
+        DIRK_LOG(LogVulkan, INFO, "using validation layers");
+        createInfo.enabledLayerCount = validationLayers.size();
+        createInfo.ppEnabledLayerNames = validationLayers.data();
+#else
+        createInfo.enabledLayerCount = 0;
 #endif
 
-    this->physicalDevice = selectPhysicalDevice();
-    if (!this->physicalDevice) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to get a physical device");
+        this->instance = vk::createInstance(createInfo);
     }
 
-    auto features = getDeviceFeatures();
+    // VALIDATION LAYERS
+    {
+#ifdef ENABLE_VALIDATION_LAYERS
+        vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
+        vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
 
-    this->properties = RendererProperties{
-        .msaaSamples = features.msaaSamples,
-        .anisotropy = features.anisotropy,
+        vk::DebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT{};
+        debugUtilsMessengerCreateInfoEXT.messageSeverity = severityFlags;
+        debugUtilsMessengerCreateInfoEXT.messageType = messageTypeFlags;
+        debugUtilsMessengerCreateInfoEXT.pfnUserCallback = &debugCallback;
+
+        vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
+        this->debugMessenger = instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT, nullptr, dispatcher);
+#endif
+    }
+
+    // PHYSICAL DEVICE
+    {
+        auto physicalDevices = instance.enumeratePhysicalDevices();
+
+        // rank each available device
+        std::multimap<int, vk::PhysicalDevice> candidates;
+
+        for (const auto& device : physicalDevices) {
+            int score = getDeviceSuitability(device);
+            candidates.insert(std::make_pair(score, device));
+        }
+
+        if (candidates.rbegin()->first > 0) {
+            this->physicalDevice = candidates.rbegin()->second;
+            this->properties.msaaSamples = getMaxUsableSampleCount(physicalDevice);
+        } else {
+            DIRK_LOG(LogVulkan, FATAL, "could not find a physical device");
+            return;
+        }
+
+        vk::PhysicalDeviceProperties deviceProperties = physicalDevice.getProperties();
+        // TODO: get more human readable data (like enum values)
+        DIRK_LOG(LogVulkan, INFO,
+                 "physical device selected: "
+                     << "\n\tvendor id: " << deviceProperties.vendorID
+                     << "\n\tdevice id: " << deviceProperties.deviceID
+                     << "\n\tdevice name: " << deviceProperties.deviceName
+                     //<< "\n\tdevice type: " << deviceProperties.deviceType
+                     << "\n\tapi version: " << deviceProperties.apiVersion
+                     << "\n\tdriver version: " << deviceProperties.driverVersion);
+
+        auto features = getDeviceFeatures(physicalDevice);
+        this->properties.msaaSamples = features.msaaSamples;
+        this->properties.anisotropy = features.anisotropy;
         // TODO: set swapchain format
         // TODO: min image count
-    };
-
-    this->device = createLogicalDevice();
-    if (!this->device) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to create logical device");
     }
 
-    vk::FenceCreateInfo fenceInfo{};
-    fenceInfo.sType = vk::StructureType::eFenceCreateInfo;
-    fenceInfo.flags = vk::FenceCreateFlagBits::eSignaled; // create the fence as signaled to avoid stalling at first draw call
-    inFlightFence = device.createFence(fenceInfo);
+    // LOGICAL DEVICE
+    {
+        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
-    this->queues = createQueues();
-    this->commandPool = createCommandPool();
-    if (!this->commandPool) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to create command pool");
+        // queues
+        std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+        std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos(uniqueQueueFamilies.size());
+        float queuePriority = 1.f;
+        for (int i = 0; i < uniqueQueueFamilies.size(); i++) {
+            std::set<uint32_t>::iterator iter = uniqueQueueFamilies.find(i);
+            if (iter == uniqueQueueFamilies.end()) {
+                DIRK_LOG(LogVulkan, FATAL, "error creating logical device");
+            }
+
+            uint32_t queueFamily = *iter;
+
+            vk::DeviceQueueCreateInfo queueCreateInfo;
+            queueCreateInfo.sType = vk::StructureType::eDeviceQueueCreateInfo;
+            queueCreateInfo.queueFamilyIndex = queueFamily;
+            queueCreateInfo.queueCount = 1;
+            queueCreateInfo.pQueuePriorities = &queuePriority;
+
+            queueCreateInfos[i] = queueCreateInfo;
+        }
+
+        vk::PhysicalDeviceFeatures deviceFeatures{};
+        deviceFeatures.samplerAnisotropy = vk::True;
+
+        vk::DeviceCreateInfo createInfo{};
+        createInfo.sType = vk::StructureType::eDeviceCreateInfo;
+        createInfo.pEnabledFeatures = &deviceFeatures;
+        // queues
+        createInfo.queueCreateInfoCount = queueCreateInfos.size();
+        createInfo.pQueueCreateInfos = queueCreateInfos.data();
+        // extensions
+        createInfo.enabledExtensionCount = deviceExtensions.size();
+        createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+
+        this->device = physicalDevice.createDevice(createInfo);
+
+        this->queues.graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
+        this->queues.presentQueue = device.getQueue(indices.presentFamily.value(), 0);
+
+        vk::FenceCreateInfo fenceInfo{};
+        fenceInfo.sType = vk::StructureType::eFenceCreateInfo;
+        fenceInfo.flags = vk::FenceCreateFlagBits::eSignaled; // create the fence as signaled to avoid stalling at first draw call
+        this->inFlightFence = device.createFence(fenceInfo);
     }
 
-    this->descriptorSetLayout = createDescriptorSetLayout();
-    if (!this->descriptorSetLayout) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to create descriptor set layout");
+    // COMMAND POOL
+    {
+        QueueFamilyIndices queueFamilyIndices = Renderer::findQueueFamilies(physicalDevice);
+
+        vk::CommandPoolCreateInfo poolInfo{};
+        poolInfo.sType = vk::StructureType::eCommandPoolCreateInfo;
+        poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+        this->commandPool = device.createCommandPool(poolInfo);
     }
 
-    this->descriptorPool = createDescriptorPool();
-    if (!this->descriptorPool) {
-        DIRK_LOG(LogVulkan, FATAL, "failed to create descriptor pool");
+    // DESCIPTOR SETS
+    {
+        std::array bindings = {
+            vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr),
+            vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr),
+        };
+
+        vk::DescriptorSetLayoutCreateInfo layoutInfo{};
+        layoutInfo.bindingCount = bindings.size();
+        layoutInfo.pBindings = bindings.data();
+        this->descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+
+        std::array poolSizes{
+            vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, MAX_DESCRIPTOR_SET_COUNT),
+            vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, MAX_DESCRIPTOR_SET_COUNT),
+        };
+        vk::DescriptorPoolCreateInfo poolInfo{};
+        poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+        poolInfo.maxSets = MAX_DESCRIPTOR_SET_COUNT;
+        poolInfo.poolSizeCount = poolSizes.size();
+        poolInfo.pPoolSizes = poolSizes.data();
+
+        this->descriptorPool = device.createDescriptorPool(poolInfo);
     }
 
     DIRK_LOG(LogVulkan, INFO, "vulkan initialized successfully");
 
     // ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    {
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    ImGui::StyleColorsDark();
+        ImGui::StyleColorsDark();
 
-    // Setup scaling
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(1.f);
-    style.FontScaleDpi = 1.f;
-    io.ConfigDpiScaleFonts = true;
-    io.ConfigDpiScaleViewports = true;
-    style.WindowRounding = 0.0f;
-    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        // Setup scaling
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.ScaleAllSizes(1.f);
+        style.FontScaleDpi = 1.f;
+        io.ConfigDpiScaleFonts = true;
+        io.ConfigDpiScaleViewports = true;
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 
-    gEngine->getPlatform()->initImGui();
-    auto mainWindow = gEngine->getPlatform()->getMainWindow();
+        gEngine->getPlatform()->initImGui();
+        auto mainWindow = gEngine->getPlatform()->getMainWindow();
 
-    ImGui_ImplVulkan_InitInfo initInfo = {};
-    initInfo.Instance = instance;
-    initInfo.PhysicalDevice = physicalDevice;
-    initInfo.Device = device;
-    initInfo.QueueFamily = findQueueFamilies(physicalDevice).graphicsFamily.value();
-    initInfo.Queue = queues.graphicsQueue;
-    initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
-    initInfo.MinImageCount = properties.minImageCount;
-    initInfo.ImageCount = mainWindow->getImageCount();
-    initInfo.Allocator = nullptr;
-    initInfo.PipelineInfoMain.RenderPass = mainWindow->getRenderpass();
-    initInfo.PipelineInfoMain.Subpass = 0;
-    initInfo.PipelineInfoMain.MSAASamples = (VkSampleCountFlagBits) vk::SampleCountFlagBits::e1;
-    initInfo.CheckVkResultFn = checkVkResult;
-    ImGui_ImplVulkan_Init(&initInfo);
+        ImGui_ImplVulkan_InitInfo initInfo = {};
+        initInfo.Instance = instance;
+        initInfo.PhysicalDevice = physicalDevice;
+        initInfo.Device = device;
+        initInfo.QueueFamily = findQueueFamilies(physicalDevice).graphicsFamily.value();
+        initInfo.Queue = queues.graphicsQueue;
+        initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
+        initInfo.MinImageCount = properties.minImageCount;
+        initInfo.ImageCount = mainWindow->getImageCount();
+        initInfo.Allocator = nullptr;
+        initInfo.PipelineInfoMain.RenderPass = mainWindow->getRenderpass();
+        initInfo.PipelineInfoMain.Subpass = 0;
+        initInfo.PipelineInfoMain.MSAASamples = (VkSampleCountFlagBits) vk::SampleCountFlagBits::e1;
+        initInfo.CheckVkResultFn = checkVkResult;
+        ImGui_ImplVulkan_Init(&initInfo);
+    }
 }
 
 Renderer::~Renderer() {
@@ -273,38 +397,6 @@ vk::Semaphore Renderer::createSemaphore() {
     return device.createSemaphore(createInfo);
 }
 
-vk::Instance Renderer::createVulkanInstance() {
-    // vk app
-    vk::ApplicationInfo appInfo{};
-    appInfo.sType = vk::StructureType::eApplicationInfo;
-    appInfo.pApplicationName = "DirkEngine";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "DirkEngine";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = vk::ApiVersion14;
-
-    auto instanceExtensions = Platform::getRequiredExtensions();
-    if (!checkRequiredInstanceExtensions(instanceExtensions))
-        return nullptr;
-
-    vk::InstanceCreateInfo createInfo{};
-    createInfo.sType = vk::StructureType::eInstanceCreateInfo;
-    createInfo.pApplicationInfo = &appInfo;
-    createInfo.enabledExtensionCount = instanceExtensions.size();
-    createInfo.ppEnabledExtensionNames = instanceExtensions.data();
-
-#ifdef ENABLE_VALIDATION_LAYERS
-    check(checkValidationLayerSupport());
-    DIRK_LOG(LogVulkan, INFO, "using validation layers");
-    createInfo.enabledLayerCount = validationLayers.size();
-    createInfo.ppEnabledLayerNames = validationLayers.data();
-#else
-    createInfo.enabledLayerCount = 0;
-#endif
-
-    return vk::createInstance(createInfo);
-}
-
 bool Renderer::checkRequiredInstanceExtensions(std::vector<const char*>& extensions) {
     auto availableExtensions = vk::enumerateInstanceExtensionProperties();
     for (const char* extensionName : extensions) {
@@ -321,39 +413,6 @@ bool Renderer::checkRequiredInstanceExtensions(std::vector<const char*>& extensi
     }
 
     return true;
-}
-
-vk::PhysicalDevice Renderer::selectPhysicalDevice() {
-    auto devices = instance.enumeratePhysicalDevices();
-    vk::PhysicalDevice physicalDevice;
-
-    // rank each available device
-    std::multimap<int, vk::PhysicalDevice> candidates;
-
-    for (const auto& device : devices) {
-        int score = getDeviceSuitability(device);
-        candidates.insert(std::make_pair(score, device));
-    }
-
-    if (candidates.rbegin()->first > 0) {
-        physicalDevice = candidates.rbegin()->second;
-        properties.msaaSamples = getMaxUsableSampleCount(physicalDevice);
-    } else {
-        return nullptr;
-    }
-
-    vk::PhysicalDeviceProperties deviceProperties = physicalDevice.getProperties();
-    // TODO: get more human readable data (like enum values)
-    DIRK_LOG(LogVulkan, INFO,
-             "physical device selected: "
-                 << "\n\tvendor id: " << deviceProperties.vendorID
-                 << "\n\tdevice id: " << deviceProperties.deviceID
-                 << "\n\tdevice name: " << deviceProperties.deviceName
-                 //<< "\n\tdevice type: " << deviceProperties.deviceType
-                 << "\n\tapi version: " << deviceProperties.apiVersion
-                 << "\n\tdriver version: " << deviceProperties.driverVersion);
-
-    return physicalDevice;
 }
 
 int Renderer::getDeviceSuitability(vk::PhysicalDevice device) {
@@ -423,55 +482,6 @@ SwapChainSupportDetails Renderer::querySwapChainSupport(vk::PhysicalDevice devic
     };
 }
 
-vk::Device Renderer::createLogicalDevice() {
-    QueueFamilyIndices indices = Renderer::findQueueFamilies(physicalDevice);
-
-    // queues
-    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
-    std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos(uniqueQueueFamilies.size());
-    float queuePriority = 1.f;
-    for (int i = 0; i < uniqueQueueFamilies.size(); i++) {
-        std::set<uint32_t>::iterator iter = uniqueQueueFamilies.find(i);
-        if (iter == uniqueQueueFamilies.end())
-            return nullptr;
-
-        uint32_t queueFamily = *iter;
-
-        vk::DeviceQueueCreateInfo queueCreateInfo;
-        queueCreateInfo.sType = vk::StructureType::eDeviceQueueCreateInfo;
-        queueCreateInfo.queueFamilyIndex = queueFamily;
-        queueCreateInfo.queueCount = 1;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
-
-        queueCreateInfos[i] = queueCreateInfo;
-    }
-
-    vk::PhysicalDeviceFeatures deviceFeatures{};
-    deviceFeatures.samplerAnisotropy = vk::True;
-
-    vk::DeviceCreateInfo createInfo{};
-    createInfo.sType = vk::StructureType::eDeviceCreateInfo;
-    createInfo.pEnabledFeatures = &deviceFeatures;
-    // queues
-    createInfo.queueCreateInfoCount = queueCreateInfos.size();
-    createInfo.pQueueCreateInfos = queueCreateInfos.data();
-    // extensions
-    createInfo.enabledExtensionCount = deviceExtensions.size();
-    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-
-    return physicalDevice.createDevice(createInfo);
-}
-
-Queues Renderer::createQueues() {
-    Queues queues;
-
-    QueueFamilyIndices indices = Renderer::findQueueFamilies(physicalDevice);
-    queues.graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
-    queues.presentQueue = device.getQueue(indices.presentFamily.value(), 0);
-
-    return queues;
-}
-
 vk::SurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
     for (const auto& availableFormat : availableFormats) {
         if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
@@ -499,78 +509,6 @@ vk::Extent2D Renderer::chooseSwapExtent(vk::Extent2D windowSize, const vk::Surfa
     windowSize.height = std::clamp(windowSize.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
     return windowSize;
-}
-
-void Renderer::recreateSwapChain() {
-    // TODO: move the swap chain recreation stuff
-    /**
-    // wait if window has been minimized
-    int width = 0, height = 0;
-    while (width == 0 || height == 0) {
-        glfwGetFramebufferSize(window, &width, &height);
-        glfwWaitEvents();
-    }
-
-    device.waitIdle();
-
-    // recreate depth image
-    this->depthImageMemoryView = createDepthResources();
-
-    // recreate msaa image buffer
-    this->colorImageMemoryView = createColorResources();
-
-    // cleanup swap chain
-    this->swapChainImages.clear();
-
-    for (auto image : swapChainImages) {
-        device.destroyFramebuffer(image.frameBuffer);
-        device.destroyImageView(image.imageView);
-    }
-
-    this->device.destroySwapchainKHR(this->swapChain);
-
-    std::vector<vk::Image> swapChainImages = createSwapChain();
-    this->swapChainImages = createSwapChainImages(swapChainImages);
-
-    Camera::get()->resize(swapChainExtent.width, swapChainExtent.height);
-    */
-}
-
-vk::CommandPool Renderer::createCommandPool() {
-    QueueFamilyIndices queueFamilyIndices = Renderer::findQueueFamilies(physicalDevice);
-
-    vk::CommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = vk::StructureType::eCommandPoolCreateInfo;
-    poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-
-    return device.createCommandPool(poolInfo);
-}
-
-vk::DescriptorSetLayout Renderer::createDescriptorSetLayout() {
-    std::array bindings = {
-        vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr),
-        vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr),
-    };
-
-    vk::DescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.bindingCount = bindings.size();
-    layoutInfo.pBindings = bindings.data();
-    return device.createDescriptorSetLayout(layoutInfo);
-}
-
-vk::DescriptorPool Renderer::createDescriptorPool() {
-    std::array poolSizes{
-        vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, MAX_DESCRIPTOR_SET_COUNT),
-        vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, MAX_DESCRIPTOR_SET_COUNT),
-    };
-    vk::DescriptorPoolCreateInfo poolInfo{};
-    poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
-    poolInfo.maxSets = MAX_DESCRIPTOR_SET_COUNT;
-    poolInfo.poolSizeCount = poolSizes.size();
-    poolInfo.pPoolSizes = poolSizes.data();
-
-    return device.createDescriptorPool(poolInfo);
 }
 
 vk::DescriptorSet Renderer::createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout) {
@@ -639,13 +577,11 @@ vk::Bool32 Renderer::debugCallback(
     }
 
     DIRK_LOG(LogVulkanValidation, level, pCallbackData->pMessage);
-
     return vk::False;
 }
 
 bool Renderer::checkValidationLayerSupport() {
     auto availableLayers = vk::enumerateInstanceLayerProperties();
-
     for (const char* layerName : validationLayers) {
         bool layerFound = false;
 
@@ -658,21 +594,7 @@ bool Renderer::checkValidationLayerSupport() {
             return false;
         }
     }
-
     return true;
-}
-
-vk::DebugUtilsMessengerEXT Renderer::setupDebugMessenger() {
-    vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
-    vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
-
-    vk::DebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT{};
-    debugUtilsMessengerCreateInfoEXT.messageSeverity = severityFlags;
-    debugUtilsMessengerCreateInfoEXT.messageType = messageTypeFlags;
-    debugUtilsMessengerCreateInfoEXT.pfnUserCallback = &debugCallback;
-
-    vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
-    return instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT, nullptr, dispatcher);
 }
 #endif
 

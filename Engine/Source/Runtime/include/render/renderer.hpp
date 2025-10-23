@@ -69,27 +69,16 @@ private:
     std::vector<std::shared_ptr<Viewport>> viewports;
 
 private:
-    vk::Instance createVulkanInstance();
     bool checkRequiredInstanceExtensions(std::vector<const char*>& extensions);
 
-    vk::PhysicalDevice selectPhysicalDevice();
     int getDeviceSuitability(vk::PhysicalDevice device);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
-
-    vk::Device createLogicalDevice();
-    Queues createQueues();
 
     // swap chain
     vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
     vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
     vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities);
-    void recreateSwapChain();
-
-    vk::CommandPool createCommandPool();
-    vk::Pipeline createGraphicsPipeline();
-    vk::DescriptorSetLayout createDescriptorSetLayout();
-    vk::DescriptorPool createDescriptorPool();
 
 #ifdef ENABLE_VALIDATION_LAYERS
 private:
@@ -102,11 +91,10 @@ private:
     bool checkValidationLayerSupport();
     vk::DebugUtilsMessengerEXT setupDebugMessenger();
 
-    std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
     vk::DebugUtilsMessengerEXT debugMessenger;
 #endif
 
-private:
+    // vulkan resources
     vk::Instance instance;
 
     vk::PhysicalDevice physicalDevice;
@@ -119,12 +107,11 @@ private:
 
     vk::Fence inFlightFence;
 
-private:
     // misc variables used by the renderer
-
-    const std::vector<const char*> deviceExtensions = { vk::KHRSwapchainExtensionName };
-
     RendererProperties properties;
+
+    static constexpr std::array<const char*, 1> deviceExtensions = { vk::KHRSwapchainExtensionName };
+    static constexpr std::array<const char*, 1> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 
 public:
     // some utility functions
