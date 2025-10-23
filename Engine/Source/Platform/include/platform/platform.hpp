@@ -11,7 +11,10 @@
 namespace dirk::Platform {
 
 struct Cursor {};
-struct PlatformCreateInfo {};
+struct PlatformCreateInfo {
+    std::string_view name;
+    WindowCreateInfo mainWindow;
+};
 
 struct ImGuiData {
     ImGuiContext* context;

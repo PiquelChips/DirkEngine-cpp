@@ -19,7 +19,6 @@ class DirkEngine;
 class World;
 
 struct ViewportCreateInfo {
-    vk::Extent2D size;
     std::string_view name;
 
     std::shared_ptr<World> world;

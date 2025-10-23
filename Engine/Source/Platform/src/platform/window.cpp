@@ -1,18 +1,7 @@
-#include "render/window.hpp"
-#include "render/renderer.hpp"
+namespace dirk::Platform {
 
-#include "render/vulkan_types.hpp"
-#include "vulkan/vulkan.hpp"
-#include "vulkan/vulkan_core.h"
-#include "vulkan/vulkan_handles.hpp"
-#include "vulkan/vulkan_structs.hpp"
-
-#include <algorithm>
-#include <memory>
-#include <vector>
-
-namespace dirk {
-
+// this is old window code, could be reused in the future
+/**
 Window::Window(const WindowCreateInfo& createInfo) {
     // TODO: create platform window
     auto renderer = gEngine->getRenderer();
@@ -90,5 +79,6 @@ void Window::processPlatformEvents() {
     platformWindow->pollEvents();
     // TODO: process platform events
 }
+*/
 
-} // namespace dirk
+} // namespace dirk::Platform
