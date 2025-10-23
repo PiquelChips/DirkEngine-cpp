@@ -33,6 +33,14 @@ struct ImGuiData {
 struct ImGuiViewportData {
     std::shared_ptr<Window> window;
     bool windowOwned;
+    int ignoreWindowSizeEventFrame;
+    int ignoreWindowPosEventFrame;
+
+    ImGuiViewportData() {
+        memset((void*) this, 0, sizeof(*this));
+        ignoreWindowSizeEventFrame = ignoreWindowPosEventFrame = -1;
+    }
+    ~ImGuiViewportData() { IM_ASSERT(window == nullptr); }
 };
 
 class Platform {

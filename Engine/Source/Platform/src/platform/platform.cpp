@@ -1,4 +1,5 @@
 #include "platform/platform.hpp"
+#include "common.hpp"
 
 #include "imgui.h"
 #include "input/keys.hpp"
@@ -192,11 +193,14 @@ ImVec2 Platform::ImGui_GetWindowSize(ImGuiViewport* viewport) {
 }
 
 ImVec2 Platform::ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport) {
-    // TODO: is this really necessary?
+    // framebuffer scale only necessary on Apple
+    /**
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
     ImVec2 framebuffer_scale;
     ImGui_ImplGlfw_GetWindowSizeAndFramebufferScale(vd->Window, nullptr, &framebuffer_scale);
     return framebuffer_scale;
+    */
+    return ImVec2(1.f, 1.f);
 }
 
 void Platform::ImGui_SetWindowFocus(ImGuiViewport* viewport) {
