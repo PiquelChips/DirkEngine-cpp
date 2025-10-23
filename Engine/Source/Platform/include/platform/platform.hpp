@@ -67,6 +67,9 @@ private:
     static int ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface);
 
     // callbacks for platform events
+    void windowSizeCallback(std::shared_ptr<Window> window, vk::Extent2D inSize);
+    void windowPosCallback(std::shared_ptr<Window> window, glm::vec2 inPos);
+    void windowCloseCallback(std::shared_ptr<Window> window);
     void focusWindowCallback(std::shared_ptr<Window> window, bool focused);
     void cursorEnterCallback(std::shared_ptr<Window> window, bool entered);
     void cursorPosCallback(std::shared_ptr<Window> window, glm::vec2 pos);

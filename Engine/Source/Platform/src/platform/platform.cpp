@@ -73,7 +73,7 @@ Platform::Platform(const PlatformCreateInfo& createInfo) {
 
     ImGuiViewport* main_viewport = ImGui::GetMainViewport();
     main_viewport->PlatformUserData = vd;
-    main_viewport->PlatformHandle = (void*) bd->window.get();
+    main_viewport->PlatformHandle = (void*) bd->window->getPlatformHandle();
     IM_UNUSED(main_viewport);
 }
 
@@ -139,7 +139,7 @@ void Platform::ImGui_CreateWindow(ImGuiViewport* viewport) {
     vd->window = bd->platform->createWindow(createInfo);
     vd->windowOwned = true;
     bd->platform->contextMap[vd->window] = bd->context;
-    viewport->PlatformHandle = (void*) vd->window.get();
+    viewport->PlatformHandle = (void*) vd->window->getPlatformHandle();
 
     vd->window->setPosition({ viewport->Pos.x, viewport->Pos.y });
 }
@@ -231,6 +231,35 @@ int Platform::ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, con
 
     outSurface = (ImU64*) (VkSurfaceKHR) vd->window->createSurface((VkInstance) instance);
     return (int) vk::Result::eSuccess;
+}
+
+void Platform::windowSizeCallback(std::shared_ptr<Window> window, vk::Extent2D inSize) {
+    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle())) {
+        if (ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData) {
+            bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowSizeEventFrame + 1);
+            // data->IgnoreWindowSizeEventFrame = -1;
+            if (ignore_event)
+                return;
+        }
+        viewport->PlatformRequestResize = true;
+    }
+}
+
+void Platform::windowPosCallback(std::shared_ptr<Window> window, glm::vec2 inPos) {
+    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle())) {
+        if (ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData) {
+            bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowPosEventFrame + 1);
+            // data->IgnoreWindowPosEventFrame = -1;
+            if (ignore_event)
+                return;
+        }
+        viewport->PlatformRequestMove = true;
+    }
+}
+
+void Platform::windowCloseCallback(std::shared_ptr<Window> window) {
+    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle()))
+        viewport->PlatformRequestClose = true;
 }
 
 void Platform::focusWindowCallback(std::shared_ptr<Window> window, bool focused) {
