@@ -34,7 +34,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 /**
  * The vulkan implementation of the renderer
  */
-class Renderer {
+class Renderer : public IRenderer {
 
 public:
     Renderer();

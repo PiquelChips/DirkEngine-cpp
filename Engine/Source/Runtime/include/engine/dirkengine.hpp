@@ -24,7 +24,7 @@ struct DirkEngineCreateInfo {
     std::vector<ActorCreateInfo> actorCreateInfos;
 };
 
-class DirkEngine {
+class DirkEngine : public IEngine {
 
 public:
     DirkEngine(const DirkEngineCreateInfo& createInfo);
@@ -35,8 +35,8 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    Renderer* getRenderer() { return renderer.get(); }
-    Platform::Platform* getPlatform() { return platform.get(); }
+    IRenderer* getRenderer() { return (IRenderer*) renderer.get(); }
+    IPlatform* getPlatform() { return (IPlatform*) platform.get(); }
 
 private:
     std::unique_ptr<Platform::Platform> platform;
