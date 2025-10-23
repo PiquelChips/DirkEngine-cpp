@@ -1,16 +1,23 @@
 #include "platform/window.hpp"
+#include "asserts.hpp"
+#include "backends/imgui_impl_vulkan.h"
+#include "platform/platform.hpp"
+
+#include "imgui.h"
+#include "vulkan/vulkan_enums.hpp"
+
+#include <cstdint>
 
 namespace dirk::Platform {
 
-Window::Window(const WindowCreateInfo& createInfo) {
+Window::Window(const WindowCreateInfo& createInfo, Platform* platform) : platform(platform) {
     // TODO: create platform window
-    auto renderer = gEngine->getRenderer();
-    surface = platformWindow->createVulkanSurface(renderer->getResources().instance);
+    surface = platformWindow->createVulkanSurface(platform->getRendererResources().instance);
 
     SwapChainCreateInfo swapChainInfo{
-        .swapChain = swapChain,
+        .swapChain = swapchain,
         .swapChainImageFormat = swapChainImageFormat,
-        .swapChainExtent = swapChainExtent,
+        .swapChainExtent = size,
         .renderPass = renderPass,
         .surface = surface,
         .windowSize = platformWindow->getFramebufferSize()
@@ -34,22 +41,52 @@ void Window::updateVisibility(bool inVisible) {}
 
 vk::SurfaceKHR Window::createSurface(vk::Instance instance) {}
 
-/**
-vk::SubmitInfo Window::render() {
-    // TODO: render window UI with ImGUI
+vk::SubmitInfo Window::render(ImDrawData* drawData) {
+    auto resources = platform->getRendererResources();
+    auto result = resources.device.acquireNextImageKHR(swapchain, UINT64_MAX, imageAvailableSemaphore, nullptr);
+    checkVulkan(result.result);
+    imageIndex = result.value;
+    auto image = swapChainImages[imageIndex];
 
-    std::vector<vk::Semaphore> waitSemaphores(viewports.size());
-    for (auto& viewport : viewports) {
-        waitSemaphores.emplace_back(viewport->getRenderFinishedSemaphore());
+    {
+        commandBuffer.reset();
+
+        vk::CommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
+        beginInfo.pInheritanceInfo = nullptr;
+
+        checkVulkan(commandBuffer.begin(&beginInfo));
     }
+    {
+        vk::RenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = vk::StructureType::eRenderPassBeginInfo;
+        renderPassInfo.renderPass = renderPass;
+        renderPassInfo.framebuffer = image.frameBuffer;
+
+        // make sure to render on the entire screen
+        renderPassInfo.renderArea.offset = vk::Offset2D(0, 0);
+        renderPassInfo.renderArea.extent = size;
+
+        // clear color is black with 100% opacity
+        std::array<vk::ClearValue, 2> clearValues = { vk::ClearColorValue(0.f, 0.f, 0.f, 1.f), vk::ClearDepthStencilValue(1.f, 0.f) };
+        renderPassInfo.clearValueCount = clearValues.size();
+        renderPassInfo.pClearValues = clearValues.data();
+
+        commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
+    }
+
+    ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer);
+
+    commandBuffer.endRenderPass();
+    commandBuffer.end();
 
     vk::SubmitInfo submitInfo{};
     submitInfo.sType = vk::StructureType::eSubmitInfo;
 
     // wait semaphores
     vk::PipelineStageFlags waitStage{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    submitInfo.waitSemaphoreCount = waitSemaphores.size();
-    submitInfo.pWaitSemaphores = waitSemaphores.data();
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
     submitInfo.pWaitDstStageMask = &waitStage;
     // signal semaphores
     submitInfo.signalSemaphoreCount = 1;
@@ -62,27 +99,17 @@ vk::SubmitInfo Window::render() {
 }
 
 vk::PresentInfoKHR Window::present() {
-    auto renderer = gEngine->getRenderer();
-    auto device = renderer->getResources().device;
-
-    // acquire image from swapChain
-    auto imageIndex = device.acquireNextImageKHR(swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE).value;
-
     vk::PresentInfoKHR presentInfo{};
     presentInfo.sType = vk::StructureType::ePresentInfoKHR;
-    // make sure to wait for the image to be rendered
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
 
     presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = &swapChain;
+    presentInfo.pSwapchains = &swapchain;
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr; // only have one swap chain
 
-    currentFrame = (++currentFrame) % swapChainImages.size();
-
     return presentInfo;
 }
-*/
 
 } // namespace dirk::Platform
