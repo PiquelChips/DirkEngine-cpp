@@ -1,7 +1,6 @@
 #pragma once
 
 #include "render/render_types.hpp"
-#include "render/vulkan_types.hpp"
 
 #include "glm/glm.hpp"
 #include "vulkan/vulkan_handles.hpp"
