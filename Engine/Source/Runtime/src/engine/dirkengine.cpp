@@ -2,9 +2,9 @@
 
 #include "common.hpp"
 #include "engine/world.hpp"
+#include "platform/window.hpp"
 #include "render/renderer.hpp"
 #include "render/viewport.hpp"
-#include "render/window.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
 #include <chrono>
@@ -21,16 +21,11 @@ DirkEngine* gEngine;
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     gEngine = this;
 
+    platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
     renderer = std::make_unique<Renderer>();
     world = std::make_shared<World>(createInfo.actorCreateInfos);
 
     auto viewport = renderer->createViewport(ViewportCreateInfo{ .world = world });
-    auto window = createWindow(WindowCreateInfo{
-        .title = createInfo.appName,
-        .width = 1200,
-        .height = 800,
-    });
-    window->addViewport(viewport);
 
     lastTick = std::chrono::high_resolution_clock::now();
 
@@ -39,10 +34,6 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
 
         if (isRequestingExit())
             break;
-
-        for (auto& window : windows) {
-            window->processPlatformEvents();
-        }
 
         tick(deltaTime);
     }
@@ -59,14 +50,6 @@ void DirkEngine::exit() {
 void DirkEngine::exit(const std::string& reason) {
     DIRK_LOG(LogEngine, INFO, "engine exit has been requested with reason: " << reason);
     this->exit();
-}
-
-std::shared_ptr<Window>& DirkEngine::createWindow(const WindowCreateInfo& createInfo) {
-    return windows.emplace_back(std::make_unique<Window>(createInfo));
-}
-
-void DirkEngine::destroyWindow(std::shared_ptr<Window>& window) {
-    windows.erase(std::find(windows.begin(), windows.end(), window));
 }
 
 void DirkEngine::tick(float deltaTime) {

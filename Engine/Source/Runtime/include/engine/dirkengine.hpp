@@ -6,8 +6,9 @@
 
 #include "actor.hpp"
 #include "common.hpp"
+#include "platform/platform.hpp"
+#include "platform/window.hpp"
 #include "render/vulkan_types.hpp"
-#include "render/window.hpp"
 
 namespace dirk {
 
@@ -19,6 +20,7 @@ class Camera;
 
 struct DirkEngineCreateInfo {
     std::string_view appName;
+    Platform::PlatformCreateInfo platformCreateInfo;
     std::vector<ActorCreateInfo> actorCreateInfos;
 };
 
@@ -33,17 +35,12 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    std::shared_ptr<Window>& createWindow(const WindowCreateInfo& createInfo);
-    void destroyWindow(std::shared_ptr<Window>& window);
-    std::vector<std::shared_ptr<Window>>& getWindows() { return windows; }
-
     Renderer* getRenderer() { return renderer.get(); }
 
 private:
+    std::unique_ptr<Platform::Platform> platform;
     std::unique_ptr<Renderer> renderer;
     std::shared_ptr<World> world;
-
-    std::vector<std::shared_ptr<Window>> windows;
 
 private:
     void tick(float deltaTime);
