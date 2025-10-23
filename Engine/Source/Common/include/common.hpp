@@ -1,6 +1,7 @@
 #pragma once
 
 // GLM
+#include <memory>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES // properly aligns types in memory; this doesn't affect nested structs!!!
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE        // vulkan uses the 0.0 to 1.0 ranges; opengl uses the -1.0 to 1.0 range
@@ -89,11 +90,17 @@ public:
     virtual const DeviceFeatures getDeviceFeatures() = 0;
 };
 
+namespace Platform {
+class Window;
+}
+
 class IPlatform {
 public:
     virtual void initImGui(const RendererResources& resources) = 0;
     virtual void tick(float deltaTime) = 0;
     virtual void shutdownImGui() = 0;
+
+    virtual std::shared_ptr<Platform::Window>& getMainWindow() = 0;
 };
 
 class IEngine {

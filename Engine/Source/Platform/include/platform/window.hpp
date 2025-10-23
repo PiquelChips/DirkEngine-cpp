@@ -45,8 +45,8 @@ public:
     void setTitle(std::string_view inTitle);
     std::string_view getTitle();
 
-    uint32_t getImageCount(); // swap chain image count
-    vk::RenderPass getRenderpass();
+    uint32_t getImageCount() { return swapChainImages.size(); }
+    vk::RenderPass getRenderpass() { return renderPass; }
 
     void* getPlatformHandle();
 
