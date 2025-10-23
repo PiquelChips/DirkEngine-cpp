@@ -5,6 +5,7 @@
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string_view>
 
@@ -52,6 +53,9 @@ public:
     void setTitle(std::string_view inTitle);
     std::string_view getTitle();
 
+    uint32_t getImageCount(); // swap chain image count
+    vk::RenderPass getRenderpass();
+
     void* getPlatformHandle();
 
     bool isFocused();
@@ -64,6 +68,8 @@ public:
 private:
     Platform* platform;
     std::unique_ptr<PlatformWindowImpl> platformWindow;
+
+    // vulkan stuff
 };
 
 // interface for all platform windows

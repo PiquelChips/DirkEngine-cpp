@@ -48,6 +48,7 @@ struct RendererProperties {
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
     bool anisotropy = false;
     vk::Format swapChainImageFormat = vk::Format::eUndefined;
+    std::uint32_t minImageCount;
 };
 
 struct DeviceFeatures {

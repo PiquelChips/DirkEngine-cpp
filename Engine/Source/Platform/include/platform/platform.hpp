@@ -14,8 +14,7 @@ namespace dirk::Platform {
 
 struct Cursor {};
 struct PlatformCreateInfo {
-    std::string_view name;
-    WindowCreateInfo mainWindow;
+    WindowCreateInfo mainWindowInfo;
 };
 
 struct ImGuiData {
