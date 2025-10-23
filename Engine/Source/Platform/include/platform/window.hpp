@@ -14,16 +14,7 @@
 
 #pragma once
 
-namespace dirk {
-
-struct SwapChainImage {
-    vk::ImageView imageView;
-    vk::Framebuffer frameBuffer;
-
-    operator bool() const { return imageView && frameBuffer; }
-};
-
-namespace Platform {
+namespace dirk::Platform {
 
 class Window;
 class PlatformWindowImpl;
@@ -132,6 +123,4 @@ public:
     virtual bool shouldClose() = 0;
 };
 
-} // namespace Platform
-
-} // namespace dirk
+} // namespace dirk::Platform

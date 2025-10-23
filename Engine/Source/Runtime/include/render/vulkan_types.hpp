@@ -29,36 +29,6 @@ struct QueueFamilyIndices {
     }
 };
 
-struct RendererProperties {
-    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
-    bool anisotropy = false;
-    vk::Format swapChainImageFormat = vk::Format::eUndefined;
-    std::uint32_t minImageCount;
-};
-
-struct DeviceFeatures {
-    bool anisotropy = false;
-    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
-
-    bool isComplete() {
-        return anisotropy && static_cast<int>(msaaSamples) > 1;
-    }
-
-    int getScore() {
-        if (isComplete())
-            return 1000;
-
-        int score = 0;
-
-        if (anisotropy)
-            score += 10;
-
-        score += static_cast<int>(msaaSamples);
-
-        return score;
-    }
-};
-
 struct ImageMemoryView {
     vk::Image image;
     vk::DeviceMemory memory;

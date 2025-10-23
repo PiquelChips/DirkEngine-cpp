@@ -49,7 +49,7 @@ struct ImGuiViewportData {
     ~ImGuiViewportData() { IM_ASSERT(window == nullptr); }
 };
 
-class Platform {
+class Platform : public IPlatform {
 public:
     Platform(const PlatformCreateInfo& createInfo);
     ~Platform();
