@@ -8,7 +8,6 @@
 #include "common.hpp"
 #include "platform/platform.hpp"
 #include "platform/window.hpp"
-#include "render/vulkan_types.hpp"
 
 namespace dirk {
 
@@ -35,8 +34,8 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-    IRenderer* getRenderer() { return (IRenderer*) renderer.get(); }
-    IPlatform* getPlatform() { return (IPlatform*) platform.get(); }
+    IRenderer* getRenderer() const { return (IRenderer*) renderer.get(); }
+    IPlatform* getPlatform() const { return (IPlatform*) platform.get(); }
 
 private:
     std::unique_ptr<Platform::Platform> platform;

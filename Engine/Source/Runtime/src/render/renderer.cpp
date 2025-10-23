@@ -9,7 +9,6 @@
 #include "platform/platform.hpp"
 #include "render/camera.hpp"
 #include "render/viewport.hpp"
-#include "render/vulkan_types.hpp"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -118,7 +117,7 @@ Renderer::Renderer() {
     style.WindowRounding = 0.0f;
     style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 
-    gEngine->getPlatform()->initImGui(getResources());
+    gEngine->getPlatform()->initImGui();
     auto mainWindow = gEngine->getPlatform()->getMainWindow();
 
     ImGui_ImplVulkan_InitInfo initInfo = {};

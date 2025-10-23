@@ -5,7 +5,6 @@
 #include "render/camera.hpp"
 #include "render/render_types.hpp"
 #include "render/renderer.hpp"
-#include "render/vulkan_types.hpp"
 
 #include "resources/resource_manager.hpp"
 #include "vulkan/vulkan_enums.hpp"
