@@ -12,8 +12,8 @@
 #include "logging/logging.hpp"
 
 namespace dirk {
-class DirkEngine;
-extern DirkEngine* gEngine;
+class IEngine;
+extern IEngine* gEngine;
 
 struct Queues {
     vk::Queue graphicsQueue;
