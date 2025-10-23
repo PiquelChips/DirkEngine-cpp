@@ -31,11 +31,16 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 #define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
 
+struct SwapChainSupportDetails {
+    vk::SurfaceCapabilitiesKHR capabilities;
+    std::vector<vk::SurfaceFormatKHR> formats;
+    std::vector<vk::PresentModeKHR> presentModes;
+};
+
 /**
  * The vulkan implementation of the renderer
  */
 class Renderer : public IRenderer {
-
 public:
     Renderer();
     ~Renderer();
@@ -49,6 +54,7 @@ public:
 
     vk::ShaderModule loadShaderModule(const std::string& shaderName);
     vk::Semaphore createSemaphore();
+    vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
 
     inline RendererResources getResources() { return RendererResources{
         .instance = instance,
@@ -87,9 +93,6 @@ private:
     vk::DescriptorSetLayout createDescriptorSetLayout();
     vk::DescriptorPool createDescriptorPool();
 
-public:
-    vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
-
 #ifdef ENABLE_VALIDATION_LAYERS
 private:
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
@@ -126,7 +129,7 @@ private:
     RendererProperties properties;
 
 public:
-    // some static utility functions
+    // some utility functions
     ImageMemoryView createImageMemoryView(CreateImageMemoryViewInfo& createInfo);
 
     std::tuple<vk::Image, vk::DeviceMemory> createImage(
@@ -138,21 +141,22 @@ public:
     vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor, uint32_t mipLevels = 1);
 
     std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
-    static uint32_t findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
-    static vk::Format findSupportedFormat(vk::PhysicalDevice physicalDevice, const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
-    static vk::SampleCountFlagBits getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice);
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
 
     vk::CommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue);
 
-    static void transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels = 1);
-    static void copyBuffer(vk::CommandBuffer commandBuffer, vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size);
-    static void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
+    void transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels = 1);
+    void copyBuffer(vk::CommandBuffer commandBuffer, vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size);
+    void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
     void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels);
 
+public:
+    // static utils
+    static uint32_t findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+    static vk::Format findSupportedFormat(vk::PhysicalDevice physicalDevice, const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
+    static vk::SampleCountFlagBits getMaxUsableSampleCount(vk::PhysicalDevice physicalDevice);
     static bool hasStencilComponent(vk::Format format);
-
     static DeviceFeatures getDeviceFeatures(vk::PhysicalDevice physicalDevice);
 };
 
