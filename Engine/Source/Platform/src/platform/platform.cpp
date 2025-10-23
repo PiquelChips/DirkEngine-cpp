@@ -14,8 +14,16 @@
 namespace dirk::Platform {
 
 Platform::Platform(const PlatformCreateInfo& createInfo) {
-    // TODO: create first simple window to be used in renderer init (for surface format detection and stuff)
-    std::shared_ptr<Window> window;
+    // TODO: create main window
+}
+
+Platform::~Platform() {
+    if (getBackendData() != nullptr)
+        shutdownImGui();
+}
+
+void Platform::initImGui() {
+    auto mainWindow = getMainWindow();
 
     ImGuiIO& io = ImGui::GetIO();
     IMGUI_CHECKVERSION();
@@ -32,9 +40,9 @@ Platform::Platform(const PlatformCreateInfo& createInfo) {
 
     bd->context = ImGui::GetCurrentContext();
     bd->platform = this;
-    bd->window = window;
+    bd->window = mainWindow;
 
-    contextMap[window] = bd->context;
+    contextMap[mainWindow] = bd->context;
 
     // platform support
     ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
@@ -78,7 +86,26 @@ Platform::Platform(const PlatformCreateInfo& createInfo) {
     IM_UNUSED(main_viewport);
 }
 
-Platform::~Platform() {
+void Platform::tick(float deltaTime) {
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiData* bd = getBackendData();
+    check(bd);
+
+    io.DeltaTime = deltaTime;
+    bd->mouseIgnoreButtonUp = false;
+
+    auto size = bd->window->getSize();
+    io.DisplaySize = ImVec2(size.width, size.height);
+    // Apple only
+    // auto fbSize = bd->window->getFramebufferSize();
+    // io.DisplayFramebufferScale = ImVec2((float) fbSize.width / (float) size.width, (float) fbSize.height / (float) size.height);
+
+    updateMonitors();
+    updateMouseData();
+    updateMouseCursor();
+}
+
+void Platform::shutdownImGui() {
     ImGuiData* bd = getBackendData();
     IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
 
@@ -99,25 +126,6 @@ Platform::~Platform() {
     platform_io.ClearPlatformHandlers();
     contextMap.erase(bd->window);
     IM_DELETE(bd);
-}
-
-void Platform::tick(float deltaTime) {
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuiData* bd = getBackendData();
-    check(bd);
-
-    io.DeltaTime = deltaTime;
-    bd->mouseIgnoreButtonUp = false;
-
-    auto size = bd->window->getSize();
-    io.DisplaySize = ImVec2(size.width, size.height);
-    // Apple only
-    // auto fbSize = bd->window->getFramebufferSize();
-    // io.DisplayFramebufferScale = ImVec2((float) fbSize.width / (float) size.width, (float) fbSize.height / (float) size.height);
-
-    updateMonitors();
-    updateMouseData();
-    updateMouseCursor();
 }
 
 void Platform::ImGui_CreateWindow(ImGuiViewport* viewport) {

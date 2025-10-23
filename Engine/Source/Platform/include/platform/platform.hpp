@@ -53,7 +53,11 @@ public:
     Platform(const PlatformCreateInfo& createInfo);
     ~Platform();
 
+    void initImGui();
     void tick(float deltaTime);
+    void shutdownImGui();
+
+    std::shared_ptr<Window>& getMainWindow() { return windows[0]; }
 
 private:
     // platform funcs used by ImGui
@@ -96,6 +100,8 @@ private:
     void focusWindow(std::shared_ptr<Window> window);
 
     std::unordered_map<std::shared_ptr<Window>, ImGuiContext*> contextMap;
+
+    std::vector<std::shared_ptr<Window>> windows;
 
 public:
     static ImGuiKey keyToImGuiKey(Input::Key key);
