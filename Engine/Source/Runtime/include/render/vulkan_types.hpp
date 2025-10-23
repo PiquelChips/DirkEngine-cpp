@@ -29,21 +29,6 @@ struct QueueFamilyIndices {
     }
 };
 
-struct Queues {
-    vk::Queue graphicsQueue;
-    vk::Queue presentQueue;
-};
-
-struct RendererResources {
-    vk::Instance instance;
-    vk::PhysicalDevice physicalDevice;
-    vk::Device device;
-
-    Queues queues;
-    vk::CommandPool commandPool;
-    vk::DescriptorSetLayout descriptorSetLayout;
-};
-
 struct RendererProperties {
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
     bool anisotropy = false;
