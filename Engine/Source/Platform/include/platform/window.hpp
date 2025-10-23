@@ -50,6 +50,8 @@ public:
     void setTitle(std::string_view inTitle);
     std::string_view getTitle();
 
+    void* getPlatformHandle();
+
     bool isFocused();
     bool isMinimized();
 
