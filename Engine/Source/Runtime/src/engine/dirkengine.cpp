@@ -16,7 +16,7 @@ namespace dirk {
 
 DEFINE_LOG_CATEGORY(LogEngine)
 
-DirkEngine* gEngine;
+IEngine* gEngine;
 
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     gEngine = this;
