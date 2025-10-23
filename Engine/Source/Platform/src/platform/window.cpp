@@ -3,6 +3,11 @@
 #include "backends/imgui_impl_vulkan.h"
 #include "common.hpp"
 #include "platform/platform.hpp"
+#include <memory>
+
+#ifdef PLATFORM_LINUX
+#include "platform/linux/linux.hpp"
+#endif
 
 #include "imgui.h"
 #include "vulkan/vulkan_enums.hpp"
@@ -12,7 +17,9 @@
 namespace dirk::Platform {
 
 Window::Window(const WindowCreateInfo& createInfo, Platform* platform) : platform(platform) {
-    // TODO: create platform window
+#ifdef PLATFORM_LINUX
+    platformWindow = std::make_unique<Linux::LinuxWindow>();
+#endif
     auto renderer = gEngine->getRenderer();
     surface = platformWindow->createVulkanSurface(renderer->getResources().instance);
 

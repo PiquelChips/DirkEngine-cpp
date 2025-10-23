@@ -1,5 +1,8 @@
 #include "platform/platform.hpp"
 #include "common.hpp"
+#ifdef PLATFORM_LINUX
+#include "platform/linux/linux.hpp"
+#endif
 
 #include "imgui.h"
 #include "input/keys.hpp"
@@ -630,7 +633,7 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
 
 std::vector<const char*> getRequiredExtensions() {
 #ifdef PLATFORM_LINUX
-    // return Linux::getRequiredExtensions();
+    return Linux::getRequiredExtensions();
 #endif
     return std::vector<const char*>();
 }
