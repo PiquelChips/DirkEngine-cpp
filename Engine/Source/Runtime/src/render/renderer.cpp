@@ -94,6 +94,8 @@ Renderer::~Renderer() {
 }
 
 void Renderer::render() {
+    // TODO: fix rendering for ImGui
+    /**
     // wait for previous frame
     checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
 
@@ -118,6 +120,7 @@ void Renderer::render() {
     for (auto& info : presentInfos) {
         auto result = queues.presentQueue.presentKHR(&info);
     }
+    */
 }
 
 std::shared_ptr<Viewport> Renderer::createViewport(const ViewportCreateInfo& createInfo) {

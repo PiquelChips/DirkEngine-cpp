@@ -1,3 +1,5 @@
+#pragma once
+
 #include <array>
 #include <memory>
 #include <unordered_map>
@@ -96,8 +98,9 @@ private:
     std::unordered_map<std::shared_ptr<Window>, ImGuiContext*> contextMap;
 
 public:
-    static std::vector<const char*> getRequiredExtensions();
     static ImGuiKey keyToImGuiKey(Input::Key key);
 };
+
+std::vector<const char*> getRequiredExtensions();
 
 } // namespace dirk::Platform
