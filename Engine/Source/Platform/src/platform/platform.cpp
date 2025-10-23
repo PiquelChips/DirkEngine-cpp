@@ -13,17 +13,18 @@
 
 namespace dirk::Platform {
 
-Platform::Platform(const PlatformCreateInfo& createInfo) {}
+Platform::Platform(const PlatformCreateInfo& createInfo) : appName(createInfo.appName) {}
 
 Platform::~Platform() {
     if (getBackendData() != nullptr)
         shutdownImGui();
 }
 
-void Platform::initImGui(const WindowCreateInfo& createInfo) {
+void Platform::initImGui(const RendererResources& resources) {
+    this->rendererResources = resources;
     windows.clear();
     windows.resize(1);
-    auto mainWindow = createWindow(createInfo);
+    auto mainWindow = createWindow(WindowCreateInfo{ .title = appName });
 
     ImGuiIO& io = ImGui::GetIO();
     IMGUI_CHECKVERSION();
@@ -493,7 +494,9 @@ void Platform::updateMouseCursor() {
 }
 
 // TODO: window createion and destruction
-std::shared_ptr<Window> Platform::createWindow(const WindowCreateInfo& createInfo) { return nullptr; }
+std::shared_ptr<Window> Platform::createWindow(const WindowCreateInfo& createInfo) {
+    return nullptr;
+}
 void Platform::destroyWindow(std::shared_ptr<Window> window) {}
 void Platform::focusWindow(std::shared_ptr<Window> window) {}
 

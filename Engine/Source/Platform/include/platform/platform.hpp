@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "input/keys.hpp"
@@ -13,7 +14,10 @@
 namespace dirk::Platform {
 
 struct Cursor {};
-struct PlatformCreateInfo {};
+
+struct PlatformCreateInfo {
+    std::string_view appName;
+};
 
 struct ImGuiData {
     ImGuiContext* context;
@@ -50,10 +54,11 @@ public:
     Platform(const PlatformCreateInfo& createInfo);
     ~Platform();
 
-    void initImGui(const WindowCreateInfo& createInfo);
+    void initImGui(const RendererResources& resources);
     void tick(float deltaTime);
     void shutdownImGui();
 
+    const RendererResources& getRendererResources() { return rendererResources; }
     std::shared_ptr<Window>& getMainWindow() { return windows[0]; }
 
 private:
@@ -97,8 +102,10 @@ private:
     void focusWindow(std::shared_ptr<Window> window);
 
     std::unordered_map<std::shared_ptr<Window>, ImGuiContext*> contextMap;
-
     std::vector<std::shared_ptr<Window>> windows;
+
+    std::string_view appName;
+    RendererResources rendererResources;
 
 public:
     static ImGuiKey keyToImGuiKey(Input::Key key);

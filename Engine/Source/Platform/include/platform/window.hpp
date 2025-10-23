@@ -1,3 +1,4 @@
+#include "common.hpp"
 #include "imgui.h"
 #include "input/keys.hpp"
 
@@ -36,8 +37,6 @@ struct WindowCreateInfo {
     bool visible;
     bool decorated;
     bool floating;
-
-    Platform* platform;
 };
 
 /**
@@ -46,7 +45,7 @@ struct WindowCreateInfo {
  */
 class Window {
 public:
-    Window(const WindowCreateInfo& createInfo);
+    Window(const WindowCreateInfo& createInfo, Platform* platform);
 
     vk::Extent2D getSize() const;
     void setSize(vk::Extent2D inSize);
@@ -85,13 +84,10 @@ private:
     vk::Extent2D size;
     vk::SurfaceFormatKHR surfaceFormat;
     vk::PresentModeKHR presentMode;
-    vk::ClearValue clearValue;
-    bool clearEnable;
     vk::Format swapChainImageFormat;
 
     // state
-    std::uint32_t currentFrame;
-    std::uint32_t imageCount;
+    std::uint32_t imageIndex;
 
     Platform* platform;
     std::unique_ptr<PlatformWindowImpl> platformWindow;
@@ -127,6 +123,7 @@ public:
      * Returns the size of the vulkan framebuffer linked to this window
      */
     virtual vk::Extent2D getSize() = 0;
+    virtual vk::Extent2D getFramebufferSize() = 0;
 
     /**
      * Will return true if the operating system has requested

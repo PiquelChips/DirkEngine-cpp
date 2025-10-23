@@ -59,18 +59,6 @@ struct DeviceFeatures {
     }
 };
 
-struct SwapChainCreateInfo {
-    // OUTPUT
-    vk::SwapchainKHR& swapChain; // the output swapchain
-    vk::Format& swapChainImageFormat;
-    vk::Extent2D& swapChainExtent;
-
-    // INPUT
-    vk::RenderPass renderPass;
-    vk::SurfaceKHR surface;
-    vk::Extent2D windowSize;
-};
-
 struct ImageMemoryView {
     vk::Image image;
     vk::DeviceMemory memory;
