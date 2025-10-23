@@ -1,3 +1,4 @@
+#include "imgui.h"
 #include "input/keys.hpp"
 
 #include "glm/glm.hpp"
@@ -65,6 +66,9 @@ public:
     void updateVisibility(bool inVisible);
 
     vk::SurfaceKHR createSurface(vk::Instance instance);
+
+    vk::SubmitInfo render(ImDrawData* drawData);
+    vk::PresentInfoKHR present();
 
 private:
     // render resources
