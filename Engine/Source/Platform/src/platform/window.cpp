@@ -1,6 +1,7 @@
 #include "platform/window.hpp"
 #include "asserts.hpp"
 #include "backends/imgui_impl_vulkan.h"
+#include "common.hpp"
 #include "platform/platform.hpp"
 
 #include "imgui.h"
@@ -12,7 +13,8 @@ namespace dirk::Platform {
 
 Window::Window(const WindowCreateInfo& createInfo, Platform* platform) : platform(platform) {
     // TODO: create platform window
-    surface = platformWindow->createVulkanSurface(platform->getRendererResources().instance);
+    auto renderer = gEngine->getRenderer();
+    surface = platformWindow->createVulkanSurface(renderer->getResources().instance);
 
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
@@ -42,38 +44,35 @@ void Window::updateVisibility(bool inVisible) {}
 vk::SurfaceKHR Window::createSurface(vk::Instance instance) {}
 
 vk::SubmitInfo Window::render(ImDrawData* drawData) {
-    auto resources = platform->getRendererResources();
+    auto resources = gEngine->getRenderer()->getResources();
     auto result = resources.device.acquireNextImageKHR(swapchain, UINT64_MAX, imageAvailableSemaphore, nullptr);
     checkVulkan(result.result);
     imageIndex = result.value;
     auto image = swapChainImages[imageIndex];
 
-    {
-        commandBuffer.reset();
+    commandBuffer.reset();
 
-        vk::CommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
-        beginInfo.pInheritanceInfo = nullptr;
+    vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
+    beginInfo.pInheritanceInfo = nullptr;
 
-        checkVulkan(commandBuffer.begin(&beginInfo));
-    }
-    {
-        vk::RenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = vk::StructureType::eRenderPassBeginInfo;
-        renderPassInfo.renderPass = renderPass;
-        renderPassInfo.framebuffer = image.frameBuffer;
+    checkVulkan(commandBuffer.begin(&beginInfo));
 
-        // make sure to render on the entire screen
-        renderPassInfo.renderArea.offset = vk::Offset2D(0, 0);
-        renderPassInfo.renderArea.extent = size;
+    vk::RenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = vk::StructureType::eRenderPassBeginInfo;
+    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.framebuffer = image.frameBuffer;
 
-        // clear color is black with 100% opacity
-        std::array<vk::ClearValue, 2> clearValues = { vk::ClearColorValue(0.f, 0.f, 0.f, 1.f), vk::ClearDepthStencilValue(1.f, 0.f) };
-        renderPassInfo.clearValueCount = clearValues.size();
-        renderPassInfo.pClearValues = clearValues.data();
+    // make sure to render on the entire screen
+    renderPassInfo.renderArea.offset = vk::Offset2D(0, 0);
+    renderPassInfo.renderArea.extent = size;
 
-        commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
-    }
+    // clear color is black with 100% opacity
+    std::array<vk::ClearValue, 2> clearValues = { vk::ClearColorValue(0.f, 0.f, 0.f, 1.f), vk::ClearDepthStencilValue(1.f, 0.f) };
+    renderPassInfo.clearValueCount = clearValues.size();
+    renderPassInfo.pClearValues = clearValues.data();
+
+    commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
 
     ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer);
 

@@ -20,8 +20,7 @@ Platform::~Platform() {
         shutdownImGui();
 }
 
-void Platform::initImGui(const RendererResources& resources) {
-    this->rendererResources = resources;
+void Platform::initImGui() {
     windows.clear();
     windows.resize(1);
     auto mainWindow = createWindow(WindowCreateInfo{ .title = appName });
