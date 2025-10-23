@@ -27,21 +27,51 @@ Window::Window(const WindowCreateInfo& createInfo, Platform* platform) : platfor
     swapChainImages = renderer->createSwapChain(swapChainInfo);
 }
 
-vk::Extent2D Window::getSize() const {}
-void Window::setSize(vk::Extent2D inSize) {}
-glm::vec2 Window::getPosition() const {}
-void Window::setPosition(const glm::vec2& inPosition) {}
-void Window::setTitle(std::string_view inTitle) {}
-std::string_view Window::getTitle() {}
+vk::Extent2D Window::getSize() const {
+    return platformWindow->getSize();
+}
 
-void* Window::getPlatformHandle() {}
+void Window::setSize(vk::Extent2D inSize) {
+    this->platformWindow->setSize(inSize);
+    this->size = inSize;
 
-bool Window::isFocused() {}
-bool Window::isMinimized() {}
+    auto renderer = gEngine->getRenderer();
+    auto device = renderer->getResources().device;
 
+    for (auto image : swapChainImages) {
+        device.destroyFramebuffer(image.frameBuffer);
+        device.destroyImageView(image.imageView);
+    }
+
+    device.destroySwapchainKHR(swapchain);
+
+    SwapChainCreateInfo swapChainInfo{
+        .swapChain = swapchain,
+        .swapChainImageFormat = swapChainImageFormat,
+        .swapChainExtent = size,
+        .renderPass = renderPass,
+        .surface = surface,
+        .windowSize = platformWindow->getFramebufferSize()
+    };
+    swapChainImages = renderer->createSwapChain(swapChainInfo);
+}
+
+glm::vec2 Window::getPosition() const { return platformWindow->getPosition(); }
+void Window::setPosition(const glm::vec2& inPosition) { platformWindow->setPosition(inPosition); }
+std::string_view Window::getTitle() { return platformWindow->getTitle(); }
+void Window::setTitle(std::string_view inTitle) { platformWindow->setTitle(inTitle); }
+void* Window::getPlatformHandle() { return platformWindow->getNativeHandle(); }
+
+bool Window::isFocused() { return platformWindow->isFocused(); }
+bool Window::isMinimized() { return platformWindow->isMinimized(); }
+
+// TODO: handle visibility
 void Window::updateVisibility(bool inVisible) {}
 
-vk::SurfaceKHR Window::createSurface(vk::Instance instance) {}
+vk::SurfaceKHR Window::createSurface(vk::Instance instance) {
+    this->surface = platformWindow->createVulkanSurface(instance);
+    return this->surface;
+}
 
 vk::SubmitInfo Window::render(ImDrawData* drawData) {
     auto resources = gEngine->getRenderer()->getResources();
