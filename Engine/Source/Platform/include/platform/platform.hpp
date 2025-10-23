@@ -54,11 +54,10 @@ public:
     Platform(const PlatformCreateInfo& createInfo);
     ~Platform();
 
-    void initImGui(const RendererResources& resources);
+    void initImGui();
     void tick(float deltaTime);
     void shutdownImGui();
 
-    const RendererResources& getRendererResources() { return rendererResources; }
     std::shared_ptr<Window>& getMainWindow() { return windows[0]; }
 
 private:
@@ -105,7 +104,6 @@ private:
     std::vector<std::shared_ptr<Window>> windows;
 
     std::string_view appName;
-    RendererResources rendererResources;
 
 public:
     static ImGuiKey keyToImGuiKey(Input::Key key);
