@@ -107,6 +107,8 @@ void Platform::tick(float deltaTime) {
     updateMonitors();
     updateMouseData();
     updateMouseCursor();
+
+    // TODO: process platform events
 }
 
 void Platform::shutdownImGui() {
