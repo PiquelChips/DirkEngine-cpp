@@ -80,14 +80,72 @@ struct SwapChainImage {
     operator bool() const { return imageView && frameBuffer; }
 };
 
+struct ImageMemoryView {
+    vk::Image image;
+    vk::DeviceMemory memory;
+    vk::ImageView view;
+
+    operator bool() const { return image && memory && view; }
+};
+
+struct CreateImageMemoryViewInfo {
+    // the image
+    uint32_t width, height;
+    vk::Format format;
+    vk::ImageTiling tiling;
+    vk::ImageUsageFlags usage;
+    // the memory
+    vk::MemoryPropertyFlags properties;
+    // the view
+    vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor;
+    // MSAA & mipmaps
+    vk::SampleCountFlagBits numSamples = vk::SampleCountFlagBits::e1;
+    uint32_t mipLevels = 1;
+};
+
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
+
+    bool isComplete() {
+        return graphicsFamily.has_value() && presentFamily.has_value();
+    }
+};
+
 class IRenderer {
 public:
     virtual ~IRenderer() = default;
+
     virtual std::vector<SwapChainImage> createSwapChain(const SwapChainCreateInfo& createInfo) = 0;
+    virtual vk::ShaderModule loadShaderModule(const std::string& shaderName) = 0;
+    virtual vk::Semaphore createSemaphore() = 0;
+    virtual vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout) = 0;
 
     virtual RendererResources getResources() = 0;
     virtual const RendererProperties& getProperties() = 0;
     virtual const DeviceFeatures getDeviceFeatures() = 0;
+
+    // some utility functions
+    virtual ImageMemoryView createImageMemoryView(CreateImageMemoryViewInfo& createInfo) = 0;
+
+    virtual std::tuple<vk::Image, vk::DeviceMemory> createImage(
+        uint32_t width, uint32_t height, vk::Format format,
+        vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
+        vk::SampleCountFlagBits numSamples = vk::SampleCountFlagBits::e1,
+        uint32_t mipLevels = 1) = 0;
+
+    virtual vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor, uint32_t mipLevels = 1) = 0;
+
+    virtual std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) = 0;
+    virtual QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device) = 0;
+
+    virtual vk::CommandBuffer beginSingleTimeCommands() = 0;
+    virtual void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue) = 0;
+
+    virtual void transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels = 1) = 0;
+    virtual void copyBuffer(vk::CommandBuffer commandBuffer, vk::Buffer& srcBuffer, vk::Buffer& dstBuffer, vk::DeviceSize size) = 0;
+    virtual void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height) = 0;
+    virtual void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) = 0;
 };
 
 namespace Platform {
@@ -96,7 +154,9 @@ class Window;
 
 class IPlatform {
 public:
-    virtual void initImGui(const RendererResources& resources) = 0;
+    virtual ~IPlatform() = default;
+
+    virtual void initImGui() = 0;
     virtual void tick(float deltaTime) = 0;
     virtual void shutdownImGui() = 0;
 
@@ -105,6 +165,8 @@ public:
 
 class IEngine {
 public:
+    virtual ~IEngine() = default;
+
     virtual void exit() = 0;
     virtual void exit(const std::string& reason) = 0;
 
