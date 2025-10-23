@@ -38,7 +38,7 @@ namespace dirk {
 static void checkVkResult(VkResult err) {
     if (err == VK_SUCCESS)
         return;
-    DIRK_LOG(LogVulkan, ERROR, "VkResult = " << err);
+    DIRK_LOG(LogVulkan, ERROR, "vk::Result = " << err);
 }
 
 DEFINE_LOG_CATEGORY(LogVulkan)
@@ -118,7 +118,7 @@ Renderer::Renderer() {
     style.WindowRounding = 0.0f;
     style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 
-    gEngine->getPlatform()->initImGui();
+    gEngine->getPlatform()->initImGui(getResources());
     auto mainWindow = gEngine->getPlatform()->getMainWindow();
 
     ImGui_ImplVulkan_InitInfo initInfo = {};
