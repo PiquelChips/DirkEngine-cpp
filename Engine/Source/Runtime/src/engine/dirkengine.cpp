@@ -53,6 +53,7 @@ void DirkEngine::exit(const std::string& reason) {
 }
 
 void DirkEngine::tick(float deltaTime) {
+    platform->tick(deltaTime);
     world->tick(deltaTime);
 
     renderer->render();

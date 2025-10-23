@@ -2,6 +2,7 @@
 
 #include "glm/glm.hpp"
 #include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
@@ -66,10 +67,30 @@ public:
     vk::SurfaceKHR createSurface(vk::Instance instance);
 
 private:
+    // render resources
+    vk::SwapchainKHR swapchain;
+    vk::SurfaceKHR surface;
+    vk::RenderPass renderPass;
+    vk::CommandBuffer commandBuffer;
+
+    vk::Semaphore imageAvailableSemaphore;
+    vk::Semaphore renderFinishedSemaphore;
+    std::vector<SwapChainImage> swapChainImages;
+
+    // settings
+    vk::Extent2D size;
+    vk::SurfaceFormatKHR surfaceFormat;
+    vk::PresentModeKHR presentMode;
+    vk::ClearValue clearValue;
+    bool clearEnable;
+    vk::Format swapChainImageFormat;
+
+    // state
+    std::uint32_t currentFrame;
+    std::uint32_t imageCount;
+
     Platform* platform;
     std::unique_ptr<PlatformWindowImpl> platformWindow;
-
-    // vulkan stuff
 };
 
 // interface for all platform windows
