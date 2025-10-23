@@ -25,6 +25,7 @@ Platform::~Platform() {
 }
 
 void Platform::initImGui() {
+    windows.clear();
     windows.resize(1);
     auto mainWindow = createWindow(mainWindowCreateInfo);
 
@@ -83,10 +84,10 @@ void Platform::initImGui() {
     vd->window = bd->window;
     vd->windowOwned = false;
 
-    ImGuiViewport* main_viewport = ImGui::GetMainViewport();
-    main_viewport->PlatformUserData = vd;
-    main_viewport->PlatformHandle = (void*) bd->window->getPlatformHandle();
-    IM_UNUSED(main_viewport);
+    ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+    mainViewport->PlatformUserData = vd;
+    mainViewport->PlatformHandle = (void*) bd->window->getPlatformHandle();
+    IM_UNUSED(mainViewport);
 }
 
 void Platform::tick(float deltaTime) {
