@@ -13,9 +13,7 @@
 namespace dirk::Platform {
 
 struct Cursor {};
-struct PlatformCreateInfo {
-    WindowCreateInfo mainWindowInfo;
-};
+struct PlatformCreateInfo {};
 
 struct ImGuiData {
     ImGuiContext* context;
@@ -52,7 +50,7 @@ public:
     Platform(const PlatformCreateInfo& createInfo);
     ~Platform();
 
-    void initImGui();
+    void initImGui(const WindowCreateInfo& createInfo);
     void tick(float deltaTime);
     void shutdownImGui();
 

@@ -13,21 +13,17 @@
 
 namespace dirk::Platform {
 
-static WindowCreateInfo mainWindowCreateInfo;
-
-Platform::Platform(const PlatformCreateInfo& createInfo) {
-    mainWindowCreateInfo = createInfo.mainWindowInfo;
-}
+Platform::Platform(const PlatformCreateInfo& createInfo) {}
 
 Platform::~Platform() {
     if (getBackendData() != nullptr)
         shutdownImGui();
 }
 
-void Platform::initImGui() {
+void Platform::initImGui(const WindowCreateInfo& createInfo) {
     windows.clear();
     windows.resize(1);
-    auto mainWindow = createWindow(mainWindowCreateInfo);
+    auto mainWindow = createWindow(createInfo);
 
     ImGuiIO& io = ImGui::GetIO();
     IMGUI_CHECKVERSION();

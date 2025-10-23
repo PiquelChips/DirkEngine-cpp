@@ -2,8 +2,21 @@
 
 namespace dirk::Platform {
 
-// TODO: implement window
-Window::Window(const WindowCreateInfo& createInfo) {}
+Window::Window(const WindowCreateInfo& createInfo) {
+    // TODO: create platform window
+    auto renderer = gEngine->getRenderer();
+    surface = platformWindow->createVulkanSurface(renderer->getResources().instance);
+
+    SwapChainCreateInfo swapChainInfo{
+        .swapChain = swapChain,
+        .swapChainImageFormat = swapChainImageFormat,
+        .swapChainExtent = swapChainExtent,
+        .renderPass = renderPass,
+        .surface = surface,
+        .windowSize = platformWindow->getFramebufferSize()
+    };
+    swapChainImages = renderer->createSwapChain(swapChainInfo);
+}
 
 vk::Extent2D Window::getSize() const {}
 void Window::setSize(vk::Extent2D inSize) {}
@@ -21,32 +34,7 @@ void Window::updateVisibility(bool inVisible) {}
 
 vk::SurfaceKHR Window::createSurface(vk::Instance instance) {}
 
-// this is old window code, could be reused in the future
 /**
-Window::Window(const WindowCreateInfo& createInfo) {
-    // TODO: create platform window
-    auto renderer = gEngine->getRenderer();
-    surface = platformWindow->createVulkanSurface(renderer->getResources().instance);
-
-    SwapChainCreateInfo swapChainInfo{
-        .swapChain = swapChain,
-        .swapChainImageFormat = swapChainImageFormat,
-        .swapChainExtent = swapChainExtent,
-        .renderPass = renderPass,
-        .surface = surface,
-        .windowSize = platformWindow->getFramebufferSize()
-    };
-    swapChainImages = renderer->createSwapChain(swapChainInfo);
-}
-
-void Window::addViewport(std::shared_ptr<Viewport> inViewport) {
-    viewports.emplace_back(inViewport);
-}
-
-void Window::removeViewport(std::shared_ptr<Viewport> inViewport) {
-    viewports.erase(std::find(viewports.begin(), viewports.end(), inViewport));
-}
-
 vk::SubmitInfo Window::render() {
     // TODO: render window UI with ImGUI
 
@@ -94,11 +82,6 @@ vk::PresentInfoKHR Window::present() {
     currentFrame = (++currentFrame) % swapChainImages.size();
 
     return presentInfo;
-}
-
-void Window::processPlatformEvents() {
-    platformWindow->pollEvents();
-    // TODO: process platform events
 }
 */
 

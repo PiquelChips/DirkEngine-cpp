@@ -1,8 +1,10 @@
 #include "render/renderer.hpp"
+#include "asserts.hpp"
 #include "backends/imgui_impl_vulkan.h"
 #include "common.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
+#include "imgui.h"
 #include "logging/logging.hpp"
 #include "platform/platform.hpp"
 #include "render/camera.hpp"
@@ -143,33 +145,36 @@ Renderer::~Renderer() {
 }
 
 void Renderer::render() {
-    // TODO: fix rendering for ImGui
-    /**
     // wait for previous frame
     checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
-
     // only reset after or we risk blocking with an unsignalled fence
     checkVulkan(device.resetFences(1, &inFlightFence));
 
-    auto& windows = gEngine->getWindows();
-    std::vector<vk::SubmitInfo> submitInfos(viewports.size() + windows.size());
-    std::vector<vk::PresentInfoKHR> presentInfos(windows.size());
-
+    // render engine viewports
+    std::vector<vk::SubmitInfo> submitInfos(viewports.size());
     for (auto& viewport : viewports) {
         submitInfos.emplace_back(viewport->render());
     }
-
-    for (auto& window : windows) {
-        submitInfos.emplace_back(window->render());
-        presentInfos.emplace_back(window->present());
-    }
-
     auto result = queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence);
+    checkVulkan(result);
 
-    for (auto& info : presentInfos) {
-        auto result = queues.presentQueue.presentKHR(&info);
-    }
-    */
+    ImGui_ImplVulkan_NewFrame();
+    ImGui::NewFrame();
+
+    // TODO: process all ImGui rendering
+    ImGui::ShowDemoWindow();
+
+    ImGui::Render();
+
+    auto window = gEngine->getPlatform()->getMainWindow();
+    if (!window->isMinimized())
+        queues.graphicsQueue.submit(window->render(ImGui::GetDrawData()), inFlightFence);
+
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
+
+    if (!window->isMinimized())
+        checkVulkan(queues.presentQueue.presentKHR(window->present()));
 }
 
 std::shared_ptr<Viewport> Renderer::createViewport(const ViewportCreateInfo& createInfo) {
