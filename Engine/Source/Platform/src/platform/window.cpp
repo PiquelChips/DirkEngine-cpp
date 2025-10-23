@@ -1,4 +1,25 @@
+#include "platform/window.hpp"
+
 namespace dirk::Platform {
+
+// TODO: implement window
+Window::Window(const WindowCreateInfo& createInfo) {}
+
+vk::Extent2D Window::getSize() const {}
+void Window::setSize(vk::Extent2D inSize) {}
+glm::vec2 Window::getPosition() const {}
+void Window::setPosition(const glm::vec2& inPosition) {}
+void Window::setTitle(std::string_view inTitle) {}
+std::string_view Window::getTitle() {}
+
+void* Window::getPlatformHandle() {}
+
+bool Window::isFocused() {}
+bool Window::isMinimized() {}
+
+void Window::updateVisibility(bool inVisible) {}
+
+vk::SurfaceKHR Window::createSurface(vk::Instance instance) {}
 
 // this is old window code, could be reused in the future
 /**
