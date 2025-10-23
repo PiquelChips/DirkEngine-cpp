@@ -57,18 +57,18 @@ public:
 
 private:
     // platform funcs used by ImGui
-    static void ImGui_CreateWindow(ImGuiViewport* viewport);                      // . . U . .  // Create a new platform window for the given viewport
-    static void ImGui_DestroyWindow(ImGuiViewport* viewport);                     // N . U . D  //
-    static void ImGui_ShowWindow(ImGuiViewport* viewport);                        // . . U . .  // Newly created windows are initially hidden so SetWindowPos/Size/Title can be called on them before showing the window
-    static void ImGui_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos);          // . . U . .  // Set platform window position (given the upper-left corner of client area)
-    static ImVec2 ImGui_GetWindowPos(ImGuiViewport* viewport);                    // N . . . .  //
-    static void ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size);        // . . U . .  // Set platform window client area size (ignoring OS decorations such as OS title bar etc.)
-    static ImVec2 ImGui_GetWindowSize(ImGuiViewport* viewport);                   // N . . . .  // Get platform window client area size
-    static ImVec2 ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport);       // N . . . .  // Return viewport density. Always 1,1 on Windows, often 2,2 on Retina display on macOS/iOS. MUST BE INTEGER VALUES.
-    static void ImGui_SetWindowFocus(ImGuiViewport* viewport);                    // N . . . .  // Move window to front and set input focus
-    static bool ImGui_GetWindowFocus(ImGuiViewport* viewport);                    // . . U . .  //
-    static bool ImGui_GetWindowMinimized(ImGuiViewport* viewport);                // N . . . .  // Get platform window minimized state. When minimized, we generally won't attempt to get/set size and contents will be culled more easily
-    static void ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title); // . . U . .  // Set platform window title (given an UTF-8 string)
+    static void ImGui_CreateWindow(ImGuiViewport* viewport);
+    static void ImGui_DestroyWindow(ImGuiViewport* viewport);
+    static void ImGui_ShowWindow(ImGuiViewport* viewport);
+    static void ImGui_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos);
+    static ImVec2 ImGui_GetWindowPos(ImGuiViewport* viewport);
+    static void ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size);
+    static ImVec2 ImGui_GetWindowSize(ImGuiViewport* viewport);
+    static ImVec2 ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport);
+    static void ImGui_SetWindowFocus(ImGuiViewport* viewport);
+    static bool ImGui_GetWindowFocus(ImGuiViewport* viewport);
+    static bool ImGui_GetWindowMinimized(ImGuiViewport* viewport);
+    static void ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title);
     static int ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface);
 
     // callbacks for platform events
