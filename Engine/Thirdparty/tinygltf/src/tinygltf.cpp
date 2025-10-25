@@ -1,5 +1,3 @@
-#include "common.hpp"
-
 // TINY GLTF
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
