@@ -56,8 +56,11 @@ type SetupConfig struct {
 }
 
 type BuildType struct {
-	Name     string            `json:"-"`
-	Optimize bool              `json:"optimize"`
-	Compact  bool              `json:"compact"` // compact the output (essentially statically linking)
-	Defines  map[string]string `json:"defines"`
+	Name           string            `json:"-"`
+	Optimize       bool              `json:"optimize"`
+	Compact        bool              `json:"compact"` // compact the output (essentially statically linking)
+	Defines        map[string]string `json:"defines"`
+	WarningLevel   int               `json:"warning_level"` // TODO: actually use this
+	SearchDirs     []string          `json:"-"`
+	ErrOnBuildFail bool              `json:"-"`
 }

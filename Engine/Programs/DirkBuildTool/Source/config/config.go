@@ -45,6 +45,8 @@ func loadBuildTypes() map[string]*models.BuildType {
 
 	for name, conf := range buildTypes {
 		conf.Name = name
+		conf.SearchDirs = Dirs.Modules
+		conf.ErrOnBuildFail = false
 	}
 
 	return buildTypes
