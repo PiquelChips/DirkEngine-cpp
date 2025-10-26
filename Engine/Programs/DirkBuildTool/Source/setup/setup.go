@@ -104,7 +104,7 @@ func Setup(buildConfig *models.BuildConfig) error {
 		externalLibs = append(externalLibs, dep.GetLibs()...)
 	}
 
-	paths := getLibraryPaths([]string{"LD_LIBRARY_PATH", "NIX_LD_LIBRARY_PATH"}) // TODO: use config to get these
+	paths := getLibraryPaths(config.General.LibSearchEnvs)
 	for _, lib := range externalLibs {
 		for _, path := range paths {
 			entries, _ := os.ReadDir(path)

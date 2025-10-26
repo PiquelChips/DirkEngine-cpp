@@ -17,8 +17,13 @@ type DirsConfig struct {
 	Modules      []string `json:"modules"` // dirs that will be searched for modules
 }
 
+type GeneralConfig struct {
+	LibSearchEnvs []string `json:"lib_search_envs"`
+}
+
 var BuildTypes map[string]*models.BuildType
 var Dirs DirsConfig
+var General GeneralConfig
 var Setup *models.SetupConfig
 
 const configDir = "Engine/Programs/DirkBuildTool/Config"
@@ -27,6 +32,7 @@ func LoadConfig() {
 	log.Printf("Loading configuration\n")
 	Dirs = loadDirsConfig()
 	BuildTypes = loadBuildTypes()
+	General = loadGeneralConfig()
 }
 
 func loadBuildTypes() map[string]*models.BuildType {
@@ -78,6 +84,16 @@ func loadDirsConfig() DirsConfig {
 	}
 
 	return dirs
+}
+
+func loadGeneralConfig() GeneralConfig {
+	config := GeneralConfig{}
+	if err := loadConfig("general.json", &config); err != nil {
+		fmt.Printf("%s\n", err.Error())
+		os.Exit(1)
+		return GeneralConfig{}
+	}
+	return config
 }
 
 func loadConfig(file string, out any) error {
