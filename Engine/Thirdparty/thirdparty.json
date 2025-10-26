@@ -1,0 +1,20 @@
+{
+    "tinygltf": {},
+    "ImGui": {},
+    "glm": {
+        "header_only": true,
+        "include_dir": "."
+    },
+    "vulkan": {
+        "external": true
+    },
+    "Wayland": {
+        "external": true,
+        "libs": [
+            "wayland-client"
+        ]
+    },
+    "xkbcommon": {
+        "external": true
+    }
+}
