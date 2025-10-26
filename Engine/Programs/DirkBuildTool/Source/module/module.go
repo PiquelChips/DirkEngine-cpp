@@ -17,6 +17,7 @@ type Module interface {
 	models.Dependency
 
 	ToMakefile() make.Makefile
+	GetName() string
 
 	getBuildDeps() []Module
 	getPath() string

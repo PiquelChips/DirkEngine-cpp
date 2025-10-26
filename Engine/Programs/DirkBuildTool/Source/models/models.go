@@ -7,8 +7,7 @@ type Defines map[string]string
 type Dependency interface {
 	GetIncludeDir() string
 	GetDefines() Defines
-	IsLib() bool
-	GetName() string
+	GetLibs() []string
 }
 
 type ThirdpartyDependency struct {
