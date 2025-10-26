@@ -11,27 +11,15 @@ type Dependency interface {
 }
 
 type ThirdpartyDependency struct {
-	Name         string  `json:"name"`
-	IsHeaderOnly bool    `json:"header_only"`
-	IncludeDir   string  `json:"inc_dir"`
-	Defines      Defines `json:"defines,omitempty"`
+	IsHeaderOnly bool     `json:"header_only"`
+	External     bool     `json:"external"`
+	IncludeDir   string   `json:"include_dir"`    // relative (default is "include")
+	Libs         []string `json:"libs,omitempty"` // the names of the libraries needed without (ex: wayland needs wayland-client)
 }
 
-func (dep *ThirdpartyDependency) GetIncludeDir() string {
-	return dep.IncludeDir
-}
-
-func (dep *ThirdpartyDependency) GetDefines() Defines {
-	return dep.Defines
-}
-
-func (dep *ThirdpartyDependency) IsLib() bool {
-	return !dep.IsHeaderOnly
-}
-
-func (dep *ThirdpartyDependency) GetName() string {
-	return dep.Name
-}
+func (dep *ThirdpartyDependency) GetIncludeDir() string { return dep.IncludeDir }
+func (dep *ThirdpartyDependency) GetDefines() Defines   { return nil }
+func (dep *ThirdpartyDependency) GetLibs() []string     { return dep.Libs }
 
 type CompileCommands []*CompileCommand
 
