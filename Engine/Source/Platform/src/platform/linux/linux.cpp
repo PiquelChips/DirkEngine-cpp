@@ -1,30 +1,25 @@
+#include "platform/platform.hpp"
 #ifdef PLATFORM_LINUX
 
 #include "platform/linux/linux.hpp"
 
 namespace dirk::Platform::Linux {
 
-std::vector<const char*> getRequiredExtensions() {}
+LinuxPlatform::LinuxPlatform(const PlatformCreateInfo& createInfo) {
+    display = wl_display_connect(nullptr);
+    DIRK_LOG(LogWayland, INFO, "connected to display")
+}
 
-LinuxWindow::LinuxWindow() {}
-LinuxWindow::~LinuxWindow() {}
+LinuxPlatform::~LinuxPlatform() {
+    wl_display_disconnect(display);
+}
 
-void* LinuxWindow::getNativeHandle() {}
+void LinuxPlatform::pollPlatformEvents() {
+    // TODO: handle return value
+    wl_display_dispatch(display);
+}
 
-vk::SurfaceKHR LinuxWindow::createVulkanSurface(vk::Instance instance) {}
-
-vk::Extent2D LinuxWindow::getSize() {}
-void LinuxWindow::setSize(vk::Extent2D inSize) {}
-vk::Extent2D LinuxWindow::getFramebufferSize() {}
-
-glm::vec2 LinuxWindow::getPosition() {}
-void LinuxWindow::setPosition(const glm::vec2 inPosition) {}
-
-std::string_view LinuxWindow::getTitle() {}
-void LinuxWindow::setTitle(std::string_view inTitle) {}
-
-bool LinuxWindow::isFocused() {}
-bool LinuxWindow::isMinimized() {}
+std::vector<const char*> LinuxPlatform::getRequiredExtensions() {}
 
 } // namespace dirk::Platform::Linux
 

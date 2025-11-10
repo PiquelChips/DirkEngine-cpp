@@ -16,7 +16,14 @@
 
 namespace dirk::Platform {
 
-Platform::Platform(const PlatformCreateInfo& createInfo) : appName(createInfo.appName) {}
+Platform::Platform(const PlatformCreateInfo& createInfo)
+    : appName(createInfo.appName) {
+#ifdef PLATFORM_LINUX
+    platformImpl = std::make_unique<Linux::LinuxPlatform>(createInfo);
+#else
+    DIRK_LOG(LogPlatform, FATAL, "no platform detected")
+#endif
+}
 
 Platform::~Platform() {
     if (getBackendData() != nullptr)
@@ -495,12 +502,17 @@ void Platform::updateMouseCursor() {
     */
 }
 
-// TODO: window createion and destruction
 std::shared_ptr<Window> Platform::createWindow(const WindowCreateInfo& createInfo) {
-    return nullptr;
+    return platformImpl->createWindow(createInfo);
 }
-void Platform::destroyWindow(std::shared_ptr<Window> window) {}
-void Platform::focusWindow(std::shared_ptr<Window> window) {}
+
+void Platform::destroyWindow(std::shared_ptr<Window> window) {
+    platformImpl->destroyWindow(window);
+}
+
+void Platform::focusWindow(std::shared_ptr<Window> window) {
+    platformImpl->focusWindow(window);
+}
 
 // clang-format off
 ImGuiKey Platform::keyToImGuiKey(Input::Key key)
@@ -630,12 +642,5 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     }
 }
 // clang-format on
-
-std::vector<const char*> getRequiredExtensions() {
-#ifdef PLATFORM_LINUX
-    return Linux::getRequiredExtensions();
-#endif
-    return std::vector<const char*>();
-}
 
 } // namespace dirk::Platform

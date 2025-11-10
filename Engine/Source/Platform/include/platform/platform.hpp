@@ -49,6 +49,16 @@ struct ImGuiViewportData {
     ~ImGuiViewportData() { IM_ASSERT(window == nullptr); }
 };
 
+class PlatformImpl {
+public:
+    virtual ~PlatformImpl();
+    virtual void pollPlatformEvents() = 0;
+    virtual std::vector<const char*> getRequiredExtensions() = 0;
+    virtual std::shared_ptr<Window> createWindow(const WindowCreateInfo& createInfo) = 0;
+    virtual void destroyWindow(std::shared_ptr<Window> window) = 0;
+    virtual void focusWindow(std::shared_ptr<Window> window) = 0;
+};
+
 class Platform : public IPlatform {
 public:
     Platform(const PlatformCreateInfo& createInfo);
@@ -105,10 +115,10 @@ private:
 
     std::string_view appName;
 
+    std::unique_ptr<PlatformImpl> platformImpl;
+
 public:
     static ImGuiKey keyToImGuiKey(Input::Key key);
 };
-
-std::vector<const char*> getRequiredExtensions();
 
 } // namespace dirk::Platform
