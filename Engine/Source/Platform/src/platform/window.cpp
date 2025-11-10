@@ -1,14 +1,15 @@
 #include "platform/window.hpp"
 #include "asserts.hpp"
-#include "backends/imgui_impl_vulkan.h"
 #include "common.hpp"
 #include "platform/platform.hpp"
 #include <memory>
 
 #ifdef PLATFORM_LINUX
 #include "platform/linux/linux.hpp"
+#include "platform/linux/window.hpp"
 #endif
 
+#include "backends/imgui_impl_vulkan.h"
 #include "imgui.h"
 #include "vulkan/vulkan_enums.hpp"
 

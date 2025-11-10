@@ -20,6 +20,9 @@ void LinuxPlatform::pollPlatformEvents() {
 }
 
 std::vector<const char*> LinuxPlatform::getRequiredExtensions() {}
+std::shared_ptr<Window> LinuxPlatform::createWindow(const WindowCreateInfo& createInfo) {}
+void LinuxPlatform::destroyWindow(std::shared_ptr<Window> window) {}
+void LinuxPlatform::focusWindow(std::shared_ptr<Window> window) {}
 
 } // namespace dirk::Platform::Linux
 

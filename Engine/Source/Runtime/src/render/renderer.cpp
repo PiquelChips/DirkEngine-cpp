@@ -57,7 +57,8 @@ Renderer::Renderer() {
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.apiVersion = vk::ApiVersion14;
 
-        auto instanceExtensions = Platform::getRequiredExtensions();
+        // TODO: see platform stuff
+        std::vector<const char*> instanceExtensions = std::vector<const char*>();
         check(checkRequiredInstanceExtensions(instanceExtensions));
 
         vk::InstanceCreateInfo createInfo{};

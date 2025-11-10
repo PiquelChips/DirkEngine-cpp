@@ -51,7 +51,7 @@ struct ImGuiViewportData {
 
 class PlatformImpl {
 public:
-    virtual ~PlatformImpl();
+    virtual ~PlatformImpl() = default;
     virtual void pollPlatformEvents() = 0;
     virtual std::vector<const char*> getRequiredExtensions() = 0;
     virtual std::shared_ptr<Window> createWindow(const WindowCreateInfo& createInfo) = 0;
