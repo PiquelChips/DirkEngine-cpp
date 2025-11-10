@@ -10,11 +10,13 @@
     },
     "Wayland": {
         "external": true,
+        "include_dir": ".",
         "libs": [
             "wayland-client"
         ]
     },
     "xkbcommon": {
+        "include_dir": ".",
         "external": true
     }
 }

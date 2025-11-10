@@ -6,6 +6,8 @@
         "Common",
         "vulkan",
         "glm",
-        "ImGui"
+        "ImGui",
+        "Wayland",
+        "xkbcommon"
     ]
 }
