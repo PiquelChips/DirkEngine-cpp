@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef PLATFORM_LINUX
+#define VK_USE_PLATFORM_WAYLAND_KHR
+#endif
+
 // GLM
 #include <memory>
 #define GLM_FORCE_RADIANS
