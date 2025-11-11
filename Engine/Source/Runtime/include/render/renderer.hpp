@@ -15,11 +15,14 @@
 #include <unordered_map>
 #include <vector>
 
+/**
+ * TODO: fix for some reason segfault at debug messenger create
 #ifdef DIRK_DEVELOPMENT_BUILD
 #ifndef DISABLE_VALIDATION_LAYERS
 #define ENABLE_VALIDATION_LAYERS
 #endif
 #endif
+*/
 
 namespace dirk {
 
@@ -89,7 +92,6 @@ private:
         void* pUserData);
 
     bool checkValidationLayerSupport();
-    vk::DebugUtilsMessengerEXT setupDebugMessenger();
 
     vk::DebugUtilsMessengerEXT debugMessenger;
 #endif
