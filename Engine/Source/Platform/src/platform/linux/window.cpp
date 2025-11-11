@@ -1,23 +1,39 @@
+#include "asserts.hpp"
 #ifdef PLATFORM_LINUX
 
-#include "platform/linux/window.hpp"
+#include "common.hpp"
 #include "logging/logging.hpp"
+#include "platform/linux/window.hpp"
 
 #include "wayland-client-core.h"
+#include "wayland-client-protocol.h"
 
 namespace dirk::Platform::Linux {
 
 DEFINE_LOG_CATEGORY(LogLinux)
 DEFINE_LOG_CATEGORY(LogWayland)
 
-std::vector<const char*> getRequiredExtensions() {}
+LinuxWindow::LinuxWindow(const LinuxWindowCreateInfo& createInfo) : linuxPlatform(createInfo.platformImpl) {
+    wlSurface = wl_compositor_create_surface(linuxPlatform->getWaylandState().compositor);
+}
 
-LinuxWindow::LinuxWindow() {}
 LinuxWindow::~LinuxWindow() {}
 
-void* LinuxWindow::getNativeHandle() {}
+vk::SurfaceKHR LinuxWindow::getVulkanSurface(vk::Instance instance) {
+    if (vkSurface)
+        return vkSurface;
 
-vk::SurfaceKHR LinuxWindow::createVulkanSurface(vk::Instance instance) {}
+    vk::WaylandSurfaceCreateInfoKHR createInfo;
+    createInfo.display = linuxPlatform->getDisplay();
+    createInfo.surface = wlSurface;
+
+    vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
+    // TODO: use error
+    auto err = instance.createWaylandSurfaceKHR(&createInfo, nullptr, &vkSurface, dispatcher);
+    check(vkSurface);
+
+    return vkSurface;
+}
 
 vk::Extent2D LinuxWindow::getSize() {}
 void LinuxWindow::setSize(vk::Extent2D inSize) {}

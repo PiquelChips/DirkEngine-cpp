@@ -1,5 +1,6 @@
 #include "platform/platform.hpp"
 #include "common.hpp"
+
 #ifdef PLATFORM_LINUX
 #include "platform/linux/linux.hpp"
 #endif
@@ -250,11 +251,11 @@ int Platform::ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, con
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
     IM_UNUSED(bd);
 
-    outSurface = (ImU64*) (VkSurfaceKHR) vd->window->createSurface((VkInstance) instance);
+    outSurface = (ImU64*) (VkSurfaceKHR) vd->window->getVulkanSurface((VkInstance) instance);
     return (int) vk::Result::eSuccess;
 }
 
-void Platform::windowSizeCallback(std::shared_ptr<Window> window, vk::Extent2D inSize) {
+void Platform::windowSizeCallback(Window* window, vk::Extent2D inSize) {
     if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle())) {
         if (ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData) {
             bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowSizeEventFrame + 1);
@@ -266,7 +267,7 @@ void Platform::windowSizeCallback(std::shared_ptr<Window> window, vk::Extent2D i
     }
 }
 
-void Platform::windowPosCallback(std::shared_ptr<Window> window, glm::vec2 inPos) {
+void Platform::windowPosCallback(Window* window, glm::vec2 inPos) {
     if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle())) {
         if (ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData) {
             bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowPosEventFrame + 1);
@@ -278,12 +279,12 @@ void Platform::windowPosCallback(std::shared_ptr<Window> window, glm::vec2 inPos
     }
 }
 
-void Platform::windowCloseCallback(std::shared_ptr<Window> window) {
+void Platform::windowCloseCallback(Window* window) {
     if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle()))
         viewport->PlatformRequestClose = true;
 }
 
-void Platform::focusWindowCallback(std::shared_ptr<Window> window, bool focused) {
+void Platform::focusWindowCallback(Window* window, bool focused) {
     ImGuiData* bd = getBackendData(window);
 
     // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
@@ -294,7 +295,7 @@ void Platform::focusWindowCallback(std::shared_ptr<Window> window, bool focused)
     io.AddFocusEvent(focused);
 }
 
-void Platform::cursorEnterCallback(std::shared_ptr<Window> window, bool entered) {
+void Platform::cursorEnterCallback(Window* window, bool entered) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
@@ -308,7 +309,7 @@ void Platform::cursorEnterCallback(std::shared_ptr<Window> window, bool entered)
     }
 }
 
-void Platform::cursorPosCallback(std::shared_ptr<Window> window, glm::vec2 pos) {
+void Platform::cursorPosCallback(Window* window, glm::vec2 pos) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
@@ -321,7 +322,7 @@ void Platform::cursorPosCallback(std::shared_ptr<Window> window, glm::vec2 pos) 
     bd->lastValidMousePos = pos;
 }
 
-void Platform::mouseButtonCallback(std::shared_ptr<Window> window, Input::MouseButton button, Input::KeyState action) {
+void Platform::mouseButtonCallback(Window* window, Input::MouseButton button, Input::KeyState action) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
@@ -332,14 +333,14 @@ void Platform::mouseButtonCallback(std::shared_ptr<Window> window, Input::MouseB
     io.AddMouseButtonEvent((int) button, action == Input::KeyState::Pressed);
 }
 
-void Platform::mouseScrollCallback(std::shared_ptr<Window> window, glm::vec2 offset) {
+void Platform::mouseScrollCallback(Window* window, glm::vec2 offset) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
     io.AddMouseWheelEvent(offset.x, offset.y);
 }
 
-void Platform::keyCallback(std::shared_ptr<Window> window, Input::Key key, Input::KeyState action) {
+void Platform::keyCallback(Window* window, Input::Key key, Input::KeyState action) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
@@ -351,7 +352,7 @@ void Platform::keyCallback(std::shared_ptr<Window> window, Input::Key key, Input
     io.AddKeyEvent(keyToImGuiKey(key), (action == Input::KeyState::Pressed));
 }
 
-void Platform::charCallback(std::shared_ptr<Window> window, unsigned int c) {
+void Platform::charCallback(Window* window, unsigned int c) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
@@ -362,7 +363,7 @@ ImGuiData* Platform::getBackendData() {
     return ImGui::GetCurrentContext() ? (ImGuiData*) ImGui::GetIO().BackendPlatformUserData : nullptr;
 }
 
-ImGuiData* Platform::getBackendData(std::shared_ptr<Window> window) {
+ImGuiData* Platform::getBackendData(Window* window) {
     ImGuiData* bd = getBackendData(window);
     ImGuiContext* ctx = bd->platform->contextMap.at(window);
     return (ImGuiData*) ImGui::GetIO(ctx).BackendPlatformUserData;
@@ -502,16 +503,20 @@ void Platform::updateMouseCursor() {
     */
 }
 
-std::shared_ptr<Window> Platform::createWindow(const WindowCreateInfo& createInfo) {
-    return platformImpl->createWindow(createInfo);
+Window* Platform::createWindow(const WindowCreateInfo& createInfo) {
+    windows.push_back(std::make_unique<Window>(
+        createInfo,
+        this,
+        platformImpl->createPlatformWindow(createInfo)));
+    return windows.back().get();
 }
 
-void Platform::destroyWindow(std::shared_ptr<Window> window) {
-    platformImpl->destroyWindow(window);
+void Platform::destroyWindow(Window* window) {
+    platformImpl->destroyWindow(window->getPlatformImpl());
 }
 
-void Platform::focusWindow(std::shared_ptr<Window> window) {
-    platformImpl->focusWindow(window);
+void Platform::focusWindow(Window* window) {
+    platformImpl->focusWindow(window->getPlatformImpl());
 }
 
 // clang-format off
@@ -642,5 +647,14 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     }
 }
 // clang-format on
+
+std::vector<const char*> Platform::getRequiredExtensions() {
+    auto extensions = std::vector<const char*>();
+    extensions.push_back(vk::KHRSurfaceExtensionName);
+#ifdef PLATFORM_LINUX
+    extensions.push_back(vk::KHRWaylandSurfaceExtensionName);
+#endif
+    return extensions;
+}
 
 } // namespace dirk::Platform

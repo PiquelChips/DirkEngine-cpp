@@ -2,12 +2,8 @@
 #include "asserts.hpp"
 #include "common.hpp"
 #include "platform/platform.hpp"
+#include <algorithm>
 #include <memory>
-
-#ifdef PLATFORM_LINUX
-#include "platform/linux/linux.hpp"
-#include "platform/linux/window.hpp"
-#endif
 
 #include "backends/imgui_impl_vulkan.h"
 #include "imgui.h"
@@ -17,12 +13,10 @@
 
 namespace dirk::Platform {
 
-Window::Window(const WindowCreateInfo& createInfo, Platform* platform) : platform(platform) {
-#ifdef PLATFORM_LINUX
-    platformWindow = std::make_unique<Linux::LinuxWindow>();
-#endif
+Window::Window(const WindowCreateInfo& createInfo, Platform* platform, std::unique_ptr<PlatformWindowImpl> impl)
+    : platform(platform), platformWindow(std::move(impl)) {
     auto renderer = gEngine->getRenderer();
-    surface = platformWindow->createVulkanSurface(renderer->getResources().instance);
+    surface = platformWindow->getVulkanSurface(renderer->getResources().instance);
 
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
@@ -68,7 +62,6 @@ glm::vec2 Window::getPosition() const { return platformWindow->getPosition(); }
 void Window::setPosition(const glm::vec2& inPosition) { platformWindow->setPosition(inPosition); }
 std::string_view Window::getTitle() { return platformWindow->getTitle(); }
 void Window::setTitle(std::string_view inTitle) { platformWindow->setTitle(inTitle); }
-void* Window::getPlatformHandle() { return platformWindow->getNativeHandle(); }
 
 bool Window::isFocused() { return platformWindow->isFocused(); }
 bool Window::isMinimized() { return platformWindow->isMinimized(); }
@@ -76,8 +69,8 @@ bool Window::isMinimized() { return platformWindow->isMinimized(); }
 // TODO: handle visibility
 void Window::updateVisibility(bool inVisible) {}
 
-vk::SurfaceKHR Window::createSurface(vk::Instance instance) {
-    this->surface = platformWindow->createVulkanSurface(instance);
+vk::SurfaceKHR Window::getVulkanSurface(vk::Instance instance) {
+    this->surface = platformWindow->getVulkanSurface(instance);
     return this->surface;
 }
 

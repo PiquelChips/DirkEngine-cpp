@@ -16,7 +16,6 @@
 
 namespace dirk::Platform {
 
-class PlatformWindowImpl;
 class Platform;
 
 struct WindowCreateInfo {
@@ -29,13 +28,35 @@ struct WindowCreateInfo {
     bool floating;
 };
 
+// interface for all platform windows
+class PlatformWindowImpl {
+public:
+    virtual ~PlatformWindowImpl() = default;
+
+    virtual vk::SurfaceKHR getVulkanSurface(vk::Instance instance) = 0;
+    virtual void* getPlatformHandle() = 0;
+
+    virtual vk::Extent2D getSize() = 0;
+    virtual void setSize(vk::Extent2D inSize) = 0;
+    virtual vk::Extent2D getFramebufferSize() = 0;
+
+    virtual glm::vec2 getPosition() = 0;
+    virtual void setPosition(const glm::vec2 inPosition) = 0;
+
+    virtual std::string_view getTitle() = 0;
+    virtual void setTitle(std::string_view inTitle) = 0;
+
+    virtual bool isFocused() = 0;
+    virtual bool isMinimized() = 0;
+};
+
 /**
  * Engine level abstration that handles converting platform level
  * windows to engine systems
  */
 class Window {
 public:
-    Window(const WindowCreateInfo& createInfo, Platform* platform);
+    Window(const WindowCreateInfo& createInfo, Platform* platform, std::unique_ptr<PlatformWindowImpl> impl);
 
     vk::Extent2D getSize() const;
     void setSize(vk::Extent2D inSize);
@@ -47,14 +68,15 @@ public:
     uint32_t getImageCount() { return swapChainImages.size(); }
     vk::RenderPass getRenderpass() { return renderPass; }
 
-    void* getPlatformHandle();
+    PlatformWindowImpl* getPlatformImpl() { return platformWindow.get(); }
+    void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
 
     bool isFocused();
     bool isMinimized();
 
     void updateVisibility(bool inVisible);
 
-    vk::SurfaceKHR createSurface(vk::Instance instance);
+    vk::SurfaceKHR getVulkanSurface(vk::Instance instance);
 
     vk::SubmitInfo render(ImDrawData* drawData);
     vk::PresentInfoKHR present();
@@ -81,29 +103,6 @@ private:
 
     Platform* platform;
     std::unique_ptr<PlatformWindowImpl> platformWindow;
-};
-
-// interface for all platform windows
-class PlatformWindowImpl {
-public:
-    virtual ~PlatformWindowImpl() = default;
-
-    virtual void* getNativeHandle() = 0;
-
-    virtual vk::SurfaceKHR createVulkanSurface(vk::Instance instance) = 0;
-
-    virtual vk::Extent2D getSize() = 0;
-    virtual void setSize(vk::Extent2D inSize) = 0;
-    virtual vk::Extent2D getFramebufferSize() = 0;
-
-    virtual glm::vec2 getPosition() = 0;
-    virtual void setPosition(const glm::vec2 inPosition) = 0;
-
-    virtual std::string_view getTitle() = 0;
-    virtual void setTitle(std::string_view inTitle) = 0;
-
-    virtual bool isFocused() = 0;
-    virtual bool isMinimized() = 0;
 };
 
 } // namespace dirk::Platform

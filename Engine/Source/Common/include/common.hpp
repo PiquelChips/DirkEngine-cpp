@@ -163,7 +163,7 @@ public:
     virtual void tick(float deltaTime) = 0;
     virtual void shutdownImGui() = 0;
 
-    virtual std::shared_ptr<Platform::Window>& getMainWindow() = 0;
+    virtual Platform::Window* getMainWindow() = 0;
 };
 
 class IEngine {

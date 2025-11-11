@@ -23,12 +23,12 @@ struct ImGuiData {
     ImGuiContext* context;
     Platform* platform;
     static constexpr std::string_view platformName = "imgui_impl_dirk";
-    std::shared_ptr<Window> window;
+    Window* window;
     std::array<Cursor, ImGuiMouseCursor_COUNT> mouseCursors;
 
     glm::vec2 lastValidMousePos;
-    std::array<std::shared_ptr<Window>, Input::KeyLast> keyOwnerWindows; // keys used as indexes, window is which window currently has that key
-    std::shared_ptr<Window> mouseWindow;                                 // the window the mouse is currenly on (if nullptr, mouse not on any window)
+    std::array<Window*, Input::KeyLast> keyOwnerWindows; // keys used as indexes, window is which window currently has that key
+    Window* mouseWindow;                                 // the window the mouse is currenly on (if nullptr, mouse not on any window)
 
     bool mouseIgnoreButtonUpWaitForFocusLoss;
     bool mouseIgnoreButtonUp;
@@ -37,7 +37,7 @@ struct ImGuiData {
 };
 
 struct ImGuiViewportData {
-    std::shared_ptr<Window> window;
+    Window* window;
     bool windowOwned;
     int ignoreWindowSizeEventFrame;
     int ignoreWindowPosEventFrame;
@@ -53,10 +53,9 @@ class PlatformImpl {
 public:
     virtual ~PlatformImpl() = default;
     virtual void pollPlatformEvents() = 0;
-    virtual std::vector<const char*> getRequiredExtensions() = 0;
-    virtual std::shared_ptr<Window> createWindow(const WindowCreateInfo& createInfo) = 0;
-    virtual void destroyWindow(std::shared_ptr<Window> window) = 0;
-    virtual void focusWindow(std::shared_ptr<Window> window) = 0;
+    virtual std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) = 0;
+    virtual void destroyWindow(PlatformWindowImpl* window) = 0;
+    virtual void focusWindow(PlatformWindowImpl* window) = 0;
 };
 
 class Platform : public IPlatform {
@@ -68,7 +67,9 @@ public:
     void tick(float deltaTime);
     void shutdownImGui();
 
-    std::shared_ptr<Window>& getMainWindow() { return windows[0]; }
+    Window* getMainWindow() { return windows[0].get(); }
+
+    static std::vector<const char*> getRequiredExtensions();
 
 private:
     // platform funcs used by ImGui
@@ -87,31 +88,31 @@ private:
     static int ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface);
 
     // callbacks for platform events
-    void windowSizeCallback(std::shared_ptr<Window> window, vk::Extent2D inSize);
-    void windowPosCallback(std::shared_ptr<Window> window, glm::vec2 inPos);
-    void windowCloseCallback(std::shared_ptr<Window> window);
-    void focusWindowCallback(std::shared_ptr<Window> window, bool focused);
-    void cursorEnterCallback(std::shared_ptr<Window> window, bool entered);
-    void cursorPosCallback(std::shared_ptr<Window> window, glm::vec2 pos);
-    void mouseButtonCallback(std::shared_ptr<Window> window, Input::MouseButton button, Input::KeyState action);
-    void mouseScrollCallback(std::shared_ptr<Window> window, glm::vec2 offset);
-    void keyCallback(std::shared_ptr<Window> window, Input::Key key, Input::KeyState action);
-    void charCallback(std::shared_ptr<Window> window, unsigned int c);
+    void windowSizeCallback(Window* window, vk::Extent2D inSize);
+    void windowPosCallback(Window* window, glm::vec2 inPos);
+    void windowCloseCallback(Window* window);
+    void focusWindowCallback(Window* window, bool focused);
+    void cursorEnterCallback(Window* window, bool entered);
+    void cursorPosCallback(Window* window, glm::vec2 pos);
+    void mouseButtonCallback(Window* window, Input::MouseButton button, Input::KeyState action);
+    void mouseScrollCallback(Window* window, glm::vec2 offset);
+    void keyCallback(Window* window, Input::Key key, Input::KeyState action);
+    void charCallback(Window* window, unsigned int c);
 
 private:
     static ImGuiData* getBackendData();
-    static ImGuiData* getBackendData(std::shared_ptr<Window> window);
+    static ImGuiData* getBackendData(Window* window);
 
     void updateMonitors();
     void updateMouseData();
     void updateMouseCursor();
 
-    std::shared_ptr<Window> createWindow(const WindowCreateInfo& createInfo);
-    void destroyWindow(std::shared_ptr<Window> window);
-    void focusWindow(std::shared_ptr<Window> window);
+    Window* createWindow(const WindowCreateInfo& createInfo);
+    void destroyWindow(Window* window);
+    void focusWindow(Window* window);
 
-    std::unordered_map<std::shared_ptr<Window>, ImGuiContext*> contextMap;
-    std::vector<std::shared_ptr<Window>> windows;
+    std::unordered_map<Window*, ImGuiContext*> contextMap;
+    std::vector<std::unique_ptr<Window>> windows;
 
     std::string_view appName;
 

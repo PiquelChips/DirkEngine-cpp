@@ -1,13 +1,39 @@
-#include "platform/platform.hpp"
 #ifdef PLATFORM_LINUX
 
 #include "platform/linux/linux.hpp"
+#include "platform/linux/window.hpp"
+#include "platform/platform.hpp"
+#include "platform/window.hpp"
+
+#include "wayland-client-core.h"
+#include "wayland-client-protocol.h"
 
 namespace dirk::Platform::Linux {
 
+static void registry_handle_global(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version) {
+    WaylandState* state = static_cast<WaylandState*>(data);
+    if (strcmp(interface, wl_compositor_interface.name) == 0) {
+        state->compositor = static_cast<wl_compositor*>(
+            wl_registry_bind(registry, name, &wl_compositor_interface, 6));
+    }
+}
+
+static void registry_handle_global_remove(void* data, struct wl_registry* registry, uint32_t name) {}
+
+static const struct wl_registry_listener
+    registryListener = {
+        .global = registry_handle_global,
+        .global_remove = registry_handle_global_remove,
+    };
+
 LinuxPlatform::LinuxPlatform(const PlatformCreateInfo& createInfo) {
     display = wl_display_connect(nullptr);
-    DIRK_LOG(LogWayland, INFO, "connected to display")
+    check(display);
+    DIRK_LOG(LogWayland, INFO, "connected to display");
+    registry = wl_display_get_registry(display);
+    check(registry);
+    wl_registry_add_listener(registry, &registryListener, &state);
+    wl_display_roundtrip(display);
 }
 
 LinuxPlatform::~LinuxPlatform() {
@@ -19,10 +45,19 @@ void LinuxPlatform::pollPlatformEvents() {
     wl_display_dispatch(display);
 }
 
-std::vector<const char*> LinuxPlatform::getRequiredExtensions() {}
-std::shared_ptr<Window> LinuxPlatform::createWindow(const WindowCreateInfo& createInfo) {}
-void LinuxPlatform::destroyWindow(std::shared_ptr<Window> window) {}
-void LinuxPlatform::focusWindow(std::shared_ptr<Window> window) {}
+std::unique_ptr<PlatformWindowImpl> LinuxPlatform::createPlatformWindow(const WindowCreateInfo& createInfo) {
+    return std::make_unique<LinuxWindow>(LinuxWindowCreateInfo{
+        .platformImpl = this,
+        .createInfo = createInfo,
+    });
+}
+
+// TODO: destroy window
+void LinuxPlatform::destroyWindow(PlatformWindowImpl* window) {}
+
+void LinuxPlatform::focusWindow(PlatformWindowImpl* window) {
+    auto linuxWindow = static_cast<LinuxWindow*>(window);
+}
 
 } // namespace dirk::Platform::Linux
 
