@@ -2,13 +2,11 @@
 
 #pragma once
 
-#include "wayland-client-core.h"
-#include "wayland-client-protocol.h"
-
 #include "platform/platform.hpp"
 #include "platform/window.hpp"
 
-#include <vector>
+#include "wayland-client-core.h"
+#include "wayland-client-protocol.h"
 
 namespace dirk::Platform::Linux {
 
@@ -25,7 +23,10 @@ public:
     LinuxPlatform(const PlatformCreateInfo& createInfo);
     ~LinuxPlatform();
     void pollPlatformEvents() override;
+
     std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) override;
+    vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) override;
+
     void destroyWindow(PlatformWindowImpl* window) override;
     void focusWindow(PlatformWindowImpl* window) override;
 

@@ -1,15 +1,16 @@
 #pragma once
 
-#include <array>
-#include <memory>
-#include <unordered_map>
-#include <vector>
-
 #include "common.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "input/keys.hpp"
+#include "vulkan/vulkan_handles.hpp"
 #include "window.hpp"
+
+#include <array>
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
 namespace dirk::Platform {
 
@@ -54,6 +55,7 @@ public:
     virtual ~PlatformImpl() = default;
     virtual void pollPlatformEvents() = 0;
     virtual std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) = 0;
+    virtual vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) = 0;
     virtual void destroyWindow(PlatformWindowImpl* window) = 0;
     virtual void focusWindow(PlatformWindowImpl* window) = 0;
 };
@@ -68,6 +70,7 @@ public:
     void shutdownImGui();
 
     Window* getMainWindow() { return windows[0].get(); }
+    vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
 
     static std::vector<const char*> getRequiredExtensions();
 

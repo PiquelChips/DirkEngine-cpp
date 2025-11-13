@@ -1,9 +1,9 @@
-#include "asserts.hpp"
 #ifdef PLATFORM_LINUX
 
+#include "platform/linux/window.hpp"
+#include "asserts.hpp"
 #include "common.hpp"
 #include "logging/logging.hpp"
-#include "platform/linux/window.hpp"
 
 #include "wayland-client-core.h"
 #include "wayland-client-protocol.h"

@@ -164,6 +164,7 @@ public:
     virtual void shutdownImGui() = 0;
 
     virtual Platform::Window* getMainWindow() = 0;
+    virtual vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) = 0;
 };
 
 class IEngine {

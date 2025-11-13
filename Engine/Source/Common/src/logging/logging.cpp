@@ -49,7 +49,7 @@ void endLogEntry(std::stringstream stream) {
 
 bool shouldLog(LogCategory category, LogLevel level) {
     switch (level) {
-#ifndef DEBUG_BUILD
+#ifndef DIRK_DEBUG_BUILD
     case DEBUG:
         return false;
     case TRACE:

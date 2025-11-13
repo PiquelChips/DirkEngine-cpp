@@ -1,10 +1,12 @@
 #ifdef PLATFORM_LINUX
 
 #include "platform/linux/linux.hpp"
+#include "common.hpp"
 #include "platform/linux/window.hpp"
 #include "platform/platform.hpp"
 #include "platform/window.hpp"
 
+#include "vulkan/vulkan_handles.hpp"
 #include "wayland-client-core.h"
 #include "wayland-client-protocol.h"
 
@@ -50,6 +52,24 @@ std::unique_ptr<PlatformWindowImpl> LinuxPlatform::createPlatformWindow(const Wi
         .platformImpl = this,
         .createInfo = createInfo,
     });
+}
+
+vk::SurfaceKHR LinuxPlatform::createTempVulkanSurface(vk::Instance instance) {
+    vk::SurfaceKHR vkSurface;
+    auto wlSurface = wl_compositor_create_surface(state.compositor);
+
+    vk::WaylandSurfaceCreateInfoKHR createInfo;
+    createInfo.display = display;
+    createInfo.surface = wlSurface;
+
+    vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
+    // TODO: use error
+    auto err = instance.createWaylandSurfaceKHR(&createInfo, nullptr, &vkSurface, dispatcher);
+    check(vkSurface);
+
+    free(wlSurface);
+    wlSurface = nullptr;
+    return vkSurface;
 }
 
 // TODO: destroy window

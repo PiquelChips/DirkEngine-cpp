@@ -128,8 +128,9 @@ Renderer::Renderer() {
         auto features = getDeviceFeatures(physicalDevice);
         this->properties.msaaSamples = features.msaaSamples;
         this->properties.anisotropy = features.anisotropy;
-        // TODO: set swapchain format
-        // TODO: min image count
+        auto swapChainInfo = querySwapChainSupport(physicalDevice);
+        this->properties.swapChainImageFormat = chooseSwapSurfaceFormat(swapChainInfo.formats).format;
+        this->properties.minImageCount = swapChainInfo.capabilities.minImageCount;
     }
 
     // LOGICAL DEVICE
@@ -429,7 +430,7 @@ int Renderer::getDeviceSuitability(vk::PhysicalDevice device) {
     if (!deviceFeatures.geometryShader)
         return 0;
 
-    QueueFamilyIndices indices = Renderer::findQueueFamilies(device);
+    QueueFamilyIndices indices = findQueueFamilies(device);
     if (!indices.isComplete())
         return 0;
 
@@ -472,13 +473,11 @@ bool Renderer::checkDeviceExtensionSupport(vk::PhysicalDevice device) {
 }
 
 SwapChainSupportDetails Renderer::querySwapChainSupport(vk::PhysicalDevice device) {
-    // TODO: quert swap chain support
+    auto surface = gEngine->getPlatform()->createTempVulkanSurface(instance);
     return SwapChainSupportDetails{
-        /**
         .capabilities = device.getSurfaceCapabilitiesKHR(surface),
         .formats = device.getSurfaceFormatsKHR(surface),
         .presentModes = device.getSurfacePresentModesKHR(surface),
-        */
     };
 }
 
@@ -919,6 +918,7 @@ vk::ShaderModule Renderer::loadShaderModule(const std::string& shaderName) {
 };
 
 QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device) {
+    auto surface = gEngine->getPlatform()->createTempVulkanSurface(instance);
     QueueFamilyIndices indices;
 
     std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
@@ -929,14 +929,11 @@ QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device) {
         if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
             indices.graphicsFamily = i;
 
-        // TODO: use temp surface to query for device support
-        /**
         // present queue
         vk::Bool32 presentSupport = device.getSurfaceSupportKHR(i, surface);
 
         if (presentSupport)
             indices.presentFamily = i;
-        */
 
         // dont loop over every possible queue if we have the required ones already
         if (indices.isComplete())

@@ -1,5 +1,6 @@
 #include "platform/platform.hpp"
 #include "common.hpp"
+#include "vulkan/vulkan_handles.hpp"
 
 #ifdef PLATFORM_LINUX
 #include "platform/linux/linux.hpp"
@@ -139,6 +140,10 @@ void Platform::shutdownImGui() {
     platform_io.ClearPlatformHandlers();
     contextMap.erase(bd->window);
     IM_DELETE(bd);
+}
+
+vk::SurfaceKHR Platform::createTempVulkanSurface(vk::Instance instance) {
+    return platformImpl->createTempVulkanSurface(instance);
 }
 
 void Platform::ImGui_CreateWindow(ImGuiViewport* viewport) {
