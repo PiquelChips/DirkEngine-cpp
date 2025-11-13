@@ -35,6 +35,7 @@ Platform::~Platform() {
 void Platform::initImGui() {
     windows.clear();
     windows.resize(1);
+
     auto mainWindow = createWindow(WindowCreateInfo{ .title = appName });
 
     ImGuiIO& io = ImGui::GetIO();

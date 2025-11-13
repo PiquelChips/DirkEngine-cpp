@@ -15,8 +15,7 @@ namespace dirk::Platform {
 
 Window::Window(const WindowCreateInfo& createInfo, Platform* platform, std::unique_ptr<PlatformWindowImpl> impl)
     : platform(platform), platformWindow(std::move(impl)) {
-    auto renderer = gEngine->getRenderer();
-    surface = platformWindow->getVulkanSurface(renderer->getResources().instance);
+    surface = platformWindow->getVulkanSurface(gEngine->getRenderer()->getResources().instance);
 
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
@@ -26,7 +25,7 @@ Window::Window(const WindowCreateInfo& createInfo, Platform* platform, std::uniq
         .surface = surface,
         .windowSize = platformWindow->getFramebufferSize()
     };
-    swapChainImages = renderer->createSwapChain(swapChainInfo);
+    swapChainImages = gEngine->getRenderer()->createSwapChain(swapChainInfo);
 }
 
 vk::Extent2D Window::getSize() const {
