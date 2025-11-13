@@ -46,7 +46,7 @@ private:
 
     // render settings
     std::string_view name;
-    vk::Extent2D size;
+    vk::Extent2D size = { 1, 1 };
 
     // for render output
     ImageMemoryView depthImageMemoryView;
