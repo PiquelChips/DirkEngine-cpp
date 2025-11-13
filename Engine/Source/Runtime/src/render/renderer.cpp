@@ -47,6 +47,17 @@ DEFINE_LOG_CATEGORY(LogRenderer)
 Renderer::Renderer() {
     DIRK_LOG(LogVulkan, INFO, "initlializing Vulkan...");
 
+#ifdef ENABLE_VALIDATION_LAYERS
+    // debug messenger
+    vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
+    vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
+
+    vk::DebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT{};
+    debugUtilsMessengerCreateInfoEXT.messageSeverity = severityFlags;
+    debugUtilsMessengerCreateInfoEXT.messageType = messageTypeFlags;
+    debugUtilsMessengerCreateInfoEXT.pfnUserCallback = &debugCallback;
+#endif
+
     // INSTANCE
     {
         vk::ApplicationInfo appInfo{};
@@ -57,23 +68,26 @@ Renderer::Renderer() {
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.apiVersion = vk::ApiVersion14;
 
-        std::vector<const char*> instanceExtensions = Platform::Platform::getRequiredExtensions();
-        check(checkRequiredInstanceExtensions(instanceExtensions));
-
         vk::InstanceCreateInfo createInfo{};
         createInfo.sType = vk::StructureType::eInstanceCreateInfo;
         createInfo.pApplicationInfo = &appInfo;
-        createInfo.enabledExtensionCount = instanceExtensions.size();
-        createInfo.ppEnabledExtensionNames = instanceExtensions.data();
 
+        std::vector<const char*> instanceExtensions = Platform::Platform::getRequiredExtensions();
 #ifdef ENABLE_VALIDATION_LAYERS
+        instanceExtensions.push_back(vk::EXTDebugUtilsExtensionName);
+
         check(checkValidationLayerSupport());
         DIRK_LOG(LogVulkan, INFO, "using validation layers");
         createInfo.enabledLayerCount = validationLayers.size();
         createInfo.ppEnabledLayerNames = validationLayers.data();
+        createInfo.pNext = debugUtilsMessengerCreateInfoEXT;
 #else
         createInfo.enabledLayerCount = 0;
 #endif
+        check(checkRequiredInstanceExtensions(instanceExtensions));
+
+        createInfo.enabledExtensionCount = instanceExtensions.size();
+        createInfo.ppEnabledExtensionNames = instanceExtensions.data();
 
         this->instance = vk::createInstance(createInfo);
     }
@@ -81,14 +95,6 @@ Renderer::Renderer() {
     // VALIDATION LAYERS
     {
 #ifdef ENABLE_VALIDATION_LAYERS
-        vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
-        vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
-
-        vk::DebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT{};
-        debugUtilsMessengerCreateInfoEXT.messageSeverity = severityFlags;
-        debugUtilsMessengerCreateInfoEXT.messageType = messageTypeFlags;
-        debugUtilsMessengerCreateInfoEXT.pfnUserCallback = &debugCallback;
-
         vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
         this->debugMessenger = instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT, nullptr, dispatcher);
 #endif
