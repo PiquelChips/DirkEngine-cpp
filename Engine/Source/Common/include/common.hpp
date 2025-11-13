@@ -17,6 +17,9 @@
 #include "logging/logging.hpp"
 
 namespace dirk {
+
+DECLARE_LOG_CATEGORY_EXTERN(LogDirk);
+
 class IEngine;
 extern IEngine* gEngine;
 

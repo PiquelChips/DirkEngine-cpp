@@ -18,6 +18,8 @@
 
 namespace dirk::Platform {
 
+DEFINE_LOG_CATEGORY(LogPlatform)
+
 Platform::Platform(const PlatformCreateInfo& createInfo)
     : appName(createInfo.appName) {
 #ifdef PLATFORM_LINUX

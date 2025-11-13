@@ -14,6 +14,8 @@
 
 namespace dirk::Platform {
 
+DECLARE_LOG_CATEGORY_EXTERN(LogPlatform)
+
 struct Cursor {};
 
 struct PlatformCreateInfo {
