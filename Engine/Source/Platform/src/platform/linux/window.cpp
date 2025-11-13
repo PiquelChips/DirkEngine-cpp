@@ -42,7 +42,7 @@ vk::Extent2D LinuxWindow::getFramebufferSize() { return {}; }
 glm::vec2 LinuxWindow::getPosition() { return {}; }
 void LinuxWindow::setPosition(const glm::vec2 inPosition) {}
 
-std::string_view LinuxWindow::getTitle() { return ""; }
+std::string_view LinuxWindow::getTitle() { return "Title"; }
 void LinuxWindow::setTitle(std::string_view inTitle) {}
 
 bool LinuxWindow::isFocused() { return true; }
