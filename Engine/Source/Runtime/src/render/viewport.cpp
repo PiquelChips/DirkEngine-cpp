@@ -290,17 +290,15 @@ vk::SubmitInfo Viewport::render() {
     commandBuffer.reset();
 
     vk::CommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
     beginInfo.pInheritanceInfo = nullptr;
 
     checkVulkan(commandBuffer.begin(&beginInfo));
 
     vk::RenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = vk::StructureType::eRenderPassBeginInfo;
     renderPassInfo.renderPass = renderPass;
     renderPassInfo.framebuffer = framebuffer;
 
-    // make sure to render on the entire screen
+    // make sure to render on the entire frame buffer
     renderPassInfo.renderArea.offset = vk::Offset2D(0, 0);
     renderPassInfo.renderArea.extent = size;
 

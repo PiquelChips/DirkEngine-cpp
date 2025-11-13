@@ -278,6 +278,7 @@ void Renderer::render() {
     for (auto& viewport : viewports) {
         submitInfos.emplace_back(viewport->render());
     }
+
     auto result = queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence);
     checkVulkan(result);
 
