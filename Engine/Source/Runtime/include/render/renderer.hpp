@@ -46,6 +46,9 @@ public:
     Renderer();
     ~Renderer();
 
+    // ONLY CALLED ONCE BY ENGINE. DO NOT CALL ANYWHERE ELSE
+    void initImGui();
+
     void render();
 
     std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);

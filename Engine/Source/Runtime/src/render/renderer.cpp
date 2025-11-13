@@ -220,46 +220,45 @@ Renderer::Renderer() {
     }
 
     DIRK_LOG(LogVulkan, INFO, "vulkan initialized successfully");
+}
 
-    // ImGui
-    {
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+void Renderer::initImGui() {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-        ImGui::StyleColorsDark();
+    ImGui::StyleColorsDark();
 
-        // Setup scaling
-        ImGuiStyle& style = ImGui::GetStyle();
-        style.ScaleAllSizes(1.f);
-        style.FontScaleDpi = 1.f;
-        io.ConfigDpiScaleFonts = true;
-        io.ConfigDpiScaleViewports = true;
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    // Setup scaling
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(1.f);
+    style.FontScaleDpi = 1.f;
+    io.ConfigDpiScaleFonts = true;
+    io.ConfigDpiScaleViewports = true;
+    style.WindowRounding = 0.0f;
+    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 
-        gEngine->getPlatform()->initImGui();
-        auto mainWindow = gEngine->getPlatform()->getMainWindow();
+    gEngine->getPlatform()->initImGui();
+    auto mainWindow = gEngine->getPlatform()->getMainWindow();
 
-        ImGui_ImplVulkan_InitInfo initInfo = {};
-        initInfo.Instance = instance;
-        initInfo.PhysicalDevice = physicalDevice;
-        initInfo.Device = device;
-        initInfo.QueueFamily = findQueueFamilies(physicalDevice).graphicsFamily.value();
-        initInfo.Queue = queues.graphicsQueue;
-        initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
-        initInfo.MinImageCount = properties.minImageCount;
-        initInfo.ImageCount = mainWindow->getImageCount();
-        initInfo.Allocator = nullptr;
-        initInfo.PipelineInfoMain.RenderPass = mainWindow->getRenderpass();
-        initInfo.PipelineInfoMain.Subpass = 0;
-        initInfo.PipelineInfoMain.MSAASamples = (VkSampleCountFlagBits) vk::SampleCountFlagBits::e1;
-        initInfo.CheckVkResultFn = checkVkResult;
-        ImGui_ImplVulkan_Init(&initInfo);
-    }
+    ImGui_ImplVulkan_InitInfo initInfo = {};
+    initInfo.Instance = instance;
+    initInfo.PhysicalDevice = physicalDevice;
+    initInfo.Device = device;
+    initInfo.QueueFamily = findQueueFamilies(physicalDevice).graphicsFamily.value();
+    initInfo.Queue = queues.graphicsQueue;
+    initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
+    initInfo.MinImageCount = properties.minImageCount;
+    initInfo.ImageCount = mainWindow->getImageCount();
+    initInfo.Allocator = nullptr;
+    initInfo.PipelineInfoMain.RenderPass = mainWindow->getRenderpass();
+    initInfo.PipelineInfoMain.Subpass = 0;
+    initInfo.PipelineInfoMain.MSAASamples = (VkSampleCountFlagBits) vk::SampleCountFlagBits::e1;
+    initInfo.CheckVkResultFn = checkVkResult;
+    ImGui_ImplVulkan_Init(&initInfo);
 }
 
 Renderer::~Renderer() {

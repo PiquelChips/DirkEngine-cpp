@@ -23,6 +23,7 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
 
     platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
     renderer = std::make_unique<Renderer>();
+    renderer->initImGui();
     world = std::make_shared<World>(createInfo.actorCreateInfos);
 
     auto viewport = renderer->createViewport(ViewportCreateInfo{ .world = world });
