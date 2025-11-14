@@ -21,7 +21,6 @@ Window::Window(const WindowCreateInfo& createInfo, Platform* platform, std::uniq
         .swapChain = swapchain,
         .swapChainImageFormat = swapChainImageFormat,
         .swapChainExtent = size,
-        .renderPass = renderPass,
         .surface = surface,
         .windowSize = platformWindow->getFramebufferSize()
     };
@@ -40,8 +39,7 @@ void Window::setSize(vk::Extent2D inSize) {
     auto device = renderer->getResources().device;
 
     for (auto image : swapChainImages) {
-        device.destroyFramebuffer(image.frameBuffer);
-        device.destroyImageView(image.imageView);
+        device.destroyImageView(image);
     }
 
     device.destroySwapchainKHR(swapchain);
@@ -50,7 +48,6 @@ void Window::setSize(vk::Extent2D inSize) {
         .swapChain = swapchain,
         .swapChainImageFormat = swapChainImageFormat,
         .swapChainExtent = size,
-        .renderPass = renderPass,
         .surface = surface,
         .windowSize = platformWindow->getFramebufferSize()
     };
@@ -88,25 +85,36 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
 
     checkVulkan(commandBuffer.begin(&beginInfo));
 
-    vk::RenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = vk::StructureType::eRenderPassBeginInfo;
-    renderPassInfo.renderPass = renderPass;
-    renderPassInfo.framebuffer = image.frameBuffer;
+    vk::RenderingAttachmentInfo colorAttachment{};
+    colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+    colorAttachment.imageLayout = vk::ImageLayout::eUndefined;
+    colorAttachment.resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    colorAttachment.resolveMode = vk::ResolveModeFlagBits::eAverage; // TODO: what is this?
+    colorAttachment.clearValue = vk::ClearColorValue(0.f, 0.f, 0.f, 1.f);
 
-    // make sure to render on the entire screen
-    renderPassInfo.renderArea.offset = vk::Offset2D(0, 0);
-    renderPassInfo.renderArea.extent = size;
+    vk::RenderingAttachmentInfo depthAttachment{};
+    depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
+    depthAttachment.imageLayout = vk::ImageLayout::eUndefined;
+    depthAttachment.resolveImageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+    depthAttachment.resolveMode = vk::ResolveModeFlagBits::eAverage; // TODO: what is this?
+    depthAttachment.clearValue = vk::ClearDepthStencilValue(1.f, 0.f);
 
-    // clear color is black with 100% opacity
-    std::array<vk::ClearValue, 2> clearValues = { vk::ClearColorValue(0.f, 0.f, 0.f, 1.f), vk::ClearDepthStencilValue(1.f, 0.f) };
-    renderPassInfo.clearValueCount = clearValues.size();
-    renderPassInfo.pClearValues = clearValues.data();
+    vk::RenderingInfo renderInfo{};
+    renderInfo.renderArea.offset = vk::Offset2D(0, 0);
+    renderInfo.renderArea.extent = size;
 
-    commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
+    renderInfo.colorAttachmentCount = 1;
+    renderInfo.pColorAttachments = &colorAttachment;
+    renderInfo.pDepthAttachment = &depthAttachment;
+    renderInfo.layerCount = 1;
+
+    commandBuffer.beginRendering(renderInfo);
 
     ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer);
 
-    commandBuffer.endRenderPass();
+    commandBuffer.endRendering();
     commandBuffer.end();
 
     vk::SubmitInfo submitInfo{};

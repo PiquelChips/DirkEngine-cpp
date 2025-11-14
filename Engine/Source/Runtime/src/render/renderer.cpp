@@ -114,7 +114,6 @@ Renderer::Renderer() {
 
         if (candidates.rbegin()->first > 0) {
             this->physicalDevice = candidates.rbegin()->second;
-            this->properties.msaaSamples = getMaxUsableSampleCount(physicalDevice);
         } else {
             DIRK_LOG(LogVulkan, FATAL, "could not find a physical device");
             return;
@@ -137,6 +136,12 @@ Renderer::Renderer() {
         auto swapChainInfo = querySwapChainSupport(physicalDevice);
         this->properties.swapChainImageFormat = chooseSwapSurfaceFormat(swapChainInfo.formats).format;
         this->properties.minImageCount = swapChainInfo.capabilities.minImageCount;
+
+        this->properties.depthFormat = findSupportedFormat(
+            physicalDevice,
+            { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint },
+            vk::ImageTiling::eOptimal,
+            vk::FormatFeatureFlagBits::eDepthStencilAttachment);
     }
 
     // LOGICAL DEVICE
@@ -176,6 +181,10 @@ Renderer::Renderer() {
         // extensions
         createInfo.enabledExtensionCount = deviceExtensions.size();
         createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+
+        vk::PhysicalDeviceVulkan13Features vulkanFeatures{};
+        vulkanFeatures.dynamicRendering = vk::True;
+        createInfo.pNext = vulkanFeatures;
 
         this->device = physicalDevice.createDevice(createInfo);
 
@@ -249,6 +258,12 @@ void Renderer::initImGui() {
 
     gEngine->getPlatform()->initImGui();
     auto mainWindow = gEngine->getPlatform()->getMainWindow();
+    check(mainWindow);
+
+    vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{};
+    pipelineRenderingCreateInfo.colorAttachmentCount = 1;
+    pipelineRenderingCreateInfo.pColorAttachmentFormats = &properties.swapChainImageFormat;
+    pipelineRenderingCreateInfo.depthAttachmentFormat = properties.depthFormat;
 
     ImGui_ImplVulkan_InitInfo initInfo = {};
     initInfo.Instance = instance;
@@ -260,10 +275,11 @@ void Renderer::initImGui() {
     initInfo.MinImageCount = properties.minImageCount;
     initInfo.ImageCount = mainWindow->getImageCount();
     initInfo.Allocator = nullptr;
-    initInfo.PipelineInfoMain.RenderPass = mainWindow->getRenderpass();
     initInfo.PipelineInfoMain.Subpass = 0;
     initInfo.PipelineInfoMain.MSAASamples = (VkSampleCountFlagBits) vk::SampleCountFlagBits::e1;
+    initInfo.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingCreateInfo;
     initInfo.CheckVkResultFn = checkVkResult;
+    initInfo.UseDynamicRendering = true;
     ImGui_ImplVulkan_Init(&initInfo);
 }
 
@@ -315,7 +331,7 @@ void Renderer::destroyViewport(std::shared_ptr<Viewport> viewport) {
     viewports.erase(std::find(viewports.begin(), viewports.end(), viewport));
 }
 
-std::vector<SwapChainImage> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {
+std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
     vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -374,27 +390,10 @@ std::vector<SwapChainImage> Renderer::createSwapChain(const SwapChainCreateInfo&
                  << "\n\timage width: " << createInfo.swapChainExtent.width
                  << "\n\timage height: " << createInfo.swapChainExtent.height);
 
-    std::vector<SwapChainImage> swapImages(images.size());
+    std::vector<vk::ImageView> swapImages(images.size());
 
-    for (int i = 0; i < images.size(); i++) {
-        SwapChainImage image;
-
-        // image view
-        image.imageView = Renderer::createImageView(images[i], createInfo.swapChainImageFormat);
-
-        // frame buffers
-        vk::FramebufferCreateInfo framebufferInfo{};
-        framebufferInfo.sType = vk::StructureType::eFramebufferCreateInfo;
-        framebufferInfo.renderPass = createInfo.renderPass;
-        framebufferInfo.attachmentCount = 1;
-        framebufferInfo.pAttachments = &image.imageView;
-        framebufferInfo.width = createInfo.swapChainExtent.width;
-        framebufferInfo.height = createInfo.swapChainExtent.height;
-        framebufferInfo.layers = 1;
-        image.frameBuffer = device.createFramebuffer(framebufferInfo);
-
-        swapImages[i] = image;
-    }
+    for (int i = 0; i < images.size(); i++)
+        swapImages[i] = createImageView(images[i], createInfo.swapChainImageFormat);
 
     return swapImages;
 }

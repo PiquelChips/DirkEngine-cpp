@@ -42,6 +42,7 @@ struct RendererProperties {
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
     bool anisotropy = false;
     vk::Format swapChainImageFormat = vk::Format::eUndefined;
+    vk::Format depthFormat = vk::Format::eUndefined;
     std::uint32_t minImageCount;
 };
 
@@ -75,16 +76,8 @@ struct SwapChainCreateInfo {
     vk::Extent2D& swapChainExtent;
 
     // INPUT
-    vk::RenderPass renderPass;
     vk::SurfaceKHR surface;
     vk::Extent2D windowSize;
-};
-
-struct SwapChainImage {
-    vk::ImageView imageView;
-    vk::Framebuffer frameBuffer;
-
-    operator bool() const { return imageView && frameBuffer; }
 };
 
 struct ImageMemoryView {
@@ -123,7 +116,7 @@ class IRenderer {
 public:
     virtual ~IRenderer() = default;
 
-    virtual std::vector<SwapChainImage> createSwapChain(const SwapChainCreateInfo& createInfo) = 0;
+    virtual std::vector<vk::ImageView> createSwapChain(const SwapChainCreateInfo& createInfo) = 0;
     virtual vk::ShaderModule loadShaderModule(const std::string& shaderName) = 0;
     virtual vk::Semaphore createSemaphore() = 0;
     virtual vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout) = 0;

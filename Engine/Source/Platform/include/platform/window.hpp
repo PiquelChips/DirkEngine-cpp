@@ -66,7 +66,6 @@ public:
     std::string_view getTitle();
 
     uint32_t getImageCount() { return swapChainImages.size(); }
-    vk::RenderPass getRenderpass() { return renderPass; }
 
     PlatformWindowImpl* getPlatformImpl() { return platformWindow.get(); }
     void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
@@ -85,12 +84,11 @@ private:
     // render resources
     vk::SwapchainKHR swapchain;
     vk::SurfaceKHR surface;
-    vk::RenderPass renderPass;
     vk::CommandBuffer commandBuffer;
 
     vk::Semaphore imageAvailableSemaphore;
     vk::Semaphore renderFinishedSemaphore;
-    std::vector<SwapChainImage> swapChainImages;
+    std::vector<vk::ImageView> swapChainImages;
 
     // settings
     vk::Extent2D size;

@@ -51,7 +51,7 @@ public:
     std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);
     void destroyViewport(std::shared_ptr<Viewport> viewport);
 
-    std::vector<SwapChainImage> createSwapChain(const SwapChainCreateInfo& createInfo);
+    std::vector<vk::ImageView> createSwapChain(const SwapChainCreateInfo& createInfo);
 
     vk::ShaderModule loadShaderModule(const std::string& shaderName);
     vk::Semaphore createSemaphore();

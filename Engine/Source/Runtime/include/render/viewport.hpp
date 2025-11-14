@@ -46,18 +46,15 @@ private:
 
     // render settings
     std::string_view name;
-    vk::Extent2D size = { 1, 1 };
+    vk::Extent2D size;
 
     // for render output
     ImageMemoryView depthImageMemoryView;
-    vk::Format depthFormat;
     ImageMemoryView colorImageMemoryView;
     ImageMemoryView outImageMemoryView;
     vk::Sampler outSampler;
-    vk::Framebuffer framebuffer;
 
     // render objects
-    vk::RenderPass renderPass;
     vk::Pipeline graphicsPipeline;
     vk::CommandBuffer commandBuffer;
     vk::PipelineLayout pipelineLayout;
