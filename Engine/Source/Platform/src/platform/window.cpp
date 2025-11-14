@@ -20,20 +20,17 @@ Window::Window(const WindowCreateInfo& createInfo, Platform* platform, std::uniq
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
         .swapChainImageFormat = swapChainImageFormat,
-        .swapChainExtent = size,
+        .swapChainExtent = swapChainExtent,
         .surface = surface,
-        .windowSize = platformWindow->getFramebufferSize()
+        .windowSize = platformWindow->getSize()
     };
     swapChainImages = gEngine->getRenderer()->createSwapChain(swapChainInfo);
 }
 
-vk::Extent2D Window::getSize() const {
-    return platformWindow->getSize();
-}
+vk::Extent2D Window::getSize() const { return platformWindow->getSize(); }
 
 void Window::setSize(vk::Extent2D inSize) {
     this->platformWindow->setSize(inSize);
-    this->size = inSize;
 
     auto renderer = gEngine->getRenderer();
     auto device = renderer->getResources().device;
@@ -47,9 +44,9 @@ void Window::setSize(vk::Extent2D inSize) {
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
         .swapChainImageFormat = swapChainImageFormat,
-        .swapChainExtent = size,
+        .swapChainExtent = swapChainExtent,
         .surface = surface,
-        .windowSize = platformWindow->getFramebufferSize()
+        .windowSize = platformWindow->getSize()
     };
     swapChainImages = renderer->createSwapChain(swapChainInfo);
 }
@@ -103,7 +100,7 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
 
     vk::RenderingInfo renderInfo{};
     renderInfo.renderArea.offset = vk::Offset2D(0, 0);
-    renderInfo.renderArea.extent = size;
+    renderInfo.renderArea.extent = swapChainExtent;
 
     renderInfo.colorAttachmentCount = 1;
     renderInfo.pColorAttachments = &colorAttachment;

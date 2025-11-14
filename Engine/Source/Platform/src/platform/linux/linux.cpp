@@ -12,6 +12,9 @@
 
 namespace dirk::Platform::Linux {
 
+DEFINE_LOG_CATEGORY(LogLinux)
+DEFINE_LOG_CATEGORY(LogWayland)
+
 static void registry_handle_global(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version) {
     WaylandState* state = static_cast<WaylandState*>(data);
     if (strcmp(interface, wl_compositor_interface.name) == 0) {

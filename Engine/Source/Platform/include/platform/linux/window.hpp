@@ -7,18 +7,12 @@
 #include "platform/window.hpp"
 
 #include "vulkan/vulkan_handles.hpp"
-#include "wayland-client-core.h"
 
 namespace dirk::Platform::Linux {
 
-struct LinuxWindowCreateInfo {
-    LinuxPlatform* platformImpl;
-    const WindowCreateInfo& createInfo;
-};
-
 class LinuxWindow : public PlatformWindowImpl {
 public:
-    LinuxWindow(const LinuxWindowCreateInfo& createInfo);
+    LinuxWindow(const WindowCreateInfo& createInfo, LinuxPlatform& platformImpl);
     ~LinuxWindow();
 
     vk::SurfaceKHR getVulkanSurface(vk::Instance instance) override;
@@ -26,7 +20,6 @@ public:
 
     vk::Extent2D getSize() override;
     void setSize(vk::Extent2D inSize) override;
-    vk::Extent2D getFramebufferSize() override;
 
     glm::vec2 getPosition() override;
     void setPosition(const glm::vec2 inPosition) override;
@@ -38,7 +31,9 @@ public:
     bool isMinimized() override;
 
 private:
-    LinuxPlatform* linuxPlatform;
+    vk::Extent2D size;
+
+    LinuxPlatform& linuxPlatform;
 
     wl_surface* wlSurface;
     vk::SurfaceKHR vkSurface;

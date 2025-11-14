@@ -14,7 +14,7 @@
 namespace dirk {
 
 Viewport::Viewport(const ViewportCreateInfo& createInfo)
-    : world(createInfo.world) {
+    : world(createInfo.world), size(createInfo.size) {
     camera = std::make_unique<Camera>(
         CameraCreateInfo{
             .positon = { 0.f, 1000.f, 1000.f },
@@ -46,77 +46,6 @@ void Viewport::createRenderResources() {
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
     auto properties = renderer->getProperties();
-
-    // RENDER PASS
-
-    /*
-    vk::AttachmentDescription colorAttachment{};
-    colorAttachment.format = properties.swapChainImageFormat;
-    colorAttachment.samples = properties.msaaSamples;
-    colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-    colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-    colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
-    colorAttachment.finalLayout = vk::ImageLayout::eColorAttachmentOptimal;
-
-    vk::AttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
-
-    vk::AttachmentDescription depthAttachment{};
-    depthAttachment.format = depthFormat;
-    depthAttachment.samples = properties.msaaSamples;
-    depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-    depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
-    depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-    depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-    depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
-    depthAttachment.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-
-    vk::AttachmentReference depthAttachmentRef{};
-    depthAttachmentRef.attachment = 1;
-    depthAttachmentRef.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-
-    vk::AttachmentDescription colorAttachmentResolve{};
-    colorAttachmentResolve.format = properties.swapChainImageFormat;
-    colorAttachmentResolve.samples = vk::SampleCountFlagBits::e1;
-    colorAttachmentResolve.loadOp = vk::AttachmentLoadOp::eDontCare;
-    colorAttachmentResolve.storeOp = vk::AttachmentStoreOp::eStore;
-    colorAttachmentResolve.initialLayout = vk::ImageLayout::eUndefined;
-    colorAttachmentResolve.finalLayout = vk::ImageLayout::ePresentSrcKHR;
-
-    vk::AttachmentReference colorAttachmentResolveRef{};
-    colorAttachmentResolveRef.attachment = 2;
-    colorAttachmentResolveRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
-
-    vk::SubpassDescription subpass{};
-    subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
-    subpass.pResolveAttachments = &colorAttachmentResolveRef;
-
-    vk::SubpassDependency dependency{};
-    // src
-    dependency.srcSubpass = vk::SubpassExternal;
-    dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests;
-    dependency.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-    // dst
-    dependency.dstSubpass = 0;
-    dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests;
-    dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-
-    std::array attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
-    vk::RenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.sType = vk::StructureType::eRenderPassCreateInfo;
-    renderPassInfo.attachmentCount = attachments.size();
-    renderPassInfo.pAttachments = attachments.data();
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
-
-    renderPass = resources.device.createRenderPass(renderPassInfo);
-    */
 
     // GRPAHICS PIPELINE
 

@@ -38,7 +38,6 @@ public:
 
     virtual vk::Extent2D getSize() = 0;
     virtual void setSize(vk::Extent2D inSize) = 0;
-    virtual vk::Extent2D getFramebufferSize() = 0;
 
     virtual glm::vec2 getPosition() = 0;
     virtual void setPosition(const glm::vec2 inPosition) = 0;
@@ -85,13 +84,13 @@ private:
     vk::SwapchainKHR swapchain;
     vk::SurfaceKHR surface;
     vk::CommandBuffer commandBuffer;
+    vk::Extent2D swapChainExtent;
 
     vk::Semaphore imageAvailableSemaphore;
     vk::Semaphore renderFinishedSemaphore;
     std::vector<vk::ImageView> swapChainImages;
 
     // settings
-    vk::Extent2D size;
     vk::SurfaceFormatKHR surfaceFormat;
     vk::PresentModeKHR presentMode;
     vk::Format swapChainImageFormat;

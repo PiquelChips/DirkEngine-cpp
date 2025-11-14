@@ -26,7 +26,10 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     renderer->initImGui();
     world = std::make_shared<World>(createInfo.actorCreateInfos);
 
-    auto viewport = renderer->createViewport(ViewportCreateInfo{ .world = world });
+    auto viewport = renderer->createViewport(ViewportCreateInfo{
+        .size = vk::Extent2D(1, 1),
+        .world = world,
+    });
 
     lastTick = std::chrono::high_resolution_clock::now();
 

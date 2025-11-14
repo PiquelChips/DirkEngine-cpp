@@ -21,6 +21,7 @@ class World;
 
 struct ViewportCreateInfo {
     std::string_view name;
+    vk::Extent2D size;
 
     std::shared_ptr<World> world;
 };
