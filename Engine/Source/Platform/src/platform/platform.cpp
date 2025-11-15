@@ -25,7 +25,7 @@ Platform::Platform(const PlatformCreateInfo& createInfo)
 #ifdef PLATFORM_LINUX
     platformImpl = std::make_unique<Linux::LinuxPlatformImpl>(createInfo);
 #else
-    DIRK_LOG(LogPlatform, FATAL, "no platform detected")
+#error "no platform specified"
 #endif
 }
 
