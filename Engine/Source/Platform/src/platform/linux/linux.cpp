@@ -1,4 +1,4 @@
-#include <cstring>
+#include "input/keys.hpp"
 #ifdef PLATFORM_LINUX
 
 #include "common.hpp"
@@ -10,6 +10,9 @@
 #include "vulkan/vulkan_handles.hpp"
 #include "wayland-client-core.h"
 #include "wayland-client-protocol.h"
+#include "wayland-util.h"
+
+#include <cstring>
 
 namespace dirk::Platform::Linux {
 
@@ -79,6 +82,14 @@ vk::SurfaceKHR LinuxPlatformImpl::createTempVulkanSurface(vk::Instance instance)
     return vkSurface;
 }
 
+Window& LinuxPlatformImpl::getWindowWithSurface(wl_surface* surface) {
+    for (auto& window : platform.getWindows()) {
+        if (static_cast<wl_surface*>(window->getPlatformHandle()) == surface)
+            return *window;
+    }
+    DIRK_LOG(LogWayland, FATAL, "unable to find window with surface");
+}
+
 void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version) {
     LinuxPlatformImpl* platform = static_cast<LinuxPlatformImpl*>(data);
 
@@ -108,11 +119,10 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
         platform->pointer = wl_seat_get_pointer(seat);
 
         static const wl_pointer_listener pointerListener = {
-            wl_PointerEnter,
-            wl_PointerLeave,
-            wl_PointerMotion,
-            wl_PointerButton,
-            wl_PointerAxis,
+            .enter = wl_PointerEnter,
+            .motion = wl_PointerMotion,
+            .button = wl_PointerButton,
+            .axis = wl_PointerAxis,
         };
         wl_pointer_add_listener(platform->pointer, &pointerListener, platform);
     }
@@ -121,12 +131,10 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
         platform->keyboard = wl_seat_get_keyboard(seat);
 
         static const wl_keyboard_listener keyboardListener = {
-            wl_KeyboardKeymap,
-            wl_KeyboardEnter,
-            wl_KeyboardLeave,
-            wl_KeyboardKey,
-            wl_KeyboardModifiers,
-            wl_KeyboardRepeatInfo,
+            .enter = wl_KeyboardEnter,
+            .key = wl_KeyboardKey,
+            .modifiers = wl_KeyboardModifiers,
+            .repeat_info = wl_KeyboardRepeatInfo,
         };
         wl_keyboard_add_listener(platform->keyboard, &keyboardListener, platform);
     }
@@ -134,47 +142,78 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
 
 void LinuxPlatformImpl::wl_PointerEnter(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
-}
+    check(platform->pointer == pointer);
+    auto& window = platform->getWindowWithSurface(surface);
 
-void LinuxPlatformImpl::wl_PointerLeave(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface) {
-    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    platform->platform.focusWindowCallback(window);
+    platform->platform.cursorPosCallback(window, { x, y });
 }
 
 void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->pointer == pointer);
+    auto& window = platform->platform.getFocusedWindow();
+
+    platform->platform.cursorPosCallback(window, { x, y });
 }
 
 void LinuxPlatformImpl::wl_PointerButton(void* data, wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->pointer == pointer);
+    auto& window = platform->platform.getFocusedWindow();
+
+    // window mouse button
 }
 
 void LinuxPlatformImpl::wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
-}
+    check(platform->pointer == pointer);
+    auto& window = platform->platform.getFocusedWindow();
 
-void LinuxPlatformImpl::wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size) {
-    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    double delta = wl_fixed_to_double(value);
+    if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+        platform->platform.mouseScrollCallback(window, { 0.f, -delta / 10.f });
+    } else {
+        platform->platform.mouseScrollCallback(window, { -delta / 10.f, 0.f });
+    }
 }
 
 void LinuxPlatformImpl::wl_KeyboardEnter(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface, wl_array* keys) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
-}
+    check(platform->keyboard == keyboard);
+    auto& window = platform->getWindowWithSurface(surface);
 
-void LinuxPlatformImpl::wl_KeyboardLeave(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface) {
-    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    platform->platform.focusWindowCallback(window);
 }
 
 void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->keyboard == keyboard);
+    auto& window = platform->platform.getFocusedWindow();
+
+    // window key
 }
 
 void LinuxPlatformImpl::wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->keyboard == keyboard);
+    auto& window = platform->platform.getFocusedWindow();
+
+    // TODO: modifiers
 }
 
-void LinuxPlatformImpl::wl_KeyboardRepeatInfo(void* data, wl_keyboard* wl_keyboard, int32_t rate, int32_t delay) {
+void LinuxPlatformImpl::wl_KeyboardRepeatInfo(void* data, wl_keyboard* keyboard, int32_t rate, int32_t delay) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->keyboard == keyboard);
+    auto& window = platform->platform.getFocusedWindow();
+
+    // TODO: repeat keys
 }
+
+// TODO: key conversions
+Input::Key LinuxPlatformImpl::getKeyFromCode(uint32_t code) {}
+Input::MouseButton LinuxPlatformImpl::getMouseFromCode(uint32_t code) {}
+Input::KeyState LinuxPlatformImpl::getKeyStateFromCode(uint32_t code) {}
 
 } // namespace dirk::Platform::Linux
 

@@ -29,7 +29,7 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
     xdgToplevel = xdg_surface_get_toplevel(xdgSurface);
 
     static const xdg_toplevel_listener xdgToplevelListener = {
-        [](void* data, xdg_toplevel* toplevel, int32_t width, int32_t height, wl_array* states) {
+        .configure = [](void* data, xdg_toplevel* toplevel, int32_t width, int32_t height, wl_array* states) {
             auto* window = static_cast<LinuxWindowImpl*>(data);
 
             if (width < 0 && height < 0) {
@@ -37,11 +37,11 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
             }
 
             window->setSize(vk::Extent2D(width, height));
-            // TODO: make sure this reaches the owning window (maybe through onResize callback)
+            // TODO: use platform window size callback
         },
-        [](void* data, xdg_toplevel* toplevel) {
+        .close = [](void* data, xdg_toplevel* toplevel) {
             auto* window = static_cast<LinuxWindowImpl*>(data);
-            // TODO: delete the window
+            // TODO: use platform window close callback
         }
     };
     xdg_toplevel_add_listener(xdgToplevel, &xdgToplevelListener, this);

@@ -159,7 +159,8 @@ public:
     virtual void tick(float deltaTime) = 0;
     virtual void shutdownImGui() = 0;
 
-    virtual Platform::Window* getMainWindow() = 0;
+    virtual Platform::Window& getMainWindow() = 0;
+    virtual Platform::Window& getFocusedWindow() = 0;
     virtual vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) = 0;
 };
 

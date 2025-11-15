@@ -30,7 +30,6 @@ struct ImGuiData {
     Window* window;
     std::array<Cursor, ImGuiMouseCursor_COUNT> mouseCursors;
 
-    glm::vec2 lastValidMousePos;
     std::array<Window*, Input::KeyLast> keyOwnerWindows; // keys used as indexes, window is which window currently has that key
     Window* mouseWindow;                                 // the window the mouse is currenly on (if nullptr, mouse not on any window)
 
@@ -70,8 +69,12 @@ public:
     void tick(float deltaTime);
     void shutdownImGui();
 
-    Window* getMainWindow() { return windows[0].get(); }
+    Window& getMainWindow() { return *windows[0]; }
+    Window& getFocusedWindow() { return focusedWindow; }
+
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
+
+    std::vector<std::unique_ptr<Window>>& getWindows() { return windows; }
 
 private:
     // platform funcs used by ImGui
@@ -92,10 +95,9 @@ private:
 public:
     // callbacks for platform events
     void windowSizeCallback(Window& window, vk::Extent2D inSize);
-    void windowPosCallback(Window& window, glm::vec2 inPos);
+    void windowMoveCallback(Window& window);
     void windowCloseCallback(Window& window);
-    void focusWindowCallback(Window& window, bool focused);
-    void cursorEnterCallback(Window& window, bool entered);
+    void focusWindowCallback(Window& window);
     void cursorPosCallback(Window& window, glm::vec2 pos);
     void mouseButtonCallback(Window& window, Input::MouseButton button, Input::KeyState action);
     void mouseScrollCallback(Window& window, glm::vec2 offset);
@@ -115,6 +117,8 @@ private:
 
     std::unordered_map<Window*, ImGuiContext*> contextMap;
     std::vector<std::unique_ptr<Window>> windows;
+    // the last window that was focused
+    Window& focusedWindow;
 
     std::string_view appName;
 

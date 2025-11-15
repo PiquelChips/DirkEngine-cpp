@@ -277,7 +277,7 @@ void Platform::windowSizeCallback(Window& window, vk::Extent2D inSize) {
     }
 }
 
-void Platform::windowPosCallback(Window& window, glm::vec2 inPos) {
+void Platform::windowMoveCallback(Window& window) {
     if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle())) {
         if (ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData) {
             bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowPosEventFrame + 1);
@@ -294,28 +294,26 @@ void Platform::windowCloseCallback(Window& window) {
         viewport->PlatformRequestClose = true;
 }
 
-void Platform::focusWindowCallback(Window& window, bool focused) {
-    ImGuiData* bd = getBackendData(window);
+void Platform::focusWindowCallback(Window& window) {
+    {
+        ImGuiData* bd = getBackendData(focusedWindow);
 
-    // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
-    bd->mouseIgnoreButtonUp = (bd->mouseIgnoreButtonUpWaitForFocusLoss && focused == 0);
-    bd->mouseIgnoreButtonUpWaitForFocusLoss = false;
+        // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
+        bd->mouseIgnoreButtonUp = bd->mouseIgnoreButtonUpWaitForFocusLoss;
+        bd->mouseIgnoreButtonUpWaitForFocusLoss = false;
 
-    ImGuiIO& io = ImGui::GetIO(bd->context);
-    io.AddFocusEvent(focused);
-}
+        ImGuiIO& io = ImGui::GetIO(bd->context);
+        io.AddFocusEvent(false);
+    }
+    {
+        ImGuiData* bd = getBackendData(window);
 
-void Platform::cursorEnterCallback(Window& window, bool entered) {
-    ImGuiData* bd = getBackendData(window);
-    ImGuiIO& io = ImGui::GetIO(bd->context);
+        // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
+        bd->mouseIgnoreButtonUp = false;
+        bd->mouseIgnoreButtonUpWaitForFocusLoss = false;
 
-    if (entered) {
-        bd->mouseWindow = &window;
-        io.AddMousePosEvent(bd->lastValidMousePos.x, bd->lastValidMousePos.y);
-    } else if (!entered && bd->mouseWindow == &window) {
-        bd->lastValidMousePos = { io.MousePos.x, io.MousePos.y };
-        bd->mouseWindow = nullptr;
-        io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+        ImGuiIO& io = ImGui::GetIO(bd->context);
+        io.AddFocusEvent(true);
     }
 }
 
@@ -329,7 +327,6 @@ void Platform::cursorPosCallback(Window& window, glm::vec2 pos) {
         pos.y += windowPos.y;
     }
     io.AddMousePosEvent(pos.x, pos.y);
-    bd->lastValidMousePos = pos;
 }
 
 void Platform::mouseButtonCallback(Window& window, Input::MouseButton button, Input::KeyState action) {
