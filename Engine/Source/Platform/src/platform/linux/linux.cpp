@@ -33,10 +33,18 @@ static const struct wl_registry_listener
 
 LinuxPlatform::LinuxPlatform(const PlatformCreateInfo& createInfo) {
     display = wl_display_connect(nullptr);
-    check(display);
+    if (!display) {
+        DIRK_LOG(LogWayland, FATAL, "failed to create wayland display")
+        return;
+    }
+
     DIRK_LOG(LogWayland, INFO, "connected to display");
+
     registry = wl_display_get_registry(display);
-    check(registry);
+    if (!registry) {
+        DIRK_LOG(LogWayland, FATAL, "failed to get wayland display registry")
+    }
+
     wl_registry_add_listener(registry, &registryListener, &state);
     wl_display_roundtrip(display);
 }
