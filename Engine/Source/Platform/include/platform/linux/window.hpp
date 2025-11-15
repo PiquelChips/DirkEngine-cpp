@@ -43,6 +43,9 @@ private:
     LinuxPlatformImpl& linuxPlatform;
 
     wl_surface* wlSurface;
+    xdg_surface* xdgSurface;
+    xdg_toplevel* xdgToplevel;
+
     vk::SurfaceKHR vkSurface;
 };
 

@@ -7,14 +7,19 @@
 
 #include "wayland-client-core.h"
 #include "wayland-client-protocol.h"
+#include "xdh-shell-client-protocol.h"
 
 namespace dirk::Platform::Linux {
 
 LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatformImpl& platformImpl)
     : linuxPlatform(platformImpl), size(createInfo.size) {
-    wlSurface = wl_compositor_create_surface(linuxPlatform.getWaylandState().compositor);
+    wlSurface = wl_compositor_create_surface(linuxPlatform.getCompositor());
     if (!wlSurface)
         DIRK_LOG(LogWayland, FATAL, "failed to create vulkan surface");
+
+    xdgSurface = xdg_wm_base_get_xdg_surface(linuxPlatform.getXdgWmBase(), wlSurface);
+    // xdg_surface_add_listener(state.xdg_surface, &xdg_surface_listener, &state);
+    xdgToplevel = xdg_surface_get_toplevel(xdgSurface);
 
     setSize(createInfo.size);
     setTitle(createInfo.title);
@@ -57,7 +62,7 @@ std::string_view LinuxWindowImpl::getTitle() { return title; }
 
 void LinuxWindowImpl::setTitle(std::string_view inTitle) {
     this->title = inTitle;
-    // TODO: set the title of the window
+    xdg_toplevel_set_title(xdgToplevel, title.data());
 }
 
 bool LinuxWindowImpl::isFocused() { return focused; }
