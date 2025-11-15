@@ -71,6 +71,7 @@ func Setup(buildConfig *models.BuildConfig) error {
 	}
 
 	// fixup some stuff
+	externalLibs := []string{}
 	for name, dep := range config.Setup.Thirdparty {
 		if dep.IncludeDir == "" {
 			dep.IncludeDir = "include"
@@ -83,31 +84,29 @@ func Setup(buildConfig *models.BuildConfig) error {
 		if !filepath.IsAbs(dep.IncludeDir) {
 			dir, err := getDir(name)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			incDir, err := filepath.Abs(fmt.Sprintf("%s/%s", dir, dep.IncludeDir))
 			if err != nil {
-				return nil
+				return err
 			}
 			dep.IncludeDir = incDir
 		}
-	}
 
-	// link externals
-	externalLibs := []string{}
-	for _, dep := range config.Setup.Thirdparty {
-		if !dep.External {
-			continue
+		// for linking external libs
+		if dep.External {
+			externalLibs = append(externalLibs, dep.GetLibs()...)
 		}
-
-		externalLibs = append(externalLibs, dep.GetLibs()...)
 	}
 
 	paths := getLibraryPaths(config.General.LibSearchEnvs)
 	for _, lib := range externalLibs {
 		for _, path := range paths {
-			entries, _ := os.ReadDir(path)
+			entries, err := os.ReadDir(path)
+			if err != nil {
+				continue
+			}
 			for _, entry := range entries {
 				if entry.IsDir() {
 					continue
