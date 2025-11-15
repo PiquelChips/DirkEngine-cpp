@@ -58,8 +58,7 @@ public:
     virtual void pollPlatformEvents() = 0;
     virtual std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) = 0;
     virtual vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) = 0;
-    virtual void destroyWindow(PlatformWindowImpl* window) = 0;
-    virtual void focusWindow(PlatformWindowImpl* window) = 0;
+    virtual void focusWindow(PlatformWindowImpl& window) = 0;
 };
 
 class Platform : public IPlatform {

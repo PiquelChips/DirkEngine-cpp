@@ -27,8 +27,7 @@ public:
     std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) override;
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) override;
 
-    void destroyWindow(PlatformWindowImpl* window) override;
-    void focusWindow(PlatformWindowImpl* window) override;
+    void focusWindow(PlatformWindowImpl& window) override;
 
     WaylandState& getWaylandState() { return state; }
     wl_display* getDisplay() { return display; }
