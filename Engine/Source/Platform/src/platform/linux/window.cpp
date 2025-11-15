@@ -18,8 +18,33 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
         DIRK_LOG(LogWayland, FATAL, "failed to create vulkan surface");
 
     xdgSurface = xdg_wm_base_get_xdg_surface(linuxPlatform.getXdgWmBase(), wlSurface);
-    // xdg_surface_add_listener(state.xdg_surface, &xdg_surface_listener, &state);
+    static const xdg_surface_listener xdgSurfaceListener = {
+        .configure = [](void* data, xdg_surface* surface, uint32_t serial) {
+            auto* window = static_cast<LinuxWindowImpl*>(data);
+            xdg_surface_ack_configure(surface, serial);
+        }
+    };
+    xdg_surface_add_listener(xdgSurface, &xdgSurfaceListener, this);
+
     xdgToplevel = xdg_surface_get_toplevel(xdgSurface);
+
+    static const xdg_toplevel_listener xdgToplevelListener = {
+        [](void* data, xdg_toplevel* toplevel, int32_t width, int32_t height, wl_array* states) {
+            auto* window = static_cast<LinuxWindowImpl*>(data);
+
+            if (width < 0 && height < 0) {
+                window->minimized = true;
+            }
+
+            window->setSize(vk::Extent2D(width, height));
+            // TODO: make sure this reaches the owning window (maybe through onResize callback)
+        },
+        [](void* data, xdg_toplevel* toplevel) {
+            auto* window = static_cast<LinuxWindowImpl*>(data);
+            // TODO: delete the window
+        }
+    };
+    xdg_toplevel_add_listener(xdgToplevel, &xdgToplevelListener, this);
 
     setSize(createInfo.size);
     setTitle(createInfo.title);
@@ -27,9 +52,15 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
     // TODO: visible
     // TODO: decorated
     // TODO: floating
+
+    wl_surface_commit(wlSurface);
 }
 
-LinuxWindowImpl::~LinuxWindowImpl() {}
+LinuxWindowImpl::~LinuxWindowImpl() {
+    if (xdgToplevel) xdg_toplevel_destroy(xdgToplevel);
+    if (xdgSurface) xdg_surface_destroy(xdgSurface);
+    if (wlSurface) wl_surface_destroy(wlSurface);
+}
 
 vk::SurfaceKHR LinuxWindowImpl::getVulkanSurface(vk::Instance instance) {
     if (vkSurface)

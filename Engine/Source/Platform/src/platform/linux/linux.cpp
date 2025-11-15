@@ -24,7 +24,7 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
     } else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
         // xdg_wm_base
         state->xdgWmBase = static_cast<xdg_wm_base*>(wl_registry_bind(registry, name, &xdg_wm_base_interface, 1));
-        struct xdg_wm_base_listener xdg_wm_base_listener = {
+        static const struct xdg_wm_base_listener xdg_wm_base_listener = {
             .ping = [](void* data, struct xdg_wm_base* xdg_wm_base, uint32_t serial) { xdg_wm_base_pong(xdg_wm_base, serial); },
         };
         xdg_wm_base_add_listener(state->xdgWmBase, &xdg_wm_base_listener, state);
@@ -56,12 +56,16 @@ LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo) {
 }
 
 LinuxPlatformImpl::~LinuxPlatformImpl() {
-    wl_display_disconnect(state.display);
+    if (state.xdgWmBase) xdg_wm_base_destroy(state.xdgWmBase);
+    if (state.compositor) wl_compositor_destroy(state.compositor);
+    if (state.registry) wl_registry_destroy(state.registry);
+    if (state.display) wl_display_disconnect(state.display);
 }
 
 void LinuxPlatformImpl::pollPlatformEvents() {
-    // TODO: handle return value
-    wl_display_dispatch(state.display);
+    if (wl_display_dispatch(state.display) == 0) {
+        gEngine->exit("platform exit");
+    }
 }
 
 std::unique_ptr<PlatformWindowImpl> LinuxPlatformImpl::createPlatformWindow(const WindowCreateInfo& createInfo) {
