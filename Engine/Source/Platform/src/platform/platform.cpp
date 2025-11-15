@@ -1,6 +1,9 @@
 #include "platform/platform.hpp"
 #include "common.hpp"
+#include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_handles.hpp"
+#include <array>
+#include <span>
 
 #ifdef PLATFORM_LINUX
 #include "platform/linux/linux.hpp"
@@ -659,14 +662,5 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     }
 }
 // clang-format on
-
-std::vector<const char*> Platform::getRequiredExtensions() {
-    auto extensions = std::vector<const char*>();
-    extensions.push_back(vk::KHRSurfaceExtensionName);
-#ifdef PLATFORM_LINUX
-    extensions.push_back(vk::KHRWaylandSurfaceExtensionName);
-#endif
-    return extensions;
-}
 
 } // namespace dirk::Platform

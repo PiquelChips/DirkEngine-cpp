@@ -9,6 +9,7 @@
 
 #include <array>
 #include <memory>
+#include <span>
 #include <unordered_map>
 #include <vector>
 
@@ -72,8 +73,6 @@ public:
 
     Window* getMainWindow() { return windows[0].get(); }
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
-
-    static std::vector<const char*> getRequiredExtensions();
 
 private:
     // platform funcs used by ImGui

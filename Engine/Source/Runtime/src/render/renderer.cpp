@@ -72,9 +72,12 @@ Renderer::Renderer() {
         createInfo.sType = vk::StructureType::eInstanceCreateInfo;
         createInfo.pApplicationInfo = &appInfo;
 
-        std::vector<const char*> instanceExtensions = Platform::Platform::getRequiredExtensions();
+        std::vector<const char*> extentions{ vk::KHRSurfaceExtensionName };
+#ifdef PLATFORM_LINUX
+        extentions.push_back(vk::KHRWaylandSurfaceExtensionName);
+#endif
 #ifdef ENABLE_VALIDATION_LAYERS
-        instanceExtensions.push_back(vk::EXTDebugUtilsExtensionName);
+        extentions.push_back(vk::EXTDebugUtilsExtensionName);
 
         check(checkValidationLayerSupport());
         DIRK_LOG(LogVulkan, INFO, "using validation layers");
@@ -84,10 +87,10 @@ Renderer::Renderer() {
 #else
         createInfo.enabledLayerCount = 0;
 #endif
-        check(checkRequiredInstanceExtensions(instanceExtensions));
+        check(checkRequiredInstanceExtensions(extentions));
 
-        createInfo.enabledExtensionCount = instanceExtensions.size();
-        createInfo.ppEnabledExtensionNames = instanceExtensions.data();
+        createInfo.enabledExtensionCount = extentions.size();
+        createInfo.ppEnabledExtensionNames = extentions.data();
 
         this->instance = vk::createInstance(createInfo);
     }
