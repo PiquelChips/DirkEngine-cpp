@@ -31,8 +31,10 @@ type CompileCommand struct {
 }
 
 type BuildConfig struct {
-	Target string     `json:"target"`
-	Type   *BuildType `json:"build_type"`
+	Target         string     `json:"target"`
+	Type           *BuildType `json:"build_type"`
+	SearchDirs     []string   `json:"search_dirs"`
+	ErrOnBuildFail bool       `json:"err_on_build_fail"`
 }
 
 type SetupConfig struct {
@@ -43,11 +45,9 @@ type SetupConfig struct {
 }
 
 type BuildType struct {
-	Name           string            `json:"-"`
-	Optimize       bool              `json:"optimize"`
-	Compact        bool              `json:"compact"` // compact the output (essentially statically linking)
-	Defines        map[string]string `json:"defines"`
-	WarningLevel   int               `json:"warning_level"` // TODO: actually use this
-	SearchDirs     []string          `json:"-"`
-	ErrOnBuildFail bool              `json:"-"`
+	Name         string            `json:"-"`
+	Optimize     bool              `json:"optimize"`
+	Compact      bool              `json:"compact"` // compact the output (essentially statically linking)
+	Defines      map[string]string `json:"defines"`
+	WarningLevel int               `json:"warning_level"` // TODO: actually use this
 }

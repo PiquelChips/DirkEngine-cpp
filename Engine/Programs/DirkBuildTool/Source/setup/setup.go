@@ -129,14 +129,14 @@ func Setup(buildConfig *models.BuildConfig) error {
 		if err := build.Build(&models.BuildConfig{
 			Target: name,
 			Type: &models.BuildType{
-				Name:           "Thirdparty",
-				Optimize:       true,
-				Compact:        buildConfig.Type.Compact,
-				Defines:        nil,
-				WarningLevel:   0, // no warnings for thirdparty stuff
-				SearchDirs:     []string{config.Dirs.Thirdparty},
-				ErrOnBuildFail: true,
+				Name:         "Thirdparty",
+				Optimize:     true,
+				Compact:      buildConfig.Type.Compact,
+				Defines:      nil,
+				WarningLevel: 0, // no warnings for thirdparty stuff
 			},
+			SearchDirs:     []string{config.Dirs.Thirdparty},
+			ErrOnBuildFail: true,
 		}); err != nil {
 			return err
 		}
