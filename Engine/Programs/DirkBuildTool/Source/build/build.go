@@ -59,10 +59,10 @@ func Build(buildConfig *models.BuildConfig) error {
 	if err := module.Build(target); err == nil {
 		return nil
 	} else if _, ok := err.(*exec.ExitError); ok {
+		fmt.Printf("An error occured in the build process\n")
 		if buildConfig.Type.ErrOnBuildFail {
 			return err
 		}
-		fmt.Printf("An error occured in the build process\n")
 		return nil
 	} else {
 		return err
