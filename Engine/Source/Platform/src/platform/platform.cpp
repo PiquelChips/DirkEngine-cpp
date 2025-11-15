@@ -184,7 +184,7 @@ void Platform::ImGui_DestroyWindow(ImGuiViewport* viewport) {
             // because we will not receive any release events after window is destroyed.
             for (int i = 0; i < bd->keyOwnerWindows.size(); i++)
                 if (bd->keyOwnerWindows[i] == vd->window)
-                    bd->platform->keyCallback(vd->window, (Input::Key) i, Input::KeyState::Released);
+                    bd->platform->keyCallback(*vd->window, (Input::Key) i, Input::KeyState::Released);
 
             bd->platform->contextMap.erase(vd->window);
             bd->platform->destroyWindow(vd->window);
@@ -238,7 +238,7 @@ ImVec2 Platform::ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport) {
 void Platform::ImGui_SetWindowFocus(ImGuiViewport* viewport) {
     ImGuiData* bd = getBackendData();
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
-    bd->platform->focusWindow(vd->window);
+    vd->window->focus(true);
 }
 
 bool Platform::ImGui_GetWindowFocus(ImGuiViewport* viewport) {
@@ -265,8 +265,8 @@ int Platform::ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, con
     return (int) vk::Result::eSuccess;
 }
 
-void Platform::windowSizeCallback(Window* window, vk::Extent2D inSize) {
-    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle())) {
+void Platform::windowSizeCallback(Window& window, vk::Extent2D inSize) {
+    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle())) {
         if (ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData) {
             bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowSizeEventFrame + 1);
             // data->IgnoreWindowSizeEventFrame = -1;
@@ -277,8 +277,8 @@ void Platform::windowSizeCallback(Window* window, vk::Extent2D inSize) {
     }
 }
 
-void Platform::windowPosCallback(Window* window, glm::vec2 inPos) {
-    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle())) {
+void Platform::windowPosCallback(Window& window, glm::vec2 inPos) {
+    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle())) {
         if (ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData) {
             bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowPosEventFrame + 1);
             // data->IgnoreWindowPosEventFrame = -1;
@@ -289,12 +289,12 @@ void Platform::windowPosCallback(Window* window, glm::vec2 inPos) {
     }
 }
 
-void Platform::windowCloseCallback(Window* window) {
-    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle()))
+void Platform::windowCloseCallback(Window& window) {
+    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle()))
         viewport->PlatformRequestClose = true;
 }
 
-void Platform::focusWindowCallback(Window* window, bool focused) {
+void Platform::focusWindowCallback(Window& window, bool focused) {
     ImGuiData* bd = getBackendData(window);
 
     // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
@@ -305,26 +305,26 @@ void Platform::focusWindowCallback(Window* window, bool focused) {
     io.AddFocusEvent(focused);
 }
 
-void Platform::cursorEnterCallback(Window* window, bool entered) {
+void Platform::cursorEnterCallback(Window& window, bool entered) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
     if (entered) {
-        bd->mouseWindow = window;
+        bd->mouseWindow = &window;
         io.AddMousePosEvent(bd->lastValidMousePos.x, bd->lastValidMousePos.y);
-    } else if (!entered && bd->mouseWindow == window) {
+    } else if (!entered && bd->mouseWindow == &window) {
         bd->lastValidMousePos = { io.MousePos.x, io.MousePos.y };
         bd->mouseWindow = nullptr;
         io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
     }
 }
 
-void Platform::cursorPosCallback(Window* window, glm::vec2 pos) {
+void Platform::cursorPosCallback(Window& window, glm::vec2 pos) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        auto windowPos = window->getPosition();
+        auto windowPos = window.getPosition();
         pos.x += windowPos.x;
         pos.y += windowPos.y;
     }
@@ -332,7 +332,7 @@ void Platform::cursorPosCallback(Window* window, glm::vec2 pos) {
     bd->lastValidMousePos = pos;
 }
 
-void Platform::mouseButtonCallback(Window* window, Input::MouseButton button, Input::KeyState action) {
+void Platform::mouseButtonCallback(Window& window, Input::MouseButton button, Input::KeyState action) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
@@ -343,26 +343,26 @@ void Platform::mouseButtonCallback(Window* window, Input::MouseButton button, In
     io.AddMouseButtonEvent((int) button, action == Input::KeyState::Pressed);
 }
 
-void Platform::mouseScrollCallback(Window* window, glm::vec2 offset) {
+void Platform::mouseScrollCallback(Window& window, glm::vec2 offset) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
     io.AddMouseWheelEvent(offset.x, offset.y);
 }
 
-void Platform::keyCallback(Window* window, Input::Key key, Input::KeyState action) {
+void Platform::keyCallback(Window& window, Input::Key key, Input::KeyState action) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
     if (action != Input::KeyState::Pressed && action != Input::KeyState::Released)
         return;
 
-    bd->keyOwnerWindows[key] = (action == Input::KeyState::Pressed) ? window : nullptr;
+    bd->keyOwnerWindows[key] = (action == Input::KeyState::Pressed) ? &window : nullptr;
 
     io.AddKeyEvent(keyToImGuiKey(key), (action == Input::KeyState::Pressed));
 }
 
-void Platform::charCallback(Window* window, unsigned int c) {
+void Platform::charCallback(Window& window, unsigned int c) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
@@ -373,9 +373,8 @@ ImGuiData* Platform::getBackendData() {
     return ImGui::GetCurrentContext() ? (ImGuiData*) ImGui::GetIO().BackendPlatformUserData : nullptr;
 }
 
-ImGuiData* Platform::getBackendData(Window* window) {
-    ImGuiData* bd = getBackendData(window);
-    ImGuiContext* ctx = bd->platform->contextMap.at(window);
+ImGuiData* Platform::getBackendData(Window& window) {
+    ImGuiContext* ctx = contextMap.at(&window);
     return (ImGuiData*) ImGui::GetIO(ctx).BackendPlatformUserData;
 }
 
@@ -528,10 +527,6 @@ void Platform::destroyWindow(Window* window) {
             return;
         }
     }
-}
-
-void Platform::focusWindow(Window* window) {
-    platformImpl->focusWindow(window->getPlatformImpl());
 }
 
 // clang-format off

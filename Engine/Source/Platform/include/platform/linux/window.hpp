@@ -28,10 +28,17 @@ public:
     void setTitle(std::string_view inTitle) override;
 
     bool isFocused() override;
+    void focus(bool inFocused) override;
+
     bool isMinimized() override;
+    void minimize(bool inMinimized) override;
 
 private:
+    // window properties
     vk::Extent2D size;
+    std::string_view title;
+    bool focused;
+    bool minimized;
 
     LinuxPlatformImpl& linuxPlatform;
 

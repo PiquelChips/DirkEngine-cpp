@@ -81,11 +81,6 @@ vk::SurfaceKHR LinuxPlatformImpl::createTempVulkanSurface(vk::Instance instance)
     return vkSurface;
 }
 
-// TODO: actually focus the window
-void LinuxPlatformImpl::focusWindow(PlatformWindowImpl& window) {
-    auto linuxWindow = static_cast<LinuxWindowImpl&>(window);
-}
-
 } // namespace dirk::Platform::Linux
 
 #endif

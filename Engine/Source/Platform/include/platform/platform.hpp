@@ -59,7 +59,6 @@ public:
     virtual void pollPlatformEvents() = 0;
     virtual std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) = 0;
     virtual vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) = 0;
-    virtual void focusWindow(PlatformWindowImpl& window) = 0;
 };
 
 class Platform : public IPlatform {
@@ -91,20 +90,20 @@ private:
     static int ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface);
 
     // callbacks for platform events
-    void windowSizeCallback(Window* window, vk::Extent2D inSize);
-    void windowPosCallback(Window* window, glm::vec2 inPos);
-    void windowCloseCallback(Window* window);
-    void focusWindowCallback(Window* window, bool focused);
-    void cursorEnterCallback(Window* window, bool entered);
-    void cursorPosCallback(Window* window, glm::vec2 pos);
-    void mouseButtonCallback(Window* window, Input::MouseButton button, Input::KeyState action);
-    void mouseScrollCallback(Window* window, glm::vec2 offset);
-    void keyCallback(Window* window, Input::Key key, Input::KeyState action);
-    void charCallback(Window* window, unsigned int c);
+    void windowSizeCallback(Window& window, vk::Extent2D inSize);
+    void windowPosCallback(Window& window, glm::vec2 inPos);
+    void windowCloseCallback(Window& window);
+    void focusWindowCallback(Window& window, bool focused);
+    void cursorEnterCallback(Window& window, bool entered);
+    void cursorPosCallback(Window& window, glm::vec2 pos);
+    void mouseButtonCallback(Window& window, Input::MouseButton button, Input::KeyState action);
+    void mouseScrollCallback(Window& window, glm::vec2 offset);
+    void keyCallback(Window& window, Input::Key key, Input::KeyState action);
+    void charCallback(Window& window, unsigned int c);
 
 private:
     static ImGuiData* getBackendData();
-    static ImGuiData* getBackendData(Window* window);
+    ImGuiData* getBackendData(Window& window);
 
     void updateMonitors();
     void updateMouseData();
@@ -112,7 +111,6 @@ private:
 
     Window* createWindow(const WindowCreateInfo& createInfo);
     void destroyWindow(Window* window);
-    void focusWindow(Window* window);
 
     std::unordered_map<Window*, ImGuiContext*> contextMap;
     std::vector<std::unique_ptr<Window>> windows;

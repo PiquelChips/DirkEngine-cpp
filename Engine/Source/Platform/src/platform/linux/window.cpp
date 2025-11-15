@@ -15,6 +15,13 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
     wlSurface = wl_compositor_create_surface(linuxPlatform.getWaylandState().compositor);
     if (!wlSurface)
         DIRK_LOG(LogWayland, FATAL, "failed to create vulkan surface");
+
+    setSize(createInfo.size);
+    setTitle(createInfo.title);
+    focus(createInfo.focused);
+    // TODO: visible
+    // TODO: decorated
+    // TODO: floating
 }
 
 LinuxWindowImpl::~LinuxWindowImpl() {}
@@ -37,16 +44,35 @@ vk::SurfaceKHR LinuxWindowImpl::getVulkanSurface(vk::Instance instance) {
 }
 
 vk::Extent2D LinuxWindowImpl::getSize() { return size; }
-void LinuxWindowImpl::setSize(vk::Extent2D inSize) {}
+
+void LinuxWindowImpl::setSize(vk::Extent2D inSize) {
+    this->size = inSize;
+    // TODO: resize window
+}
 
 glm::vec2 LinuxWindowImpl::getPosition() {}
 void LinuxWindowImpl::setPosition(const glm::vec2 inPosition) {}
 
-std::string_view LinuxWindowImpl::getTitle() {}
-void LinuxWindowImpl::setTitle(std::string_view inTitle) {}
+std::string_view LinuxWindowImpl::getTitle() { return title; }
 
-bool LinuxWindowImpl::isFocused() {}
-bool LinuxWindowImpl::isMinimized() {}
+void LinuxWindowImpl::setTitle(std::string_view inTitle) {
+    this->title = inTitle;
+    // TODO: set the title of the window
+}
+
+bool LinuxWindowImpl::isFocused() { return focused; }
+
+void LinuxWindowImpl::focus(bool inFocused) {
+    this->focused = inFocused;
+    // TODO: focus the window
+}
+
+bool LinuxWindowImpl::isMinimized() { return minimized; }
+
+void LinuxWindowImpl::minimize(bool isMinimized) {
+    this->minimized = minimized;
+    // TODO: minimize the window
+}
 
 } // namespace dirk::Platform::Linux
 

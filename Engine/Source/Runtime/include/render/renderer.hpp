@@ -43,7 +43,17 @@ public:
     Renderer();
     ~Renderer();
 
-    // ONLY CALLED ONCE BY ENGINE. DO NOT CALL ANYWHERE ELSE
+    /**
+     * This function sets up ImGui for use with the renderer.
+     * It indirectly creates a new window which requires the
+     * renderer variable of the engine to be populated. However,
+     * this only happens after the constructor is finished so
+     * this function should only be called once after the
+     * constructor. Thus, do not call this ever. It is called
+     * in DirkEngine, it should not be called anywhere else.
+     *
+     * DO NOT CALL THIS FUNCTION
+     */
     void initImGui();
 
     void render();

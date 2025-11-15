@@ -46,7 +46,10 @@ public:
     virtual void setTitle(std::string_view inTitle) = 0;
 
     virtual bool isFocused() = 0;
+    virtual void focus(bool inFocused) = 0;
+
     virtual bool isMinimized() = 0;
+    virtual void minimize(bool inMinimized) = 0;
 };
 
 /**
@@ -70,6 +73,7 @@ public:
     void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
 
     bool isFocused();
+    void focus(bool inFocus);
     bool isMinimized();
 
     void updateVisibility(bool inVisible);
