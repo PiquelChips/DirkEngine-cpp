@@ -14,13 +14,6 @@ namespace dirk::Platform::Linux {
 DECLARE_LOG_CATEGORY_EXTERN(LogLinux)
 DECLARE_LOG_CATEGORY_EXTERN(LogWayland)
 
-struct WaylandState {
-    wl_display* display;
-    wl_registry* registry;
-    wl_compositor* compositor;
-    xdg_wm_base* xdgWmBase;
-};
-
 class LinuxPlatformImpl : public PlatformImpl {
 
 public:
@@ -31,12 +24,18 @@ public:
     std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) override;
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) override;
 
-    wl_display* getDisplay() { return state.display; }
-    wl_compositor* getCompositor() { return state.compositor; }
-    xdg_wm_base* getXdgWmBase() { return state.xdgWmBase; }
+    wl_display* getDisplay() { return display; }
+    wl_compositor* getCompositor() { return compositor; }
+    xdg_wm_base* getXdgWmBase() { return xdgWmBase; }
 
 private:
-    WaylandState state;
+    static void globalRegistryHandler(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version);
+
+private:
+    wl_display* display;
+    wl_registry* registry;
+    wl_compositor* compositor;
+    xdg_wm_base* xdgWmBase;
 };
 
 }; // namespace dirk::Platform::Linux
