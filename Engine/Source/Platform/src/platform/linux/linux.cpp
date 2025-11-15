@@ -1,7 +1,8 @@
+#include <cstring>
 #ifdef PLATFORM_LINUX
 
-#include "platform/linux/linux.hpp"
 #include "common.hpp"
+#include "platform/linux/linux.hpp"
 #include "platform/linux/window.hpp"
 #include "platform/platform.hpp"
 #include "platform/window.hpp"
@@ -15,7 +16,8 @@ namespace dirk::Platform::Linux {
 DEFINE_LOG_CATEGORY(LogLinux)
 DEFINE_LOG_CATEGORY(LogWayland)
 
-LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo) {
+LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo, Platform& platform)
+    : platform(platform) {
     display = wl_display_connect(nullptr);
     if (!display) {
         DIRK_LOG(LogWayland, FATAL, "failed to create wayland display")
@@ -38,6 +40,10 @@ LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo) {
 }
 
 LinuxPlatformImpl::~LinuxPlatformImpl() {
+    if (keyboard) wl_keyboard_destroy(keyboard);
+    if (pointer) wl_pointer_destroy(pointer);
+    if (seat) wl_seat_destroy(seat);
+
     if (xdgWmBase) xdg_wm_base_destroy(xdgWmBase);
     if (compositor) wl_compositor_destroy(compositor);
     if (registry) wl_registry_destroy(registry);
@@ -86,7 +92,88 @@ void LinuxPlatformImpl::globalRegistryHandler(void* data, struct wl_registry* re
             .ping = [](void* data, struct xdg_wm_base* xdg_wm_base, uint32_t serial) { xdg_wm_base_pong(xdg_wm_base, serial); },
         };
         xdg_wm_base_add_listener(platform->xdgWmBase, &xdgWmBaseListener, platform);
+    } else if (strcmp(interface, wl_seat_interface.name) == 0) {
+        platform->seat = static_cast<wl_seat*>(wl_registry_bind(registry, name, &wl_seat_interface, 7));
+        static const wl_seat_listener seatListener = {
+            seatCapabilities,
+        };
+        wl_seat_add_listener(platform->seat, &seatListener, platform);
     }
+}
+
+void LinuxPlatformImpl::seatCapabilities(void* data, wl_seat* seat, uint32_t caps) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+
+    if ((caps & WL_SEAT_CAPABILITY_POINTER) && !platform->pointer) {
+        platform->pointer = wl_seat_get_pointer(seat);
+
+        static const wl_pointer_listener pointerListener = {
+            pointerEnter,
+            pointerLeave,
+            pointerMotion,
+            pointerButton,
+            pointerAxis,
+        };
+        wl_pointer_add_listener(platform->pointer, &pointerListener, platform);
+    }
+
+    if ((caps & WL_SEAT_CAPABILITY_KEYBOARD) && !platform->keyboard) {
+        platform->keyboard = wl_seat_get_keyboard(seat);
+
+        static const wl_keyboard_listener keyboardListener = {
+            keyboardKeymap,
+            keyboardEnter,
+            keyboardLeave,
+            keyboardKey,
+            keyboardModifiers,
+            keyboardRepeatInfo,
+        };
+        wl_keyboard_add_listener(platform->keyboard, &keyboardListener, platform);
+    }
+}
+
+void LinuxPlatformImpl::pointerEnter(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+}
+
+void LinuxPlatformImpl::pointerLeave(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+}
+
+void LinuxPlatformImpl::pointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+}
+
+void LinuxPlatformImpl::pointerButton(void* data, wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+}
+
+void LinuxPlatformImpl::pointerAxis(void* data, wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+}
+
+void LinuxPlatformImpl::keyboardKeymap(void* data, wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+}
+
+void LinuxPlatformImpl::keyboardEnter(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface, wl_array* keys) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+}
+
+void LinuxPlatformImpl::keyboardLeave(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+}
+
+void LinuxPlatformImpl::keyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+}
+
+void LinuxPlatformImpl::keyboardModifiers(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+}
+
+void LinuxPlatformImpl::keyboardRepeatInfo(void* data, wl_keyboard* wl_keyboard, int32_t rate, int32_t delay) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
 } // namespace dirk::Platform::Linux

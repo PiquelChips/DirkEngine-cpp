@@ -26,7 +26,7 @@ DEFINE_LOG_CATEGORY(LogPlatform)
 Platform::Platform(const PlatformCreateInfo& createInfo)
     : appName(createInfo.appName) {
 #ifdef PLATFORM_LINUX
-    platformImpl = std::make_unique<Linux::LinuxPlatformImpl>(createInfo);
+    platformImpl = std::make_unique<Linux::LinuxPlatformImpl>(createInfo, *this);
 #else
 #error "no platform specified"
 #endif
