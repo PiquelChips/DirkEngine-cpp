@@ -51,10 +51,7 @@ void LinuxPlatform::pollPlatformEvents() {
 }
 
 std::unique_ptr<PlatformWindowImpl> LinuxPlatform::createPlatformWindow(const WindowCreateInfo& createInfo) {
-    return std::make_unique<LinuxWindow>(LinuxWindowCreateInfo{
-        .platformImpl = this,
-        .createInfo = createInfo,
-    });
+    return std::make_unique<LinuxWindow>(createInfo, *this);
 }
 
 vk::SurfaceKHR LinuxPlatform::createTempVulkanSurface(vk::Instance instance) {

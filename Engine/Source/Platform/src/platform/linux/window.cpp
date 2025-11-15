@@ -11,9 +11,6 @@
 
 namespace dirk::Platform::Linux {
 
-DEFINE_LOG_CATEGORY(LogLinux)
-DEFINE_LOG_CATEGORY(LogWayland)
-
 LinuxWindow::LinuxWindow(const WindowCreateInfo& createInfo, LinuxPlatform& platformImpl)
     : linuxPlatform(platformImpl), size(createInfo.size) {
     wlSurface = wl_compositor_create_surface(linuxPlatform.getWaylandState().compositor);
