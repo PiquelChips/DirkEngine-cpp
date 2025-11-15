@@ -11,14 +11,14 @@
 
 namespace dirk::Platform::Linux {
 
-LinuxWindow::LinuxWindow(const WindowCreateInfo& createInfo, LinuxPlatform& platformImpl)
+LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatformImpl& platformImpl)
     : linuxPlatform(platformImpl), size(createInfo.size) {
     wlSurface = wl_compositor_create_surface(linuxPlatform.getWaylandState().compositor);
 }
 
-LinuxWindow::~LinuxWindow() {}
+LinuxWindowImpl::~LinuxWindowImpl() {}
 
-vk::SurfaceKHR LinuxWindow::getVulkanSurface(vk::Instance instance) {
+vk::SurfaceKHR LinuxWindowImpl::getVulkanSurface(vk::Instance instance) {
     if (vkSurface)
         return vkSurface;
 
@@ -34,17 +34,17 @@ vk::SurfaceKHR LinuxWindow::getVulkanSurface(vk::Instance instance) {
     return vkSurface;
 }
 
-vk::Extent2D LinuxWindow::getSize() { return size; }
-void LinuxWindow::setSize(vk::Extent2D inSize) {}
+vk::Extent2D LinuxWindowImpl::getSize() { return size; }
+void LinuxWindowImpl::setSize(vk::Extent2D inSize) {}
 
-glm::vec2 LinuxWindow::getPosition() {}
-void LinuxWindow::setPosition(const glm::vec2 inPosition) {}
+glm::vec2 LinuxWindowImpl::getPosition() {}
+void LinuxWindowImpl::setPosition(const glm::vec2 inPosition) {}
 
-std::string_view LinuxWindow::getTitle() {}
-void LinuxWindow::setTitle(std::string_view inTitle) {}
+std::string_view LinuxWindowImpl::getTitle() {}
+void LinuxWindowImpl::setTitle(std::string_view inTitle) {}
 
-bool LinuxWindow::isFocused() {}
-bool LinuxWindow::isMinimized() {}
+bool LinuxWindowImpl::isFocused() {}
+bool LinuxWindowImpl::isMinimized() {}
 
 } // namespace dirk::Platform::Linux
 

@@ -10,10 +10,10 @@
 
 namespace dirk::Platform::Linux {
 
-class LinuxWindow : public PlatformWindowImpl {
+class LinuxWindowImpl : public PlatformWindowImpl {
 public:
-    LinuxWindow(const WindowCreateInfo& createInfo, LinuxPlatform& platformImpl);
-    ~LinuxWindow();
+    LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatformImpl& platformImpl);
+    ~LinuxWindowImpl();
 
     vk::SurfaceKHR getVulkanSurface(vk::Instance instance) override;
     void* getPlatformHandle() override { return wlSurface; }
@@ -33,7 +33,7 @@ public:
 private:
     vk::Extent2D size;
 
-    LinuxPlatform& linuxPlatform;
+    LinuxPlatformImpl& linuxPlatform;
 
     wl_surface* wlSurface;
     vk::SurfaceKHR vkSurface;

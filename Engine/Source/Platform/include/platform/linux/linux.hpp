@@ -17,11 +17,11 @@ struct WaylandState {
     wl_compositor* compositor;
 };
 
-class LinuxPlatform : public PlatformImpl {
+class LinuxPlatformImpl : public PlatformImpl {
 
 public:
-    LinuxPlatform(const PlatformCreateInfo& createInfo);
-    ~LinuxPlatform();
+    LinuxPlatformImpl(const PlatformCreateInfo& createInfo);
+    ~LinuxPlatformImpl();
     void pollPlatformEvents() override;
 
     std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) override;

@@ -31,7 +31,7 @@ static const struct wl_registry_listener
         .global_remove = registry_handle_global_remove,
     };
 
-LinuxPlatform::LinuxPlatform(const PlatformCreateInfo& createInfo) {
+LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo) {
     display = wl_display_connect(nullptr);
     if (!display) {
         DIRK_LOG(LogWayland, FATAL, "failed to create wayland display")
@@ -49,20 +49,20 @@ LinuxPlatform::LinuxPlatform(const PlatformCreateInfo& createInfo) {
     wl_display_roundtrip(display);
 }
 
-LinuxPlatform::~LinuxPlatform() {
+LinuxPlatformImpl::~LinuxPlatformImpl() {
     wl_display_disconnect(display);
 }
 
-void LinuxPlatform::pollPlatformEvents() {
+void LinuxPlatformImpl::pollPlatformEvents() {
     // TODO: handle return value
     wl_display_dispatch(display);
 }
 
-std::unique_ptr<PlatformWindowImpl> LinuxPlatform::createPlatformWindow(const WindowCreateInfo& createInfo) {
-    return std::make_unique<LinuxWindow>(createInfo, *this);
+std::unique_ptr<PlatformWindowImpl> LinuxPlatformImpl::createPlatformWindow(const WindowCreateInfo& createInfo) {
+    return std::make_unique<LinuxWindowImpl>(createInfo, *this);
 }
 
-vk::SurfaceKHR LinuxPlatform::createTempVulkanSurface(vk::Instance instance) {
+vk::SurfaceKHR LinuxPlatformImpl::createTempVulkanSurface(vk::Instance instance) {
     vk::SurfaceKHR vkSurface;
     auto wlSurface = wl_compositor_create_surface(state.compositor);
 
@@ -81,10 +81,10 @@ vk::SurfaceKHR LinuxPlatform::createTempVulkanSurface(vk::Instance instance) {
 }
 
 // TODO: destroy window
-void LinuxPlatform::destroyWindow(PlatformWindowImpl* window) {}
+void LinuxPlatformImpl::destroyWindow(PlatformWindowImpl* window) {}
 
-void LinuxPlatform::focusWindow(PlatformWindowImpl* window) {
-    auto linuxWindow = static_cast<LinuxWindow*>(window);
+void LinuxPlatformImpl::focusWindow(PlatformWindowImpl* window) {
+    auto linuxWindow = static_cast<LinuxWindowImpl*>(window);
 }
 
 } // namespace dirk::Platform::Linux
