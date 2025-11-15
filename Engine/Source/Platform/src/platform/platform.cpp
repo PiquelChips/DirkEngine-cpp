@@ -513,13 +513,18 @@ void Platform::updateMouseCursor() {
 Window* Platform::createWindow(const WindowCreateInfo& createInfo) {
     windows.push_back(std::make_unique<Window>(
         createInfo,
-        this,
+        *this,
         platformImpl->createPlatformWindow(createInfo)));
     return windows.back().get();
 }
 
 void Platform::destroyWindow(Window* window) {
-    platformImpl->destroyWindow(window->getPlatformImpl());
+    for (auto it = windows.begin(); it < windows.end(); ++it) {
+        if (it->get() == window) {
+            windows.erase(it);
+            return;
+        }
+    }
 }
 
 void Platform::focusWindow(Window* window) {

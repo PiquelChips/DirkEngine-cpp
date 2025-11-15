@@ -13,7 +13,7 @@
 
 namespace dirk::Platform {
 
-Window::Window(const WindowCreateInfo& createInfo, Platform* platform, std::unique_ptr<PlatformWindowImpl> impl)
+Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl)
     : platform(platform), platformWindow(std::move(impl)) {
     surface = platformWindow->getVulkanSurface(gEngine->getRenderer()->getResources().instance);
 

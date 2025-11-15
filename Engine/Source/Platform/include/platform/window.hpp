@@ -55,7 +55,7 @@ public:
  */
 class Window {
 public:
-    Window(const WindowCreateInfo& createInfo, Platform* platform, std::unique_ptr<PlatformWindowImpl> impl);
+    Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl);
 
     vk::Extent2D getSize() const;
     void setSize(vk::Extent2D inSize);
@@ -66,7 +66,7 @@ public:
 
     uint32_t getImageCount() { return swapChainImages.size(); }
 
-    PlatformWindowImpl* getPlatformImpl() { return platformWindow.get(); }
+    PlatformWindowImpl& getPlatformImpl() { return *platformWindow.get(); }
     void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
 
     bool isFocused();
@@ -98,7 +98,7 @@ private:
     // state
     std::uint32_t imageIndex;
 
-    Platform* platform;
+    Platform& platform;
     std::unique_ptr<PlatformWindowImpl> platformWindow;
 };
 

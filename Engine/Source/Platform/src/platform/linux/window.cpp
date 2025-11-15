@@ -1,7 +1,6 @@
 #ifdef PLATFORM_LINUX
 
 #include "platform/linux/window.hpp"
-#include "asserts.hpp"
 #include "common.hpp"
 #include "logging/logging.hpp"
 #include "platform/linux/linux.hpp"
@@ -14,6 +13,8 @@ namespace dirk::Platform::Linux {
 LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatformImpl& platformImpl)
     : linuxPlatform(platformImpl), size(createInfo.size) {
     wlSurface = wl_compositor_create_surface(linuxPlatform.getWaylandState().compositor);
+    if (!wlSurface)
+        DIRK_LOG(LogWayland, FATAL, "failed to create vulkan surface");
 }
 
 LinuxWindowImpl::~LinuxWindowImpl() {}
@@ -27,8 +28,9 @@ vk::SurfaceKHR LinuxWindowImpl::getVulkanSurface(vk::Instance instance) {
     createInfo.surface = wlSurface;
 
     vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
-    // TODO: use error
     auto err = instance.createWaylandSurfaceKHR(&createInfo, nullptr, &vkSurface, dispatcher);
+    if (err != vk::Result::eSuccess)
+        DIRK_LOG(LogWayland, FATAL, "received error code " << err << " while attempting to create vulkan surface for wayland surface")
     check(vkSurface);
 
     return vkSurface;

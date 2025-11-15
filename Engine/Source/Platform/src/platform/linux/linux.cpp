@@ -71,8 +71,9 @@ vk::SurfaceKHR LinuxPlatformImpl::createTempVulkanSurface(vk::Instance instance)
     createInfo.surface = wlSurface;
 
     vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
-    // TODO: use error
     auto err = instance.createWaylandSurfaceKHR(&createInfo, nullptr, &vkSurface, dispatcher);
+    if (err != vk::Result::eSuccess)
+        DIRK_LOG(LogWayland, FATAL, "received error code " << err << " while attempting to create vulkan surface for wayland surface")
     check(vkSurface);
 
     free(wlSurface);
