@@ -32,7 +32,7 @@ LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo, Platf
     }
 
     static const struct wl_registry_listener registryListener = {
-        .global = globalRegistryHandler,
+        .global = wl_GlobalRegistryHandler,
         .global_remove = [](void* data, struct wl_registry* registry, uint32_t name) {},
     };
     wl_registry_add_listener(registry, &registryListener, this);
@@ -79,7 +79,7 @@ vk::SurfaceKHR LinuxPlatformImpl::createTempVulkanSurface(vk::Instance instance)
     return vkSurface;
 }
 
-void LinuxPlatformImpl::globalRegistryHandler(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version) {
+void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version) {
     LinuxPlatformImpl* platform = static_cast<LinuxPlatformImpl*>(data);
 
     if (strcmp(interface, wl_compositor_interface.name) == 0) {
@@ -95,24 +95,24 @@ void LinuxPlatformImpl::globalRegistryHandler(void* data, struct wl_registry* re
     } else if (strcmp(interface, wl_seat_interface.name) == 0) {
         platform->seat = static_cast<wl_seat*>(wl_registry_bind(registry, name, &wl_seat_interface, 7));
         static const wl_seat_listener seatListener = {
-            seatCapabilities,
+            wl_SeatCapabilities,
         };
         wl_seat_add_listener(platform->seat, &seatListener, platform);
     }
 }
 
-void LinuxPlatformImpl::seatCapabilities(void* data, wl_seat* seat, uint32_t caps) {
+void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t caps) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 
     if ((caps & WL_SEAT_CAPABILITY_POINTER) && !platform->pointer) {
         platform->pointer = wl_seat_get_pointer(seat);
 
         static const wl_pointer_listener pointerListener = {
-            pointerEnter,
-            pointerLeave,
-            pointerMotion,
-            pointerButton,
-            pointerAxis,
+            wl_PointerEnter,
+            wl_PointerLeave,
+            wl_PointerMotion,
+            wl_PointerButton,
+            wl_PointerAxis,
         };
         wl_pointer_add_listener(platform->pointer, &pointerListener, platform);
     }
@@ -121,58 +121,58 @@ void LinuxPlatformImpl::seatCapabilities(void* data, wl_seat* seat, uint32_t cap
         platform->keyboard = wl_seat_get_keyboard(seat);
 
         static const wl_keyboard_listener keyboardListener = {
-            keyboardKeymap,
-            keyboardEnter,
-            keyboardLeave,
-            keyboardKey,
-            keyboardModifiers,
-            keyboardRepeatInfo,
+            wl_KeyboardKeymap,
+            wl_KeyboardEnter,
+            wl_KeyboardLeave,
+            wl_KeyboardKey,
+            wl_KeyboardModifiers,
+            wl_KeyboardRepeatInfo,
         };
         wl_keyboard_add_listener(platform->keyboard, &keyboardListener, platform);
     }
 }
 
-void LinuxPlatformImpl::pointerEnter(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y) {
+void LinuxPlatformImpl::wl_PointerEnter(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
-void LinuxPlatformImpl::pointerLeave(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface) {
+void LinuxPlatformImpl::wl_PointerLeave(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
-void LinuxPlatformImpl::pointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
+void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
-void LinuxPlatformImpl::pointerButton(void* data, wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state) {
+void LinuxPlatformImpl::wl_PointerButton(void* data, wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
-void LinuxPlatformImpl::pointerAxis(void* data, wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value) {
+void LinuxPlatformImpl::wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
-void LinuxPlatformImpl::keyboardKeymap(void* data, wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size) {
+void LinuxPlatformImpl::wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
-void LinuxPlatformImpl::keyboardEnter(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface, wl_array* keys) {
+void LinuxPlatformImpl::wl_KeyboardEnter(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface, wl_array* keys) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
-void LinuxPlatformImpl::keyboardLeave(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface) {
+void LinuxPlatformImpl::wl_KeyboardLeave(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
-void LinuxPlatformImpl::keyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state) {
+void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
-void LinuxPlatformImpl::keyboardModifiers(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group) {
+void LinuxPlatformImpl::wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 
-void LinuxPlatformImpl::keyboardRepeatInfo(void* data, wl_keyboard* wl_keyboard, int32_t rate, int32_t delay) {
+void LinuxPlatformImpl::wl_KeyboardRepeatInfo(void* data, wl_keyboard* wl_keyboard, int32_t rate, int32_t delay) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 }
 

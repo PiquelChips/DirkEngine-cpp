@@ -4,7 +4,6 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "input/keys.hpp"
-#include "platform/linux/linux.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "window.hpp"
 
@@ -74,8 +73,6 @@ public:
     Window* getMainWindow() { return windows[0].get(); }
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
 
-    friend class Linux::LinuxPlatformImpl;
-
 private:
     // platform funcs used by ImGui
     static void ImGui_CreateWindow(ImGuiViewport* viewport);
@@ -92,7 +89,7 @@ private:
     static void ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title);
     static int ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface);
 
-protected:
+public:
     // callbacks for platform events
     void windowSizeCallback(Window& window, vk::Extent2D inSize);
     void windowPosCallback(Window& window, glm::vec2 inPos);
