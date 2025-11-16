@@ -7,7 +7,7 @@
 
 #include "wayland-client-core.h"
 #include "wayland-client-protocol.h"
-#include "xdh-shell-client-protocol.h"
+#include "xdg-shell-client-protocol.h"
 
 namespace dirk::Platform::Linux {
 

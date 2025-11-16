@@ -1,5 +1,3 @@
-#include "xkbcommon/xkbcommon.h"
-#include <cstdint>
 #ifdef PLATFORM_LINUX
 
 #pragma once
@@ -9,7 +7,10 @@
 
 #include "wayland-client-core.h"
 #include "wayland-client-protocol.h"
-#include "xdh-shell-client-protocol.h"
+#include "xdg-shell-client-protocol.h"
+#include "xkbcommon/xkbcommon.h"
+
+#include <cstdint>
 
 namespace dirk::Platform::Linux {
 
