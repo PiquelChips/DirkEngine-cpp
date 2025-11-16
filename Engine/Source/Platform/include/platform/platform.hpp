@@ -70,7 +70,7 @@ public:
     void shutdownImGui();
 
     Window& getMainWindow() { return *windows[0]; }
-    Window& getFocusedWindow() { return focusedWindow; }
+    Window& getFocusedWindow() { return *focusedWindow; }
 
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
 
@@ -118,7 +118,7 @@ private:
     std::unordered_map<Window*, ImGuiContext*> contextMap;
     std::vector<std::unique_ptr<Window>> windows;
     // the last window that was focused
-    Window& focusedWindow;
+    Window* focusedWindow;
 
     std::string_view appName;
 

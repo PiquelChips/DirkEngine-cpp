@@ -260,7 +260,7 @@ void Renderer::initImGui() {
     style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 
     gEngine->getPlatform()->initImGui();
-    auto mainWindow = gEngine->getPlatform()->getMainWindow();
+    auto mainWindow = &gEngine->getPlatform()->getMainWindow();
     check(mainWindow);
 
     vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{};
@@ -315,7 +315,7 @@ void Renderer::render() {
 
     ImGui::Render();
 
-    auto window = gEngine->getPlatform()->getMainWindow();
+    auto window = &gEngine->getPlatform()->getMainWindow();
     if (!window->isMinimized())
         queues.graphicsQueue.submit(window->render(ImGui::GetDrawData()), inFlightFence);
 

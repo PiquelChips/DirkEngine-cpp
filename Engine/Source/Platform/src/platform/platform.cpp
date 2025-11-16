@@ -41,6 +41,7 @@ void Platform::initImGui() {
     windows.clear();
 
     auto mainWindow = createWindow(WindowCreateInfo{ .title = appName });
+    focusedWindow = mainWindow;
 
     ImGuiIO& io = ImGui::GetIO();
     IMGUI_CHECKVERSION();
@@ -296,7 +297,7 @@ void Platform::windowCloseCallback(Window& window) {
 
 void Platform::focusWindowCallback(Window& window) {
     {
-        ImGuiData* bd = getBackendData(focusedWindow);
+        ImGuiData* bd = getBackendData(*focusedWindow);
 
         // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
         bd->mouseIgnoreButtonUp = bd->mouseIgnoreButtonUpWaitForFocusLoss;
