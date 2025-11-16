@@ -247,7 +247,6 @@ void LinuxPlatformImpl::wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, 
     auto& window = platform->platform.getFocusedWindow();
 
     xkb_state_update_mask(platform->xkbState, depressed, latched, locked, 0, 0, group);
-    // TODO: modifiers
 }
 
 void LinuxPlatformImpl::wl_KeyboardRepeatInfo(void* data, wl_keyboard* keyboard, int32_t rate, int32_t delay) {
@@ -258,7 +257,6 @@ void LinuxPlatformImpl::wl_KeyboardRepeatInfo(void* data, wl_keyboard* keyboard,
     // TODO: repeat keys
 }
 
-// TODO: key conversions
 Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {
     // clang-format off
     switch (sym)
@@ -388,30 +386,29 @@ Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {
 Input::MouseButton LinuxPlatformImpl::getMouseFromCode(uint32_t button) {
     // clang-format off
     switch (button) {
-    case BTN_LEFT:
-        return Input::MouseButton::Left;
-    case BTN_RIGHT:
-        return Input::MouseButton::Right;
-    case BTN_MIDDLE:
-        return Input::MouseButton::Middle;
-    default:
-        return Input::MouseButton::Left;
+    case BTN_LEFT: return Input::MouseButton::Left;
+    case BTN_RIGHT: return Input::MouseButton::Right;
+    case BTN_MIDDLE: return Input::MouseButton::Middle;
+    case BTN_0: return Input::MouseButton::Button0;
+    case BTN_1: return Input::MouseButton::Button1;
+    case BTN_2: return Input::MouseButton::Button2;
+    case BTN_3: return Input::MouseButton::Button3;
+    case BTN_4: return Input::MouseButton::Button4;
+    case BTN_5: return Input::MouseButton::Button5;
+    default: return Input::MouseButton::Left;
     }
     // clang-format on
 }
 
 Input::KeyState LinuxPlatformImpl::getKeyStateFromCode(uint32_t state) {
-
+    // clang-format off
     switch (state) {
-    case WL_KEYBOARD_KEY_STATE_PRESSED:
-        return Input::KeyState::Pressed;
-    case WL_KEYBOARD_KEY_STATE_RELEASED:
-        return Input::KeyState::Released;
-    case WL_KEYBOARD_KEY_STATE_REPEATED:
-        return Input::KeyState::Held;
-    default:
-        return Input::KeyState::None;
+    case WL_KEYBOARD_KEY_STATE_PRESSED: return Input::KeyState::Pressed;
+    case WL_KEYBOARD_KEY_STATE_RELEASED: return Input::KeyState::Released;
+    case WL_KEYBOARD_KEY_STATE_REPEATED: return Input::KeyState::Held;
+    default: return Input::KeyState::None;
     }
+    // clang-format on
 }
 
 } // namespace dirk::Platform::Linux
