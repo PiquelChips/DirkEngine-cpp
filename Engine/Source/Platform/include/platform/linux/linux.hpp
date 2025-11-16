@@ -1,3 +1,4 @@
+#include "xkbcommon/xkbcommon.h"
 #include <cstdint>
 #ifdef PLATFORM_LINUX
 
@@ -29,9 +30,9 @@ public:
     wl_compositor* getCompositor() { return compositor; }
     xdg_wm_base* getXdgWmBase() { return xdgWmBase; }
 
-    static Input::Key getKeyFromCode(uint32_t code);
+    static Input::Key getKeyFromSym(xkb_keysym_t sym);
     static Input::MouseButton getMouseFromCode(uint32_t code);
-    static Input::KeyState getKeyStateFromCode(uint32_t code);
+    static Input::KeyState getKeyStateFromCode(uint32_t state);
 
 private:
     Window& getWindowWithSurface(wl_surface* surface);
@@ -44,6 +45,7 @@ private:
     static void wl_PointerButton(void* data, wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state);
     static void wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value);
 
+    static void wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size);
     static void wl_KeyboardEnter(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface, wl_array* keys);
     static void wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state);
     static void wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group);
@@ -59,6 +61,10 @@ private:
     wl_seat* seat;
     wl_pointer* pointer;
     wl_keyboard* keyboard;
+
+    xkb_context* xkbContext;
+    xkb_keymap* xkbKeymap;
+    xkb_state* xkbState;
 
     Platform& platform;
 };
