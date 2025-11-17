@@ -43,6 +43,7 @@ private:
 
     static void wl_OutputHandleGeometry(void* data, struct wl_output* output, int32_t x, int32_t y, int32_t physicalWidth, int32_t physicalHeight, int32_t subpixel, const char* make, const char* model, int32_t transform);
     static void wl_OutputHandleMode(void* data, struct wl_output* output, uint32_t flags, int32_t width, int32_t height, int32_t refresh);
+    static void wl_OutputHandleDone(void* data, struct wl_output* output);
     static void wl_OutputHandleName(void* data, struct wl_output* output, const char* name);
 
     static void wl_PointerEnter(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y);

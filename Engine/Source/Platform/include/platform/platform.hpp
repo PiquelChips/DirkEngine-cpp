@@ -10,7 +10,6 @@
 
 #include <array>
 #include <memory>
-#include <span>
 #include <unordered_map>
 #include <vector>
 
@@ -78,6 +77,7 @@ public:
 
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
     Monitor& createMonitor(void* platformHandle);
+    void updateMonitors();
 
     std::vector<std::unique_ptr<Window>>& getWindows() { return windows; }
     std::vector<std::unique_ptr<Monitor>>& getMonitors() { return monitors; }
@@ -112,7 +112,6 @@ private:
     static ImGuiData* getBackendData();
     ImGuiData* getBackendData(Window& window);
 
-    void updateMonitors();
     void updateMouseData();
     void updateMouseCursor();
 

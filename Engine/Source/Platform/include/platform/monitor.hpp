@@ -15,11 +15,14 @@ struct VideoMode {
     std::uint32_t refreshRate = 60;
 };
 
+class Platform;
+
 class Monitor {
 public:
-    Monitor(void* platformHandle) : platformHandle(platformHandle) {}
+    Monitor(void* platformHandle, Platform& platform) : platformHandle(platformHandle), platform(platform) {}
 
     void* getPlatformHandle() { return platformHandle; }
+    Platform& getPlatform() { return platform; }
 
     VideoMode& getVideoMode() { return videoMode; }
     void setVideoMode(VideoMode& inVideoMode) { videoMode = inVideoMode; }
@@ -35,6 +38,7 @@ private:
     std::string_view name;
     glm::vec2 position;
     VideoMode videoMode;
+    Platform& platform;
 };
 
 } // namespace dirk::Platform

@@ -241,6 +241,7 @@ Renderer::Renderer() {
 }
 
 void Renderer::initImGui() {
+    DIRK_LOG(LogRenderer, INFO, "initlializing ImGui")
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();

@@ -83,6 +83,8 @@ void Platform::initImGui() {
     platformIO.Platform_GetClipboardTextFn = nullptr;
     platformIO.Platform_SetClipboardTextFn = nullptr;
 
+    updateMonitors();
+
     // TODO: create mouse cursors
     bd->mouseCursors[ImGuiMouseCursor_Arrow] = Cursor{};
     bd->mouseCursors[ImGuiMouseCursor_TextInput] = Cursor{};
@@ -123,7 +125,7 @@ void Platform::tick(float deltaTime) {
     updateMouseData();
     updateMouseCursor();
 
-    // TODO: process platform events
+    platformImpl->pollPlatformEvents();
 }
 
 void Platform::shutdownImGui() {
@@ -154,7 +156,7 @@ vk::SurfaceKHR Platform::createTempVulkanSurface(vk::Instance instance) {
 }
 
 Monitor& Platform::createMonitor(void* platformHandle) {
-    monitors.push_back(std::make_unique<Monitor>(platformHandle));
+    monitors.push_back(std::make_unique<Monitor>(platformHandle, *this));
     return *monitors.back();
 }
 
@@ -373,13 +375,13 @@ ImGuiData* Platform::getBackendData(Window& window) {
 }
 
 void Platform::updateMonitors() {
-    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
 
     auto& monitors = getMonitors();
     if (monitors.size() == 0) // Preserve existing monitor list if there are none. Happens on macOS sleeping
         return;
 
-    platform_io.Monitors.resize(0);
+    platformIO.Monitors.resize(0);
     for (auto& monitor : monitors) {
         ImGuiPlatformMonitor imGuiMonitor;
 
@@ -390,7 +392,7 @@ void Platform::updateMonitors() {
 
         imGuiMonitor.DpiScale = 1.f;
         imGuiMonitor.PlatformHandle = monitor->getPlatformHandle();
-        platform_io.Monitors.push_back(imGuiMonitor);
+        platformIO.Monitors.push_back(imGuiMonitor);
     }
 }
 

@@ -11,7 +11,7 @@
 
 namespace dirk::Platform::Linux {
 
-#define LOG_WAYLAND_NOT_IMPLEMENTED(feature) DIRK_LOG(LogWayland, ERROR, feature << " is not implemented in wayland");
+#define LOG_WAYLAND_NOT_IMPLEMENTED(feature) DIRK_LOG(LogWayland, WARNING, feature << " is not implemented in wayland");
 
 LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatformImpl& platformImpl)
     : linuxPlatform(platformImpl), size(createInfo.size) {
@@ -44,7 +44,9 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
         .close = [](void* data, xdg_toplevel* toplevel) {
             auto* window = static_cast<LinuxWindowImpl*>(data);
             // TODO: use platform window close callback
-        }
+        },
+        .configure_bounds = [](void*, struct xdg_toplevel*, int32_t, int32_t) {},
+        .wm_capabilities = [](void*, struct xdg_toplevel*, struct wl_array*) {},
     };
     xdg_toplevel_add_listener(xdgToplevel, &xdgToplevelListener, this);
 
@@ -85,8 +87,8 @@ void LinuxWindowImpl::setSize(vk::Extent2D inSize) {
 }
 
 // clang-format off
-glm::vec2 LinuxWindowImpl::getPosition() { LOG_WAYLAND_NOT_IMPLEMENTED("window positioning"); return {0, 0}; }
-void LinuxWindowImpl::setPosition(const glm::vec2 inPosition) { LOG_WAYLAND_NOT_IMPLEMENTED("window positioning"); }
+glm::vec2 LinuxWindowImpl::getPosition() { LOG_WAYLAND_NOT_IMPLEMENTED("getting window position"); return {0, 0}; }
+void LinuxWindowImpl::setPosition(const glm::vec2 inPosition) { LOG_WAYLAND_NOT_IMPLEMENTED("setting window position"); }
 // clang-format on
 
 void LinuxWindowImpl::setTitle(std::string_view inTitle) {

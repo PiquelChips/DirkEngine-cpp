@@ -1,8 +1,9 @@
+#include "logging/logging.hpp"
 #ifdef PLATFORM_LINUX
 
-#include "platform/linux/linux.hpp"
 #include "common.hpp"
 #include "input/keys.hpp"
+#include "platform/linux/linux.hpp"
 #include "platform/linux/window.hpp"
 #include "platform/monitor.hpp"
 #include "platform/platform.hpp"
@@ -108,26 +109,30 @@ void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry*
 
     if (strcmp(interface, wl_compositor_interface.name) == 0) {
         // wl_compositor
-        platform->compositor = static_cast<wl_compositor*>(wl_registry_bind(registry, name, &wl_compositor_interface, wl_compositor_interface.version));
+        platform->compositor = static_cast<wl_compositor*>(wl_registry_bind(registry, name, &wl_compositor_interface, version));
     } else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
         // xdg_wm_base
-        platform->xdgWmBase = static_cast<xdg_wm_base*>(wl_registry_bind(registry, name, &xdg_wm_base_interface, xdg_wm_base_interface.version));
+        platform->xdgWmBase = static_cast<xdg_wm_base*>(wl_registry_bind(registry, name, &xdg_wm_base_interface, version));
         static const struct xdg_wm_base_listener xdgWmBaseListener = {
             .ping = [](void* data, struct xdg_wm_base* xdg_wm_base, uint32_t serial) { xdg_wm_base_pong(xdg_wm_base, serial); },
         };
         xdg_wm_base_add_listener(platform->xdgWmBase, &xdgWmBaseListener, platform);
     } else if (strcmp(interface, wl_seat_interface.name) == 0) {
-        platform->seat = static_cast<wl_seat*>(wl_registry_bind(registry, name, &wl_seat_interface, wl_seat_interface.version));
+        platform->seat = static_cast<wl_seat*>(wl_registry_bind(registry, name, &wl_seat_interface, version));
         static const wl_seat_listener seatListener = {
-            wl_SeatCapabilities,
+            .capabilities = wl_SeatCapabilities,
+            .name = [](void*, struct wl_seat*, const char* name) { DIRK_LOG(LogWayland, INFO, "new seat " << name); },
         };
         wl_seat_add_listener(platform->seat, &seatListener, platform);
     } else if (strcmp(interface, wl_output_interface.name) == 0) {
-        wl_output* output = static_cast<wl_output*>(wl_registry_bind(platform->registry, name, &wl_output_interface, wl_output_interface.version));
+        wl_output* output = static_cast<wl_output*>(wl_registry_bind(platform->registry, name, &wl_output_interface, version));
         static const struct wl_output_listener outputListener = {
             .geometry = wl_OutputHandleGeometry,
             .mode = wl_OutputHandleMode,
+            .done = wl_OutputHandleDone,
+            .scale = [](void*, struct wl_output*, int32_t) {},
             .name = wl_OutputHandleName,
+            .description = [](void*, struct wl_output*, const char*) {},
 
         };
         wl_output_add_listener(output, &outputListener, &platform->platform.createMonitor(output));
@@ -182,11 +187,20 @@ void LinuxPlatformImpl::wl_OutputHandleMode(void* data, struct wl_output* output
     monitor->setVideoMode(mode);
 }
 
+void LinuxPlatformImpl::wl_OutputHandleDone(void* data, struct wl_output* output) {
+    auto* monitor = static_cast<Monitor*>(data);
+    check(monitor);
+    check(monitor->getPlatformHandle() == output);
+
+    monitor->getPlatform().updateMonitors();
+}
+
 void LinuxPlatformImpl::wl_OutputHandleName(void* data, struct wl_output* output, const char* name) {
     auto* monitor = static_cast<Monitor*>(data);
     check(monitor);
     check(monitor->getPlatformHandle() == output);
     monitor->setName(name);
+    DIRK_LOG(LogWayland, INFO, "new monitor " << name)
 }
 
 void LinuxPlatformImpl::wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size) {
