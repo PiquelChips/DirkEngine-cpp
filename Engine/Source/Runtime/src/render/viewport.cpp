@@ -214,7 +214,6 @@ void Viewport::createRenderResources() {
     outImageMemoryView = renderer->createImageMemoryView(outInfo);
 
     // TODO: out image sampler (to be used by ImGUI)
-    // make sure textures are rendered to shader read optimal layout
 }
 
 vk::SubmitInfo Viewport::render() {

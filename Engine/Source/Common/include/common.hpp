@@ -149,7 +149,8 @@ public:
 
 namespace Platform {
 class Window;
-}
+class Monitor;
+} // namespace Platform
 
 class IPlatform {
 public:
@@ -163,6 +164,7 @@ public:
     virtual Platform::Window& getFocusedWindow() = 0;
     // THIS SHOULD NEVER BE USED TO DISPLAY ANYTHING. ONLY USE THIS SURFACE TO QUERY FOR FEATURES
     virtual vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) = 0;
+    virtual Platform::Monitor& createMonitor(void* platformHandle) = 0;
 };
 
 class IEngine {

@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "input/keys.hpp"
+#include "monitor.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "window.hpp"
 
@@ -76,8 +77,10 @@ public:
     // clang-format on
 
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
+    Monitor& createMonitor(void* platformHandle);
 
     std::vector<std::unique_ptr<Window>>& getWindows() { return windows; }
+    std::vector<std::unique_ptr<Monitor>>& getMonitors() { return monitors; }
 
 private:
     // platform funcs used by ImGui
@@ -118,6 +121,7 @@ private:
 
     std::unordered_map<Window*, ImGuiContext*> contextMap;
     std::vector<std::unique_ptr<Window>> windows;
+    std::vector<std::unique_ptr<Monitor>> monitors;
     // the last window that was focused
     Window* focusedWindow;
 

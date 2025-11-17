@@ -1,5 +1,6 @@
 #include "platform/platform.hpp"
 #include "common.hpp"
+#include "platform/monitor.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include <array>
@@ -150,6 +151,11 @@ void Platform::shutdownImGui() {
 
 vk::SurfaceKHR Platform::createTempVulkanSurface(vk::Instance instance) {
     return platformImpl->createTempVulkanSurface(instance);
+}
+
+Monitor& Platform::createMonitor(void* platformHandle) {
+    monitors.push_back(std::make_unique<Monitor>(platformHandle));
+    return *monitors.back();
 }
 
 void Platform::ImGui_CreateWindow(ImGuiViewport* viewport) {
@@ -367,42 +373,25 @@ ImGuiData* Platform::getBackendData(Window& window) {
 }
 
 void Platform::updateMonitors() {
-    // TODO: update monitors
-    /**
     ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
 
-    int monitors_count = 0;
-    GLFWmonitor** glfw_monitors = glfwGetMonitors(&monitors_count);
-    if (monitors_count == 0) // Preserve existing monitor list if there are none. Happens on macOS sleeping (#5683)
+    auto& monitors = getMonitors();
+    if (monitors.size() == 0) // Preserve existing monitor list if there are none. Happens on macOS sleeping
         return;
 
     platform_io.Monitors.resize(0);
-    for (int n = 0; n < monitors_count; n++) {
-        ImGuiPlatformMonitor monitor;
-        int x, y;
-        glfwGetMonitorPos(glfw_monitors[n], &x, &y);
-        const GLFWvidmode* vid_mode = glfwGetVideoMode(glfw_monitors[n]);
-        if (vid_mode == nullptr)
-            continue; // Failed to get Video mode (e.g. Emscripten does not support this function)
-        monitor.MainPos = monitor.WorkPos = ImVec2((float) x, (float) y);
-        monitor.MainSize = monitor.WorkSize = ImVec2((float) vid_mode->width, (float) vid_mode->height);
-#if GLFW_HAS_MONITOR_WORK_AREA
-        int w, h;
-        glfwGetMonitorWorkarea(glfw_monitors[n], &x, &y, &w, &h);
-        if (w > 0 && h > 0) // Workaround a small GLFW issue reporting zero on monitor changes: https://github.com/glfw/glfw/pull/1761
-        {
-            monitor.WorkPos = ImVec2((float) x, (float) y);
-            monitor.WorkSize = ImVec2((float) w, (float) h);
-        }
-#endif
-        float scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfw_monitors[n]);
-        if (scale == 0.0f)
-            continue; // Some accessibility applications are declaring virtual monitors with a DPI of 0, see #7902.
-        monitor.DpiScale = scale;
-        monitor.PlatformHandle = (void*) glfw_monitors[n]; // [...] GLFW doc states: "guaranteed to be valid only until the monitor configuration changes"
-        platform_io.Monitors.push_back(monitor);
+    for (auto& monitor : monitors) {
+        ImGuiPlatformMonitor imGuiMonitor;
+
+        auto position = monitor->getPosition();
+        auto& vidMode = monitor->getVideoMode();
+        imGuiMonitor.MainPos = imGuiMonitor.WorkPos = ImVec2(position.x, position.y);
+        imGuiMonitor.MainSize = imGuiMonitor.WorkSize = ImVec2(vidMode.size.width, vidMode.size.height);
+
+        imGuiMonitor.DpiScale = 1.f;
+        imGuiMonitor.PlatformHandle = monitor->getPlatformHandle();
+        platform_io.Monitors.push_back(imGuiMonitor);
     }
-    */
 }
 
 void Platform::updateMouseData() {
