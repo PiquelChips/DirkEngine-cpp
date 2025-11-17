@@ -28,12 +28,6 @@ public:
     bool isFocused() override { return focused; }
     void focus(bool inFocused) override;
 
-    bool isMinimized() override { return minimized; }
-    void minimize(bool inMinimized) override;
-
-    bool isMaximized() override { return maximized; }
-    void maximize(bool inMaximized) override;
-
     // TODO: xdg-decoration protocol
     bool isDecorated() override { return decorated; }
     void setDecorated(bool inDecorated) override;
