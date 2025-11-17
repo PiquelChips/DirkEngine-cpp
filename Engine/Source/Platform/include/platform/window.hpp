@@ -60,29 +60,20 @@ class Window {
 public:
     Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl);
 
-    vk::Extent2D getSize();
-    void setSize(vk::Extent2D inSize);
+    vk::Extent2D getSize() { return platformWindow->getSize(); }
+    void setSize(vk::Extent2D inSize) { platformWindow->setSize(inSize); }
 
-    glm::vec2 getPosition();
-    void setPosition(const glm::vec2 inPosition);
+    glm::vec2 getPosition() { return platformWindow->getPosition(); }
+    void setPosition(const glm::vec2 inPosition) { return platformWindow->setPosition(inPosition); }
 
-    std::string_view getTitle();
-    void setTitle(std::string_view inTitle);
+    std::string_view getTitle() { return platformWindow->getTitle(); }
+    void setTitle(std::string_view inTitle) { platformWindow->setTitle(inTitle); }
 
-    bool isFocused();
-    void focus(bool inFocused);
-
-    bool isMinimized();
-    void minimize(bool inMinimized);
-
-    bool isMaximized();
-    void maximize(bool inMaximized);
+    bool isFocused() { return platformWindow->isFocused(); }
+    void focus(bool inFocused) { platformWindow->focus(inFocused); }
 
     bool isDecorated();
     void setDecorated(bool inDecorated);
-
-    bool isFloating();
-    void setFloating(bool inFloating);
 
     uint32_t getImageCount() { return swapChainImages.size(); } // TODO: what?
 
@@ -97,7 +88,6 @@ public:
 private:
     // render resources
     vk::SwapchainKHR swapchain;
-    vk::SurfaceKHR surface;
     vk::CommandBuffer commandBuffer;
     vk::Extent2D swapChainExtent;
 
