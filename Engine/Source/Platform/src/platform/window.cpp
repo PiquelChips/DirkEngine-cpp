@@ -57,6 +57,7 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
     imageIndex = result.value;
     auto image = swapChainImages[imageIndex];
 
+    // TODO: command buffer is never created
     commandBuffer.reset();
 
     vk::CommandBufferBeginInfo beginInfo{};
