@@ -50,6 +50,15 @@ public:
 
     virtual bool isMinimized() = 0;
     virtual void minimize(bool inMinimized) = 0;
+
+    virtual bool isMaximized() = 0;
+    virtual void maximize(bool inMaximized) = 0;
+
+    virtual bool isDecorated() = 0;
+    virtual void setDecorated(bool inDecorated) = 0;
+
+    virtual bool isFloating() = 0;
+    virtual void setFloating(bool inFloating) = 0;
 };
 
 /**
@@ -60,23 +69,35 @@ class Window {
 public:
     Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl);
 
-    vk::Extent2D getSize() const;
+    vk::Extent2D getSize();
     void setSize(vk::Extent2D inSize);
-    glm::vec2 getPosition() const;
-    void setPosition(const glm::vec2& inPosition);
-    void setTitle(std::string_view inTitle);
-    std::string_view getTitle();
 
-    uint32_t getImageCount() { return swapChainImages.size(); }
+    glm::vec2 getPosition();
+    void setPosition(const glm::vec2 inPosition);
+
+    std::string_view getTitle();
+    void setTitle(std::string_view inTitle);
+
+    bool isFocused();
+    void focus(bool inFocused);
+
+    bool isMinimized();
+    void minimize(bool inMinimized);
+
+    bool isMaximized();
+    void maximize(bool inMaximized);
+
+    bool isDecorated();
+    void setDecorated(bool inDecorated);
+
+    bool isFloating();
+    void setFloating(bool inFloating);
+
+    uint32_t getImageCount() { return swapChainImages.size(); } // TODO: what?
+    void updateVisibility(bool inVisible); // TODO: what?
 
     PlatformWindowImpl& getPlatformImpl() { return *platformWindow.get(); }
     void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
-
-    bool isFocused();
-    void focus(bool inFocus);
-    bool isMinimized();
-
-    void updateVisibility(bool inVisible);
 
     vk::SurfaceKHR getVulkanSurface(vk::Instance instance);
 
