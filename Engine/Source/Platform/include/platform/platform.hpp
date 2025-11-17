@@ -57,6 +57,7 @@ public:
     virtual ~PlatformImpl() = default;
     virtual void pollPlatformEvents() = 0;
     virtual std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) = 0;
+    // THIS SHOULD NEVER BE USED TO DISPLAY ANYTHING. ONLY USE THIS SURFACE TO QUERY FOR FEATURES
     virtual vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) = 0;
 };
 
