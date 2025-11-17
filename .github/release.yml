@@ -4,6 +4,9 @@ changelog:
       - documentation
       - ci-cd
   categories:
+    - title: DirkBuildTool
+      labels:
+        - build-tool
     - title: Features
       labels:
         - enhancement
