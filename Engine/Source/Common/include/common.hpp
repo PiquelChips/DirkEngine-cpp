@@ -161,6 +161,7 @@ public:
 
     virtual Platform::Window& getMainWindow() = 0;
     virtual Platform::Window& getFocusedWindow() = 0;
+    // THIS SHOULD NEVER BE USED TO DISPLAY ANYTHING. ONLY USE THIS SURFACE TO QUERY FOR FEATURES
     virtual vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) = 0;
 };
 
