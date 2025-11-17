@@ -2,7 +2,6 @@
 #include "asserts.hpp"
 #include "common.hpp"
 #include "platform/platform.hpp"
-#include <algorithm>
 #include <memory>
 
 #include "backends/imgui_impl_vulkan.h"
@@ -25,6 +24,8 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
         .windowSize = platformWindow->getSize()
     };
     swapChainImages = gEngine->getRenderer()->createSwapChain(swapChainInfo);
+
+    imageAvailableSemaphore = gEngine->getRenderer()->createSemaphore();
 }
 
 void Window::setSize(vk::Extent2D inSize) {
