@@ -94,7 +94,6 @@ public:
     void setFloating(bool inFloating);
 
     uint32_t getImageCount() { return swapChainImages.size(); } // TODO: what?
-    void updateVisibility(bool inVisible); // TODO: what?
 
     PlatformWindowImpl& getPlatformImpl() { return *platformWindow.get(); }
     void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
