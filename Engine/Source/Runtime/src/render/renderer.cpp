@@ -316,14 +316,12 @@ void Renderer::render() {
     ImGui::Render();
 
     auto window = &gEngine->getPlatform()->getMainWindow();
-    if (!window->isMinimized())
-        queues.graphicsQueue.submit(window->render(ImGui::GetDrawData()), inFlightFence);
+    queues.graphicsQueue.submit(window->render(ImGui::GetDrawData()), inFlightFence);
 
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
 
-    if (!window->isMinimized())
-        checkVulkan(queues.presentQueue.presentKHR(window->present()));
+    checkVulkan(queues.presentQueue.presentKHR(window->present()));
 }
 
 std::shared_ptr<Viewport> Renderer::createViewport(const ViewportCreateInfo& createInfo) {

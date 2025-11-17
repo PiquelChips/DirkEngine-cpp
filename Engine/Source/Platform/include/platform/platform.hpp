@@ -70,8 +70,10 @@ public:
     void tick(float deltaTime);
     void shutdownImGui();
 
+    // clang-format off
     Window& getMainWindow() { check(windows[0]); return *windows[0]; }
     Window& getFocusedWindow() { check(focusedWindow); return *focusedWindow; }
+    // clang-format on
 
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
 
@@ -81,7 +83,6 @@ private:
     // platform funcs used by ImGui
     static void ImGui_CreateWindow(ImGuiViewport* viewport);
     static void ImGui_DestroyWindow(ImGuiViewport* viewport);
-    static void ImGui_ShowWindow(ImGuiViewport* viewport);
     static void ImGui_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos);
     static ImVec2 ImGui_GetWindowPos(ImGuiViewport* viewport);
     static void ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size);
@@ -89,7 +90,6 @@ private:
     static ImVec2 ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport);
     static void ImGui_SetWindowFocus(ImGuiViewport* viewport);
     static bool ImGui_GetWindowFocus(ImGuiViewport* viewport);
-    static bool ImGui_GetWindowMinimized(ImGuiViewport* viewport);
     static void ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title);
     static int ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface);
 

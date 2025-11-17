@@ -257,7 +257,7 @@ void LinuxPlatformImpl::wl_KeyboardRepeatInfo(void* data, wl_keyboard* keyboard,
     // TODO: repeat keys
 }
 
-Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {
+constexpr Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {
     // clang-format off
     switch (sym)
     {
@@ -383,7 +383,7 @@ Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {
     // clang-format on
 }
 
-Input::MouseButton LinuxPlatformImpl::getMouseFromCode(uint32_t button) {
+constexpr Input::MouseButton LinuxPlatformImpl::getMouseFromCode(uint32_t button) {
     // clang-format off
     switch (button) {
     case BTN_LEFT: return Input::MouseButton::Left;
@@ -400,7 +400,7 @@ Input::MouseButton LinuxPlatformImpl::getMouseFromCode(uint32_t button) {
     // clang-format on
 }
 
-Input::KeyState LinuxPlatformImpl::getKeyStateFromCode(uint32_t state) {
+constexpr Input::KeyState LinuxPlatformImpl::getKeyStateFromCode(uint32_t state) {
     // clang-format off
     switch (state) {
     case WL_KEYBOARD_KEY_STATE_PRESSED: return Input::KeyState::Pressed;

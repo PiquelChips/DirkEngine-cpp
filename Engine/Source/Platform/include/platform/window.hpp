@@ -61,7 +61,7 @@ public:
     Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl);
 
     vk::Extent2D getSize() { return platformWindow->getSize(); }
-    void setSize(vk::Extent2D inSize) { platformWindow->setSize(inSize); }
+    void setSize(vk::Extent2D inSize);
 
     glm::vec2 getPosition() { return platformWindow->getPosition(); }
     void setPosition(const glm::vec2 inPosition) { return platformWindow->setPosition(inPosition); }
@@ -79,8 +79,7 @@ public:
 
     PlatformWindowImpl& getPlatformImpl() { return *platformWindow.get(); }
     void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
-
-    vk::SurfaceKHR getVulkanSurface(vk::Instance instance);
+    vk::SurfaceKHR getVulkanSurface(vk::Instance instance) { return surface; }
 
     vk::SubmitInfo render(ImDrawData* drawData);
     vk::PresentInfoKHR present();
@@ -88,6 +87,7 @@ public:
 private:
     // render resources
     vk::SwapchainKHR swapchain;
+    vk::SurfaceKHR surface;
     vk::CommandBuffer commandBuffer;
     vk::Extent2D swapChainExtent;
 
