@@ -31,9 +31,9 @@ public:
     wl_compositor* getCompositor() { return compositor; }
     xdg_wm_base* getXdgWmBase() { return xdgWmBase; }
 
-    static Input::Key getKeyFromSym(xkb_keysym_t sym);
-    static Input::MouseButton getMouseFromCode(uint32_t code);
-    static Input::KeyState getKeyStateFromCode(uint32_t state);
+    static constexpr Input::Key getKeyFromSym(xkb_keysym_t sym);
+    static constexpr Input::MouseButton getMouseFromCode(uint32_t code);
+    static constexpr Input::KeyState getKeyStateFromCode(uint32_t state);
 
 private:
     Window& getWindowWithSurface(wl_surface* surface);
