@@ -15,6 +15,7 @@
             "wayland-client"
         ]
     },
+    "wayland-protocols": {},
     "xkbcommon": {
         "include_dir": ".",
         "external": true
