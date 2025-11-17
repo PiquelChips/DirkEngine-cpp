@@ -18,20 +18,31 @@ public:
     vk::SurfaceKHR getVulkanSurface(vk::Instance instance) override;
     void* getPlatformHandle() override { return wlSurface; }
 
-    vk::Extent2D getSize() override;
+    vk::Extent2D getSize() override { return size; }
     void setSize(vk::Extent2D inSize) override;
 
-    glm::vec2 getPosition() override;
-    void setPosition(const glm::vec2 inPosition) override;
-
-    std::string_view getTitle() override;
+    std::string_view getTitle() override { return title; }
     void setTitle(std::string_view inTitle) override;
 
-    bool isFocused() override;
+    // TODO: xdg-activation protocol
+    bool isFocused() override { return focused; }
     void focus(bool inFocused) override;
 
-    bool isMinimized() override;
+    bool isMinimized() override { return minimized; }
     void minimize(bool inMinimized) override;
+
+    bool isMaximized() override { return maximized; }
+    void maximize(bool inMaximized) override;
+
+    // TODO: xdg-decoration protocol
+    bool isDecorated() override { return decorated; }
+    void setDecorated(bool inDecorated) override;
+
+    // TODO: throw DIRK_LOG error as not implemented in wayland
+    glm::vec2 getPosition() override;
+    void setPosition(const glm::vec2 inPosition) override;
+    bool isFloating() override;
+    void setFloating(bool inFloating) override;
 
 private:
     // window properties
@@ -39,6 +50,8 @@ private:
     std::string_view title;
     bool focused;
     bool minimized;
+    bool maximized;
+    bool decorated;
 
     LinuxPlatformImpl& linuxPlatform;
 
