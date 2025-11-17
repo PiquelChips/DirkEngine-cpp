@@ -53,10 +53,10 @@ private:
     ImageMemoryView depthImageMemoryView;
     ImageMemoryView colorImageMemoryView;
     ImageMemoryView outImageMemoryView;
-    vk::Sampler outSampler;
+    vk::Sampler sampler;
 
     // render objects
-    vk::Pipeline graphicsPipeline;
+    vk::Pipeline pipeline;
     vk::CommandBuffer commandBuffer;
     vk::PipelineLayout pipelineLayout;
 
