@@ -59,9 +59,6 @@ void Window::setTitle(std::string_view inTitle) { platformWindow->setTitle(inTit
 bool Window::isFocused() { return platformWindow->isFocused(); }
 bool Window::isMinimized() { return platformWindow->isMinimized(); }
 
-// TODO: handle visibility
-void Window::updateVisibility(bool inVisible) {}
-
 vk::SurfaceKHR Window::getVulkanSurface(vk::Instance instance) {
     this->surface = platformWindow->getVulkanSurface(instance);
     return this->surface;
