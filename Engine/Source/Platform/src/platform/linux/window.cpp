@@ -11,6 +11,8 @@
 
 namespace dirk::Platform::Linux {
 
+#define LOG_WAYLAND_NOT_IMPLEMENTED(feature) DIRK_LOG(LogWayland, ERROR, feature << " is not implemented in wayland");
+
 LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatformImpl& platformImpl)
     : linuxPlatform(platformImpl), size(createInfo.size) {
     wlSurface = wl_compositor_create_surface(linuxPlatform.getCompositor());
@@ -49,9 +51,7 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
     setSize(createInfo.size);
     setTitle(createInfo.title);
     focus(createInfo.focused);
-    // TODO: visible
-    // TODO: decorated
-    // TODO: floating
+    setDecorated(createInfo.decorated);
 
     wl_surface_commit(wlSurface);
 }
@@ -79,35 +79,22 @@ vk::SurfaceKHR LinuxWindowImpl::getVulkanSurface(vk::Instance instance) {
     return vkSurface;
 }
 
-vk::Extent2D LinuxWindowImpl::getSize() { return size; }
-
 void LinuxWindowImpl::setSize(vk::Extent2D inSize) {
     this->size = inSize;
     // TODO: resize window
 }
 
-glm::vec2 LinuxWindowImpl::getPosition() {}
-void LinuxWindowImpl::setPosition(const glm::vec2 inPosition) {}
-
-std::string_view LinuxWindowImpl::getTitle() { return title; }
+glm::vec2 LinuxWindowImpl::getPosition() { LOG_WAYLAND_NOT_IMPLEMENTED("window positioning"); }
+void LinuxWindowImpl::setPosition(const glm::vec2 inPosition) { LOG_WAYLAND_NOT_IMPLEMENTED("window positioning"); }
 
 void LinuxWindowImpl::setTitle(std::string_view inTitle) {
     this->title = inTitle;
     xdg_toplevel_set_title(xdgToplevel, title.data());
 }
 
-bool LinuxWindowImpl::isFocused() { return focused; }
-
 void LinuxWindowImpl::focus(bool inFocused) {
     this->focused = inFocused;
-    // TODO: focus the window
-}
-
-bool LinuxWindowImpl::isMinimized() { return minimized; }
-
-void LinuxWindowImpl::minimize(bool isMinimized) {
-    this->minimized = minimized;
-    // TODO: minimize the window
+    // TODO: xdg-activation protocol
 }
 
 } // namespace dirk::Platform::Linux
