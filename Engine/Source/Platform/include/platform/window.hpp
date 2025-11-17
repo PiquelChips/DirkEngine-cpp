@@ -48,17 +48,8 @@ public:
     virtual bool isFocused() = 0;
     virtual void focus(bool inFocused) = 0;
 
-    virtual bool isMinimized() = 0;
-    virtual void minimize(bool inMinimized) = 0;
-
-    virtual bool isMaximized() = 0;
-    virtual void maximize(bool inMaximized) = 0;
-
     virtual bool isDecorated() = 0;
     virtual void setDecorated(bool inDecorated) = 0;
-
-    virtual bool isFloating() = 0;
-    virtual void setFloating(bool inFloating) = 0;
 };
 
 /**
