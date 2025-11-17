@@ -27,8 +27,6 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
     swapChainImages = gEngine->getRenderer()->createSwapChain(swapChainInfo);
 }
 
-vk::Extent2D Window::getSize() const { return platformWindow->getSize(); }
-
 void Window::setSize(vk::Extent2D inSize) {
     this->platformWindow->setSize(inSize);
 
@@ -49,19 +47,6 @@ void Window::setSize(vk::Extent2D inSize) {
         .windowSize = platformWindow->getSize()
     };
     swapChainImages = renderer->createSwapChain(swapChainInfo);
-}
-
-glm::vec2 Window::getPosition() const { return platformWindow->getPosition(); }
-void Window::setPosition(const glm::vec2& inPosition) { platformWindow->setPosition(inPosition); }
-std::string_view Window::getTitle() { return platformWindow->getTitle(); }
-void Window::setTitle(std::string_view inTitle) { platformWindow->setTitle(inTitle); }
-
-bool Window::isFocused() { return platformWindow->isFocused(); }
-bool Window::isMinimized() { return platformWindow->isMinimized(); }
-
-vk::SurfaceKHR Window::getVulkanSurface(vk::Instance instance) {
-    this->surface = platformWindow->getVulkanSurface(instance);
-    return this->surface;
 }
 
 vk::SubmitInfo Window::render(ImDrawData* drawData) {
