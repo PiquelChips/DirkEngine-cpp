@@ -32,7 +32,6 @@ public:
     bool isDecorated() override { return decorated; }
     void setDecorated(bool inDecorated) override;
 
-    // TODO: throw DIRK_LOG error as not implemented in wayland
     glm::vec2 getPosition() override;
     void setPosition(const glm::vec2 inPosition) override;
 

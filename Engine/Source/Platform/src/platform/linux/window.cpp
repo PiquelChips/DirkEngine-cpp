@@ -84,8 +84,10 @@ void LinuxWindowImpl::setSize(vk::Extent2D inSize) {
     // TODO: resize window
 }
 
-glm::vec2 LinuxWindowImpl::getPosition() { LOG_WAYLAND_NOT_IMPLEMENTED("window positioning"); }
+// clang-format off
+glm::vec2 LinuxWindowImpl::getPosition() { LOG_WAYLAND_NOT_IMPLEMENTED("window positioning"); return {0, 0}; }
 void LinuxWindowImpl::setPosition(const glm::vec2 inPosition) { LOG_WAYLAND_NOT_IMPLEMENTED("window positioning"); }
+// clang-format on
 
 void LinuxWindowImpl::setTitle(std::string_view inTitle) {
     this->title = inTitle;
@@ -95,6 +97,11 @@ void LinuxWindowImpl::setTitle(std::string_view inTitle) {
 void LinuxWindowImpl::focus(bool inFocused) {
     this->focused = inFocused;
     // TODO: xdg-activation protocol
+}
+
+void LinuxWindowImpl::setDecorated(bool inDecorated) {
+    this->decorated = inDecorated;
+    // TODO: xdg-decoration protocol
 }
 
 } // namespace dirk::Platform::Linux
