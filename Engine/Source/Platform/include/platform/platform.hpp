@@ -70,8 +70,8 @@ public:
     void tick(float deltaTime);
     void shutdownImGui();
 
-    Window& getMainWindow() { return *windows[0]; }
-    Window& getFocusedWindow() { return *focusedWindow; }
+    Window& getMainWindow() { check(windows[0]); return *windows[0]; }
+    Window& getFocusedWindow() { check(focusedWindow); return *focusedWindow; }
 
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
 
