@@ -83,8 +83,6 @@ void Platform::initImGui() {
     platformIO.Platform_GetClipboardTextFn = nullptr;
     platformIO.Platform_SetClipboardTextFn = nullptr;
 
-    updateMonitors();
-
     // TODO: create mouse cursors
     bd->mouseCursors[ImGuiMouseCursor_Arrow] = Cursor{};
     bd->mouseCursors[ImGuiMouseCursor_TextInput] = Cursor{};
@@ -121,7 +119,6 @@ void Platform::tick(float deltaTime) {
     // auto fbSize = bd->window->getFramebufferSize();
     // io.DisplayFramebufferScale = ImVec2((float) fbSize.width / (float) size.width, (float) fbSize.height / (float) size.height);
 
-    updateMonitors();
     updateMouseData();
     updateMouseCursor();
 
