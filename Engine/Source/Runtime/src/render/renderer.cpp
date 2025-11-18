@@ -241,7 +241,6 @@ Renderer::Renderer() {
 }
 
 void Renderer::initImGui() {
-    DIRK_LOG(LogRenderer, INFO, "initlializing ImGui")
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -285,6 +284,7 @@ void Renderer::initImGui() {
     initInfo.CheckVkResultFn = checkVkResult;
     initInfo.UseDynamicRendering = true;
     ImGui_ImplVulkan_Init(&initInfo);
+    DIRK_LOG(LogRenderer, INFO, "initlialized ImGui")
 }
 
 Renderer::~Renderer() {

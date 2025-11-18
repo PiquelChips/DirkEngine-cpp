@@ -47,9 +47,9 @@ private:
 
     LinuxPlatformImpl& linuxPlatform;
 
-    wl_surface* wlSurface;
-    xdg_surface* xdgSurface;
-    xdg_toplevel* xdgToplevel;
+    wl_surface* wlSurface = nullptr;
+    xdg_surface* xdgSurface = nullptr;
+    xdg_toplevel* xdgToplevel = nullptr;
 
     vk::SurfaceKHR vkSurface;
 };

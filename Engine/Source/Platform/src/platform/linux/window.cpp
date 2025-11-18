@@ -71,8 +71,10 @@ void LinuxWindowImpl::show() {
 }
 
 void LinuxWindowImpl::hide() {
-    if (xdgToplevel) xdg_toplevel_destroy(xdgToplevel);
-    if (xdgSurface) xdg_surface_destroy(xdgSurface);
+    xdg_toplevel_destroy(xdgToplevel);
+    xdgToplevel = nullptr;
+    xdg_surface_destroy(xdgSurface);
+    xdgSurface = nullptr;
 }
 
 vk::SurfaceKHR LinuxWindowImpl::getVulkanSurface(vk::Instance instance) {
