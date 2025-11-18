@@ -69,7 +69,7 @@ LinuxPlatformImpl::~LinuxPlatformImpl() {
 
 void LinuxPlatformImpl::pollPlatformEvents() {
     if (wl_display_dispatch(display) == -1) {
-        gEngine->exit("platform exit");
+        gEngine->exit("unable to poll platform events");
     }
 }
 
