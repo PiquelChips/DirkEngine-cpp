@@ -18,6 +18,7 @@ public:
     void hide() override;
 
     vk::SurfaceKHR getVulkanSurface(vk::Instance instance) override;
+    void createVulkanSurface(VkInstance instance, VkSurfaceKHR* surface) override;
     void* getPlatformHandle() override { return wlSurface; }
 
     vk::Extent2D getSize() override { return size; }

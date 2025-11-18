@@ -262,7 +262,7 @@ int Platform::ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, con
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
     IM_UNUSED(bd);
 
-    outSurface = (ImU64*) (VkSurfaceKHR) vd->window->getVulkanSurface((VkInstance) instance);
+    vd->window->getPlatformImpl().createVulkanSurface((VkInstance) instance, (VkSurfaceKHR*) outSurface);
     return (int) vk::Result::eSuccess;
 }
 

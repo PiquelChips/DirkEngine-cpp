@@ -139,12 +139,15 @@ Renderer::Renderer() {
         auto swapChainInfo = querySwapChainSupport(physicalDevice);
         this->properties.swapChainImageFormat = chooseSwapSurfaceFormat(swapChainInfo.formats).format;
         this->properties.minImageCount = swapChainInfo.capabilities.minImageCount;
+        this->properties.msaaSamples = getMaxUsableSampleCount(physicalDevice);
 
         this->properties.depthFormat = findSupportedFormat(
             physicalDevice,
             { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint },
             vk::ImageTiling::eOptimal,
             vk::FormatFeatureFlagBits::eDepthStencilAttachment);
+
+        this->swapChainSupport = querySwapChainSupport(physicalDevice);
     }
 
     // LOGICAL DEVICE
@@ -335,8 +338,6 @@ void Renderer::destroyViewport(std::shared_ptr<Viewport> viewport) {
 }
 
 std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {
-    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
-
     vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     vk::Extent2D extent = chooseSwapExtent(createInfo.windowSize, swapChainSupport.capabilities);

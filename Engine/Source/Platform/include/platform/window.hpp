@@ -37,6 +37,7 @@ public:
     virtual void hide() = 0;
 
     virtual vk::SurfaceKHR getVulkanSurface(vk::Instance instance) = 0;
+    virtual void createVulkanSurface(VkInstance instance, VkSurfaceKHR* surface) = 0;
     virtual void* getPlatformHandle() = 0;
 
     virtual vk::Extent2D getSize() = 0;
@@ -85,7 +86,6 @@ public:
 
     PlatformWindowImpl& getPlatformImpl() { return *platformWindow.get(); }
     void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
-    vk::SurfaceKHR getVulkanSurface(vk::Instance instance) { return surface; }
 
     vk::SubmitInfo render(ImDrawData* drawData);
     vk::PresentInfoKHR present();

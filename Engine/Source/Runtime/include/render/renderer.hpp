@@ -122,6 +122,7 @@ private:
 
     // misc variables used by the renderer
     RendererProperties properties;
+    SwapChainSupportDetails swapChainSupport;
 
     static constexpr std::array<const char*, 1> deviceExtensions = { vk::KHRSwapchainExtensionName };
     static constexpr std::array<const char*, 1> validationLayers = { "VK_LAYER_KHRONOS_validation" };

@@ -5,6 +5,9 @@
 #include "logging/logging.hpp"
 #include "platform/linux/linux.hpp"
 
+#include "vulkan/vulkan_core.h"
+#include "vulkan/vulkan_handles.hpp"
+#include "vulkan/vulkan_wayland.h"
 #include "wayland-client-core.h"
 #include "wayland-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
@@ -81,17 +84,21 @@ vk::SurfaceKHR LinuxWindowImpl::getVulkanSurface(vk::Instance instance) {
     if (vkSurface)
         return vkSurface;
 
+    VkSurfaceKHR surf;
+    createVulkanSurface(instance, &surf);
+    return vkSurface;
+}
+
+void LinuxWindowImpl::createVulkanSurface(VkInstance instance, VkSurfaceKHR* surface) {
     vk::WaylandSurfaceCreateInfoKHR createInfo;
     createInfo.display = linuxPlatform.getDisplay();
     createInfo.surface = wlSurface;
 
-    vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
-    auto err = instance.createWaylandSurfaceKHR(&createInfo, nullptr, &vkSurface, dispatcher);
-    if (err != vk::Result::eSuccess)
+    auto err = vkCreateWaylandSurfaceKHR(instance, createInfo, nullptr, surface);
+    if (err != VK_SUCCESS)
         DIRK_LOG(LogWayland, FATAL, "received error code " << err << " while attempting to create vulkan surface for wayland surface")
-    check(vkSurface);
 
-    return vkSurface;
+    vkSurface = *surface;
 }
 
 void LinuxWindowImpl::setSize(vk::Extent2D inSize) {
