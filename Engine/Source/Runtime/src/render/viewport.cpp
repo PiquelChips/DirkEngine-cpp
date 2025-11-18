@@ -24,7 +24,7 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
             .nearClip = .1f,
             .farClip = 100000.f,
         },
-        this);
+        *this);
 
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
@@ -269,7 +269,7 @@ vk::SubmitInfo Viewport::render() {
     scissor.extent = size;
     commandBuffer.setScissor(0, 1, &scissor);
 
-    for (auto pair : world->getActors()) {
+    for (auto& pair : world->getActors()) {
         pair.second->recordCommandBuffer(commandBuffer, pipelineLayout, camera);
     }
 

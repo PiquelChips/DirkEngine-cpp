@@ -241,6 +241,7 @@ Renderer::Renderer() {
 }
 
 void Renderer::initImGui() {
+    DIRK_LOG(LogVulkan, INFO, "initlializing imgui");
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -303,42 +304,26 @@ void Renderer::render() {
         submitInfos.emplace_back(viewport->render());
     }
 
-    DIRK_LOG(LogRenderer, FATAL, "submitting render queue")
     checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
-    DIRK_LOG(LogRenderer, FATAL, "submitted render queue")
 
-    DIRK_LOG(LogRenderer, FATAL, "starting new vulkan frame")
     ImGui_ImplVulkan_NewFrame();
-    DIRK_LOG(LogRenderer, FATAL, "started new vulkan frame")
-    DIRK_LOG(LogRenderer, FATAL, "starting frame")
     ImGui::NewFrame();
-    DIRK_LOG(LogRenderer, FATAL, "started frame")
 
     // TODO: process all ImGui rendering
     ImGui::ShowDemoWindow();
 
-    DIRK_LOG(LogRenderer, FATAL, "rendering imgui")
     ImGui::Render();
-    DIRK_LOG(LogRenderer, FATAL, "rendered imgui")
 
     checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
     checkVulkan(device.resetFences(1, &inFlightFence));
 
     auto window = &gEngine->getPlatform()->getMainWindow();
-    DIRK_LOG(LogRenderer, FATAL, "rendering imgui draw data")
     queues.graphicsQueue.submit(window->render(ImGui::GetDrawData()), inFlightFence);
-    DIRK_LOG(LogRenderer, FATAL, "rendered imgui draw data")
 
-    DIRK_LOG(LogRenderer, FATAL, "updating platform windows")
     ImGui::UpdatePlatformWindows();
-    DIRK_LOG(LogRenderer, FATAL, "updated platform windows")
-    DIRK_LOG(LogRenderer, FATAL, "rendering platform windows default")
     ImGui::RenderPlatformWindowsDefault();
-    DIRK_LOG(LogRenderer, FATAL, "rendered platform windows default")
 
-    DIRK_LOG(LogRenderer, FATAL, "presenting frame queue")
     checkVulkan(queues.presentQueue.presentKHR(window->present()));
-    DIRK_LOG(LogRenderer, FATAL, "presenting frame queue")
 }
 
 std::shared_ptr<Viewport> Renderer::createViewport(const ViewportCreateInfo& createInfo) {
