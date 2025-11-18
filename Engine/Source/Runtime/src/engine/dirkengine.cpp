@@ -23,6 +23,7 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
 
     platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
     renderer = std::make_unique<Renderer>();
+    // we need renderer var to be initialized for this function to run
     renderer->initImGui();
     world = std::make_shared<World>(createInfo.actorCreateInfos);
 

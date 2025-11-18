@@ -67,7 +67,7 @@ void Platform::initImGui() {
     ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
     platformIO.Platform_CreateWindow = ImGui_CreateWindow;
     platformIO.Platform_DestroyWindow = ImGui_DestroyWindow;
-    platformIO.Platform_ShowWindow = [](ImGuiViewport*) { DIRK_LOG(LogPlatform, ERROR, "ImGui::Platform_ShowWindow not implemented") };
+    platformIO.Platform_ShowWindow = ImGui_ShowWindow;
     platformIO.Platform_SetWindowPos = ImGui_SetWindowPos;
     platformIO.Platform_GetWindowPos = ImGui_GetWindowPos;
     platformIO.Platform_SetWindowSize = ImGui_SetWindowSize;
@@ -75,9 +75,9 @@ void Platform::initImGui() {
     platformIO.Platform_GetWindowFramebufferScale = ImGui_GetWindowFramebufferScale;
     platformIO.Platform_SetWindowFocus = ImGui_SetWindowFocus;
     platformIO.Platform_GetWindowFocus = ImGui_GetWindowFocus;
-    platformIO.Platform_GetWindowMinimized = [](ImGuiViewport* vp) { return false; };
+    platformIO.Platform_GetWindowMinimized = [](ImGuiViewport* vp) { DIRK_LOG(LogPlatform, WARNING, "ImGui::Platform_SetWindowAlpha not implemented"); return false; };
     platformIO.Platform_SetWindowTitle = ImGui_SetWindowTitle;
-    platformIO.Platform_SetWindowAlpha = [](ImGuiViewport*, float) { DIRK_LOG(LogPlatform, ERROR, "ImGui::Platform_SetWindowAlpha not implemented") };
+    platformIO.Platform_SetWindowAlpha = [](ImGuiViewport*, float) { DIRK_LOG(LogPlatform, WARNING, "ImGui::Platform_SetWindowAlpha not implemented") };
     platformIO.Platform_CreateVkSurface = ImGui_CreateVkSurface;
 
     platformIO.Platform_GetClipboardTextFn = nullptr;
@@ -201,6 +201,11 @@ void Platform::ImGui_DestroyWindow(ImGuiViewport* viewport) {
     viewport->PlatformUserData = viewport->PlatformHandle = nullptr;
 }
 
+void Platform::ImGui_ShowWindow(ImGuiViewport* viewport) {
+    ImGuiViewportData* vd = static_cast<ImGuiViewportData*>(viewport->PlatformUserData);
+    vd->window->show();
+}
+
 void Platform::ImGui_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos) {
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
     vd->ignoreWindowPosEventFrame = ImGui::GetFrameCount();
@@ -239,7 +244,7 @@ ImVec2 Platform::ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport) {
 void Platform::ImGui_SetWindowFocus(ImGuiViewport* viewport) {
     ImGuiData* bd = getBackendData();
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
-    vd->window->focus(true);
+    vd->window->focus();
 }
 
 bool Platform::ImGui_GetWindowFocus(ImGuiViewport* viewport) {

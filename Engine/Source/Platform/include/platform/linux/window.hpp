@@ -3,7 +3,6 @@
 #pragma once
 
 #include "platform/linux/linux.hpp"
-#include "platform/platform.hpp"
 #include "platform/window.hpp"
 
 #include "vulkan/vulkan_handles.hpp"
@@ -15,6 +14,9 @@ public:
     LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatformImpl& platformImpl);
     ~LinuxWindowImpl();
 
+    void show() override;
+    void hide() override;
+
     vk::SurfaceKHR getVulkanSurface(vk::Instance instance) override;
     void* getPlatformHandle() override { return wlSurface; }
 
@@ -25,8 +27,8 @@ public:
     void setTitle(std::string_view inTitle) override;
 
     // TODO: xdg-activation protocol
-    bool isFocused() override { return focused; }
-    void focus(bool inFocused) override;
+    bool isFocused() override;
+    void focus() override;
 
     // TODO: xdg-decoration protocol
     bool isDecorated() override { return decorated; }
@@ -39,7 +41,6 @@ private:
     // window properties
     vk::Extent2D size;
     std::string_view title;
-    bool focused;
     bool minimized;
     bool maximized;
     bool decorated;

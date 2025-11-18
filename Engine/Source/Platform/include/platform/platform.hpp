@@ -87,6 +87,7 @@ private:
     // platform funcs used by ImGui
     static void ImGui_CreateWindow(ImGuiViewport* viewport);
     static void ImGui_DestroyWindow(ImGuiViewport* viewport);
+    static void ImGui_ShowWindow(ImGuiViewport* viewport);
     static void ImGui_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos);
     static ImVec2 ImGui_GetWindowPos(ImGuiViewport* viewport);
     static void ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size);

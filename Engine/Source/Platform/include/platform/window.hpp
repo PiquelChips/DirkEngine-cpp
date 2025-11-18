@@ -33,6 +33,9 @@ class PlatformWindowImpl {
 public:
     virtual ~PlatformWindowImpl() = default;
 
+    virtual void show() = 0;
+    virtual void hide() = 0;
+
     virtual vk::SurfaceKHR getVulkanSurface(vk::Instance instance) = 0;
     virtual void* getPlatformHandle() = 0;
 
@@ -46,7 +49,7 @@ public:
     virtual void setTitle(std::string_view inTitle) = 0;
 
     virtual bool isFocused() = 0;
-    virtual void focus(bool inFocused) = 0;
+    virtual void focus() = 0;
 
     virtual bool isDecorated() = 0;
     virtual void setDecorated(bool inDecorated) = 0;
@@ -60,6 +63,9 @@ class Window {
 public:
     Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl);
 
+    void show() { platformWindow->show(); }
+    void hide() { platformWindow->hide(); }
+
     vk::Extent2D getSize() { return platformWindow->getSize(); }
     void setSize(vk::Extent2D inSize);
 
@@ -70,7 +76,7 @@ public:
     void setTitle(std::string_view inTitle) { platformWindow->setTitle(inTitle); }
 
     bool isFocused() { return platformWindow->isFocused(); }
-    void focus(bool inFocused) { platformWindow->focus(inFocused); }
+    void focus() { platformWindow->focus(); }
 
     bool isDecorated();
     void setDecorated(bool inDecorated);

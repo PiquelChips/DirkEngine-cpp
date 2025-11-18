@@ -19,6 +19,19 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
     if (!wlSurface)
         DIRK_LOG(LogWayland, FATAL, "failed to create vulkan surface");
 
+    setSize(createInfo.size);
+    setTitle(createInfo.title);
+    if (createInfo.focused)
+        focus();
+    setDecorated(createInfo.decorated);
+}
+
+LinuxWindowImpl::~LinuxWindowImpl() {
+    hide();
+    if (wlSurface) wl_surface_destroy(wlSurface);
+}
+
+void LinuxWindowImpl::show() {
     xdgSurface = xdg_wm_base_get_xdg_surface(linuxPlatform.getXdgWmBase(), wlSurface);
     static const xdg_surface_listener xdgSurfaceListener = {
         .configure = [](void* data, xdg_surface* surface, uint32_t serial) {
@@ -50,18 +63,16 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
     };
     xdg_toplevel_add_listener(xdgToplevel, &xdgToplevelListener, this);
 
-    setSize(createInfo.size);
-    setTitle(createInfo.title);
-    focus(createInfo.focused);
-    setDecorated(createInfo.decorated);
-
     wl_surface_commit(wlSurface);
+
+    setSize(this->size);
+    setTitle(this->title);
+    setDecorated(this->decorated);
 }
 
-LinuxWindowImpl::~LinuxWindowImpl() {
+void LinuxWindowImpl::hide() {
     if (xdgToplevel) xdg_toplevel_destroy(xdgToplevel);
     if (xdgSurface) xdg_surface_destroy(xdgSurface);
-    if (wlSurface) wl_surface_destroy(wlSurface);
 }
 
 vk::SurfaceKHR LinuxWindowImpl::getVulkanSurface(vk::Instance instance) {
@@ -83,7 +94,7 @@ vk::SurfaceKHR LinuxWindowImpl::getVulkanSurface(vk::Instance instance) {
 
 void LinuxWindowImpl::setSize(vk::Extent2D inSize) {
     this->size = inSize;
-    // TODO: resize window
+    // TODO: resize window if window obj valid
 }
 
 // clang-format off
@@ -93,11 +104,19 @@ void LinuxWindowImpl::setPosition(const glm::vec2 inPosition) { LOG_WAYLAND_NOT_
 
 void LinuxWindowImpl::setTitle(std::string_view inTitle) {
     this->title = inTitle;
+    if (!xdgToplevel)
+        return;
+
     xdg_toplevel_set_title(xdgToplevel, title.data());
+    wl_surface_commit(wlSurface);
 }
 
-void LinuxWindowImpl::focus(bool inFocused) {
-    this->focused = inFocused;
+bool LinuxWindowImpl::isFocused() {
+    // TODO: xdg-activation protocol
+    return false;
+}
+
+void LinuxWindowImpl::focus() {
     // TODO: xdg-activation protocol
 }
 
