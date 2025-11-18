@@ -69,7 +69,7 @@ LinuxPlatformImpl::~LinuxPlatformImpl() {
 
 void LinuxPlatformImpl::pollPlatformEvents() {
     if (wl_display_dispatch(display) == -1) {
-        gEngine->exit("unable to poll platform events");
+        gEngine->exit("unable to poll platform events. waylabd probably disconnected");
     }
 }
 
