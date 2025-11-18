@@ -2,13 +2,13 @@
 #include "asserts.hpp"
 #include "common.hpp"
 #include "platform/platform.hpp"
-#include <memory>
 
 #include "backends/imgui_impl_vulkan.h"
 #include "imgui.h"
 #include "vulkan/vulkan_enums.hpp"
 
 #include <cstdint>
+#include <memory>
 
 namespace dirk::Platform {
 
@@ -26,6 +26,8 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
     swapChainImages = gEngine->getRenderer()->createSwapChain(swapChainInfo);
 
     imageAvailableSemaphore = gEngine->getRenderer()->createSemaphore();
+    renderFinishedSemaphore = gEngine->getRenderer()->createSemaphore();
+    commandBuffer = gEngine->getRenderer()->createCommandBuffer();
 }
 
 void Window::setSize(vk::Extent2D inSize) {
@@ -57,7 +59,6 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
     imageIndex = result.value;
     auto image = swapChainImages[imageIndex];
 
-    // TODO: command buffer is never created
     commandBuffer.reset();
 
     vk::CommandBufferBeginInfo beginInfo{};

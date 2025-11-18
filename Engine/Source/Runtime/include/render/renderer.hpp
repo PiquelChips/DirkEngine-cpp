@@ -65,6 +65,7 @@ public:
 
     vk::ShaderModule loadShaderModule(const std::string& shaderName);
     vk::Semaphore createSemaphore();
+    vk::CommandBuffer createCommandBuffer();
     vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
 
     inline RendererResources getResources() { return RendererResources{

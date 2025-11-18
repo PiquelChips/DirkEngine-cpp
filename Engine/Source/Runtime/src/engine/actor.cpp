@@ -182,7 +182,6 @@ void Actor::updateData() {
     }
 
     descriptorSet = renderer->createDescriptorSets(uniformBuffer, textureSampler, textureImageMemoryView.view, vk::ImageLayout::eShaderReadOnlyOptimal);
-
     renderer->endSingleTimeCommands(commandBuffer, resources.queues.graphicsQueue);
 }
 

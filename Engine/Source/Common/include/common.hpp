@@ -118,6 +118,7 @@ public:
 
     virtual std::vector<vk::ImageView> createSwapChain(const SwapChainCreateInfo& createInfo) = 0;
     virtual vk::ShaderModule loadShaderModule(const std::string& shaderName) = 0;
+    virtual vk::CommandBuffer createCommandBuffer() = 0;
     virtual vk::Semaphore createSemaphore() = 0;
     virtual vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout) = 0;
 
