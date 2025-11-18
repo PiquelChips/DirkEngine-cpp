@@ -1,4 +1,3 @@
-#include "logging/logging.hpp"
 #ifdef PLATFORM_LINUX
 
 #include "common.hpp"
