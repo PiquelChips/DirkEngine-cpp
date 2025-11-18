@@ -100,6 +100,9 @@ func (m *CppMakefile) ToBytes() ([]byte, error) {
 	}
 	writeVar(buffer, "LDLIBS", ldLibs...)
 
+	buffer.WriteString("LDFLAGS+= -g\n")
+	buffer.WriteString("CXXFLAGS+= -g\n")
+
 	writeBase(buffer, "base")
 	writeBase(buffer, "compilation")
 
