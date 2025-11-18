@@ -77,6 +77,7 @@ public:
 
     vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
     Monitor& createMonitor(void* platformHandle);
+    // updated the ImGui monitors list with current platform monitors list
     void updateMonitors();
 
     std::vector<std::unique_ptr<Window>>& getWindows() { return windows; }
