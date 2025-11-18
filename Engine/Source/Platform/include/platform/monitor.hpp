@@ -33,6 +33,8 @@ public:
     glm::vec2 getPosition() { return position; }
     void setPosition(glm::vec2 inPosition) { position = inPosition; }
 
+    // TODO: some function to convert to ImGui monitor
+
 private:
     void* platformHandle;
     std::string_view name;
