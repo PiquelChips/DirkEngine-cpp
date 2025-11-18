@@ -182,7 +182,7 @@ void LinuxPlatformImpl::wl_OutputHandleMode(void* data, struct wl_output* output
 
     VideoMode mode{
         .size = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) },
-        .refreshRate = static_cast<uint32_t>(refresh * 1000.f),
+        .refreshRate = static_cast<uint32_t>(refresh / 1000.f),
     };
     monitor->setVideoMode(mode);
 }
