@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef PLATFORM_LINUX
-#define VK_USE_PLATFORM_WAYLAND_KHR
-#endif
-
 // GLM
 #include <memory>
 #define GLM_FORCE_RADIANS
@@ -11,7 +7,16 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE        // vulkan uses the 0.0 to 1.0 ranges; opengl uses the -1.0 to 1.0 range
 #define GLM_ENABLE_EXPERIMENTAL            // for the glm hash functions
 #include "glm/glm.hpp"
+
+#ifdef PLATFORM_LINUX
+#define VK_USE_PLATFORM_WAYLAND_KHR
+#endif
+
 #include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_enums.hpp"
+#include "vulkan/vulkan_funcs.hpp"
+#include "vulkan/vulkan_handles.hpp"
+#include "vulkan/vulkan_structs.hpp"
 
 #include "asserts.hpp"
 #include "logging/logging.hpp"
@@ -163,8 +168,6 @@ public:
 
     virtual Platform::Window& getMainWindow() = 0;
     virtual Platform::Window& getFocusedWindow() = 0;
-    // THIS SHOULD NEVER BE USED TO DISPLAY ANYTHING. ONLY USE THIS SURFACE TO QUERY FOR FEATURES
-    virtual vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) = 0;
     virtual Platform::Monitor& createMonitor(void* platformHandle) = 0;
 };
 

@@ -1,8 +1,8 @@
 #ifdef PLATFORM_LINUX
 
+#include "platform/linux/linux.hpp"
 #include "common.hpp"
 #include "input/keys.hpp"
-#include "platform/linux/linux.hpp"
 #include "platform/linux/window.hpp"
 #include "platform/monitor.hpp"
 #include "platform/platform.hpp"
@@ -74,25 +74,6 @@ void LinuxPlatformImpl::pollPlatformEvents() {
 
 std::unique_ptr<PlatformWindowImpl> LinuxPlatformImpl::createPlatformWindow(const WindowCreateInfo& createInfo) {
     return std::make_unique<LinuxWindowImpl>(createInfo, *this);
-}
-
-vk::SurfaceKHR LinuxPlatformImpl::createTempVulkanSurface(vk::Instance instance) {
-    vk::SurfaceKHR vkSurface;
-    auto wlSurface = wl_compositor_create_surface(compositor);
-
-    vk::WaylandSurfaceCreateInfoKHR createInfo;
-    createInfo.display = display;
-    createInfo.surface = wlSurface;
-
-    vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
-    auto err = instance.createWaylandSurfaceKHR(&createInfo, nullptr, &vkSurface, dispatcher);
-    if (err != vk::Result::eSuccess)
-        DIRK_LOG(LogWayland, FATAL, "received error code " << err << " while attempting to create vulkan surface for wayland surface")
-    check(vkSurface);
-
-    free(wlSurface);
-    wlSurface = nullptr;
-    return vkSurface;
 }
 
 Window& LinuxPlatformImpl::getWindowWithSurface(wl_surface* surface) {

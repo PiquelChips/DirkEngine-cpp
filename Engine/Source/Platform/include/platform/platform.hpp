@@ -1,12 +1,13 @@
 #pragma once
 
 #include "common.hpp"
-#include "imgui.h"
-#include "imgui_internal.h"
 #include "input/keys.hpp"
 #include "monitor.hpp"
-#include "vulkan/vulkan_handles.hpp"
 #include "window.hpp"
+
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "vulkan/vulkan_handles.hpp"
 
 #include <array>
 #include <memory>
@@ -57,8 +58,6 @@ public:
     virtual ~PlatformImpl() = default;
     virtual void pollPlatformEvents() = 0;
     virtual std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) = 0;
-    // THIS SHOULD NEVER BE USED TO DISPLAY ANYTHING. ONLY USE THIS SURFACE TO QUERY FOR FEATURES
-    virtual vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) = 0;
 };
 
 class Platform : public IPlatform {
@@ -75,7 +74,6 @@ public:
     Window& getFocusedWindow() { check(focusedWindow); return *focusedWindow; }
     // clang-format on
 
-    vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance);
     Monitor& createMonitor(void* platformHandle);
     // updated the ImGui monitors list with current platform monitors list
     void updateMonitors();

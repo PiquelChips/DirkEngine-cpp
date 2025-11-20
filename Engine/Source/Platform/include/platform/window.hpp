@@ -86,6 +86,7 @@ public:
 
     PlatformWindowImpl& getPlatformImpl() { return *platformWindow.get(); }
     void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
+    vk::SurfaceKHR getVulkanSurface() { return surface; }
 
     vk::SubmitInfo render(ImDrawData* drawData);
     vk::PresentInfoKHR present();

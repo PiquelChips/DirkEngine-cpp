@@ -25,7 +25,6 @@ public:
     void pollPlatformEvents() override;
 
     std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) override;
-    vk::SurfaceKHR createTempVulkanSurface(vk::Instance instance) override;
 
     wl_display* getDisplay() { return display; }
     wl_compositor* getCompositor() { return compositor; }

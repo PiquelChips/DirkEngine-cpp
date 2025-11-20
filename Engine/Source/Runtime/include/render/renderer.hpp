@@ -43,19 +43,7 @@ public:
     Renderer();
     ~Renderer();
 
-    /**
-     * This function sets up ImGui for use with the renderer.
-     * It indirectly creates a new window which requires the
-     * renderer variable of the engine to be populated. However,
-     * this only happens after the constructor is finished so
-     * this function should only be called once after the
-     * constructor. Thus, do not call this ever. It is called
-     * in DirkEngine, it should not be called anywhere else.
-     *
-     * DO NOT CALL THIS FUNCTION
-     */
-    void initImGui();
-
+    void init();
     void render();
 
     std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);
@@ -87,7 +75,7 @@ private:
 
     int getDeviceSuitability(vk::PhysicalDevice device);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
-    SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
+    SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 
     // swap chain
     vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
@@ -122,7 +110,6 @@ private:
 
     // misc variables used by the renderer
     RendererProperties properties;
-    SwapChainSupportDetails swapChainSupport;
 
     static constexpr std::array<const char*, 1> deviceExtensions = { vk::KHRSwapchainExtensionName };
     static constexpr std::array<const char*, 1> validationLayers = { "VK_LAYER_KHRONOS_validation" };

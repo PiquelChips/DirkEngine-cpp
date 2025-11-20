@@ -1,9 +1,9 @@
 #ifdef PLATFORM_LINUX
 
-#include "platform/linux/window.hpp"
 #include "common.hpp"
 #include "logging/logging.hpp"
 #include "platform/linux/linux.hpp"
+#include "platform/linux/window.hpp"
 
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_handles.hpp"
@@ -99,6 +99,7 @@ void LinuxWindowImpl::createVulkanSurface(VkInstance instance, VkSurfaceKHR* sur
         DIRK_LOG(LogWayland, FATAL, "received error code " << err << " while attempting to create vulkan surface for wayland surface")
 
     vkSurface = *surface;
+    check(vkSurface);
 }
 
 void LinuxWindowImpl::setSize(vk::Extent2D inSize) {

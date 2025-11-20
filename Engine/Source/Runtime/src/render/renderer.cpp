@@ -58,51 +58,47 @@ Renderer::Renderer() {
     debugUtilsMessengerCreateInfoEXT.pfnUserCallback = &debugCallback;
 #endif
 
-    // INSTANCE
-    {
-        vk::ApplicationInfo appInfo{};
-        appInfo.sType = vk::StructureType::eApplicationInfo;
-        appInfo.pApplicationName = "DirkEngine";
-        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.pEngineName = "DirkEngine";
-        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = vk::ApiVersion14;
+    vk::ApplicationInfo appInfo{};
+    appInfo.sType = vk::StructureType::eApplicationInfo;
+    appInfo.pApplicationName = "DirkEngine";
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName = "DirkEngine";
+    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion = vk::ApiVersion14;
 
-        vk::InstanceCreateInfo createInfo{};
-        createInfo.sType = vk::StructureType::eInstanceCreateInfo;
-        createInfo.pApplicationInfo = &appInfo;
+    vk::InstanceCreateInfo createInfo{};
+    createInfo.sType = vk::StructureType::eInstanceCreateInfo;
+    createInfo.pApplicationInfo = &appInfo;
 
-        std::vector<const char*> extentions{ vk::KHRSurfaceExtensionName };
+    std::vector<const char*> extentions{ vk::KHRSurfaceExtensionName };
 #ifdef PLATFORM_LINUX
-        extentions.push_back(vk::KHRWaylandSurfaceExtensionName);
+    extentions.push_back(vk::KHRWaylandSurfaceExtensionName);
 #endif
 #ifdef ENABLE_VALIDATION_LAYERS
-        extentions.push_back(vk::EXTDebugUtilsExtensionName);
+    extentions.push_back(vk::EXTDebugUtilsExtensionName);
 
-        check(checkValidationLayerSupport());
-        DIRK_LOG(LogVulkan, INFO, "using validation layers");
-        createInfo.enabledLayerCount = validationLayers.size();
-        createInfo.ppEnabledLayerNames = validationLayers.data();
-        createInfo.pNext = debugUtilsMessengerCreateInfoEXT;
+    check(checkValidationLayerSupport());
+    DIRK_LOG(LogVulkan, INFO, "using validation layers");
+    createInfo.enabledLayerCount = validationLayers.size();
+    createInfo.ppEnabledLayerNames = validationLayers.data();
+    createInfo.pNext = debugUtilsMessengerCreateInfoEXT;
 #else
-        createInfo.enabledLayerCount = 0;
+    createInfo.enabledLayerCount = 0;
 #endif
-        check(checkRequiredInstanceExtensions(extentions));
+    check(checkRequiredInstanceExtensions(extentions));
 
-        createInfo.enabledExtensionCount = extentions.size();
-        createInfo.ppEnabledExtensionNames = extentions.data();
+    createInfo.enabledExtensionCount = extentions.size();
+    createInfo.ppEnabledExtensionNames = extentions.data();
 
-        this->instance = vk::createInstance(createInfo);
-    }
+    this->instance = vk::createInstance(createInfo);
 
-    // VALIDATION LAYERS
-    {
 #ifdef ENABLE_VALIDATION_LAYERS
-        vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
-        this->debugMessenger = instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT, nullptr, dispatcher);
+    vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
+    this->debugMessenger = instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT, nullptr, dispatcher);
 #endif
-    }
+}
 
+void Renderer::init() {
     // PHYSICAL DEVICE
     {
         auto physicalDevices = instance.enumeratePhysicalDevices();
@@ -241,54 +237,58 @@ Renderer::Renderer() {
     }
 
     DIRK_LOG(LogVulkan, INFO, "vulkan initialized successfully");
-}
 
-void Renderer::initImGui() {
-    DIRK_LOG(LogVulkan, INFO, "initlializing imgui");
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    // ImGui
+    {
+        DIRK_LOG(LogVulkan, INFO, "initlializing imgui");
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    ImGui::StyleColorsDark();
+        ImGui::StyleColorsDark();
 
-    // Setup scaling
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(1.f);
-    style.FontScaleDpi = 1.f;
-    io.ConfigDpiScaleFonts = true;
-    io.ConfigDpiScaleViewports = true;
-    style.WindowRounding = 0.0f;
-    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        // Setup scaling
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.ScaleAllSizes(1.f);
+        style.FontScaleDpi = 1.f;
+        io.ConfigDpiScaleFonts = true;
+        io.ConfigDpiScaleViewports = true;
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 
-    gEngine->getPlatform()->initImGui();
-    auto mainWindow = &gEngine->getPlatform()->getMainWindow();
-    check(mainWindow);
+        gEngine->getPlatform()->initImGui();
+        auto mainWindow = &gEngine->getPlatform()->getMainWindow();
+        check(mainWindow);
 
-    vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{};
-    pipelineRenderingCreateInfo.colorAttachmentCount = 1;
-    pipelineRenderingCreateInfo.pColorAttachmentFormats = &properties.swapChainImageFormat;
-    pipelineRenderingCreateInfo.depthAttachmentFormat = properties.depthFormat;
+        auto swapChainSupport = querySwapChainSupport(physicalDevice, mainWindow->getVulkanSurface());
+        auto swapChainImageFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
 
-    ImGui_ImplVulkan_InitInfo initInfo = {};
-    initInfo.Instance = instance;
-    initInfo.PhysicalDevice = physicalDevice;
-    initInfo.Device = device;
-    initInfo.QueueFamily = findQueueFamilies(physicalDevice).graphicsFamily.value();
-    initInfo.Queue = queues.graphicsQueue;
-    initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
-    initInfo.MinImageCount = properties.minImageCount;
-    initInfo.ImageCount = mainWindow->getImageCount();
-    initInfo.Allocator = nullptr;
-    initInfo.PipelineInfoMain.Subpass = 0;
-    initInfo.PipelineInfoMain.MSAASamples = (VkSampleCountFlagBits) vk::SampleCountFlagBits::e1;
-    initInfo.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingCreateInfo;
-    initInfo.CheckVkResultFn = checkVkResult;
-    initInfo.UseDynamicRendering = true;
-    ImGui_ImplVulkan_Init(&initInfo);
-    DIRK_LOG(LogRenderer, INFO, "initlialized ImGui")
+        vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{};
+        pipelineRenderingCreateInfo.colorAttachmentCount = 1;
+        pipelineRenderingCreateInfo.pColorAttachmentFormats = &swapChainImageFormat.format;
+        pipelineRenderingCreateInfo.depthAttachmentFormat = properties.depthFormat;
+
+        ImGui_ImplVulkan_InitInfo initInfo = {};
+        initInfo.Instance = instance;
+        initInfo.PhysicalDevice = physicalDevice;
+        initInfo.Device = device;
+        initInfo.QueueFamily = findQueueFamilies(physicalDevice).graphicsFamily.value();
+        initInfo.Queue = queues.graphicsQueue;
+        initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
+        initInfo.MinImageCount = swapChainSupport.capabilities.minImageCount;
+        initInfo.ImageCount = mainWindow->getImageCount();
+        initInfo.Allocator = nullptr;
+        initInfo.PipelineInfoMain.Subpass = 0;
+        initInfo.PipelineInfoMain.MSAASamples = (VkSampleCountFlagBits) vk::SampleCountFlagBits::e1;
+        initInfo.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingCreateInfo;
+        initInfo.CheckVkResultFn = checkVkResult;
+        initInfo.UseDynamicRendering = true;
+        ImGui_ImplVulkan_Init(&initInfo);
+        DIRK_LOG(LogRenderer, INFO, "initlialized ImGui")
+    }
 }
 
 Renderer::~Renderer() {
@@ -338,6 +338,8 @@ void Renderer::destroyViewport(std::shared_ptr<Viewport> viewport) {
 }
 
 std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {
+    auto swapChainSupport = querySwapChainSupport(physicalDevice, createInfo.surface);
+
     vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     vk::Extent2D extent = chooseSwapExtent(createInfo.windowSize, swapChainSupport.capabilities);
@@ -368,10 +370,10 @@ std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& 
     swapCreateInfo.preTransform = swapChainSupport.capabilities.currentTransform;
     swapCreateInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque; // ignore alpha
     swapCreateInfo.clipped = vk::True;                                      // ingore hidden pixels (behind other windows for ex)
-    swapCreateInfo.oldSwapchain = nullptr;
+    swapCreateInfo.oldSwapchain = createInfo.swapChain;
 
     // image sharing if multiple queues
-    QueueFamilyIndices indices = Renderer::findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
     uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
     if (indices.graphicsFamily != indices.presentFamily) {
@@ -490,8 +492,8 @@ bool Renderer::checkDeviceExtensionSupport(vk::PhysicalDevice device) {
     return requiredExtensions.empty();
 }
 
-SwapChainSupportDetails Renderer::querySwapChainSupport(vk::PhysicalDevice device) {
-    auto surface = gEngine->getPlatform()->createTempVulkanSurface(instance);
+SwapChainSupportDetails Renderer::querySwapChainSupport(vk::PhysicalDevice device, vk::SurfaceKHR surface) {
+    check(surface);
     return SwapChainSupportDetails{
         .capabilities = device.getSurfaceCapabilitiesKHR(surface),
         .formats = device.getSurfaceFormatsKHR(surface),
@@ -936,7 +938,6 @@ vk::ShaderModule Renderer::loadShaderModule(const std::string& shaderName) {
 };
 
 QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device) {
-    auto surface = gEngine->getPlatform()->createTempVulkanSurface(instance);
     QueueFamilyIndices indices;
 
     std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();

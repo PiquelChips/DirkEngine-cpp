@@ -42,6 +42,7 @@ void Platform::initImGui() {
     windows.clear();
 
     auto mainWindow = createWindow(WindowCreateInfo{ .title = appName });
+    check(mainWindow);
     focusedWindow = mainWindow;
 
     ImGuiIO& io = ImGui::GetIO();
@@ -146,10 +147,6 @@ void Platform::shutdownImGui() {
     platform_io.ClearPlatformHandlers();
     contextMap.erase(bd->window);
     IM_DELETE(bd);
-}
-
-vk::SurfaceKHR Platform::createTempVulkanSurface(vk::Instance instance) {
-    return platformImpl->createTempVulkanSurface(instance);
 }
 
 Monitor& Platform::createMonitor(void* platformHandle) {
