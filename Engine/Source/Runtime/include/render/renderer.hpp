@@ -73,14 +73,15 @@ private:
 private:
     bool checkRequiredInstanceExtensions(std::vector<const char*>& extensions);
 
-    int getDeviceSuitability(vk::PhysicalDevice device);
+    int getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR surface);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
-    SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device, vk::SurfaceKHR surface);
+    QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 
     // swap chain
     vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
     vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
     vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities);
+    SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 
 #ifdef ENABLE_VALIDATION_LAYERS
 private:
@@ -127,7 +128,6 @@ public:
     vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor, uint32_t mipLevels = 1);
 
     std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
-    QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
 
     vk::CommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue);

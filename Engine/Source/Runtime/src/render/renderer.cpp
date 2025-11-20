@@ -99,6 +99,9 @@ Renderer::Renderer() {
 }
 
 void Renderer::init() {
+    // TODO: create temp vulkan surface
+    vk::SurfaceKHR surface;
+
     // PHYSICAL DEVICE
     {
         auto physicalDevices = instance.enumeratePhysicalDevices();
@@ -107,7 +110,7 @@ void Renderer::init() {
         std::multimap<int, vk::PhysicalDevice> candidates;
 
         for (const auto& device : physicalDevices) {
-            int score = getDeviceSuitability(device);
+            int score = getDeviceSuitability(device, surface);
             candidates.insert(std::make_pair(score, device));
         }
 
@@ -132,10 +135,11 @@ void Renderer::init() {
         auto features = getDeviceFeatures(physicalDevice);
         this->properties.msaaSamples = features.msaaSamples;
         this->properties.anisotropy = features.anisotropy;
-        auto swapChainInfo = querySwapChainSupport(physicalDevice);
+        auto swapChainInfo = querySwapChainSupport(physicalDevice, surface);
         this->properties.swapChainImageFormat = chooseSwapSurfaceFormat(swapChainInfo.formats).format;
         this->properties.minImageCount = swapChainInfo.capabilities.minImageCount;
         this->properties.msaaSamples = getMaxUsableSampleCount(physicalDevice);
+        this->properties.queueFamilyIndices = findQueueFamilies(physicalDevice, surface);
 
         this->properties.depthFormat = findSupportedFormat(
             physicalDevice,
@@ -146,10 +150,9 @@ void Renderer::init() {
 
     // LOGICAL DEVICE
     {
-        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
         // queues
-        std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+        std::set<uint32_t> uniqueQueueFamilies = { properties.queueFamilyIndices.graphicsFamily.value(), properties.queueFamilyIndices.presentFamily.value() };
         std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos(uniqueQueueFamilies.size());
         float queuePriority = 1.f;
         for (int i = 0; i < uniqueQueueFamilies.size(); i++) {
@@ -188,8 +191,8 @@ void Renderer::init() {
 
         this->device = physicalDevice.createDevice(createInfo);
 
-        this->queues.graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
-        this->queues.presentQueue = device.getQueue(indices.presentFamily.value(), 0);
+        this->queues.graphicsQueue = device.getQueue(properties.queueFamilyIndices.graphicsFamily.value(), 0);
+        this->queues.presentQueue = device.getQueue(properties.queueFamilyIndices.presentFamily.value(), 0);
 
         vk::FenceCreateInfo fenceInfo{};
         fenceInfo.sType = vk::StructureType::eFenceCreateInfo;
@@ -199,12 +202,10 @@ void Renderer::init() {
 
     // COMMAND POOL
     {
-        QueueFamilyIndices queueFamilyIndices = Renderer::findQueueFamilies(physicalDevice);
-
         vk::CommandPoolCreateInfo poolInfo{};
         poolInfo.sType = vk::StructureType::eCommandPoolCreateInfo;
         poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+        poolInfo.queueFamilyIndex = properties.queueFamilyIndices.graphicsFamily.value();
 
         this->commandPool = device.createCommandPool(poolInfo);
     }
@@ -273,7 +274,7 @@ void Renderer::init() {
         initInfo.Instance = instance;
         initInfo.PhysicalDevice = physicalDevice;
         initInfo.Device = device;
-        initInfo.QueueFamily = findQueueFamilies(physicalDevice).graphicsFamily.value();
+        initInfo.QueueFamily = properties.queueFamilyIndices.graphicsFamily.value();
         initInfo.Queue = queues.graphicsQueue;
         initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
         initInfo.MinImageCount = swapChainSupport.capabilities.minImageCount;
@@ -371,7 +372,7 @@ std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& 
     swapCreateInfo.oldSwapchain = createInfo.swapChain;
 
     // image sharing if multiple queues
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = properties.queueFamilyIndices;
     uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
     if (indices.graphicsFamily != indices.presentFamily) {
@@ -434,7 +435,7 @@ bool Renderer::checkRequiredInstanceExtensions(std::vector<const char*>& extensi
     return true;
 }
 
-int Renderer::getDeviceSuitability(vk::PhysicalDevice device) {
+int Renderer::getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR surface) {
     check(device);
 
     vk::PhysicalDeviceProperties deviceProperties = device.getProperties();
@@ -448,14 +449,14 @@ int Renderer::getDeviceSuitability(vk::PhysicalDevice device) {
     if (!deviceFeatures.geometryShader)
         return 0;
 
-    QueueFamilyIndices indices = findQueueFamilies(device);
+    QueueFamilyIndices indices = findQueueFamilies(device, surface);
     if (!indices.isComplete())
         return 0;
 
     if (!checkDeviceExtensionSupport(device))
         return 0;
 
-    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, surface);
     if (swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty())
         return 0;
 
@@ -756,11 +757,9 @@ vk::SampleCountFlagBits Renderer::getMaxUsableSampleCount(vk::PhysicalDevice phy
 }
 
 vk::CommandBuffer Renderer::beginSingleTimeCommands() {
-    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
-
     vk::CommandPoolCreateInfo poolInfo{};
     poolInfo.flags = vk::CommandPoolCreateFlagBits::eTransient;
-    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+    poolInfo.queueFamilyIndex = properties.queueFamilyIndices.graphicsFamily.value();
 
     vk::CommandPool commandPool = device.createCommandPool(poolInfo);
 
@@ -935,7 +934,7 @@ vk::ShaderModule Renderer::loadShaderModule(const std::string& shaderName) {
     return device.createShaderModule(createInfo);
 };
 
-QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device) {
+QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface) {
     QueueFamilyIndices indices;
 
     std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();

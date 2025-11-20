@@ -43,12 +43,22 @@ struct RendererResources {
     vk::DescriptorSetLayout descriptorSetLayout;
 };
 
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
+
+    bool isComplete() {
+        return graphicsFamily.has_value() && presentFamily.has_value();
+    }
+};
+
 struct RendererProperties {
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
     bool anisotropy = false;
     vk::Format swapChainImageFormat = vk::Format::eUndefined;
     vk::Format depthFormat = vk::Format::eUndefined;
     std::uint32_t minImageCount;
+    QueueFamilyIndices queueFamilyIndices;
 };
 
 struct DeviceFeatures {
@@ -108,15 +118,6 @@ struct CreateImageMemoryViewInfo {
     uint32_t mipLevels = 1;
 };
 
-struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-
-    bool isComplete() {
-        return graphicsFamily.has_value() && presentFamily.has_value();
-    }
-};
-
 class IRenderer {
 public:
     virtual ~IRenderer() = default;
@@ -143,7 +144,6 @@ public:
     virtual vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor, uint32_t mipLevels = 1) = 0;
 
     virtual std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) = 0;
-    virtual QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device) = 0;
 
     virtual vk::CommandBuffer beginSingleTimeCommands() = 0;
     virtual void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue) = 0;
