@@ -21,8 +21,9 @@ IEngine* gEngine;
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     gEngine = this;
 
-    platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
     renderer = std::make_unique<Renderer>();
+    // platform needs renderer init
+    platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
     // we need renderer var to be initialized for this function to run
     renderer->init();
     world = std::make_shared<World>(createInfo.actorCreateInfos);

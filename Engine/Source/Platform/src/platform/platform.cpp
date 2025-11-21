@@ -3,8 +3,6 @@
 #include "platform/monitor.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_handles.hpp"
-#include <array>
-#include <span>
 
 #ifdef PLATFORM_LINUX
 #include "platform/linux/linux.hpp"
@@ -16,6 +14,7 @@
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_enums.hpp"
 
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <vector>
