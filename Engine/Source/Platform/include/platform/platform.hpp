@@ -58,6 +58,8 @@ public:
     virtual ~PlatformImpl() = default;
     virtual void pollPlatformEvents() = 0;
     virtual std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) = 0;
+    // TODO: remove
+    virtual vk::SurfaceKHR createTempSurface(vk::Instance instance) = 0;
 };
 
 class Platform : public IPlatform {
@@ -75,6 +77,7 @@ public:
     // clang-format on
 
     Monitor& createMonitor(void* platformHandle);
+    vk::SurfaceKHR createTempSurface(vk::Instance instance) { return platformImpl->createTempSurface(instance); }
     // updated the ImGui monitors list with current platform monitors list
     void updateMonitors();
 

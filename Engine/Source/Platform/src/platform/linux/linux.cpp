@@ -84,6 +84,25 @@ Window& LinuxPlatformImpl::getWindowWithSurface(wl_surface* surface) {
     DIRK_LOG(LogWayland, FATAL, "unable to find window with surface");
 }
 
+vk::SurfaceKHR LinuxPlatformImpl::createTempSurface(vk::Instance instance) {
+    vk::SurfaceKHR vkSurface;
+    auto wlSurface = wl_compositor_create_surface(compositor);
+
+    vk::WaylandSurfaceCreateInfoKHR createInfo;
+    createInfo.display = display;
+    createInfo.surface = wlSurface;
+
+    vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
+    auto err = instance.createWaylandSurfaceKHR(&createInfo, nullptr, &vkSurface, dispatcher);
+    if (err != vk::Result::eSuccess)
+        DIRK_LOG(LogWayland, FATAL, "received error code " << err << " while attempting to create vulkan surface for wayland surface")
+    check(vkSurface);
+
+    free(wlSurface);
+    wlSurface = nullptr;
+    return vkSurface;
+}
+
 void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version) {
     LinuxPlatformImpl* platform = static_cast<LinuxPlatformImpl*>(data);
 

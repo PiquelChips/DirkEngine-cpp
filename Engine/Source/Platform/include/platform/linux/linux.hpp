@@ -5,6 +5,7 @@
 #include "platform/platform.hpp"
 #include "platform/window.hpp"
 
+#include "vulkan/vulkan_handles.hpp"
 #include "wayland-client-core.h"
 #include "wayland-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
@@ -25,6 +26,7 @@ public:
     void pollPlatformEvents() override;
 
     std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) override;
+    vk::SurfaceKHR createTempSurface(vk::Instance instance) override;
 
     wl_display* getDisplay() { return display; }
     wl_compositor* getCompositor() { return compositor; }

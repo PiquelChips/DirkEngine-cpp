@@ -169,6 +169,8 @@ public:
     virtual Platform::Window& getMainWindow() = 0;
     virtual Platform::Window& getFocusedWindow() = 0;
     virtual Platform::Monitor& createMonitor(void* platformHandle) = 0;
+    // TODO: remove
+    virtual vk::SurfaceKHR createTempSurface(vk::Instance instance) = 0;
 };
 
 class IEngine {

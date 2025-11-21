@@ -99,8 +99,7 @@ Renderer::Renderer() {
 }
 
 void Renderer::init() {
-    // TODO: create temp vulkan surface
-    vk::SurfaceKHR surface;
+    vk::SurfaceKHR surface = gEngine->getPlatform()->createTempSurface(instance);
 
     // PHYSICAL DEVICE
     {
@@ -258,6 +257,7 @@ void Renderer::init() {
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 
+        // TODO: have these be engine functions. renderer should not interact with platform
         gEngine->getPlatform()->initImGui();
         auto mainWindow = &gEngine->getPlatform()->getMainWindow();
         check(mainWindow);
