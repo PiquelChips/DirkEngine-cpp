@@ -29,12 +29,6 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 #define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
 
-struct SwapChainSupportDetails {
-    vk::SurfaceCapabilitiesKHR capabilities;
-    std::vector<vk::SurfaceFormatKHR> formats;
-    std::vector<vk::PresentModeKHR> presentModes;
-};
-
 /**
  * The vulkan implementation of the renderer
  */
@@ -67,6 +61,11 @@ public:
     inline const RendererProperties& getProperties() { return properties; }
     inline const DeviceFeatures getDeviceFeatures() { return getDeviceFeatures(physicalDevice); }
 
+    // swap chain
+    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+    vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+    vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities);
+
 private:
     std::vector<std::shared_ptr<Viewport>> viewports;
 
@@ -76,12 +75,6 @@ private:
     int getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR surface);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
-
-    // swap chain
-    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
-    vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
-    vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities);
-    SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 
 #ifdef ENABLE_VALIDATION_LAYERS
 private:

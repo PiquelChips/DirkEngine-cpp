@@ -20,7 +20,7 @@ class Platform;
 
 struct WindowCreateInfo {
     std::string_view title;
-    vk::Extent2D size;
+    vk::Extent2D size = { 550, 680 };
 
     bool focused;
     bool visible;
@@ -96,16 +96,15 @@ private:
     vk::SwapchainKHR swapchain;
     vk::SurfaceKHR surface;
     vk::CommandBuffer commandBuffer;
+
+    // renderer settings
     vk::Extent2D swapChainExtent;
+    vk::SurfaceFormatKHR surfaceFormat;
+    vk::PresentModeKHR presentMode;
 
     vk::Semaphore imageAvailableSemaphore;
     vk::Semaphore renderFinishedSemaphore;
     std::vector<vk::ImageView> swapChainImages;
-
-    // settings
-    vk::SurfaceFormatKHR surfaceFormat;
-    vk::PresentModeKHR presentMode;
-    vk::Format swapChainImageFormat;
 
     // state
     std::uint32_t imageIndex;

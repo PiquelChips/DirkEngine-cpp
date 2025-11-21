@@ -132,11 +132,14 @@ void Renderer::init() {
                      << "\n\tdriver version: " << deviceProperties.driverVersion);
 
         auto features = getDeviceFeatures(physicalDevice);
+        auto formats = physicalDevice.getSurfaceFormatsKHR(surface);
+        auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+        auto presentModes = physicalDevice.getSurfacePresentModesKHR(surface);
+
         this->properties.msaaSamples = features.msaaSamples;
         this->properties.anisotropy = features.anisotropy;
-        auto swapChainInfo = querySwapChainSupport(physicalDevice, surface);
-        this->properties.swapChainImageFormat = chooseSwapSurfaceFormat(swapChainInfo.formats).format;
-        this->properties.minImageCount = swapChainInfo.capabilities.minImageCount;
+        this->properties.surfaceFormat = chooseSwapSurfaceFormat(formats);
+        this->properties.minImageCount = capabilities.minImageCount;
         this->properties.msaaSamples = getMaxUsableSampleCount(physicalDevice);
         this->properties.queueFamilyIndices = findQueueFamilies(physicalDevice, surface);
 
@@ -262,8 +265,9 @@ void Renderer::init() {
         auto mainWindow = &gEngine->getPlatform()->getMainWindow();
         check(mainWindow);
 
-        auto swapChainSupport = querySwapChainSupport(physicalDevice, mainWindow->getVulkanSurface());
-        auto swapChainImageFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+        auto formats = physicalDevice.getSurfaceFormatsKHR(surface);
+        auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+        auto swapChainImageFormat = chooseSwapSurfaceFormat(formats);
 
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{};
         pipelineRenderingCreateInfo.colorAttachmentCount = 1;
@@ -277,7 +281,7 @@ void Renderer::init() {
         initInfo.QueueFamily = properties.queueFamilyIndices.graphicsFamily.value();
         initInfo.Queue = queues.graphicsQueue;
         initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
-        initInfo.MinImageCount = swapChainSupport.capabilities.minImageCount;
+        initInfo.MinImageCount = capabilities.minImageCount;
         initInfo.ImageCount = mainWindow->getImageCount();
         initInfo.Allocator = nullptr;
         initInfo.PipelineInfoMain.Subpass = 0;
@@ -337,20 +341,15 @@ void Renderer::destroyViewport(std::shared_ptr<Viewport> viewport) {
 }
 
 std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {
-    auto swapChainSupport = querySwapChainSupport(physicalDevice, createInfo.surface);
+    auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(createInfo.surface);
 
-    vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-    vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-    vk::Extent2D extent = chooseSwapExtent(createInfo.windowSize, swapChainSupport.capabilities);
-
-    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-
-    createInfo.swapChainImageFormat = surfaceFormat.format;
+    vk::Extent2D extent = chooseSwapExtent(createInfo.windowSize, capabilities);
+    uint32_t imageCount = capabilities.minImageCount + 1;
     createInfo.swapChainExtent = extent;
 
     // 0 means no limit to image count
-    if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
-        imageCount = swapChainSupport.capabilities.maxImageCount;
+    if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount)
+        imageCount = capabilities.maxImageCount;
 
     vk::SwapchainCreateInfoKHR swapCreateInfo{};
     swapCreateInfo.sType = vk::StructureType::eSwapchainCreateInfoKHR;
@@ -358,18 +357,18 @@ std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& 
 
     // the details and capabilities we selected
     swapCreateInfo.minImageCount = imageCount;
-    swapCreateInfo.imageFormat = createInfo.swapChainImageFormat;
-    swapCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
+    swapCreateInfo.imageFormat = createInfo.surfaceFormat.format;
+    swapCreateInfo.imageColorSpace = createInfo.surfaceFormat.colorSpace;
     swapCreateInfo.imageExtent = createInfo.swapChainExtent;
-    swapCreateInfo.presentMode = presentMode;
+    swapCreateInfo.presentMode = createInfo.presentMode;
 
     // other settings
     swapCreateInfo.imageArrayLayers = 1;
     swapCreateInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
-    swapCreateInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+    swapCreateInfo.preTransform = capabilities.currentTransform;
     swapCreateInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque; // ignore alpha
     swapCreateInfo.clipped = vk::True;                                      // ingore hidden pixels (behind other windows for ex)
-    swapCreateInfo.oldSwapchain = createInfo.swapChain;
+    swapCreateInfo.oldSwapchain = nullptr;
 
     // image sharing if multiple queues
     QueueFamilyIndices indices = properties.queueFamilyIndices;
@@ -397,8 +396,13 @@ std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& 
 
     std::vector<vk::ImageView> swapImages(images.size());
 
-    for (int i = 0; i < images.size(); i++)
-        swapImages[i] = createImageView(images[i], createInfo.swapChainImageFormat);
+    for (int i = 0; i < images.size(); i++) {
+        auto commandBuffer = beginSingleTimeCommands();
+        transitionImageLayout(commandBuffer, images[i], createInfo.surfaceFormat.format, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
+        endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
+
+        swapImages[i] = createImageView(images[i], createInfo.surfaceFormat.format);
+    }
 
     return swapImages;
 }
@@ -443,8 +447,6 @@ int Renderer::getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR sur
 
     // TODO: update with vulkan tutorial checks
 
-    DIRK_LOG(LogVulkan, DEBUG, "found device: " << deviceProperties.deviceName);
-
     // prereturn required stuff
     if (!deviceFeatures.geometryShader)
         return 0;
@@ -456,8 +458,9 @@ int Renderer::getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR sur
     if (!checkDeviceExtensionSupport(device))
         return 0;
 
-    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, surface);
-    if (swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty())
+    auto presentModes = device.getSurfacePresentModesKHR(surface);
+    auto formats = device.getSurfaceFormatsKHR(surface);
+    if (formats.empty() || presentModes.empty())
         return 0;
 
     // calculate a score to create preference based on device
@@ -471,11 +474,12 @@ int Renderer::getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR sur
     if (indices.presentFamily == indices.graphicsFamily)
         score += 10;
 
-    score += swapChainSupport.formats.size();
-    score += swapChainSupport.presentModes.size();
+    score += formats.size();
+    score += presentModes.size();
 
     score += getDeviceFeatures(device).getScore();
 
+    DIRK_LOG(LogVulkan, DEBUG, "found device: " << deviceProperties.deviceName << "(score: " << score << ")");
     return score;
 }
 
@@ -489,15 +493,6 @@ bool Renderer::checkDeviceExtensionSupport(vk::PhysicalDevice device) {
     }
 
     return requiredExtensions.empty();
-}
-
-SwapChainSupportDetails Renderer::querySwapChainSupport(vk::PhysicalDevice device, vk::SurfaceKHR surface) {
-    check(surface);
-    return SwapChainSupportDetails{
-        .capabilities = device.getSurfaceCapabilitiesKHR(surface),
-        .formats = device.getSurfaceFormatsKHR(surface),
-        .presentModes = device.getSurfacePresentModesKHR(surface),
-    };
 }
 
 vk::SurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
@@ -617,6 +612,7 @@ bool Renderer::checkValidationLayerSupport() {
 #endif
 
 ImageMemoryView Renderer::createImageMemoryView(CreateImageMemoryViewInfo& createInfo) {
+    check(createInfo.format != vk::Format::eUndefined);
     auto [image, memory] = createImage(
         createInfo.width, createInfo.height,
         createInfo.format,
@@ -824,6 +820,12 @@ void Renderer::transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::
 
         sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
         destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+    } else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::ePresentSrcKHR) {
+        barrier.srcAccessMask = {};
+        barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+
+        sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+        destinationStage = vk::PipelineStageFlagBits::eBottomOfPipe;
     } else {
         DIRK_LOG(LogVulkan, FATAL, "unsupported layout transition");
         return;

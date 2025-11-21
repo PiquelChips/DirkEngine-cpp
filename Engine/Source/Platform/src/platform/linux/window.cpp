@@ -1,9 +1,9 @@
 #ifdef PLATFORM_LINUX
 
+#include "platform/linux/window.hpp"
 #include "common.hpp"
 #include "logging/logging.hpp"
 #include "platform/linux/linux.hpp"
-#include "platform/linux/window.hpp"
 
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_handles.hpp"
@@ -27,6 +27,8 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
     if (createInfo.focused)
         focus();
     setDecorated(createInfo.decorated);
+
+    wl_surface_commit(wlSurface);
 }
 
 LinuxWindowImpl::~LinuxWindowImpl() {
@@ -78,6 +80,7 @@ void LinuxWindowImpl::hide() {
     xdgToplevel = nullptr;
     xdg_surface_destroy(xdgSurface);
     xdgSurface = nullptr;
+    wl_surface_commit(wlSurface);
 }
 
 vk::SurfaceKHR LinuxWindowImpl::getVulkanSurface(vk::Instance instance) {
@@ -100,6 +103,7 @@ void LinuxWindowImpl::createVulkanSurface(VkInstance instance, VkSurfaceKHR* sur
 
     vkSurface = *surface;
     check(vkSurface);
+    wl_surface_commit(wlSurface);
 }
 
 void LinuxWindowImpl::setSize(vk::Extent2D inSize) {

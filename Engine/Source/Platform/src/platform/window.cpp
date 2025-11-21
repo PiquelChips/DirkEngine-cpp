@@ -14,14 +14,23 @@ namespace dirk::Platform {
 
 Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl)
     : platform(platform), platformWindow(std::move(impl)) {
-    surface = platformWindow->getVulkanSurface(gEngine->getRenderer()->getResources().instance);
+    auto renderer = gEngine->getRenderer();
+    auto resources = renderer->getResources();
+
+    surface = platformWindow->getVulkanSurface(resources.instance);
+
+    auto formats = resources.physicalDevice.getSurfaceFormatsKHR(surface);
+    surfaceFormat = renderer->chooseSwapSurfaceFormat(formats);
+    auto presentModes = resources.physicalDevice.getSurfacePresentModesKHR(surface);
+    presentMode = renderer->chooseSwapPresentMode(presentModes);
 
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
-        .swapChainImageFormat = swapChainImageFormat,
         .swapChainExtent = swapChainExtent,
         .surface = surface,
-        .windowSize = platformWindow->getSize()
+        .windowSize = platformWindow->getSize(),
+        .surfaceFormat = surfaceFormat,
+        .presentMode = presentMode
     };
     swapChainImages = gEngine->getRenderer()->createSwapChain(swapChainInfo);
 
@@ -31,6 +40,9 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
 }
 
 void Window::setSize(vk::Extent2D inSize) {
+    if (inSize == platformWindow->getSize())
+        return;
+
     this->platformWindow->setSize(inSize);
 
     auto renderer = gEngine->getRenderer();
@@ -44,10 +56,11 @@ void Window::setSize(vk::Extent2D inSize) {
 
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
-        .swapChainImageFormat = swapChainImageFormat,
         .swapChainExtent = swapChainExtent,
         .surface = surface,
-        .windowSize = platformWindow->getSize()
+        .windowSize = platformWindow->getSize(),
+        .surfaceFormat = surfaceFormat,
+        .presentMode = presentMode
     };
     swapChainImages = renderer->createSwapChain(swapChainInfo);
 }

@@ -139,7 +139,7 @@ void Viewport::createRenderResources() {
 
     pipelineLayout = resources.device.createPipelineLayout(pipelineLayoutInfo);
 
-    std::array<vk::Format, 1> colorAttachmentFormats{ properties.swapChainImageFormat };
+    std::array<vk::Format, 1> colorAttachmentFormats{ properties.surfaceFormat.format };
     vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{};
     pipelineRenderingCreateInfo.colorAttachmentCount = colorAttachmentFormats.size();
     pipelineRenderingCreateInfo.pColorAttachmentFormats = colorAttachmentFormats.data();
@@ -176,7 +176,7 @@ void Viewport::createRenderResources() {
     CreateImageMemoryViewInfo colorInfo{
         .width = size.width,
         .height = size.height,
-        .format = properties.swapChainImageFormat,
+        .format = properties.surfaceFormat.format,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
         .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
@@ -205,7 +205,7 @@ void Viewport::createRenderResources() {
     CreateImageMemoryViewInfo outInfo{
         .width = size.width,
         .height = size.height,
-        .format = properties.swapChainImageFormat,
+        .format = properties.surfaceFormat.format,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
         .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,

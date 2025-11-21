@@ -55,7 +55,7 @@ struct QueueFamilyIndices {
 struct RendererProperties {
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
     bool anisotropy = false;
-    vk::Format swapChainImageFormat = vk::Format::eUndefined;
+    vk::SurfaceFormatKHR surfaceFormat = vk::Format::eUndefined;
     vk::Format depthFormat = vk::Format::eUndefined;
     std::uint32_t minImageCount;
     QueueFamilyIndices queueFamilyIndices;
@@ -87,12 +87,13 @@ struct DeviceFeatures {
 struct SwapChainCreateInfo {
     // OUTPUT
     vk::SwapchainKHR& swapChain; // the output swapchain
-    vk::Format& swapChainImageFormat;
     vk::Extent2D& swapChainExtent;
 
     // INPUT
     vk::SurfaceKHR surface;
     vk::Extent2D windowSize;
+    vk::SurfaceFormatKHR surfaceFormat;
+    vk::PresentModeKHR presentMode;
 };
 
 struct ImageMemoryView {
@@ -131,6 +132,10 @@ public:
     virtual RendererResources getResources() = 0;
     virtual const RendererProperties& getProperties() = 0;
     virtual const DeviceFeatures getDeviceFeatures() = 0;
+
+    virtual vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) = 0;
+    virtual vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) = 0;
+    virtual vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities) = 0;
 
     // some utility functions
     virtual ImageMemoryView createImageMemoryView(CreateImageMemoryViewInfo& createInfo) = 0;
