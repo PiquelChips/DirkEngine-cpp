@@ -825,12 +825,24 @@ void Renderer::transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::
 
         sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
         destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+    } else if (oldLayout == vk::ImageLayout::ePresentSrcKHR && newLayout == vk::ImageLayout::eColorAttachmentOptimal) {
+        barrier.srcAccessMask = {};
+        barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+
+        sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eNone;
+        destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    } else if (oldLayout == vk::ImageLayout::eColorAttachmentOptimal && newLayout == vk::ImageLayout::ePresentSrcKHR) {
+        barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+        barrier.dstAccessMask = {};
+
+        sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+        destinationStage = vk::PipelineStageFlagBits::eBottomOfPipe;
     } else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::ePresentSrcKHR) {
         barrier.srcAccessMask = {};
-        barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+        barrier.dstAccessMask = {};
 
-        sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
-        destinationStage = vk::PipelineStageFlagBits::eBottomOfPipe;
+        sourceStage = vk::PipelineStageFlagBits::eBottomOfPipe;
+        destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
     } else {
         DIRK_LOG(LogVulkan, FATAL, "unsupported layout transition");
         return;
