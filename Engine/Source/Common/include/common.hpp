@@ -25,8 +25,6 @@
 #include "asserts.hpp"
 #include "logging/logging.hpp"
 
-#define MAX_FRAME_COUNT 2
-
 namespace dirk {
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDirk);
@@ -102,6 +100,11 @@ struct SwapChainCreateInfo {
     vk::PresentModeKHR presentMode;
 };
 
+struct SwapchainImage {
+    vk::Image image;
+    vk::ImageView view;
+};
+
 struct ImageMemoryView {
     vk::Image image;
     vk::DeviceMemory memory;
@@ -129,7 +132,7 @@ class IRenderer {
 public:
     virtual ~IRenderer() = default;
 
-    virtual std::vector<ImageMemoryView> createSwapChain(const SwapChainCreateInfo& createInfo) = 0;
+    virtual std::vector<SwapchainImage> createSwapChain(const SwapChainCreateInfo& createInfo) = 0;
     virtual vk::ShaderModule loadShaderModule(const std::string& shaderName) = 0;
     virtual vk::CommandBuffer createCommandBuffer() = 0;
     virtual vk::Semaphore createSemaphore() = 0;

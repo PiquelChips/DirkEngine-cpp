@@ -8,6 +8,7 @@
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
+#include <array>
 #include <cstdint>
 #include <memory>
 
@@ -28,22 +29,6 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
     auto presentModes = resources.physicalDevice.getSurfacePresentModesKHR(surface);
     presentMode = renderer->chooseSwapPresentMode(presentModes);
 
-    SwapChainCreateInfo swapChainInfo{
-        .swapChain = swapchain,
-        .swapChainExtent = swapChainExtent,
-        .surface = surface,
-        .windowSize = platformWindow->getSize(),
-        .surfaceFormat = surfaceFormat,
-        .presentMode = presentMode
-    };
-    swapChainImages = gEngine->getRenderer()->createSwapChain(swapChainInfo);
-
-    imageAvailableSemaphores.resize(MAX_FRAME_COUNT);
-    renderFinishedSemaphores.resize(MAX_FRAME_COUNT);
-    for (int i = 0; i < MAX_FRAME_COUNT; i++) {
-        imageAvailableSemaphores[i] = gEngine->getRenderer()->createSemaphore();
-        renderFinishedSemaphores[i] = gEngine->getRenderer()->createSemaphore();
-    }
     commandBuffer = gEngine->getRenderer()->createCommandBuffer();
 }
 
@@ -53,6 +38,13 @@ void Window::onResize() {
     auto device = renderer->getResources().device;
 
     auto oldSwapchain = swapchain;
+
+    if (swapchain)
+        device.destroySwapchainKHR(oldSwapchain);
+}
+
+void Window::createSwapchain() {
+    auto renderer = gEngine->getRenderer();
 
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
@@ -64,15 +56,18 @@ void Window::onResize() {
     };
     swapChainImages = renderer->createSwapChain(swapChainInfo);
 
-    if (swapchain)
-        device.destroySwapchainKHR(oldSwapchain);
+    semaphores.resize(swapChainImages.size());
+    for (int i = 0; i < semaphores.size(); i++) {
+        semaphores[i] = std::tuple(renderer->createSemaphore(), renderer->createSemaphore());
+    }
 }
 
 vk::SubmitInfo Window::render(ImDrawData* drawData) {
-    frameIndex = (frameIndex + 1) % MAX_FRAME_COUNT;
+    semaphoreIndex = (semaphoreIndex + 1) % semaphores.size();
+    auto [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[semaphoreIndex];
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
-    auto result = resources.device.acquireNextImageKHR(swapchain, UINT64_MAX, imageAvailableSemaphores[frameIndex], nullptr);
+    auto result = resources.device.acquireNextImageKHR(swapchain, UINT64_MAX, imageAvailableSemaphore, nullptr);
     checkVulkan(result.result);
     imageIndex = result.value;
     auto image = swapChainImages[imageIndex];
@@ -117,13 +112,12 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
     submitInfo.sType = vk::StructureType::eSubmitInfo;
 
     // wait semaphores
-    vk::PipelineStageFlags waitStage{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = &imageAvailableSemaphores[frameIndex];
     submitInfo.pWaitDstStageMask = &waitStage;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
     // signal semaphores
     submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = &renderFinishedSemaphores[frameIndex];
+    submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
 
     // command buffers
     submitInfo.commandBufferCount = 1;
@@ -132,10 +126,11 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
 }
 
 vk::PresentInfoKHR Window::present() {
+    auto [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[semaphoreIndex];
     vk::PresentInfoKHR presentInfo{};
     presentInfo.sType = vk::StructureType::ePresentInfoKHR;
     presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = &renderFinishedSemaphores[frameIndex];
+    presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
 
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = &swapchain;

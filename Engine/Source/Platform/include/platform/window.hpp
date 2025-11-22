@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 #pragma once
 
@@ -97,6 +98,8 @@ public:
     vk::PresentInfoKHR present();
 
 private:
+    void createSwapchain();
+
     // render resources
     vk::SwapchainKHR swapchain;
     vk::SurfaceKHR surface;
@@ -107,16 +110,17 @@ private:
     vk::SurfaceFormatKHR surfaceFormat;
     vk::PresentModeKHR presentMode;
 
-    std::vector<vk::Semaphore> imageAvailableSemaphores;
-    std::vector<vk::Semaphore> renderFinishedSemaphores;
-    std::vector<ImageMemoryView> swapChainImages;
+    std::vector<SwapchainImage> swapChainImages;
+    std::vector<std::tuple<vk::Semaphore, vk::Semaphore>> semaphores;
 
     // state
-    std::uint32_t imageIndex;
-    std::uint32_t frameIndex;
+    std::uint32_t imageIndex = 0;
+    std::uint32_t semaphoreIndex = 0;
 
     Platform& platform;
     std::unique_ptr<PlatformWindowImpl> platformWindow;
+
+    static constexpr vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 };
 
 } // namespace dirk::Platform

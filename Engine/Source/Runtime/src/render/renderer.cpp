@@ -340,7 +340,7 @@ void Renderer::destroyViewport(std::shared_ptr<Viewport> viewport) {
     viewports.erase(std::find(viewports.begin(), viewports.end(), viewport));
 }
 
-std::vector<ImageMemoryView> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {
+std::vector<SwapchainImage> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {
     auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(createInfo.surface);
     auto oldSwapchain = createInfo.swapChain;
 
@@ -395,17 +395,16 @@ std::vector<ImageMemoryView> Renderer::createSwapChain(const SwapChainCreateInfo
                  << "\n\timage width: " << createInfo.swapChainExtent.width
                  << "\n\timage height: " << createInfo.swapChainExtent.height);
 
-    std::vector<ImageMemoryView> swapImages(images.size());
+    std::vector<SwapchainImage> swapImages(images.size());
 
     for (int i = 0; i < images.size(); i++) {
         auto commandBuffer = beginSingleTimeCommands();
         transitionImageLayout(commandBuffer, images[i], createInfo.surfaceFormat.format, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
         endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
 
-        swapImages[i] = ImageMemoryView{
+        swapImages[i] = SwapchainImage{
             .image = images[i],
-            .memory = nullptr,
-            .view = createImageView(images[i], createInfo.surfaceFormat.format)
+            .view = createImageView(images[i], createInfo.surfaceFormat.format),
         };
     }
 
