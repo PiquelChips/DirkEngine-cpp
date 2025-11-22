@@ -56,8 +56,8 @@ void LinuxWindowImpl::show() {
                 window->minimized = true;
             }
 
-            window->setSize(vk::Extent2D(width, height));
-            // TODO: use platform window size callback
+            window->size = vk::Extent2D(width, height);
+            // call window resize callback
         },
         .close = [](void* data, xdg_toplevel* toplevel) {
             auto* window = static_cast<LinuxWindowImpl*>(data);

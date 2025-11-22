@@ -68,7 +68,7 @@ public:
     void hide() { platformWindow->hide(); }
 
     vk::Extent2D getSize() { return platformWindow->getSize(); }
-    void setSize(vk::Extent2D inSize);
+    void setSize(vk::Extent2D inSize) { platformWindow->setSize(inSize); }
 
     glm::vec2 getPosition() { return platformWindow->getPosition(); }
     void setPosition(const glm::vec2 inPosition) { return platformWindow->setPosition(inPosition); }

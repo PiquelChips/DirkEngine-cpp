@@ -17,6 +17,7 @@
 namespace dirk::Platform {
 
 DECLARE_LOG_CATEGORY_EXTERN(LogPlatform)
+DECLARE_LOG_CATEGORY_EXTERN(LogImGui)
 
 struct Cursor {};
 

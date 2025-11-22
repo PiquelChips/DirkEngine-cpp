@@ -22,6 +22,7 @@
 namespace dirk::Platform {
 
 DEFINE_LOG_CATEGORY(LogPlatform)
+DEFINE_LOG_CATEGORY(LogImGui)
 
 Platform::Platform(const PlatformCreateInfo& createInfo)
     : appName(createInfo.appName) {

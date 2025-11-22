@@ -6,6 +6,7 @@
 #include "backends/imgui_impl_vulkan.h"
 #include "imgui.h"
 #include "vulkan/vulkan_enums.hpp"
+#include "vulkan/vulkan_structs.hpp"
 
 #include <cstdint>
 #include <memory>
