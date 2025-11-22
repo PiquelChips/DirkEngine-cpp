@@ -67,10 +67,14 @@ void Window::createSwapchain() {
 }
 
 vk::SubmitInfo Window::render(ImDrawData* drawData) {
-    semaphoreIndex = (semaphoreIndex + 1) % semaphores.size();
-    auto [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[semaphoreIndex];
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
+
+    semaphoreIndex = (semaphoreIndex + 1) % semaphores.size();
+    auto [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[semaphoreIndex];
+    check(imageAvailableSemaphore);
+    check(renderFinishedSemaphore);
+
     auto result = resources.device.acquireNextImageKHR(swapchain, UINT64_MAX, imageAvailableSemaphore, nullptr);
     checkVulkan(result.result);
     imageIndex = result.value;
