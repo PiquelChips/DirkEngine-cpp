@@ -40,11 +40,9 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
     commandBuffer = gEngine->getRenderer()->createCommandBuffer();
 }
 
-void Window::setSize(vk::Extent2D inSize) {
-    if (inSize == platformWindow->getSize())
+void Window::onResize() {
+    if (swapChainExtent == platformWindow->getSize())
         return;
-
-    this->platformWindow->setSize(inSize);
 
     auto renderer = gEngine->getRenderer();
     auto device = renderer->getResources().device;

@@ -155,6 +155,7 @@ Monitor& Platform::createMonitor(void* platformHandle) {
 }
 
 void Platform::ImGui_CreateWindow(ImGuiViewport* viewport) {
+    DIRK_LOG(LogImGui, DEBUG, "creating window")
     ImGuiData* bd = getBackendData();
     ImGuiViewportData* vd = IM_NEW(ImGuiViewportData)();
     viewport->PlatformUserData = vd;
