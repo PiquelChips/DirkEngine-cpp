@@ -18,8 +18,14 @@
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
+#define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
+#include "backends/imgui_impl_vulkan.h"
+#include "imgui.h"
+
 #include "asserts.hpp"
 #include "logging/logging.hpp"
+
+#define MAX_FRAME_COUNT 2
 
 namespace dirk {
 

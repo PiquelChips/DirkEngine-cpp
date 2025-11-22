@@ -1,8 +1,8 @@
 #ifdef PLATFORM_LINUX
 
+#include "platform/linux/linux.hpp"
 #include "common.hpp"
 #include "input/keys.hpp"
-#include "platform/linux/linux.hpp"
 #include "platform/linux/window.hpp"
 #include "platform/monitor.hpp"
 #include "platform/platform.hpp"
@@ -71,7 +71,6 @@ void LinuxPlatformImpl::pollPlatformEvents() {
         gEngine->exit("unable to poll platform events. waylabd probably disconnected");
         return;
     }
-    DIRK_LOG(LogWayland, DEBUG, "polled platform events")
 }
 
 std::unique_ptr<PlatformWindowImpl> LinuxPlatformImpl::createPlatformWindow(const WindowCreateInfo& createInfo) {
@@ -84,6 +83,7 @@ Window& LinuxPlatformImpl::getWindowWithSurface(wl_surface* surface) {
             return *window;
     }
     DIRK_LOG(LogWayland, FATAL, "unable to find window with surface");
+    return platform.getMainWindow();
 }
 
 vk::SurfaceKHR LinuxPlatformImpl::createTempSurface(vk::Instance instance) {
