@@ -67,8 +67,13 @@ LinuxPlatformImpl::~LinuxPlatformImpl() {
 }
 
 void LinuxPlatformImpl::pollPlatformEvents() {
-    if (wl_display_dispatch(display) == -1) {
-        gEngine->exit("unable to poll platform events. waylabd probably disconnected");
+    if (wl_display_dispatch_pending(display) == -1) {
+        gEngine->exit("unable to poll platform events. wayland probably disconnected");
+        return;
+    }
+
+    if (wl_display_flush(display) == -1) {
+        gEngine->exit("unable to flush wayland display");
         return;
     }
 }
