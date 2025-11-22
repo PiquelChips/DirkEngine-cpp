@@ -29,6 +29,8 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
     auto presentModes = resources.physicalDevice.getSurfacePresentModesKHR(surface);
     presentMode = renderer->chooseSwapPresentMode(presentModes);
 
+    createSwapchain();
+
     commandBuffer = gEngine->getRenderer()->createCommandBuffer();
 }
 
@@ -39,7 +41,9 @@ void Window::onResize() {
 
     auto oldSwapchain = swapchain;
 
-    if (swapchain)
+    createSwapchain();
+
+    if (oldSwapchain)
         device.destroySwapchainKHR(oldSwapchain);
 }
 
