@@ -17,6 +17,7 @@
 namespace dirk::Platform {
 
 class Platform;
+class Window;
 
 struct WindowCreateInfo {
     std::string_view title;
@@ -54,6 +55,9 @@ public:
 
     virtual bool isDecorated() = 0;
     virtual void setDecorated(bool inDecorated) = 0;
+
+    virtual void setOwningWindow(Window& window) = 0;
+    virtual Window& getOwningWindow() = 0;
 };
 
 /**

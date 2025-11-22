@@ -57,8 +57,7 @@ void LinuxWindowImpl::show() {
             }
 
             window->size = vk::Extent2D(width, height);
-            // call window resize callback
-        },
+            window->getOwningWindow().onResize(); },
         .close = [](void* data, xdg_toplevel* toplevel) {
             auto* window = static_cast<LinuxWindowImpl*>(data);
             // TODO: use platform window close callback
@@ -107,8 +106,8 @@ void LinuxWindowImpl::createVulkanSurface(VkInstance instance, VkSurfaceKHR* sur
 }
 
 void LinuxWindowImpl::setSize(vk::Extent2D inSize) {
-    this->size = inSize;
-    // TODO: resize window if window obj valid
+    // this->size = inSize;
+    //  TODO: resize window if window obj valid
 }
 
 // clang-format off

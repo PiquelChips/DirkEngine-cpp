@@ -15,6 +15,9 @@ namespace dirk::Platform {
 
 Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl)
     : platform(platform), platformWindow(std::move(impl)) {
+
+    platformWindow->setOwningWindow(*this);
+
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
 
@@ -41,9 +44,7 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
 }
 
 void Window::onResize() {
-    if (swapChainExtent == platformWindow->getSize())
-        return;
-
+    DIRK_LOG(LogPlatform, DEBUG, "resizing window")
     auto renderer = gEngine->getRenderer();
     auto device = renderer->getResources().device;
 

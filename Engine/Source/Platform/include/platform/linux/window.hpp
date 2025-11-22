@@ -38,6 +38,12 @@ public:
     glm::vec2 getPosition() override;
     void setPosition(const glm::vec2 inPosition) override;
 
+    void setOwningWindow(Window& window) override { owningWindow = &window; }
+    Window& getOwningWindow() override {
+        check(owningWindow);
+        return *owningWindow;
+    }
+
 private:
     // window properties
     vk::Extent2D size;
@@ -53,6 +59,8 @@ private:
     xdg_toplevel* xdgToplevel = nullptr;
 
     vk::SurfaceKHR vkSurface;
+
+    Window* owningWindow;
 };
 
 } // namespace dirk::Platform::Linux
