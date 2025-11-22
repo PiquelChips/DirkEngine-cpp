@@ -38,8 +38,10 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
     };
     swapChainImages = gEngine->getRenderer()->createSwapChain(swapChainInfo);
 
-    imageAvailableSemaphore = gEngine->getRenderer()->createSemaphore();
-    renderFinishedSemaphore = gEngine->getRenderer()->createSemaphore();
+    for (int i = 0; i < MAX_FRAME_COUNT; i++) {
+        imageAvailableSemaphores[i] = gEngine->getRenderer()->createSemaphore();
+        renderFinishedSemaphores[i] = gEngine->getRenderer()->createSemaphore();
+    }
     commandBuffer = gEngine->getRenderer()->createCommandBuffer();
 }
 
@@ -65,6 +67,7 @@ void Window::onResize() {
 }
 
 vk::SubmitInfo Window::render(ImDrawData* drawData) {
+    frameIndex = (frameIndex + 1) % MAX_FRAME_COUNT;
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
     auto result = resources.device.acquireNextImageKHR(swapchain, UINT64_MAX, imageAvailableSemaphores[frameIndex], nullptr);
@@ -114,11 +117,11 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
     // wait semaphores
     vk::PipelineStageFlags waitStage{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
     submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
+    submitInfo.pWaitSemaphores = &imageAvailableSemaphores[frameIndex];
     submitInfo.pWaitDstStageMask = &waitStage;
     // signal semaphores
     submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
+    submitInfo.pSignalSemaphores = &renderFinishedSemaphores[frameIndex];
 
     // command buffers
     submitInfo.commandBufferCount = 1;
@@ -130,7 +133,7 @@ vk::PresentInfoKHR Window::present() {
     vk::PresentInfoKHR presentInfo{};
     presentInfo.sType = vk::StructureType::ePresentInfoKHR;
     presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
+    presentInfo.pWaitSemaphores = &renderFinishedSemaphores[frameIndex];
 
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = &swapchain;

@@ -107,12 +107,13 @@ private:
     vk::SurfaceFormatKHR surfaceFormat;
     vk::PresentModeKHR presentMode;
 
-    vk::Semaphore imageAvailableSemaphore;
-    vk::Semaphore renderFinishedSemaphore;
+    std::vector<vk::Semaphore> imageAvailableSemaphores;
+    std::vector<vk::Semaphore> renderFinishedSemaphores;
     std::vector<ImageMemoryView> swapChainImages;
 
     // state
     std::uint32_t imageIndex;
+    std::uint32_t frameIndex;
 
     Platform& platform;
     std::unique_ptr<PlatformWindowImpl> platformWindow;
