@@ -103,7 +103,7 @@ void Platform::initImGui() {
 
     ImGuiViewport* mainViewport = ImGui::GetMainViewport();
     mainViewport->PlatformUserData = vd;
-    mainViewport->PlatformHandle = (void*) bd->window->getPlatformHandle();
+    mainViewport->PlatformHandle = bd->window->getPlatformHandle();
     IM_UNUSED(mainViewport);
 }
 

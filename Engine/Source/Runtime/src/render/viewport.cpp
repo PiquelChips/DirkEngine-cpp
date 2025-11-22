@@ -281,8 +281,8 @@ vk::SubmitInfo Viewport::render() {
 
     // wait semaphores
     vk::PipelineStageFlags waitStage{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    submitInfo.waitSemaphoreCount = 0;
-    submitInfo.pWaitSemaphores = nullptr;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &renderFinishedSemaphore;
     submitInfo.pWaitDstStageMask = &waitStage;
     // signal semaphores
     submitInfo.signalSemaphoreCount = 1;
