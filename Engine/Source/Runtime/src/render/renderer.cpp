@@ -301,7 +301,6 @@ Renderer::~Renderer() {
 }
 
 void Renderer::render() {
-    DIRK_LOG(LogRenderer, DEBUG, "beginning new frame")
     checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
     checkVulkan(device.resetFences(1, &inFlightFence));
 
@@ -341,8 +340,9 @@ void Renderer::destroyViewport(std::shared_ptr<Viewport> viewport) {
     viewports.erase(std::find(viewports.begin(), viewports.end(), viewport));
 }
 
-std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {
+std::vector<ImageMemoryView> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {
     auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(createInfo.surface);
+    auto oldSwapchain = createInfo.swapChain;
 
     vk::Extent2D extent = chooseSwapExtent(createInfo.windowSize, capabilities);
     uint32_t imageCount = capabilities.minImageCount + 1;
@@ -369,7 +369,7 @@ std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& 
     swapCreateInfo.preTransform = capabilities.currentTransform;
     swapCreateInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque; // ignore alpha
     swapCreateInfo.clipped = vk::True;                                      // ingore hidden pixels (behind other windows for ex)
-    swapCreateInfo.oldSwapchain = nullptr;
+    swapCreateInfo.oldSwapchain = oldSwapchain;
 
     // image sharing if multiple queues
     QueueFamilyIndices indices = properties.queueFamilyIndices;
@@ -395,14 +395,18 @@ std::vector<vk::ImageView> Renderer::createSwapChain(const SwapChainCreateInfo& 
                  << "\n\timage width: " << createInfo.swapChainExtent.width
                  << "\n\timage height: " << createInfo.swapChainExtent.height);
 
-    std::vector<vk::ImageView> swapImages(images.size());
+    std::vector<ImageMemoryView> swapImages(images.size());
 
     for (int i = 0; i < images.size(); i++) {
         auto commandBuffer = beginSingleTimeCommands();
         transitionImageLayout(commandBuffer, images[i], createInfo.surfaceFormat.format, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
         endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
 
-        swapImages[i] = createImageView(images[i], createInfo.surfaceFormat.format);
+        swapImages[i] = ImageMemoryView{
+            .image = images[i],
+            .memory = nullptr,
+            .view = createImageView(images[i], createInfo.surfaceFormat.format)
+        };
     }
 
     return swapImages;

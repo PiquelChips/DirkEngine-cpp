@@ -109,7 +109,7 @@ private:
 
     vk::Semaphore imageAvailableSemaphore;
     vk::Semaphore renderFinishedSemaphore;
-    std::vector<vk::ImageView> swapChainImages;
+    std::vector<ImageMemoryView> swapChainImages;
 
     // state
     std::uint32_t imageIndex;

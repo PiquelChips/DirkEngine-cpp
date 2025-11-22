@@ -48,11 +48,7 @@ void Window::onResize() {
     auto renderer = gEngine->getRenderer();
     auto device = renderer->getResources().device;
 
-    for (auto image : swapChainImages) {
-        device.destroyImageView(image);
-    }
-
-    device.destroySwapchainKHR(swapchain);
+    auto oldSwapchain = swapchain;
 
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
@@ -63,11 +59,15 @@ void Window::onResize() {
         .presentMode = presentMode
     };
     swapChainImages = renderer->createSwapChain(swapChainInfo);
+
+    if (swapchain)
+        device.destroySwapchainKHR(oldSwapchain);
 }
 
 vk::SubmitInfo Window::render(ImDrawData* drawData) {
-    auto resources = gEngine->getRenderer()->getResources();
-    auto result = resources.device.acquireNextImageKHR(swapchain, UINT64_MAX, imageAvailableSemaphore, nullptr);
+    auto renderer = gEngine->getRenderer();
+    auto resources = renderer->getResources();
+    auto result = resources.device.acquireNextImageKHR(swapchain, UINT64_MAX, imageAvailableSemaphores[frameIndex], nullptr);
     checkVulkan(result.result);
     imageIndex = result.value;
     auto image = swapChainImages[imageIndex];
@@ -80,36 +80,32 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
 
     checkVulkan(commandBuffer.begin(&beginInfo));
 
+    renderer->transitionImageLayout(commandBuffer, image.image, surfaceFormat.format, vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::eColorAttachmentOptimal);
+
     vk::RenderingAttachmentInfo colorAttachment{};
+    colorAttachment.imageView = image.view;
+    colorAttachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    colorAttachment.resolveMode = vk::ResolveModeFlagBits::eNone;
     colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
     colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-    colorAttachment.imageLayout = vk::ImageLayout::eUndefined;
-    colorAttachment.resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal;
-    colorAttachment.resolveMode = vk::ResolveModeFlagBits::eAverage; // TODO: what is this?
     colorAttachment.clearValue = vk::ClearColorValue(0.f, 0.f, 0.f, 1.f);
-
-    vk::RenderingAttachmentInfo depthAttachment{};
-    depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-    depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
-    depthAttachment.imageLayout = vk::ImageLayout::eUndefined;
-    depthAttachment.resolveImageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-    depthAttachment.resolveMode = vk::ResolveModeFlagBits::eAverage; // TODO: what is this?
-    depthAttachment.clearValue = vk::ClearDepthStencilValue(1.f, 0.f);
 
     vk::RenderingInfo renderInfo{};
     renderInfo.renderArea.offset = vk::Offset2D(0, 0);
     renderInfo.renderArea.extent = swapChainExtent;
-
+    renderInfo.layerCount = 1;
+    renderInfo.viewMask = 0;
     renderInfo.colorAttachmentCount = 1;
     renderInfo.pColorAttachments = &colorAttachment;
-    renderInfo.pDepthAttachment = &depthAttachment;
-    renderInfo.layerCount = 1;
 
     commandBuffer.beginRendering(renderInfo);
 
     ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer);
 
     commandBuffer.endRendering();
+
+    renderer->transitionImageLayout(commandBuffer, image.image, surfaceFormat.format, vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
+
     commandBuffer.end();
 
     vk::SubmitInfo submitInfo{};

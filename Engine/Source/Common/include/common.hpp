@@ -129,7 +129,7 @@ class IRenderer {
 public:
     virtual ~IRenderer() = default;
 
-    virtual std::vector<vk::ImageView> createSwapChain(const SwapChainCreateInfo& createInfo) = 0;
+    virtual std::vector<ImageMemoryView> createSwapChain(const SwapChainCreateInfo& createInfo) = 0;
     virtual vk::ShaderModule loadShaderModule(const std::string& shaderName) = 0;
     virtual vk::CommandBuffer createCommandBuffer() = 0;
     virtual vk::Semaphore createSemaphore() = 0;
