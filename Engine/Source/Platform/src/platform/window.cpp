@@ -38,6 +38,8 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
     };
     swapChainImages = gEngine->getRenderer()->createSwapChain(swapChainInfo);
 
+    imageAvailableSemaphores.resize(MAX_FRAME_COUNT);
+    renderFinishedSemaphores.resize(MAX_FRAME_COUNT);
     for (int i = 0; i < MAX_FRAME_COUNT; i++) {
         imageAvailableSemaphores[i] = gEngine->getRenderer()->createSemaphore();
         renderFinishedSemaphores[i] = gEngine->getRenderer()->createSemaphore();
