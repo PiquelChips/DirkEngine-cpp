@@ -1,8 +1,8 @@
 #ifdef PLATFORM_LINUX
 
-#include "platform/linux/linux.hpp"
 #include "common.hpp"
 #include "input/keys.hpp"
+#include "platform/linux/linux.hpp"
 #include "platform/linux/window.hpp"
 #include "platform/monitor.hpp"
 #include "platform/platform.hpp"
@@ -69,7 +69,9 @@ LinuxPlatformImpl::~LinuxPlatformImpl() {
 void LinuxPlatformImpl::pollPlatformEvents() {
     if (wl_display_dispatch(display) == -1) {
         gEngine->exit("unable to poll platform events. waylabd probably disconnected");
+        return;
     }
+    DIRK_LOG(LogWayland, DEBUG, "polled platform events")
 }
 
 std::unique_ptr<PlatformWindowImpl> LinuxPlatformImpl::createPlatformWindow(const WindowCreateInfo& createInfo) {

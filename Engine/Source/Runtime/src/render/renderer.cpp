@@ -301,6 +301,7 @@ Renderer::~Renderer() {
 }
 
 void Renderer::render() {
+    DIRK_LOG(LogRenderer, DEBUG, "beginning new frame")
     checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
     checkVulkan(device.resetFences(1, &inFlightFence));
 

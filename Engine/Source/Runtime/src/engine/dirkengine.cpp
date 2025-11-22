@@ -60,6 +60,10 @@ void DirkEngine::exit(const std::string& reason) {
 
 void DirkEngine::tick(float deltaTime) {
     platform->tick(deltaTime);
+    // in case we fail platform event polling
+    if (isRequestingExit())
+        return;
+
     world->tick(deltaTime);
 
     renderer->render();
