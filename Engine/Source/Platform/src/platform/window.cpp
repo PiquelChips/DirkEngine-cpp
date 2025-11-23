@@ -14,6 +14,8 @@
 
 namespace dirk::Platform {
 
+DEFINE_LOG_CATEGORY(LogWindow);
+
 Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl)
     : platform(platform), platformWindow(std::move(impl)) {
 
@@ -117,9 +119,6 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
     commandBuffer.end();
 
     vk::SubmitInfo submitInfo{};
-    submitInfo.sType = vk::StructureType::eSubmitInfo;
-
-    // wait semaphores
     submitInfo.pWaitDstStageMask = &waitStage;
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = &imageAvailableSemaphore;

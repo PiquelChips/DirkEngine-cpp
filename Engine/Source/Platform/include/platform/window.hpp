@@ -17,6 +17,8 @@
 
 namespace dirk::Platform {
 
+DECLARE_LOG_CATEGORY_EXTERN(LogWindow)
+
 class Platform;
 class Window;
 
