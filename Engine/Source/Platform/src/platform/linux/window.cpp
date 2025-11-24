@@ -113,12 +113,14 @@ void LinuxWindowImpl::createVulkanSurface(VkInstance instance, VkSurfaceKHR* sur
 void LinuxWindowImpl::setSize(vk::Extent2D inSize) {
     this->size = inSize;
 
-    if (!xdgToplevel)
+    /*
+    if (!xdgToplevel && resizable)
         return;
 
     xdg_toplevel_set_min_size(xdgToplevel, size.width, size.height);
     xdg_toplevel_set_max_size(xdgToplevel, size.width, size.height);
     wl_surface_commit(wlSurface);
+    */
 }
 
 // clang-format off
