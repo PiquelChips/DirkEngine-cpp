@@ -5,6 +5,7 @@
 #include "logging/logging.hpp"
 #include "platform/linux/linux.hpp"
 
+#include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_wayland.h"
@@ -56,7 +57,11 @@ void LinuxWindowImpl::show() {
                 window->minimized = true;
             }
 
-            window->size = vk::Extent2D(width, height);
+            vk::Extent2D newSize(width, height);
+            if (newSize == window->size)
+                return;
+
+            window->size = newSize;
             window->getOwningWindow().onResize();
             window->linuxPlatform.getPlatform().windowSizeCallback(window->getOwningWindow(), window->size); },
         .close = [](void* data, xdg_toplevel* toplevel) {
