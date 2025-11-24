@@ -73,7 +73,7 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
     auto resources = renderer->getResources();
 
     semaphoreIndex = (semaphoreIndex + 1) % semaphores.size();
-    auto [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[semaphoreIndex];
+    auto& [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[semaphoreIndex];
     check(imageAvailableSemaphore);
     check(renderFinishedSemaphore);
 
