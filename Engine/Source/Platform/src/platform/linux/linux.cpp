@@ -125,6 +125,7 @@ void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry*
         };
         xdg_wm_base_add_listener(platform->xdgWmBase, &xdgWmBaseListener, platform);
     } else if (strcmp(interface, wl_seat_interface.name) == 0) {
+        // wl_seat
         platform->seat = static_cast<wl_seat*>(wl_registry_bind(registry, name, &wl_seat_interface, version));
         static const wl_seat_listener seatListener = {
             .capabilities = wl_SeatCapabilities,
@@ -132,6 +133,7 @@ void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry*
         };
         wl_seat_add_listener(platform->seat, &seatListener, platform);
     } else if (strcmp(interface, wl_output_interface.name) == 0) {
+        // wl_output
         wl_output* output = static_cast<wl_output*>(wl_registry_bind(platform->registry, name, &wl_output_interface, version));
         static const struct wl_output_listener outputListener = {
             .geometry = wl_OutputHandleGeometry,
