@@ -264,6 +264,7 @@ void Renderer::init() {
         gEngine->getPlatform()->initImGui();
         auto mainWindow = &gEngine->getPlatform()->getMainWindow();
         check(mainWindow);
+        mainWindow->show();
 
         auto formats = physicalDevice.getSurfaceFormatsKHR(surface);
         auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
