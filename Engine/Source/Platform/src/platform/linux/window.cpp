@@ -57,11 +57,11 @@ void LinuxWindowImpl::show() {
             }
 
             window->size = vk::Extent2D(width, height);
-            window->getOwningWindow().onResize(); },
+            window->getOwningWindow().onResize();
+            window->linuxPlatform.getPlatform().windowSizeCallback(window->getOwningWindow(), window->size); },
         .close = [](void* data, xdg_toplevel* toplevel) {
             auto* window = static_cast<LinuxWindowImpl*>(data);
-            // TODO: use platform window close callback
-        },
+            window->linuxPlatform.getPlatform().windowCloseCallback(window->getOwningWindow()); },
         .configure_bounds = [](void*, struct xdg_toplevel*, int32_t, int32_t) {},
         .wm_capabilities = [](void*, struct xdg_toplevel*, struct wl_array*) {},
     };

@@ -156,9 +156,11 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
 
         static const wl_pointer_listener pointerListener = {
             .enter = wl_PointerEnter,
+            .leave = [](void*, struct wl_pointer*, uint32_t, struct wl_surface*) {},
             .motion = wl_PointerMotion,
             .button = wl_PointerButton,
             .axis = wl_PointerAxis,
+            .frame = [](void*, struct wl_pointer*) {},
         };
         wl_pointer_add_listener(platform->pointer, &pointerListener, platform);
     }
@@ -169,6 +171,7 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
         static const wl_keyboard_listener keyboardListener = {
             .keymap = wl_KeyboardKeymap,
             .enter = wl_KeyboardEnter,
+            .leave = [](void*, struct wl_keyboard*, uint32_t, struct wl_surface*) {},
             .key = wl_KeyboardKey,
             .modifiers = wl_KeyboardModifiers,
             .repeat_info = wl_KeyboardRepeatInfo,

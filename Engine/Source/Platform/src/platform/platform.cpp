@@ -292,6 +292,9 @@ void Platform::windowMoveCallback(Window& window) {
 void Platform::windowCloseCallback(Window& window) {
     if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle()))
         viewport->PlatformRequestClose = true;
+
+    if (&window == &getMainWindow())
+        gEngine->exit("main window closed");
 }
 
 void Platform::focusWindowCallback(Window& window) {

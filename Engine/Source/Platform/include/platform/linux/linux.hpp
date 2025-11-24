@@ -32,6 +32,8 @@ public:
     wl_compositor* getCompositor() { return compositor; }
     xdg_wm_base* getXdgWmBase() { return xdgWmBase; }
 
+    Platform& getPlatform() { return platform; }
+
     static constexpr Input::Key getKeyFromSym(xkb_keysym_t sym);
     static constexpr Input::MouseButton getMouseFromCode(uint32_t code);
     static constexpr Input::KeyState getKeyStateFromCode(uint32_t state);
