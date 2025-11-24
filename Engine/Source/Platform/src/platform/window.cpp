@@ -37,7 +37,6 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
 }
 
 void Window::onResize() {
-    DIRK_LOG(LogPlatform, DEBUG, "resizing window")
     auto renderer = gEngine->getRenderer();
     auto device = renderer->getResources().device;
 

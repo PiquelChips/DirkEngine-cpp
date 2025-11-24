@@ -390,12 +390,6 @@ std::vector<SwapchainImage> Renderer::createSwapChain(const SwapChainCreateInfo&
     check(createInfo.swapChain);
     std::vector<vk::Image> images = device.getSwapchainImagesKHR(createInfo.swapChain);
 
-    DIRK_LOG(LogVulkan, INFO,
-             "created swap chain: "
-                 << "\n\timage count: " << images.size()
-                 << "\n\timage width: " << createInfo.swapChainExtent.width
-                 << "\n\timage height: " << createInfo.swapChainExtent.height);
-
     std::vector<SwapchainImage> swapImages(images.size());
 
     for (int i = 0; i < images.size(); i++) {
