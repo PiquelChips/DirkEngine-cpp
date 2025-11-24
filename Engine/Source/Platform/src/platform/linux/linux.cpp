@@ -39,6 +39,7 @@ LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo, Platf
     registry = wl_display_get_registry(display);
     if (!registry) {
         DIRK_LOG(LogWayland, FATAL, "failed to get wayland display registry")
+        return;
     }
 
     static const struct wl_registry_listener registryListener = {
