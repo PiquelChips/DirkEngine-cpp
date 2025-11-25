@@ -1,9 +1,11 @@
 #include "render/viewport.hpp"
 #include "asserts.hpp"
+#include "backends/imgui_impl_vulkan.h"
 #include "common.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
 #include "glm/trigonometric.hpp"
+#include "imgui.h"
 #include "render/camera.hpp"
 #include "render/renderer.hpp"
 #include "vulkan/vulkan_core.h"
@@ -15,7 +17,7 @@
 namespace dirk {
 
 Viewport::Viewport(const ViewportCreateInfo& createInfo)
-    : world(createInfo.world), size(createInfo.size) {
+    : world(createInfo.world), size(createInfo.size), name(createInfo.name) {
     camera = std::make_unique<Camera>(
         CameraCreateInfo{
             .positon = { 0.f, 1000.f, 1000.f },
@@ -41,6 +43,10 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
     commandBuffer = resources.device.allocateCommandBuffers(cmdAllocInfo)[0];
 
     createRenderResources();
+}
+
+Viewport::~Viewport() {
+    ImGui_ImplVulkan_RemoveTexture(descriptorSet);
 }
 
 void Viewport::createRenderResources() {
@@ -198,22 +204,35 @@ void Viewport::createRenderResources() {
     };
     depthImageMemoryView = renderer->createImageMemoryView(imvInfo);
 
-    vk::CommandBuffer commandBuffer = renderer->beginSingleTimeCommands();
-    renderer->transitionImageLayout(commandBuffer, depthImageMemoryView.image, properties.depthFormat, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal, 1);
-    renderer->endSingleTimeCommands(commandBuffer, resources.queues.graphicsQueue);
-
     CreateImageMemoryViewInfo outInfo{
         .width = size.width,
         .height = size.height,
         .format = properties.surfaceFormat.format,
         .tiling = vk::ImageTiling::eOptimal,
-        .usage = vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
+        .usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment,
         .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
         .numSamples = vk::SampleCountFlagBits::e1,
     };
     outImageMemoryView = renderer->createImageMemoryView(outInfo);
 
-    // TODO: out image sampler (to be used by ImGUI)
+    vk::CommandBuffer commandBuffer = renderer->beginSingleTimeCommands();
+    renderer->transitionImageLayout(commandBuffer, depthImageMemoryView.image, properties.depthFormat, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+    renderer->transitionImageLayout(commandBuffer, outImageMemoryView.image, properties.surfaceFormat.format, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+    renderer->endSingleTimeCommands(commandBuffer, resources.queues.graphicsQueue);
+
+    vk::SamplerCreateInfo samplerInfo{};
+    samplerInfo.magFilter = vk::Filter::eLinear;
+    samplerInfo.minFilter = vk::Filter::eLinear;
+    samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
+    samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat; // outside image bounds just use border color
+    samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
+    samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
+    samplerInfo.minLod = -1000;
+    samplerInfo.maxLod = 1000;
+    samplerInfo.maxAnisotropy = 1.0f;
+    sampler = resources.device.createSampler(samplerInfo);
+
+    descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, outImageMemoryView.view, (VkImageLayout) vk::ImageLayout::eShaderReadOnlyOptimal);
 }
 
 vk::SubmitInfo Viewport::render() {
@@ -287,8 +306,11 @@ vk::SubmitInfo Viewport::render() {
     return submitInfo;
 }
 
-// TODO: resize viewport
-void Viewport::resize(vk::Extent2D inSize) {}
+void Viewport::renderImGui() {
+    ImGui::Begin(name.data());
+    ImGui::Image((ImTextureID) (VkDescriptorSet) descriptorSet, ImVec2(size.width, size.height));
+    ImGui::End();
+}
 
 void Viewport::setWorld(std::shared_ptr<World> inWorld) { world = inWorld; }
 

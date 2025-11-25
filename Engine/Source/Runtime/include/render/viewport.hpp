@@ -22,13 +22,13 @@ class World;
 struct ViewportCreateInfo {
     std::string_view name;
     vk::Extent2D size;
-
     std::shared_ptr<World> world;
 };
 
 class Viewport {
 public:
     Viewport(const ViewportCreateInfo& createInfo);
+    ~Viewport();
 
     void setWorld(std::shared_ptr<World> inWorld);
     std::unique_ptr<Camera>& getCamera() { return camera; }
@@ -36,7 +36,8 @@ public:
     vk::Semaphore getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
 
     vk::SubmitInfo render();
-    void resize(vk::Extent2D inSize);
+    void renderImGui();
+    void resize(vk::Extent2D inSize) { size = inSize; }
 
 private:
     // this will create render pass, pipeline and all associated stuff. this should only be called
@@ -54,6 +55,7 @@ private:
     ImageMemoryView colorImageMemoryView;
     ImageMemoryView outImageMemoryView;
     vk::Sampler sampler;
+    vk::DescriptorSet descriptorSet;
 
     // render objects
     vk::Pipeline pipeline;

@@ -326,6 +326,10 @@ void Renderer::render() {
     // TODO: process all ImGui rendering
     ImGui::ShowDemoWindow();
 
+    for (auto& viewport : viewports) {
+        viewport->renderImGui();
+    }
+
     ImGui::Render();
 
     checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
@@ -844,6 +848,12 @@ void Renderer::transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::
 
         sourceStage = vk::PipelineStageFlagBits::eBottomOfPipe;
         destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    } else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+        barrier.srcAccessMask = {};
+        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+        destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
     } else {
         DIRK_LOG(LogVulkan, FATAL, "unsupported layout transition");
         return;

@@ -29,7 +29,8 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     world = std::make_shared<World>(createInfo.actorCreateInfos);
 
     auto viewport = renderer->createViewport(ViewportCreateInfo{
-        .size = vk::Extent2D(1, 1),
+        .name = "Hello World!",
+        .size = vk::Extent2D(500, 500),
         .world = world,
     });
 
