@@ -241,7 +241,6 @@ void LinuxPlatformImpl::wl_PointerEnter(void* data, wl_pointer* pointer, uint32_
     auto& window = platform->getWindowWithSurface(surface);
 
     platform->platform.focusWindowCallback(window);
-    platform->platform.cursorPosCallback(window, { x, y });
 }
 
 void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
@@ -249,7 +248,9 @@ void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32
     check(platform->pointer == pointer);
     auto& window = platform->platform.getFocusedWindow();
 
-    platform->platform.cursorPosCallback(window, { x, y });
+    auto posX = static_cast<float>(wl_fixed_to_double(x));
+    auto posY = static_cast<float>(wl_fixed_to_double(y));
+    platform->platform.cursorPosCallback(window, { posX, posY });
 }
 
 void LinuxPlatformImpl::wl_PointerButton(void* data, wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t inButton, uint32_t inState) {
