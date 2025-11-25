@@ -11,6 +11,7 @@
 
 #include <array>
 #include <memory>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -61,6 +62,9 @@ public:
     virtual std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) = 0;
     // TODO: remove
     virtual vk::SurfaceKHR createTempSurface(vk::Instance instance) = 0;
+
+    virtual std::string_view getClipboardText() = 0;
+    virtual void setClipboardText(const std::string& text) = 0;
 };
 
 class Platform : public IPlatform {
@@ -85,6 +89,9 @@ public:
     std::vector<std::unique_ptr<Window>>& getWindows() { return windows; }
     std::vector<std::unique_ptr<Monitor>>& getMonitors() { return monitors; }
 
+    std::string_view getClipboardText() { return platformImpl->getClipboardText(); }
+    void setClipboardText(const std::string& text) { platformImpl->setClipboardText(text); }
+
 private:
     // platform funcs used by ImGui
     static void ImGui_CreateWindow(ImGuiViewport* viewport);
@@ -99,6 +106,9 @@ private:
     static bool ImGui_GetWindowFocus(ImGuiViewport* viewport);
     static void ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title);
     static int ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface);
+
+    static const char* ImGui_GetClipboardText(ImGuiContext* ctx);
+    static void ImGui_SetClipboardText(ImGuiContext* ctx, const char* text);
 
 public:
     // callbacks for platform events

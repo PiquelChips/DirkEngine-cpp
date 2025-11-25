@@ -111,6 +111,17 @@ vk::SurfaceKHR LinuxPlatformImpl::createTempSurface(vk::Instance instance) {
     return vkSurface;
 }
 
+std::string_view LinuxPlatformImpl::getClipboardText() {
+    // TODO: clipboard
+    DIRK_LOG(LogWayland, ERROR, "clipboard not implemented");
+    return "";
+}
+
+void LinuxPlatformImpl::setClipboardText(const std::string& text) {
+    // TODO: clipboard
+    DIRK_LOG(LogWayland, ERROR, "clipboard not implemented");
+}
+
 void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version) {
     LinuxPlatformImpl* platform = static_cast<LinuxPlatformImpl*>(data);
 

@@ -186,6 +186,9 @@ public:
     virtual Platform::Monitor& createMonitor(void* platformHandle) = 0;
     // TODO: remove
     virtual vk::SurfaceKHR createTempSurface(vk::Instance instance) = 0;
+
+    virtual std::string_view getClipboardText() = 0;
+    virtual void setClipboardText(const std::string& text) = 0;
 };
 
 class IEngine {

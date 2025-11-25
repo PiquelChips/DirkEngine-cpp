@@ -85,8 +85,8 @@ void Platform::initImGui() {
     platformIO.Platform_SetWindowAlpha = [](ImGuiViewport*, float) { DIRK_LOG(LogPlatform, WARNING, "ImGui::Platform_SetWindowAlpha not implemented") };
     platformIO.Platform_CreateVkSurface = ImGui_CreateVkSurface;
 
-    platformIO.Platform_GetClipboardTextFn = nullptr;
-    platformIO.Platform_SetClipboardTextFn = nullptr;
+    platformIO.Platform_GetClipboardTextFn = ImGui_GetClipboardText;
+    platformIO.Platform_SetClipboardTextFn = ImGui_SetClipboardText;
 
     // TODO: setup cursors
 
@@ -243,12 +243,26 @@ void Platform::ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title) 
 }
 
 int Platform::ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface) {
+    // TODO: should be removed with #76
     ImGuiData* bd = getBackendData();
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
     IM_UNUSED(bd);
 
     vd->window->getPlatformImpl().createVulkanSurface((VkInstance) instance, (VkSurfaceKHR*) outSurface);
     return (int) vk::Result::eSuccess;
+}
+
+const char* Platform::ImGui_GetClipboardText(ImGuiContext* ctx) {
+    ImGuiData* data = getBackendData();
+    check(data->context = ctx);
+
+    return data->platform->getClipboardText().data();
+}
+
+void Platform::ImGui_SetClipboardText(ImGuiContext* ctx, const char* text) {
+    ImGuiData* data = getBackendData();
+    check(data->context = ctx);
+    data->platform->setClipboardText(text);
 }
 
 void Platform::windowSizeCallback(Window& window, vk::Extent2D inSize) {

@@ -12,6 +12,8 @@
 #include "xkbcommon/xkbcommon.h"
 
 #include <cstdint>
+#include <string>
+#include <string_view>
 
 namespace dirk::Platform::Linux {
 
@@ -33,6 +35,9 @@ public:
     xdg_wm_base* getXdgWmBase() { return xdgWmBase; }
 
     Platform& getPlatform() { return platform; }
+
+    std::string_view getClipboardText() override;
+    void setClipboardText(const std::string& text) override;
 
     static constexpr Input::Key getKeyFromSym(xkb_keysym_t sym);
     static constexpr Input::MouseButton getMouseFromCode(uint32_t code);
