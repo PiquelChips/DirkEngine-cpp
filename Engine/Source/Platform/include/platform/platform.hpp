@@ -116,9 +116,6 @@ private:
     static ImGuiData* getBackendData();
     ImGuiData* getBackendData(Window& window);
 
-    void updateMouseData();
-    void updateMouseCursor();
-
     Window* createWindow(const WindowCreateInfo& createInfo);
     void destroyWindow(Window* window);
 
