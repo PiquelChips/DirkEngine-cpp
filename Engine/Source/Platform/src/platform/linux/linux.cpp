@@ -174,7 +174,7 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
             .leave = [](void*, struct wl_keyboard*, uint32_t, struct wl_surface*) {},
             .key = wl_KeyboardKey,
             .modifiers = wl_KeyboardModifiers,
-            .repeat_info = wl_KeyboardRepeatInfo,
+            .repeat_info = [](void* data, struct wl_keyboard* keyboard, int32_t rate, int32_t delay) {},
         };
         wl_keyboard_add_listener(platform->keyboard, &keyboardListener, platform);
     }
@@ -310,14 +310,6 @@ void LinuxPlatformImpl::wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, 
     auto& window = platform->platform.getFocusedWindow();
 
     xkb_state_update_mask(platform->xkbState, depressed, latched, locked, 0, 0, group);
-}
-
-void LinuxPlatformImpl::wl_KeyboardRepeatInfo(void* data, wl_keyboard* keyboard, int32_t rate, int32_t delay) {
-    auto* platform = static_cast<LinuxPlatformImpl*>(data);
-    check(platform->keyboard == keyboard);
-    auto& window = platform->platform.getFocusedWindow();
-
-    // TODO: repeat keys
 }
 
 constexpr Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {

@@ -22,7 +22,7 @@ public:
     void* getPlatformHandle() override { return wlSurface; }
 
     vk::Extent2D getSize() override { return size; }
-    void setSize(vk::Extent2D inSize) override;
+    void setSize(vk::Extent2D inSize) override { size = inSize; }
 
     std::string_view getTitle() override { return title; }
     void setTitle(std::string_view inTitle) override;

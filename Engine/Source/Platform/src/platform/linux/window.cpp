@@ -110,19 +110,6 @@ void LinuxWindowImpl::createVulkanSurface(VkInstance instance, VkSurfaceKHR* sur
     wl_surface_commit(wlSurface);
 }
 
-void LinuxWindowImpl::setSize(vk::Extent2D inSize) {
-    this->size = inSize;
-
-    /*
-    if (!xdgToplevel && resizable)
-        return;
-
-    xdg_toplevel_set_min_size(xdgToplevel, size.width, size.height);
-    xdg_toplevel_set_max_size(xdgToplevel, size.width, size.height);
-    wl_surface_commit(wlSurface);
-    */
-}
-
 // clang-format off
 glm::vec2 LinuxWindowImpl::getPosition() { LOG_WAYLAND_NOT_IMPLEMENTED("getting window position"); return {0, 0}; }
 void LinuxWindowImpl::setPosition(const glm::vec2 inPosition) { LOG_WAYLAND_NOT_IMPLEMENTED("setting window position"); }

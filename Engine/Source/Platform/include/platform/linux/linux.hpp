@@ -58,7 +58,6 @@ private:
     static void wl_KeyboardEnter(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface, wl_array* keys);
     static void wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state);
     static void wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group);
-    static void wl_KeyboardRepeatInfo(void* data, struct wl_keyboard* keyboard, int32_t rate, int32_t delay);
 
 private:
     wl_display* display;
