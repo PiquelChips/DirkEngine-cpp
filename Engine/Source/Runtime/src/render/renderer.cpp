@@ -246,8 +246,9 @@ void Renderer::init() {
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+        // TODO: reenable when adding viewport support
+        // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
         io.ConfigDpiScaleFonts = true;
         io.ConfigDpiScaleViewports = true;
