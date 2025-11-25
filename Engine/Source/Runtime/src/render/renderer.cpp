@@ -249,16 +249,19 @@ void Renderer::init() {
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
+        io.ConfigDpiScaleFonts = true;
+        io.ConfigDpiScaleViewports = true;
+
         ImGui::StyleColorsDark();
 
         // Setup scaling
         ImGuiStyle& style = ImGui::GetStyle();
         style.ScaleAllSizes(1.f);
         style.FontScaleDpi = 1.f;
-        io.ConfigDpiScaleFonts = true;
-        io.ConfigDpiScaleViewports = true;
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+
+        // TODO: change the path for imgui.ini
 
         // TODO: have these be engine functions. renderer should not interact with platform
         gEngine->getPlatform()->initImGui();

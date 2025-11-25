@@ -53,11 +53,14 @@ void Platform::initImGui() {
 
     io.BackendPlatformUserData = (void*) bd;
     io.BackendPlatformName = bd->platformName.data();
-    io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors; // We can honor GetMouseCursor() values (optional)
-    io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;  // We can honor io.WantSetMousePos requests (optional, rarely used)
-    // TODO: (ImGui) add platform viewport support
-    // io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;    // We can create multi-viewports on the Platform side (optional)
-    // io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can call io.AddMouseViewportEvent() with correct data (optional)
+
+    // TODO: (ImGui) Enable all features
+    // io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
+    // io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
+    // io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+    // io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
+    // io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport;
+    // io.BackendFlags |= ImGuiBackendFlags_HasParentViewport;
 
     bd->context = ImGui::GetCurrentContext();
     bd->platform = this;
