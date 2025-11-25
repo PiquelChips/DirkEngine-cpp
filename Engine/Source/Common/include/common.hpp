@@ -1,5 +1,8 @@
 #pragma once
 
+#include "asserts.hpp"
+#include "logging/logging.hpp"
+
 // GLM
 #include <memory>
 #define GLM_FORCE_RADIANS
@@ -19,11 +22,9 @@
 #include "vulkan/vulkan_structs.hpp"
 
 #define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
+#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 #include "backends/imgui_impl_vulkan.h"
 #include "imgui.h"
-
-#include "asserts.hpp"
-#include "logging/logging.hpp"
 
 namespace dirk {
 
