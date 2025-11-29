@@ -34,7 +34,6 @@ struct ImGuiData {
     std::array<Cursor, ImGuiMouseCursor_COUNT> mouseCursors;
 
     std::array<Window*, Input::KeyLast> keyOwnerWindows; // keys used as indexes, window is which window currently has that key
-    Window* mouseWindow;                                 // the window the mouse is currenly on (if nullptr, mouse not on any window)
 
     bool mouseIgnoreButtonUpWaitForFocusLoss;
     bool mouseIgnoreButtonUp;

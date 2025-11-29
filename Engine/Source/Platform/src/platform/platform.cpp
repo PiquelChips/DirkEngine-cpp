@@ -14,7 +14,6 @@
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_enums.hpp"
 
-#include <array>
 #include <cstdint>
 #include <memory>
 #include <vector>
