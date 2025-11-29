@@ -467,7 +467,9 @@ constexpr Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {
     case XKB_KEY_F22: return Input::Key::F22;
     case XKB_KEY_F23: return Input::Key::F23;
     case XKB_KEY_F24: return Input::Key::F24;
-    default: return Input::Key::Unknown;
+    default:
+        DIRK_LOG(LogWayland, ERROR, "keycode " << sym << " is unknown")
+        return Input::Key::Unknown;
     }
     // clang-format on
 }
@@ -484,7 +486,9 @@ constexpr Input::MouseButton LinuxPlatformImpl::getMouseFromCode(uint32_t button
     case BTN_3: return Input::MouseButton::Button3;
     case BTN_4: return Input::MouseButton::Button4;
     case BTN_5: return Input::MouseButton::Button5;
-    default: return Input::MouseButton::Left;
+    default:
+        DIRK_LOG(LogWayland, ERROR, "mouse button " << button << " is unknown")
+        return Input::MouseButton::Left;
     }
     // clang-format on
 }
@@ -495,7 +499,9 @@ constexpr Input::KeyState LinuxPlatformImpl::getKeyStateFromCode(uint32_t state)
     case WL_KEYBOARD_KEY_STATE_PRESSED: return Input::KeyState::Pressed;
     case WL_KEYBOARD_KEY_STATE_RELEASED: return Input::KeyState::Released;
     case WL_KEYBOARD_KEY_STATE_REPEATED: return Input::KeyState::Held;
-    default: return Input::KeyState::None;
+    default:
+        DIRK_LOG(LogWayland, ERROR, "key state " << state << " is unknown")
+        return Input::KeyState::None;
     }
     // clang-format on
 }
