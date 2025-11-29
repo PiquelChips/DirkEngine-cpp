@@ -49,19 +49,8 @@ void LinuxWindowImpl::show() {
     xdgToplevel = xdg_surface_get_toplevel(xdgSurface);
 
     static const xdg_toplevel_listener xdgToplevelListener = {
-        .configure = [](void* data, xdg_toplevel* toplevel, int32_t width, int32_t height, wl_array* states) {
-            auto* window = static_cast<LinuxWindowImpl*>(data);
-
-            vk::Extent2D newSize(width, height);
-            if (newSize == window->size)
-                return;
-
-            window->size = newSize;
-            window->getOwningWindow().onResize();
-            window->linuxPlatform.getPlatform().windowSizeCallback(window->getOwningWindow(), window->size); },
-        .close = [](void* data, xdg_toplevel* toplevel) {
-            auto* window = static_cast<LinuxWindowImpl*>(data);
-            window->linuxPlatform.getPlatform().windowCloseCallback(window->getOwningWindow()); },
+        .configure = xdg_ToplevelConfigure,
+        .close = xdg_ToplevelClose,
         .configure_bounds = [](void*, struct xdg_toplevel*, int32_t, int32_t) {},
         .wm_capabilities = [](void*, struct xdg_toplevel*, struct wl_array*) {},
     };

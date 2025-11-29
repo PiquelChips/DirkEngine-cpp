@@ -6,6 +6,9 @@
 #include "platform/window.hpp"
 
 #include "vulkan/vulkan_handles.hpp"
+#include "wayland-util.h"
+
+#include <cstdint>
 
 namespace dirk::Platform::Linux {
 
@@ -43,6 +46,10 @@ public:
         check(owningWindow);
         return *owningWindow;
     }
+
+private:
+    static void xdg_ToplevelConfigure(void* data, xdg_toplevel* toplevel, int32_t width, int32_t height, wl_array* states);
+    static void xdg_ToplevelClose(void* data, xdg_toplevel* toplevel);
 
 private:
     // window properties
