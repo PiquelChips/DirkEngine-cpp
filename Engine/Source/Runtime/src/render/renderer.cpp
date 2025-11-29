@@ -304,6 +304,8 @@ Renderer::~Renderer() {
     device.waitIdle();
     DIRK_LOG(LogVulkan, INFO, "cleaning up renderer");
 
+    viewports.clear();
+
     ImGui_ImplVulkan_Shutdown();
     gEngine->getPlatform()->shutdownImGui();
     ImGui::DestroyContext();

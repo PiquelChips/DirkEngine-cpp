@@ -53,18 +53,18 @@ LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo, Platf
 }
 
 LinuxPlatformImpl::~LinuxPlatformImpl() {
-    if (xkbState) xkb_state_unref(xkbState);
-    if (xkbKeymap) xkb_keymap_unref(xkbKeymap);
-    if (xkbContext) xkb_context_unref(xkbContext);
+    xkb_state_unref(xkbState);
+    xkb_keymap_unref(xkbKeymap);
+    xkb_context_unref(xkbContext);
 
-    if (keyboard) wl_keyboard_destroy(keyboard);
-    if (pointer) wl_pointer_destroy(pointer);
-    if (seat) wl_seat_destroy(seat);
+    wl_keyboard_destroy(keyboard);
+    wl_pointer_destroy(pointer);
+    wl_seat_destroy(seat);
 
-    if (xdgWmBase) xdg_wm_base_destroy(xdgWmBase);
-    if (compositor) wl_compositor_destroy(compositor);
-    if (registry) wl_registry_destroy(registry);
-    if (display) wl_display_disconnect(display);
+    xdg_wm_base_destroy(xdgWmBase);
+    wl_compositor_destroy(compositor);
+    wl_registry_destroy(registry);
+    wl_display_disconnect(display);
 }
 
 void LinuxPlatformImpl::pollPlatformEvents() {
@@ -235,6 +235,7 @@ void LinuxPlatformImpl::wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uin
 
     if (platform->xkbKeymap) {
         xkb_keymap_unref(platform->xkbKeymap);
+        platform->xkbKeymap = nullptr;
     }
     platform->xkbKeymap = xkb_keymap_new_from_string(platform->xkbContext, keymapStr, XKB_KEYMAP_FORMAT_TEXT_V1, XKB_KEYMAP_COMPILE_NO_FLAGS);
     munmap(static_cast<void*>(keymapStr), size);
@@ -242,6 +243,7 @@ void LinuxPlatformImpl::wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uin
 
     if (platform->xkbState) {
         xkb_state_unref(platform->xkbState);
+        platform->xkbState = nullptr;
     }
     platform->xkbState = xkb_state_new(platform->xkbKeymap);
 }
