@@ -142,7 +142,7 @@ void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry*
         platform->seat = static_cast<wl_seat*>(wl_registry_bind(registry, name, &wl_seat_interface, version));
         static const wl_seat_listener seatListener = {
             .capabilities = wl_SeatCapabilities,
-            .name = [](void*, struct wl_seat*, const char* name) { DIRK_LOG(LogWayland, INFO, "new seat " << name); },
+            .name = [](void*, struct wl_seat*, const char* name) {},
         };
         wl_seat_add_listener(platform->seat, &seatListener, platform);
     } else if (strcmp(interface, wl_output_interface.name) == 0) {

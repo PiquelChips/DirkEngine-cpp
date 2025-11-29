@@ -9,7 +9,6 @@
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_wayland.h"
-#include "wayland-client-core.h"
 #include "wayland-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
@@ -52,10 +51,6 @@ void LinuxWindowImpl::show() {
     static const xdg_toplevel_listener xdgToplevelListener = {
         .configure = [](void* data, xdg_toplevel* toplevel, int32_t width, int32_t height, wl_array* states) {
             auto* window = static_cast<LinuxWindowImpl*>(data);
-
-            if (width < 0 && height < 0) {
-                window->minimized = true;
-            }
 
             vk::Extent2D newSize(width, height);
             if (newSize == window->size)

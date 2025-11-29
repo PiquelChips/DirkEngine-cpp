@@ -48,8 +48,6 @@ private:
     // window properties
     vk::Extent2D size;
     std::string_view title;
-    bool minimized;
-    bool maximized;
     bool decorated;
 
     LinuxPlatformImpl& linuxPlatform;
