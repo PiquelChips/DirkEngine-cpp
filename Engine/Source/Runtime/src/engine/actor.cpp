@@ -15,7 +15,7 @@
 
 namespace dirk {
 
-Actor::Actor(const ActorCreateInfo& spawnInfo, World* world)
+Actor::Actor(const ActorCreateInfo& spawnInfo, World& world)
     : world(world),
       name(spawnInfo.name),
       transform(spawnInfo.transform),
@@ -31,7 +31,7 @@ void Actor::setModel(const std::string_view name) {
 void Actor::tick(float deltaTime) {}
 
 void Actor::destroy() {
-    getWorld()->destroyActor(this);
+    getWorld().destroyActor(this);
 }
 
 void Actor::setTransform(const Transform& inTransform) {
@@ -182,7 +182,6 @@ void Actor::updateData() {
     }
 
     descriptorSet = renderer->createDescriptorSets(uniformBuffer, textureSampler, textureImageMemoryView.view, vk::ImageLayout::eShaderReadOnlyOptimal);
-
     renderer->endSingleTimeCommands(commandBuffer, resources.queues.graphicsQueue);
 }
 

@@ -29,12 +29,6 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 #define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
 
-struct SwapChainSupportDetails {
-    vk::SurfaceCapabilitiesKHR capabilities;
-    std::vector<vk::SurfaceFormatKHR> formats;
-    std::vector<vk::PresentModeKHR> presentModes;
-};
-
 /**
  * The vulkan implementation of the renderer
  */
@@ -43,15 +37,17 @@ public:
     Renderer();
     ~Renderer();
 
+    void init();
     void render();
 
     std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);
     void destroyViewport(std::shared_ptr<Viewport> viewport);
 
-    std::vector<SwapChainImage> createSwapChain(const SwapChainCreateInfo& createInfo);
+    std::vector<SwapchainImage> createSwapChain(const SwapChainCreateInfo& createInfo);
 
     vk::ShaderModule loadShaderModule(const std::string& shaderName);
     vk::Semaphore createSemaphore();
+    vk::CommandBuffer createCommandBuffer();
     vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
 
     inline RendererResources getResources() { return RendererResources{
@@ -65,20 +61,20 @@ public:
     inline const RendererProperties& getProperties() { return properties; }
     inline const DeviceFeatures getDeviceFeatures() { return getDeviceFeatures(physicalDevice); }
 
+    // swap chain
+    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+    vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+    vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities);
+
 private:
     std::vector<std::shared_ptr<Viewport>> viewports;
 
 private:
     bool checkRequiredInstanceExtensions(std::vector<const char*>& extensions);
 
-    int getDeviceSuitability(vk::PhysicalDevice device);
+    int getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR surface);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
-    SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
-
-    // swap chain
-    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
-    vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
-    vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities);
+    QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 
 #ifdef ENABLE_VALIDATION_LAYERS
 private:
@@ -89,7 +85,6 @@ private:
         void* pUserData);
 
     bool checkValidationLayerSupport();
-    vk::DebugUtilsMessengerEXT setupDebugMessenger();
 
     vk::DebugUtilsMessengerEXT debugMessenger;
 #endif
@@ -126,7 +121,6 @@ public:
     vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor, uint32_t mipLevels = 1);
 
     std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
-    QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
 
     vk::CommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue);

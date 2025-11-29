@@ -1,5 +1,8 @@
 #pragma once
 
+#include "asserts.hpp"
+#include "logging/logging.hpp"
+
 // GLM
 #include <memory>
 #define GLM_FORCE_RADIANS
@@ -7,12 +10,26 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE        // vulkan uses the 0.0 to 1.0 ranges; opengl uses the -1.0 to 1.0 range
 #define GLM_ENABLE_EXPERIMENTAL            // for the glm hash functions
 #include "glm/glm.hpp"
-#include "vulkan/vulkan.hpp"
 
-#include "asserts.hpp"
-#include "logging/logging.hpp"
+#ifdef PLATFORM_LINUX
+#define VK_USE_PLATFORM_WAYLAND_KHR
+#endif
+
+#include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_enums.hpp"
+#include "vulkan/vulkan_funcs.hpp"
+#include "vulkan/vulkan_handles.hpp"
+#include "vulkan/vulkan_structs.hpp"
+
+#define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
+#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+#include "backends/imgui_impl_vulkan.h"
+#include "imgui.h"
 
 namespace dirk {
+
+DECLARE_LOG_CATEGORY_EXTERN(LogDirk);
+
 class IEngine;
 extern IEngine* gEngine;
 
@@ -31,11 +48,22 @@ struct RendererResources {
     vk::DescriptorSetLayout descriptorSetLayout;
 };
 
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
+
+    bool isComplete() {
+        return graphicsFamily.has_value() && presentFamily.has_value();
+    }
+};
+
 struct RendererProperties {
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
     bool anisotropy = false;
-    vk::Format swapChainImageFormat = vk::Format::eUndefined;
+    vk::SurfaceFormatKHR surfaceFormat = vk::Format::eUndefined;
+    vk::Format depthFormat = vk::Format::eUndefined;
     std::uint32_t minImageCount;
+    QueueFamilyIndices queueFamilyIndices;
 };
 
 struct DeviceFeatures {
@@ -64,20 +92,18 @@ struct DeviceFeatures {
 struct SwapChainCreateInfo {
     // OUTPUT
     vk::SwapchainKHR& swapChain; // the output swapchain
-    vk::Format& swapChainImageFormat;
     vk::Extent2D& swapChainExtent;
 
     // INPUT
-    vk::RenderPass renderPass;
     vk::SurfaceKHR surface;
     vk::Extent2D windowSize;
+    vk::SurfaceFormatKHR surfaceFormat;
+    vk::PresentModeKHR presentMode;
 };
 
-struct SwapChainImage {
-    vk::ImageView imageView;
-    vk::Framebuffer frameBuffer;
-
-    operator bool() const { return imageView && frameBuffer; }
+struct SwapchainImage {
+    vk::Image image;
+    vk::ImageView view;
 };
 
 struct ImageMemoryView {
@@ -103,27 +129,23 @@ struct CreateImageMemoryViewInfo {
     uint32_t mipLevels = 1;
 };
 
-struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-
-    bool isComplete() {
-        return graphicsFamily.has_value() && presentFamily.has_value();
-    }
-};
-
 class IRenderer {
 public:
     virtual ~IRenderer() = default;
 
-    virtual std::vector<SwapChainImage> createSwapChain(const SwapChainCreateInfo& createInfo) = 0;
+    virtual std::vector<SwapchainImage> createSwapChain(const SwapChainCreateInfo& createInfo) = 0;
     virtual vk::ShaderModule loadShaderModule(const std::string& shaderName) = 0;
+    virtual vk::CommandBuffer createCommandBuffer() = 0;
     virtual vk::Semaphore createSemaphore() = 0;
     virtual vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout) = 0;
 
     virtual RendererResources getResources() = 0;
     virtual const RendererProperties& getProperties() = 0;
     virtual const DeviceFeatures getDeviceFeatures() = 0;
+
+    virtual vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) = 0;
+    virtual vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) = 0;
+    virtual vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities) = 0;
 
     // some utility functions
     virtual ImageMemoryView createImageMemoryView(CreateImageMemoryViewInfo& createInfo) = 0;
@@ -137,7 +159,6 @@ public:
     virtual vk::ImageView createImageView(vk::Image& image, vk::Format format, vk::ImageAspectFlags imageAspect = vk::ImageAspectFlagBits::eColor, uint32_t mipLevels = 1) = 0;
 
     virtual std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) = 0;
-    virtual QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device) = 0;
 
     virtual vk::CommandBuffer beginSingleTimeCommands() = 0;
     virtual void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue) = 0;
@@ -149,7 +170,8 @@ public:
 
 namespace Platform {
 class Window;
-}
+class Monitor;
+} // namespace Platform
 
 class IPlatform {
 public:
@@ -159,7 +181,14 @@ public:
     virtual void tick(float deltaTime) = 0;
     virtual void shutdownImGui() = 0;
 
-    virtual std::shared_ptr<Platform::Window>& getMainWindow() = 0;
+    virtual Platform::Window& getMainWindow() = 0;
+    virtual Platform::Window& getFocusedWindow() = 0;
+    virtual Platform::Monitor& createMonitor(void* platformHandle) = 0;
+    // TODO: remove
+    virtual vk::SurfaceKHR createTempSurface(vk::Instance instance) = 0;
+
+    virtual std::string_view getClipboardText() = 0;
+    virtual void setClipboardText(const std::string& text) = 0;
 };
 
 class IEngine {

@@ -1,7 +1,5 @@
 #include "common.hpp"
 
-// TINY GLTF
-#define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "tinygltf.h"
+namespace dirk {
+DEFINE_LOG_CATEGORY(LogDirk);
+}

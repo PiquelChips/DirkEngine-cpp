@@ -18,12 +18,12 @@ public:
 
     void tick(float deltaTime);
 
-    std::unordered_map<std::string_view, std::shared_ptr<Actor>>& getActors() { return actors; }
-    std::shared_ptr<Actor>& spawnActor(const ActorCreateInfo& spawnInfo);
+    std::unordered_map<std::string_view, std::unique_ptr<Actor>>& getActors() { return actors; }
+    void spawnActor(const ActorCreateInfo& spawnInfo);
     void destroyActor(Actor* actor);
 
 private:
-    std::unordered_map<std::string_view, std::shared_ptr<Actor>> actors;
+    std::unordered_map<std::string_view, std::unique_ptr<Actor>> actors;
 };
 
 } // namespace dirk

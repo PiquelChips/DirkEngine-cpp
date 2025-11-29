@@ -15,7 +15,7 @@ class World;
 class Camera;
 
 struct ActorCreateInfo {
-    const std::string_view name;
+    std::string_view name;
     const std::string_view modelName;
     Transform transform;
 };
@@ -26,7 +26,7 @@ struct ActorCreateInfo {
 class Actor {
 
 public:
-    Actor(const ActorCreateInfo& spawnInfo, World* world);
+    Actor(const ActorCreateInfo& spawnInfo, World& world);
 
     void tick(float deltaTime);
     void destroy();
@@ -37,7 +37,7 @@ public:
     inline bool isVisible() { return visible; }
 
 private:
-    const std::string_view name;
+    std::string_view name;
     bool visible = false;
 
 public:
@@ -53,7 +53,7 @@ public:
     inline const glm::vec3& getScale() const { return transform.scale; }
     inline void setScale(const glm::vec3& inScale);
 
-    inline World* getWorld() { return world; }
+    inline World& getWorld() { return world; }
 
 private:
     void updateTransformMatrix();
@@ -72,7 +72,7 @@ private:
 
     std::shared_ptr<const Model> model;
     // owned by world
-    World* world;
+    World& world;
 
     vk::DescriptorSet descriptorSet;
 

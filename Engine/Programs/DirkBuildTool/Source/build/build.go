@@ -1,7 +1,6 @@
 package build
 
 import (
-	"DirkBuildTool/config"
 	"DirkBuildTool/models"
 	"DirkBuildTool/module"
 	"DirkBuildTool/output"
@@ -13,9 +12,9 @@ import (
 )
 
 func Build(buildConfig *models.BuildConfig) error {
-	log.Printf("Building %s for %s\n", buildConfig.Target, buildConfig.Type.Name)
+	log.Printf("Building %s %s\n", buildConfig.Type.Name, buildConfig.Target)
 	modules := map[string]module.Module{}
-	for _, dir := range config.Dirs.Modules {
+	for _, dir := range buildConfig.SearchDirs {
 		modConfigs, err := searchDir(dir)
 		if err != nil {
 			return err
@@ -61,6 +60,9 @@ func Build(buildConfig *models.BuildConfig) error {
 		return nil
 	} else if _, ok := err.(*exec.ExitError); ok {
 		fmt.Printf("An error occured in the build process\n")
+		if buildConfig.ErrOnBuildFail {
+			return err
+		}
 		return nil
 	} else {
 		return err

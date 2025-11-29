@@ -1,5 +1,12 @@
 #include "platform/platform.hpp"
 #include "common.hpp"
+#include "platform/monitor.hpp"
+#include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_handles.hpp"
+
+#ifdef PLATFORM_LINUX
+#include "platform/linux/linux.hpp"
+#endif
 
 #include "imgui.h"
 #include "input/keys.hpp"
@@ -13,7 +20,17 @@
 
 namespace dirk::Platform {
 
-Platform::Platform(const PlatformCreateInfo& createInfo) : appName(createInfo.appName) {}
+DEFINE_LOG_CATEGORY(LogPlatform)
+DEFINE_LOG_CATEGORY(LogImGui)
+
+Platform::Platform(const PlatformCreateInfo& createInfo)
+    : appName(createInfo.appName) {
+#ifdef PLATFORM_LINUX
+    platformImpl = std::make_unique<Linux::LinuxPlatformImpl>(createInfo, *this);
+#else
+#error "no platform specified"
+#endif
+}
 
 Platform::~Platform() {
     if (getBackendData() != nullptr)
@@ -22,8 +39,10 @@ Platform::~Platform() {
 
 void Platform::initImGui() {
     windows.clear();
-    windows.resize(1);
+
     auto mainWindow = createWindow(WindowCreateInfo{ .title = appName });
+    check(mainWindow);
+    focusedWindow = mainWindow;
 
     ImGuiIO& io = ImGui::GetIO();
     IMGUI_CHECKVERSION();
@@ -33,10 +52,14 @@ void Platform::initImGui() {
 
     io.BackendPlatformUserData = (void*) bd;
     io.BackendPlatformName = bd->platformName.data();
-    io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
-    io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
-    io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;    // We can create multi-viewports on the Platform side (optional)
-    io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can call io.AddMouseViewportEvent() with correct data (optional)
+
+    // TODO: (ImGui) Enable all features
+    // io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
+    // io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
+    // io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+    // io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
+    // io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport;
+    // io.BackendFlags |= ImGuiBackendFlags_HasParentViewport;
 
     bd->context = ImGui::GetCurrentContext();
     bd->platform = this;
@@ -56,24 +79,15 @@ void Platform::initImGui() {
     platformIO.Platform_GetWindowFramebufferScale = ImGui_GetWindowFramebufferScale;
     platformIO.Platform_SetWindowFocus = ImGui_SetWindowFocus;
     platformIO.Platform_GetWindowFocus = ImGui_GetWindowFocus;
-    platformIO.Platform_GetWindowMinimized = ImGui_GetWindowMinimized;
+    platformIO.Platform_GetWindowMinimized = [](ImGuiViewport* vp) { DIRK_LOG(LogPlatform, WARNING, "ImGui::Platform_GetWindowMinimized not implemented"); return false; };
     platformIO.Platform_SetWindowTitle = ImGui_SetWindowTitle;
+    platformIO.Platform_SetWindowAlpha = [](ImGuiViewport*, float) { DIRK_LOG(LogPlatform, WARNING, "ImGui::Platform_SetWindowAlpha not implemented") };
     platformIO.Platform_CreateVkSurface = ImGui_CreateVkSurface;
 
-    platformIO.Platform_GetClipboardTextFn = nullptr;
-    platformIO.Platform_SetClipboardTextFn = nullptr;
-    platformIO.Platform_OpenInShellFn = nullptr;
+    platformIO.Platform_GetClipboardTextFn = ImGui_GetClipboardText;
+    platformIO.Platform_SetClipboardTextFn = ImGui_SetClipboardText;
 
-    // TODO: create mouse cursors
-    bd->mouseCursors[ImGuiMouseCursor_Arrow] = Cursor{};
-    bd->mouseCursors[ImGuiMouseCursor_TextInput] = Cursor{};
-    bd->mouseCursors[ImGuiMouseCursor_ResizeNS] = Cursor{};
-    bd->mouseCursors[ImGuiMouseCursor_ResizeEW] = Cursor{};
-    bd->mouseCursors[ImGuiMouseCursor_Hand] = Cursor{};
-    bd->mouseCursors[ImGuiMouseCursor_ResizeAll] = Cursor{};
-    bd->mouseCursors[ImGuiMouseCursor_ResizeNESW] = Cursor{};
-    bd->mouseCursors[ImGuiMouseCursor_ResizeNWSE] = Cursor{};
-    bd->mouseCursors[ImGuiMouseCursor_NotAllowed] = Cursor{};
+    // TODO: setup cursors
 
     // setup main viewport
     ImGuiViewportData* vd = IM_NEW(ImGuiViewportData)();
@@ -82,7 +96,7 @@ void Platform::initImGui() {
 
     ImGuiViewport* mainViewport = ImGui::GetMainViewport();
     mainViewport->PlatformUserData = vd;
-    mainViewport->PlatformHandle = (void*) bd->window->getPlatformHandle();
+    mainViewport->PlatformHandle = bd->window->getPlatformHandle();
     IM_UNUSED(mainViewport);
 }
 
@@ -96,15 +110,12 @@ void Platform::tick(float deltaTime) {
 
     auto size = bd->window->getSize();
     io.DisplaySize = ImVec2(size.width, size.height);
+    // TODO: framebuffer scale
     // Apple only
     // auto fbSize = bd->window->getFramebufferSize();
     // io.DisplayFramebufferScale = ImVec2((float) fbSize.width / (float) size.width, (float) fbSize.height / (float) size.height);
 
-    updateMonitors();
-    updateMouseData();
-    updateMouseCursor();
-
-    // TODO: process platform events
+    platformImpl->pollPlatformEvents();
 }
 
 void Platform::shutdownImGui() {
@@ -112,25 +123,25 @@ void Platform::shutdownImGui() {
     IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
 
     ImGuiIO& io = ImGui::GetIO();
-    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
 
     ImGui::DestroyPlatformWindows();
-
-    // TODO: destroy cursors
-    /**
-    for (ImGuiMouseCursor cursor_n = 0; cursor_n < ImGuiMouseCursor_COUNT; cursor_n++)
-        glfwDestroyCursor(bd->mouseCursors[cursor_n]);
-    */
 
     io.BackendPlatformName = nullptr;
     io.BackendPlatformUserData = nullptr;
     io.BackendFlags &= ~(ImGuiBackendFlags_HasMouseCursors | ImGuiBackendFlags_HasSetMousePos | ImGuiBackendFlags_HasGamepad | ImGuiBackendFlags_PlatformHasViewports | ImGuiBackendFlags_HasMouseHoveredViewport);
-    platform_io.ClearPlatformHandlers();
+    platformIO.ClearPlatformHandlers();
     contextMap.erase(bd->window);
     IM_DELETE(bd);
 }
 
+Monitor& Platform::createMonitor(void* platformHandle) {
+    monitors.push_back(std::make_unique<Monitor>(platformHandle, *this));
+    return *monitors.back();
+}
+
 void Platform::ImGui_CreateWindow(ImGuiViewport* viewport) {
+    DIRK_LOG(LogImGui, DEBUG, "creating window")
     ImGuiData* bd = getBackendData();
     ImGuiViewportData* vd = IM_NEW(ImGuiViewportData)();
     viewport->PlatformUserData = vd;
@@ -163,7 +174,7 @@ void Platform::ImGui_DestroyWindow(ImGuiViewport* viewport) {
             // because we will not receive any release events after window is destroyed.
             for (int i = 0; i < bd->keyOwnerWindows.size(); i++)
                 if (bd->keyOwnerWindows[i] == vd->window)
-                    bd->platform->keyCallback(vd->window, (Input::Key) i, Input::KeyState::Released);
+                    bd->platform->keyCallback(*vd->window, (Input::Key) i, Input::KeyState::Released);
 
             bd->platform->contextMap.erase(vd->window);
             bd->platform->destroyWindow(vd->window);
@@ -175,8 +186,8 @@ void Platform::ImGui_DestroyWindow(ImGuiViewport* viewport) {
 }
 
 void Platform::ImGui_ShowWindow(ImGuiViewport* viewport) {
-    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
-    vd->window->updateVisibility(true);
+    ImGuiViewportData* vd = static_cast<ImGuiViewportData*>(viewport->PlatformUserData);
+    vd->window->show();
 }
 
 void Platform::ImGui_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos) {
@@ -204,7 +215,7 @@ ImVec2 Platform::ImGui_GetWindowSize(ImGuiViewport* viewport) {
 }
 
 ImVec2 Platform::ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport) {
-    // framebuffer scale only necessary on Apple
+    // TODO: framebuffer scale stuff
     /**
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
     ImVec2 framebuffer_scale;
@@ -217,17 +228,12 @@ ImVec2 Platform::ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport) {
 void Platform::ImGui_SetWindowFocus(ImGuiViewport* viewport) {
     ImGuiData* bd = getBackendData();
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
-    bd->platform->focusWindow(vd->window);
+    vd->window->focus();
 }
 
 bool Platform::ImGui_GetWindowFocus(ImGuiViewport* viewport) {
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
     return vd->window->isFocused();
-}
-
-bool Platform::ImGui_GetWindowMinimized(ImGuiViewport* viewport) {
-    ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
-    return vd->window->isMinimized();
 }
 
 void Platform::ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title) {
@@ -236,19 +242,32 @@ void Platform::ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title) 
 }
 
 int Platform::ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface) {
+    // TODO: should be removed with #76
     ImGuiData* bd = getBackendData();
     ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData;
     IM_UNUSED(bd);
 
-    outSurface = (ImU64*) (VkSurfaceKHR) vd->window->createSurface((VkInstance) instance);
+    vd->window->getPlatformImpl().createVulkanSurface((VkInstance) instance, (VkSurfaceKHR*) outSurface);
     return (int) vk::Result::eSuccess;
 }
 
-void Platform::windowSizeCallback(std::shared_ptr<Window> window, vk::Extent2D inSize) {
-    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle())) {
+const char* Platform::ImGui_GetClipboardText(ImGuiContext* ctx) {
+    ImGuiData* data = getBackendData();
+    check(data->context = ctx);
+
+    return data->platform->getClipboardText().data();
+}
+
+void Platform::ImGui_SetClipboardText(ImGuiContext* ctx, const char* text) {
+    ImGuiData* data = getBackendData();
+    check(data->context = ctx);
+    data->platform->setClipboardText(text);
+}
+
+void Platform::windowSizeCallback(Window& window, vk::Extent2D inSize) {
+    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle())) {
         if (ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData) {
             bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowSizeEventFrame + 1);
-            // data->IgnoreWindowSizeEventFrame = -1;
             if (ignore_event)
                 return;
         }
@@ -256,11 +275,10 @@ void Platform::windowSizeCallback(std::shared_ptr<Window> window, vk::Extent2D i
     }
 }
 
-void Platform::windowPosCallback(std::shared_ptr<Window> window, glm::vec2 inPos) {
-    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle())) {
+void Platform::windowMoveCallback(Window& window) {
+    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle())) {
         if (ImGuiViewportData* vd = (ImGuiViewportData*) viewport->PlatformUserData) {
             bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowPosEventFrame + 1);
-            // data->IgnoreWindowPosEventFrame = -1;
             if (ignore_event)
                 return;
         }
@@ -268,50 +286,50 @@ void Platform::windowPosCallback(std::shared_ptr<Window> window, glm::vec2 inPos
     }
 }
 
-void Platform::windowCloseCallback(std::shared_ptr<Window> window) {
-    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window->getPlatformHandle()))
+void Platform::windowCloseCallback(Window& window) {
+    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle()))
         viewport->PlatformRequestClose = true;
+
+    if (&window == &getMainWindow())
+        gEngine->exit("main window closed");
 }
 
-void Platform::focusWindowCallback(std::shared_ptr<Window> window, bool focused) {
-    ImGuiData* bd = getBackendData(window);
+void Platform::focusWindowCallback(Window& window) {
+    {
+        ImGuiData* bd = getBackendData(*focusedWindow);
 
-    // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
-    bd->mouseIgnoreButtonUp = (bd->mouseIgnoreButtonUpWaitForFocusLoss && focused == 0);
-    bd->mouseIgnoreButtonUpWaitForFocusLoss = false;
+        // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
+        bd->mouseIgnoreButtonUp = bd->mouseIgnoreButtonUpWaitForFocusLoss;
+        bd->mouseIgnoreButtonUpWaitForFocusLoss = false;
 
-    ImGuiIO& io = ImGui::GetIO(bd->context);
-    io.AddFocusEvent(focused);
-}
+        ImGuiIO& io = ImGui::GetIO(bd->context);
+        io.AddFocusEvent(false);
+    }
+    {
+        ImGuiData* bd = getBackendData(window);
 
-void Platform::cursorEnterCallback(std::shared_ptr<Window> window, bool entered) {
-    ImGuiData* bd = getBackendData(window);
-    ImGuiIO& io = ImGui::GetIO(bd->context);
+        // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
+        bd->mouseIgnoreButtonUp = false;
+        bd->mouseIgnoreButtonUpWaitForFocusLoss = false;
 
-    if (entered) {
-        bd->mouseWindow = window;
-        io.AddMousePosEvent(bd->lastValidMousePos.x, bd->lastValidMousePos.y);
-    } else if (!entered && bd->mouseWindow == window) {
-        bd->lastValidMousePos = { io.MousePos.x, io.MousePos.y };
-        bd->mouseWindow = nullptr;
-        io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+        ImGuiIO& io = ImGui::GetIO(bd->context);
+        io.AddFocusEvent(true);
     }
 }
 
-void Platform::cursorPosCallback(std::shared_ptr<Window> window, glm::vec2 pos) {
+void Platform::cursorPosCallback(Window& window, glm::vec2 pos) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        auto windowPos = window->getPosition();
+        auto windowPos = window.getPosition();
         pos.x += windowPos.x;
         pos.y += windowPos.y;
     }
     io.AddMousePosEvent(pos.x, pos.y);
-    bd->lastValidMousePos = pos;
 }
 
-void Platform::mouseButtonCallback(std::shared_ptr<Window> window, Input::MouseButton button, Input::KeyState action) {
+void Platform::mouseButtonCallback(Window& window, Input::MouseButton button, Input::KeyState action) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
@@ -322,26 +340,26 @@ void Platform::mouseButtonCallback(std::shared_ptr<Window> window, Input::MouseB
     io.AddMouseButtonEvent((int) button, action == Input::KeyState::Pressed);
 }
 
-void Platform::mouseScrollCallback(std::shared_ptr<Window> window, glm::vec2 offset) {
+void Platform::mouseScrollCallback(Window& window, glm::vec2 offset) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
     io.AddMouseWheelEvent(offset.x, offset.y);
 }
 
-void Platform::keyCallback(std::shared_ptr<Window> window, Input::Key key, Input::KeyState action) {
+void Platform::keyCallback(Window& window, Input::Key key, Input::KeyState action) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
     if (action != Input::KeyState::Pressed && action != Input::KeyState::Released)
         return;
 
-    bd->keyOwnerWindows[key] = (action == Input::KeyState::Pressed) ? window : nullptr;
+    bd->keyOwnerWindows[key] = (action == Input::KeyState::Pressed) ? &window : nullptr;
 
     io.AddKeyEvent(keyToImGuiKey(key), (action == Input::KeyState::Pressed));
 }
 
-void Platform::charCallback(std::shared_ptr<Window> window, unsigned int c) {
+void Platform::charCallback(Window& window, unsigned int c) {
     ImGuiData* bd = getBackendData(window);
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
@@ -352,152 +370,49 @@ ImGuiData* Platform::getBackendData() {
     return ImGui::GetCurrentContext() ? (ImGuiData*) ImGui::GetIO().BackendPlatformUserData : nullptr;
 }
 
-ImGuiData* Platform::getBackendData(std::shared_ptr<Window> window) {
-    ImGuiData* bd = getBackendData(window);
-    ImGuiContext* ctx = bd->platform->contextMap.at(window);
+ImGuiData* Platform::getBackendData(Window& window) {
+    ImGuiContext* ctx = contextMap.at(&window);
     return (ImGuiData*) ImGui::GetIO(ctx).BackendPlatformUserData;
 }
 
 void Platform::updateMonitors() {
-    // TODO: update monitors
-    /**
-    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
 
-    int monitors_count = 0;
-    GLFWmonitor** glfw_monitors = glfwGetMonitors(&monitors_count);
-    if (monitors_count == 0) // Preserve existing monitor list if there are none. Happens on macOS sleeping (#5683)
+    auto& monitors = getMonitors();
+    if (monitors.size() == 0) // Preserve existing monitor list if there are none. Happens on macOS sleeping
         return;
 
-    platform_io.Monitors.resize(0);
-    for (int n = 0; n < monitors_count; n++) {
-        ImGuiPlatformMonitor monitor;
-        int x, y;
-        glfwGetMonitorPos(glfw_monitors[n], &x, &y);
-        const GLFWvidmode* vid_mode = glfwGetVideoMode(glfw_monitors[n]);
-        if (vid_mode == nullptr)
-            continue; // Failed to get Video mode (e.g. Emscripten does not support this function)
-        monitor.MainPos = monitor.WorkPos = ImVec2((float) x, (float) y);
-        monitor.MainSize = monitor.WorkSize = ImVec2((float) vid_mode->width, (float) vid_mode->height);
-#if GLFW_HAS_MONITOR_WORK_AREA
-        int w, h;
-        glfwGetMonitorWorkarea(glfw_monitors[n], &x, &y, &w, &h);
-        if (w > 0 && h > 0) // Workaround a small GLFW issue reporting zero on monitor changes: https://github.com/glfw/glfw/pull/1761
-        {
-            monitor.WorkPos = ImVec2((float) x, (float) y);
-            monitor.WorkSize = ImVec2((float) w, (float) h);
-        }
-#endif
-        float scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfw_monitors[n]);
-        if (scale == 0.0f)
-            continue; // Some accessibility applications are declaring virtual monitors with a DPI of 0, see #7902.
-        monitor.DpiScale = scale;
-        monitor.PlatformHandle = (void*) glfw_monitors[n]; // [...] GLFW doc states: "guaranteed to be valid only until the monitor configuration changes"
-        platform_io.Monitors.push_back(monitor);
+    platformIO.Monitors.resize(0);
+    for (auto& monitor : monitors) {
+        ImGuiPlatformMonitor imGuiMonitor;
+
+        auto position = monitor->getPosition();
+        auto& vidMode = monitor->getVideoMode();
+        imGuiMonitor.MainPos = imGuiMonitor.WorkPos = ImVec2(position.x, position.y);
+        imGuiMonitor.MainSize = imGuiMonitor.WorkSize = ImVec2(vidMode.size.width, vidMode.size.height);
+
+        imGuiMonitor.DpiScale = 1.f;
+        imGuiMonitor.PlatformHandle = monitor->getPlatformHandle();
+        platformIO.Monitors.push_back(imGuiMonitor);
     }
-    */
 }
 
-void Platform::updateMouseData() {
-    // TODO: update mouse data
-    /**
-    ImGuiData* bd = ImGui_ImplGlfw_GetBackendData();
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
-
-    ImGuiID mouse_viewport_id = 0;
-    const ImVec2 mouse_pos_prev = io.MousePos;
-    for (int n = 0; n < platform_io.Viewports.Size; n++) {
-        ImGuiViewport* viewport = platform_io.Viewports[n];
-        GLFWwindow* window = (GLFWwindow*) viewport->PlatformHandle;
-
-#ifdef EMSCRIPTEN_USE_EMBEDDED_GLFW3
-        const bool is_window_focused = true;
-#else
-        const bool is_window_focused = glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0;
-#endif
-        if (is_window_focused) {
-            // (Optional) Set OS mouse position from Dear ImGui if requested (rarely used, only when io.ConfigNavMoveSetMousePos is enabled by user)
-            // When multi-viewports are enabled, all Dear ImGui positions are same as OS positions.
-            if (io.WantSetMousePos)
-                glfwSetCursorPos(window, (double) (mouse_pos_prev.x - viewport->Pos.x), (double) (mouse_pos_prev.y - viewport->Pos.y));
-
-            // (Optional) Fallback to provide mouse position when focused (ImGui_ImplGlfw_CursorPosCallback already provides this when hovered or captured)
-            if (bd->MouseWindow == nullptr) {
-                double mouse_x, mouse_y;
-                glfwGetCursorPos(window, &mouse_x, &mouse_y);
-                if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-                    // Single viewport mode: mouse position in client window coordinates (io.MousePos is (0,0) when the mouse is on the upper-left corner of the app window)
-                    // Multi-viewport mode: mouse position in OS absolute coordinates (io.MousePos is (0,0) when the mouse is on the upper-left of the primary monitor)
-                    int window_x, window_y;
-                    glfwGetWindowPos(window, &window_x, &window_y);
-                    mouse_x += window_x;
-                    mouse_y += window_y;
-                }
-                bd->LastValidMousePos = ImVec2((float) mouse_x, (float) mouse_y);
-                io.AddMousePosEvent((float) mouse_x, (float) mouse_y);
-            }
-        }
-
-        // (Optional) When using multiple viewports: call io.AddMouseViewportEvent() with the viewport the OS mouse cursor is hovering.
-        // If ImGuiBackendFlags_HasMouseHoveredViewport is not set by the backend, Dear imGui will ignore this field and infer the information using its flawed heuristic.
-        // - [X] GLFW >= 3.3 backend ON WINDOWS ONLY does correctly ignore viewports with the _NoInputs flag (since we implement hit via our WndProc hook)
-        //       On other platforms we rely on the library fallbacking to its own search when reporting a viewport with _NoInputs flag.
-        // - [!] GLFW <= 3.2 backend CANNOT correctly ignore viewports with the _NoInputs flag, and CANNOT reported Hovered Viewport because of mouse capture.
-        //       Some backend are not able to handle that correctly. If a backend report an hovered viewport that has the _NoInputs flag (e.g. when dragging a window
-        //       for docking, the viewport has the _NoInputs flag in order to allow us to find the viewport under), then Dear ImGui is forced to ignore the value reported
-        //       by the backend, and use its flawed heuristic to guess the viewport behind.
-        // - [X] GLFW backend correctly reports this regardless of another viewport behind focused and dragged from (we need this to find a useful drag and drop target).
-        // FIXME: This is currently only correct on Win32. See what we do below with the WM_NCHITTEST, missing an equivalent for other systems.
-        // See https://github.com/glfw/glfw/issues/1236 if you want to help in making this a GLFW feature.
-#if GLFW_HAS_MOUSE_PASSTHROUGH
-        const bool window_no_input = (viewport->Flags & ImGuiViewportFlags_NoInputs) != 0;
-        glfwSetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH, window_no_input);
-#endif
-#if GLFW_HAS_MOUSE_PASSTHROUGH || GLFW_HAS_WINDOW_HOVERED
-        if (glfwGetWindowAttrib(window, GLFW_HOVERED))
-            mouse_viewport_id = viewport->ID;
-#else
-        // We cannot use bd->MouseWindow maintained from CursorEnter/Leave callbacks, because it is locked to the window capturing mouse.
-#endif
-    }
-
-    if (io.BackendFlags & ImGuiBackendFlags_HasMouseHoveredViewport)
-        io.AddMouseViewportEvent(mouse_viewport_id);
-
-    */
+Window* Platform::createWindow(const WindowCreateInfo& createInfo) {
+    windows.push_back(std::make_unique<Window>(
+        createInfo,
+        *this,
+        platformImpl->createPlatformWindow(createInfo)));
+    return windows.back().get();
 }
 
-void Platform::updateMouseCursor() {
-    // TODO: update mouse cursor
-    /**
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuiData* bd = ImGui_ImplGlfw_GetBackendData();
-    if ((io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) || glfwGetInputMode(bd->Window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
-        return;
-
-    ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
-    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
-    for (int n = 0; n < platform_io.Viewports.Size; n++) {
-        GLFWwindow* window = (GLFWwindow*) platform_io.Viewports[n]->PlatformHandle;
-        if (imgui_cursor == ImGuiMouseCursor_None || io.MouseDrawCursor) {
-            // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-        } else {
-            // Show OS mouse cursor
-            // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
-            glfwSetCursor(window, bd->MouseCursors[imgui_cursor] ? bd->MouseCursors[imgui_cursor] : bd->MouseCursors[ImGuiMouseCursor_Arrow]);
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+void Platform::destroyWindow(Window* window) {
+    for (auto it = windows.begin(); it < windows.end(); ++it) {
+        if (it->get() == window) {
+            windows.erase(it);
+            return;
         }
     }
-    */
 }
-
-// TODO: window createion and destruction
-std::shared_ptr<Window> Platform::createWindow(const WindowCreateInfo& createInfo) {
-    return nullptr;
-}
-void Platform::destroyWindow(std::shared_ptr<Window> window) {}
-void Platform::focusWindow(std::shared_ptr<Window> window) {}
 
 // clang-format off
 ImGuiKey Platform::keyToImGuiKey(Input::Key key)
@@ -623,16 +538,11 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     case Input::Key::F22: return ImGuiKey_F22;
     case Input::Key::F23: return ImGuiKey_F23;
     case Input::Key::F24: return ImGuiKey_F24;
-    default: return ImGuiKey_None;
+    default:
+        DIRK_LOG(LogPlatform, ERROR, "no imgui equivalent for key " << key)
+        return ImGuiKey_None;
     }
 }
 // clang-format on
-
-std::vector<const char*> getRequiredExtensions() {
-#ifdef PLATFORM_LINUX
-    // return Linux::getRequiredExtensions();
-#endif
-    return std::vector<const char*>();
-}
 
 } // namespace dirk::Platform

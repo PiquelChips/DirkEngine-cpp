@@ -1,16 +1,23 @@
 #include "render/viewport.hpp"
+#include "asserts.hpp"
+#include "backends/imgui_impl_vulkan.h"
+#include "common.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
 #include "glm/trigonometric.hpp"
+#include "imgui.h"
 #include "render/camera.hpp"
 #include "render/renderer.hpp"
+#include "vulkan/vulkan_core.h"
+#include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
+#include "vulkan/vulkan_structs.hpp"
 #include <memory>
 
 namespace dirk {
 
 Viewport::Viewport(const ViewportCreateInfo& createInfo)
-    : world(createInfo.world) {
+    : world(createInfo.world), size(createInfo.size), name(createInfo.name) {
     camera = std::make_unique<Camera>(
         CameraCreateInfo{
             .positon = { 0.f, 1000.f, 1000.f },
@@ -19,7 +26,7 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
             .nearClip = .1f,
             .farClip = 100000.f,
         },
-        this);
+        *this);
 
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
@@ -38,79 +45,14 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
     createRenderResources();
 }
 
+Viewport::~Viewport() {
+    ImGui_ImplVulkan_RemoveTexture(descriptorSet);
+}
+
 void Viewport::createRenderResources() {
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
     auto properties = renderer->getProperties();
-
-    // RENDER PASS
-
-    vk::AttachmentDescription colorAttachment{};
-    colorAttachment.format = properties.swapChainImageFormat;
-    colorAttachment.samples = properties.msaaSamples;
-    colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-    colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-    colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
-    colorAttachment.finalLayout = vk::ImageLayout::eColorAttachmentOptimal;
-
-    vk::AttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
-
-    vk::AttachmentDescription depthAttachment{};
-    depthAttachment.format = depthFormat;
-    depthAttachment.samples = properties.msaaSamples;
-    depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-    depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
-    depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-    depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-    depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
-    depthAttachment.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-
-    vk::AttachmentReference depthAttachmentRef{};
-    depthAttachmentRef.attachment = 1;
-    depthAttachmentRef.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-
-    vk::AttachmentDescription colorAttachmentResolve{};
-    colorAttachmentResolve.format = properties.swapChainImageFormat;
-    colorAttachmentResolve.samples = vk::SampleCountFlagBits::e1;
-    colorAttachmentResolve.loadOp = vk::AttachmentLoadOp::eDontCare;
-    colorAttachmentResolve.storeOp = vk::AttachmentStoreOp::eStore;
-    colorAttachmentResolve.initialLayout = vk::ImageLayout::eUndefined;
-    colorAttachmentResolve.finalLayout = vk::ImageLayout::ePresentSrcKHR;
-
-    vk::AttachmentReference colorAttachmentResolveRef{};
-    colorAttachmentResolveRef.attachment = 2;
-    colorAttachmentResolveRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
-
-    vk::SubpassDescription subpass{};
-    subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
-    subpass.pResolveAttachments = &colorAttachmentResolveRef;
-
-    vk::SubpassDependency dependency{};
-    // src
-    dependency.srcSubpass = vk::SubpassExternal;
-    dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests;
-    dependency.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-    // dst
-    dependency.dstSubpass = 0;
-    dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests;
-    dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-
-    std::array attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
-    vk::RenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.sType = vk::StructureType::eRenderPassCreateInfo;
-    renderPassInfo.attachmentCount = attachments.size();
-    renderPassInfo.pAttachments = attachments.data();
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
-
-    renderPass = resources.device.createRenderPass(renderPassInfo);
 
     // GRPAHICS PIPELINE
 
@@ -201,9 +143,15 @@ void Viewport::createRenderResources() {
     pipelineLayoutInfo.pSetLayouts = &resources.descriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
 
-    auto pipelineLayout = resources.device.createPipelineLayout(pipelineLayoutInfo);
-    // actually create the graphics pipeline
+    pipelineLayout = resources.device.createPipelineLayout(pipelineLayoutInfo);
 
+    std::array<vk::Format, 1> colorAttachmentFormats{ properties.surfaceFormat.format };
+    vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{};
+    pipelineRenderingCreateInfo.colorAttachmentCount = colorAttachmentFormats.size();
+    pipelineRenderingCreateInfo.pColorAttachmentFormats = colorAttachmentFormats.data();
+    pipelineRenderingCreateInfo.depthAttachmentFormat = properties.depthFormat;
+
+    // actually create the graphics pipeline
     vk::GraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = vk::StructureType::eGraphicsPipelineCreateInfo;
     pipelineInfo.stageCount = 2;
@@ -220,23 +168,21 @@ void Viewport::createRenderResources() {
     pipelineInfo.pDynamicState = &dynamicState;
 
     pipelineInfo.layout = pipelineLayout;
-    pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
 
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
-    vk::Pipeline pipeline = resources.device.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo).value;
+    pipelineInfo.pNext = &pipelineRenderingCreateInfo;
 
-    resources.device.destroyShaderModule(vert);
-    resources.device.destroyShaderModule(frag);
+    pipeline = resources.device.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo).value;
 
     // COLOR RESOURCES
 
     CreateImageMemoryViewInfo colorInfo{
         .width = size.width,
         .height = size.height,
-        .format = properties.swapChainImageFormat,
+        .format = properties.surfaceFormat.format,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
         .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
@@ -246,16 +192,10 @@ void Viewport::createRenderResources() {
 
     // DEPTH RESOURCES
 
-    depthFormat = Renderer::findSupportedFormat(
-        resources.physicalDevice,
-        { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint },
-        vk::ImageTiling::eOptimal,
-        vk::FormatFeatureFlagBits::eDepthStencilAttachment);
-
     CreateImageMemoryViewInfo imvInfo{
         .width = size.width,
         .height = size.height,
-        .format = depthFormat,
+        .format = properties.depthFormat,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
         .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
@@ -264,59 +204,95 @@ void Viewport::createRenderResources() {
     };
     depthImageMemoryView = renderer->createImageMemoryView(imvInfo);
 
+    CreateImageMemoryViewInfo outInfo{
+        .width = size.width,
+        .height = size.height,
+        .format = properties.surfaceFormat.format,
+        .tiling = vk::ImageTiling::eOptimal,
+        .usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment,
+        .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
+        .numSamples = vk::SampleCountFlagBits::e1,
+    };
+    outImageMemoryView = renderer->createImageMemoryView(outInfo);
+
     vk::CommandBuffer commandBuffer = renderer->beginSingleTimeCommands();
-    renderer->transitionImageLayout(commandBuffer, depthImageMemoryView.image, depthFormat, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal, 1);
+    renderer->transitionImageLayout(commandBuffer, depthImageMemoryView.image, properties.depthFormat, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+    renderer->transitionImageLayout(commandBuffer, outImageMemoryView.image, properties.surfaceFormat.format, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
     renderer->endSingleTimeCommands(commandBuffer, resources.queues.graphicsQueue);
 
-    // TODO: out image memory view (resolve output of render pass)
-    // TODO: out image sampler (to be used by ImGUI)
-    // make sure textures are rendered to shader read optimal layout
+    vk::SamplerCreateInfo samplerInfo{};
+    samplerInfo.magFilter = vk::Filter::eLinear;
+    samplerInfo.minFilter = vk::Filter::eLinear;
+    samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
+    samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat; // outside image bounds just use border color
+    samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
+    samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
+    samplerInfo.minLod = -1000;
+    samplerInfo.maxLod = 1000;
+    samplerInfo.maxAnisotropy = 1.0f;
+    sampler = resources.device.createSampler(samplerInfo);
 
-    // FRAME BUFFER
-
-    std::array framebufferAttachments{ colorImageMemoryView.view, depthImageMemoryView.view, outImageMemoryView.view };
-    vk::FramebufferCreateInfo framebufferInfo{};
-    framebufferInfo.sType = vk::StructureType::eFramebufferCreateInfo;
-    framebufferInfo.renderPass = renderPass;
-    framebufferInfo.attachmentCount = framebufferAttachments.size();
-    framebufferInfo.pAttachments = framebufferAttachments.data();
-    framebufferInfo.width = size.width;
-    framebufferInfo.height = size.height;
-    framebufferInfo.layers = 1;
-    framebuffer = resources.device.createFramebuffer(framebufferInfo);
+    descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, outImageMemoryView.view, (VkImageLayout) vk::ImageLayout::eShaderReadOnlyOptimal);
 }
 
 vk::SubmitInfo Viewport::render() {
+    auto properties = gEngine->getRenderer()->getProperties();
     commandBuffer.reset();
 
     vk::CommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
     beginInfo.pInheritanceInfo = nullptr;
 
     checkVulkan(commandBuffer.begin(&beginInfo));
 
-    vk::RenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = vk::StructureType::eRenderPassBeginInfo;
-    renderPassInfo.renderPass = renderPass;
-    renderPassInfo.framebuffer = framebuffer;
+    vk::RenderingAttachmentInfo colorAttachment{};
+    colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+    colorAttachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    colorAttachment.imageView = colorImageMemoryView.view;
+    colorAttachment.resolveImageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    colorAttachment.resolveMode = vk::ResolveModeFlagBits::eAverage;
+    colorAttachment.resolveImageView = outImageMemoryView.view;
+    colorAttachment.clearValue = vk::ClearColorValue(0.f, 0.f, 0.f, 1.f);
 
-    // make sure to render on the entire screen
-    renderPassInfo.renderArea.offset = vk::Offset2D(0, 0);
-    renderPassInfo.renderArea.extent = size;
+    vk::RenderingAttachmentInfo depthAttachment{};
+    depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
+    depthAttachment.imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+    depthAttachment.imageView = depthImageMemoryView.view;
+    depthAttachment.clearValue = vk::ClearDepthStencilValue(1.f, 0.f);
 
-    // clear color is black with 100% opacity
-    std::array<vk::ClearValue, 2> clearValues = { vk::ClearColorValue(0.f, 0.f, 0.f, 1.f), vk::ClearDepthStencilValue(1.f, 0.f) };
-    renderPassInfo.clearValueCount = clearValues.size();
-    renderPassInfo.pClearValues = clearValues.data();
+    vk::RenderingInfo renderInfo{};
+    renderInfo.renderArea.offset = vk::Offset2D(0, 0);
+    renderInfo.renderArea.extent = size;
 
-    commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
-    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+    renderInfo.colorAttachmentCount = 1;
+    renderInfo.pColorAttachments = &colorAttachment;
+    renderInfo.pDepthAttachment = &depthAttachment;
+    renderInfo.layerCount = 1;
 
-    for (auto pair : world->getActors()) {
+    commandBuffer.beginRendering(renderInfo);
+    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+
+    vk::Viewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(size.width);
+    viewport.height = static_cast<float>(size.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    commandBuffer.setViewport(0, 1, &viewport);
+
+    // scissor is dynamic
+    vk::Rect2D scissor{};
+    scissor.offset = vk::Offset2D(0, 0);
+    scissor.extent = size;
+    commandBuffer.setScissor(0, 1, &scissor);
+
+    for (auto& pair : world->getActors()) {
         pair.second->recordCommandBuffer(commandBuffer, pipelineLayout, camera);
     }
 
-    commandBuffer.endRenderPass();
+    commandBuffer.endRendering();
     commandBuffer.end();
 
     vk::SubmitInfo submitInfo{};
@@ -324,21 +300,17 @@ vk::SubmitInfo Viewport::render() {
 
     // wait semaphores
     vk::PipelineStageFlags waitStage{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    submitInfo.waitSemaphoreCount = 0;
-    submitInfo.pWaitSemaphores = nullptr;
     submitInfo.pWaitDstStageMask = &waitStage;
-    // signal semaphores
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
-
-    // command buffers
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
     return submitInfo;
 }
 
-// TODO: resize viewport
-void Viewport::resize(vk::Extent2D inSize) {}
+void Viewport::renderImGui() {
+    ImGui::Begin(name.data());
+    ImGui::Image((ImTextureID) (VkDescriptorSet) descriptorSet, ImVec2(size.width, size.height));
+    ImGui::End();
+}
 
 void Viewport::setWorld(std::shared_ptr<World> inWorld) { world = inWorld; }
 

@@ -21,7 +21,7 @@ struct CameraCreateInfo {
 
 class Camera {
 public:
-    Camera(const CameraCreateInfo& createInfo, Viewport* viewport);
+    Camera(const CameraCreateInfo& createInfo, Viewport& viewport);
 
     void tick(float deltaTime);
     void resize(vk::Extent2D inSize);
@@ -52,7 +52,7 @@ private:
     vk::Extent2D size;
 
     // camera is owned by the viewport
-    Viewport* viewport;
+    Viewport& viewport;
 
     static constexpr glm::vec3 upDirection{ 0.f, 1.f, 0.f };
     static constexpr float SENSITIVITY = .002f;

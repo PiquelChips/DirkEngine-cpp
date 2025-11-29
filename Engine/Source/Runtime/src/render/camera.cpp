@@ -11,9 +11,9 @@ namespace dirk {
 
 DEFINE_LOG_CATEGORY(LogCamera);
 
-Camera::Camera(const CameraCreateInfo& createInfo, Viewport* viewport)
+Camera::Camera(const CameraCreateInfo& createInfo, Viewport& viewport)
     : viewport(viewport),
-      size(viewport->getSize()),
+      size(viewport.getSize()),
       position(createInfo.positon),
       forwardDirection(glm::normalize(createInfo.forwardDirection)),
       fov(createInfo.fov),

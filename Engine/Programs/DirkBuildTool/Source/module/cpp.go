@@ -29,8 +29,13 @@ type CppModule struct {
 
 func (m *CppModule) GetIncludeDir() string      { return fmt.Sprintf("%s/include", m.Path) }
 func (m *CppModule) GetDefines() models.Defines { return m.Config.Defines }
-func (m *CppModule) IsLib() bool                { return m.Config.IsLib }
 func (m *CppModule) GetName() string            { return m.Name }
+func (m *CppModule) GetLibs() []string {
+	if m.Config.IsLib {
+		return []string{m.Name}
+	}
+	return nil
+}
 
 func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 	compileCommands := models.CompileCommands{}
@@ -127,11 +132,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 			maps.Copy(defines, dep.GetDefines())
 		}
 
-		if !dep.IsLib() {
-			continue
-		}
-
-		libs = append(libs, dep.GetName())
+		libs = append(libs, dep.GetLibs()...)
 	}
 
 	for _, dep := range m.Dependants {
@@ -150,7 +151,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,
-		IsLib:     m.IsLib(),
+		IsLib:     m.Config.IsLib,
 		IsStatic:  m.build.Type.Compact,
 		Optimize:  m.build.Type.Optimize,
 		CFlags:    fmt.Sprintf("-fPIC %s -std=%s", warningFlags, m.Std),

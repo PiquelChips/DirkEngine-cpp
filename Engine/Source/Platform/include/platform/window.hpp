@@ -11,17 +11,20 @@
 #include <cstdint>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 #pragma once
 
 namespace dirk::Platform {
 
-class PlatformWindowImpl;
+DECLARE_LOG_CATEGORY_EXTERN(LogWindow)
+
 class Platform;
+class Window;
 
 struct WindowCreateInfo {
     std::string_view title;
-    vk::Extent2D size;
+    vk::Extent2D size = { 550, 680 };
 
     bool focused;
     bool visible;
@@ -29,72 +32,20 @@ struct WindowCreateInfo {
     bool floating;
 };
 
-/**
- * Engine level abstration that handles converting platform level
- * windows to engine systems
- */
-class Window {
-public:
-    Window(const WindowCreateInfo& createInfo, Platform* platform);
-
-    vk::Extent2D getSize() const;
-    void setSize(vk::Extent2D inSize);
-    glm::vec2 getPosition() const;
-    void setPosition(const glm::vec2& inPosition);
-    void setTitle(std::string_view inTitle);
-    std::string_view getTitle();
-
-    uint32_t getImageCount() { return swapChainImages.size(); }
-    vk::RenderPass getRenderpass() { return renderPass; }
-
-    void* getPlatformHandle();
-
-    bool isFocused();
-    bool isMinimized();
-
-    void updateVisibility(bool inVisible);
-
-    vk::SurfaceKHR createSurface(vk::Instance instance);
-
-    vk::SubmitInfo render(ImDrawData* drawData);
-    vk::PresentInfoKHR present();
-
-private:
-    // render resources
-    vk::SwapchainKHR swapchain;
-    vk::SurfaceKHR surface;
-    vk::RenderPass renderPass;
-    vk::CommandBuffer commandBuffer;
-
-    vk::Semaphore imageAvailableSemaphore;
-    vk::Semaphore renderFinishedSemaphore;
-    std::vector<SwapChainImage> swapChainImages;
-
-    // settings
-    vk::Extent2D size;
-    vk::SurfaceFormatKHR surfaceFormat;
-    vk::PresentModeKHR presentMode;
-    vk::Format swapChainImageFormat;
-
-    // state
-    std::uint32_t imageIndex;
-
-    Platform* platform;
-    std::unique_ptr<PlatformWindowImpl> platformWindow;
-};
-
 // interface for all platform windows
 class PlatformWindowImpl {
 public:
     virtual ~PlatformWindowImpl() = default;
 
-    virtual void* getNativeHandle() = 0;
+    virtual void show() = 0;
+    virtual void hide() = 0;
 
-    virtual vk::SurfaceKHR createVulkanSurface(vk::Instance instance) = 0;
+    virtual vk::SurfaceKHR getVulkanSurface(vk::Instance instance) = 0;
+    virtual void createVulkanSurface(VkInstance instance, VkSurfaceKHR* surface) = 0;
+    virtual void* getPlatformHandle() = 0;
 
     virtual vk::Extent2D getSize() = 0;
     virtual void setSize(vk::Extent2D inSize) = 0;
-    virtual vk::Extent2D getFramebufferSize() = 0;
 
     virtual glm::vec2 getPosition() = 0;
     virtual void setPosition(const glm::vec2 inPosition) = 0;
@@ -103,7 +54,73 @@ public:
     virtual void setTitle(std::string_view inTitle) = 0;
 
     virtual bool isFocused() = 0;
-    virtual bool isMinimized() = 0;
+    virtual void focus() = 0;
+
+    virtual bool isDecorated() = 0;
+    virtual void setDecorated(bool inDecorated) = 0;
+
+    virtual void setOwningWindow(Window& window) = 0;
+    virtual Window& getOwningWindow() = 0;
+};
+
+/**
+ * Engine level abstration that handles converting platform level
+ * windows to engine systems
+ */
+class Window {
+public:
+    Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl);
+
+    void show() { platformWindow->show(); }
+    void hide() { platformWindow->hide(); }
+
+    vk::Extent2D getSize() { return platformWindow->getSize(); }
+    void setSize(vk::Extent2D inSize) { platformWindow->setSize(inSize); }
+    void onResize();
+
+    glm::vec2 getPosition() { return platformWindow->getPosition(); }
+    void setPosition(const glm::vec2 inPosition) { return platformWindow->setPosition(inPosition); }
+
+    std::string_view getTitle() { return platformWindow->getTitle(); }
+    void setTitle(std::string_view inTitle) { platformWindow->setTitle(inTitle); }
+
+    bool isFocused() { return platformWindow->isFocused(); }
+    void focus() { platformWindow->focus(); }
+
+    bool isDecorated();
+    void setDecorated(bool inDecorated);
+
+    uint32_t getImageCount() { return swapChainImages.size(); } // TODO: what?
+
+    PlatformWindowImpl& getPlatformImpl() { return *platformWindow.get(); }
+    void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
+    vk::SurfaceKHR getVulkanSurface() { return surface; }
+
+    vk::SubmitInfo render(ImDrawData* drawData);
+    vk::PresentInfoKHR present();
+
+private:
+    // render resources
+    vk::SwapchainKHR swapchain;
+    vk::SurfaceKHR surface;
+    vk::CommandBuffer commandBuffer;
+
+    // renderer settings
+    vk::Extent2D swapChainExtent;
+    vk::SurfaceFormatKHR surfaceFormat;
+    vk::PresentModeKHR presentMode;
+
+    std::vector<SwapchainImage> swapChainImages;
+    std::vector<std::tuple<vk::Semaphore, vk::Semaphore>> semaphores;
+
+    // state
+    std::uint32_t imageIndex = 0;
+    std::uint32_t semaphoreIndex = 0;
+
+    Platform& platform;
+    std::unique_ptr<PlatformWindowImpl> platformWindow;
+
+    static constexpr vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 };
 
 } // namespace dirk::Platform

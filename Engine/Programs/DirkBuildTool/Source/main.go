@@ -44,8 +44,10 @@ func main() {
 	}
 
 	buildConfig := &models.BuildConfig{
-		Target: target,
-		Type:   buildConf,
+		Target:         target,
+		Type:           buildConf,
+		SearchDirs:     config.Dirs.Modules,
+		ErrOnBuildFail: false,
 	}
 
 	if err := setup.Setup(buildConfig); err != nil {

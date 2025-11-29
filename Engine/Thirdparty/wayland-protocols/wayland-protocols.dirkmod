@@ -1,0 +1,8 @@
+{
+    "name": "wayland-protocols",
+    "c_standard": "c23",
+    "is_lib": true,
+    "dependencies": [
+        "Wayland"
+    ]
+}

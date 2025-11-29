@@ -7,32 +7,19 @@ type Defines map[string]string
 type Dependency interface {
 	GetIncludeDir() string
 	GetDefines() Defines
-	IsLib() bool
-	GetName() string
+	GetLibs() []string
 }
 
 type ThirdpartyDependency struct {
-	Name         string  `json:"name"`
-	IsHeaderOnly bool    `json:"header_only"`
-	IncludeDir   string  `json:"inc_dir"`
-	Defines      Defines `json:"defines,omitempty"`
+	IsHeaderOnly bool     `json:"header_only"`
+	External     bool     `json:"external"`
+	IncludeDir   string   `json:"include_dir"`    // relative (default is "include")
+	Libs         []string `json:"libs,omitempty"` // the names of the libraries needed without (ex: wayland needs wayland-client)
 }
 
-func (dep *ThirdpartyDependency) GetIncludeDir() string {
-	return dep.IncludeDir
-}
-
-func (dep *ThirdpartyDependency) GetDefines() Defines {
-	return dep.Defines
-}
-
-func (dep *ThirdpartyDependency) IsLib() bool {
-	return !dep.IsHeaderOnly
-}
-
-func (dep *ThirdpartyDependency) GetName() string {
-	return dep.Name
-}
+func (dep *ThirdpartyDependency) GetIncludeDir() string { return dep.IncludeDir }
+func (dep *ThirdpartyDependency) GetDefines() Defines   { return nil }
+func (dep *ThirdpartyDependency) GetLibs() []string     { return dep.Libs }
 
 type CompileCommands []*CompileCommand
 
@@ -44,8 +31,10 @@ type CompileCommand struct {
 }
 
 type BuildConfig struct {
-	Target string     `json:"target"`
-	Type   *BuildType `json:"build_type"`
+	Target         string     `json:"target"`
+	Type           *BuildType `json:"build_type"`
+	SearchDirs     []string   `json:"search_dirs"`
+	ErrOnBuildFail bool       `json:"err_on_build_fail"`
 }
 
 type SetupConfig struct {
@@ -56,8 +45,9 @@ type SetupConfig struct {
 }
 
 type BuildType struct {
-	Name     string            `json:"-"`
-	Optimize bool              `json:"optimize"`
-	Compact  bool              `json:"compact"` // compact the output (essentially statically linking)
-	Defines  map[string]string `json:"defines"`
+	Name         string            `json:"-"`
+	Optimize     bool              `json:"optimize"`
+	Compact      bool              `json:"compact"` // compact the output (essentially statically linking)
+	Defines      map[string]string `json:"defines"`
+	WarningLevel int               `json:"warning_level"` // TODO: actually use this
 }

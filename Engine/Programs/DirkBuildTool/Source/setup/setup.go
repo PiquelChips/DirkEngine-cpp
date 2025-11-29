@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"DirkBuildTool/build"
 	"DirkBuildTool/config"
 	"DirkBuildTool/models"
 	"DirkBuildTool/output"
@@ -9,10 +10,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 )
 
 const setupFile = "setup.json"
+const thirdpartyFile = "thirdparty.json"
 
 func isSetupValid(buildConfig *models.BuildConfig) bool {
 	// attempt to read setup file
@@ -57,47 +61,89 @@ func Setup(buildConfig *models.BuildConfig) error {
 
 	os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Intermediate), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Root))
 
-	vulkanDir := os.Getenv("VULKAN_SDK")
-	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so", vulkanDir), fmt.Sprintf("%s/libvulkan.so", config.Dirs.Binaries))
-	os.Symlink(fmt.Sprintf("%s/lib/libvulkan.so.1", vulkanDir), fmt.Sprintf("%s/libvulkan.so.1", config.Dirs.Binaries))
-
-	// hardcoded deps
-	config.Setup.Thirdparty = map[string]*models.ThirdpartyDependency{
-		"glm": {
-			Name:         "glm",
-			IsHeaderOnly: true,
-			IncludeDir:   ".",
-		},
-		"tinygltf": {
-			Name:         "tinygltf",
-			IsHeaderOnly: true,
-			IncludeDir:   ".",
-		},
-		"vulkan": {
-			Name:         "vulkan",
-			IsHeaderOnly: false,
-			IncludeDir:   fmt.Sprintf("%s/include", vulkanDir),
-		},
+	data, err := os.ReadFile(fmt.Sprintf("%s/%s", config.Dirs.Thirdparty, thirdpartyFile))
+	if err != nil {
+		return err
 	}
 
-	// make all paths absolute
-	for _, dep := range config.Setup.Thirdparty {
+	if err := json.Unmarshal(data, &config.Setup.Thirdparty); err != nil {
+		return err
+	}
+
+	// fixup some stuff
+	externalLibs := []string{}
+	for name, dep := range config.Setup.Thirdparty {
+		if dep.IncludeDir == "" {
+			dep.IncludeDir = "include"
+		}
+
+		if len(dep.Libs) == 0 && (dep.External || !dep.IsHeaderOnly) {
+			dep.Libs = []string{name}
+		}
+
 		if !filepath.IsAbs(dep.IncludeDir) {
-			dir, err := getDir(dep.Name)
+			dir, err := getDir(name)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			incDir, err := filepath.Abs(fmt.Sprintf("%s/%s", dir, dep.IncludeDir))
 			if err != nil {
-				return nil
+				return err
 			}
 			dep.IncludeDir = incDir
+		}
+
+		// for linking external libs
+		if dep.External {
+			externalLibs = append(externalLibs, dep.GetLibs()...)
+		}
+	}
+
+	paths := getLibraryPaths(config.General.LibSearchEnvs)
+	for _, lib := range externalLibs {
+		for _, path := range paths {
+			entries, err := os.ReadDir(path)
+			if err != nil {
+				continue
+			}
+			for _, entry := range entries {
+				if entry.IsDir() {
+					continue
+				}
+
+				if strings.HasPrefix(entry.Name(), fmt.Sprintf("lib%s.so", lib)) {
+					os.Symlink(fmt.Sprintf("%s/%s", path, entry.Name()), fmt.Sprintf("%s/%s", config.Dirs.Binaries, entry.Name()))
+				}
+			}
+		}
+	}
+
+	// build everything thats left
+	for name, dep := range config.Setup.Thirdparty {
+		if dep.External || dep.IsHeaderOnly {
+			continue
+		}
+
+		// TODO: fix compile commands generation
+		if err := build.Build(&models.BuildConfig{
+			Target: name,
+			Type: &models.BuildType{
+				Name:         "Thirdparty",
+				Optimize:     true,
+				Compact:      buildConfig.Type.Compact,
+				Defines:      nil,
+				WarningLevel: 0, // no warnings for thirdparty stuff
+			},
+			SearchDirs:     []string{config.Dirs.Thirdparty},
+			ErrOnBuildFail: true,
+		}); err != nil {
+			return err
 		}
 	}
 
 	// write the file
-	data, err := json.Marshal(config.Setup)
+	data, err = json.Marshal(config.Setup)
 	if err != nil {
 		return nil
 	}
@@ -108,4 +154,24 @@ func Setup(buildConfig *models.BuildConfig) error {
 
 func getDir(name string) (string, error) {
 	return filepath.Abs(fmt.Sprintf("%s/%s", config.Dirs.Thirdparty, name))
+}
+
+func getLibraryPaths(envVars []string) []string {
+	paths := []string{}
+
+	for _, envVar := range envVars {
+		env := os.Getenv(envVar)
+		for path := range strings.SplitSeq(env, ":") {
+			if path == "" {
+				continue
+			}
+			if slices.Contains(paths, path) {
+				continue
+			}
+
+			paths = append(paths, path)
+		}
+	}
+
+	return paths
 }

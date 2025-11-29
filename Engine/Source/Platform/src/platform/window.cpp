@@ -1,80 +1,74 @@
 #include "platform/window.hpp"
 #include "asserts.hpp"
-#include "backends/imgui_impl_vulkan.h"
 #include "common.hpp"
 #include "platform/platform.hpp"
 
+#include "backends/imgui_impl_vulkan.h"
 #include "imgui.h"
 #include "vulkan/vulkan_enums.hpp"
+#include "vulkan/vulkan_structs.hpp"
 
+#include <array>
 #include <cstdint>
+#include <memory>
 
 namespace dirk::Platform {
 
-Window::Window(const WindowCreateInfo& createInfo, Platform* platform) : platform(platform) {
-    // TODO: create platform window
+DEFINE_LOG_CATEGORY(LogWindow);
+
+Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::unique_ptr<PlatformWindowImpl> impl)
+    : platform(platform), platformWindow(std::move(impl)) {
+
+    platformWindow->setOwningWindow(*this);
+
     auto renderer = gEngine->getRenderer();
-    surface = platformWindow->createVulkanSurface(renderer->getResources().instance);
+    auto resources = renderer->getResources();
 
-    SwapChainCreateInfo swapChainInfo{
-        .swapChain = swapchain,
-        .swapChainImageFormat = swapChainImageFormat,
-        .swapChainExtent = size,
-        .renderPass = renderPass,
-        .surface = surface,
-        .windowSize = platformWindow->getFramebufferSize()
-    };
-    swapChainImages = renderer->createSwapChain(swapChainInfo);
+    surface = platformWindow->getVulkanSurface(resources.instance);
+
+    auto formats = resources.physicalDevice.getSurfaceFormatsKHR(surface);
+    surfaceFormat = renderer->chooseSwapSurfaceFormat(formats);
+    auto presentModes = resources.physicalDevice.getSurfacePresentModesKHR(surface);
+    presentMode = renderer->chooseSwapPresentMode(presentModes);
+
+    onResize();
+
+    commandBuffer = gEngine->getRenderer()->createCommandBuffer();
 }
 
-vk::Extent2D Window::getSize() const {
-    return platformWindow->getSize();
-}
-
-void Window::setSize(vk::Extent2D inSize) {
-    this->platformWindow->setSize(inSize);
-    this->size = inSize;
-
+void Window::onResize() {
     auto renderer = gEngine->getRenderer();
     auto device = renderer->getResources().device;
-
-    for (auto image : swapChainImages) {
-        device.destroyFramebuffer(image.frameBuffer);
-        device.destroyImageView(image.imageView);
-    }
-
-    device.destroySwapchainKHR(swapchain);
+    auto oldSwapchain = swapchain;
 
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
-        .swapChainImageFormat = swapChainImageFormat,
-        .swapChainExtent = size,
-        .renderPass = renderPass,
+        .swapChainExtent = swapChainExtent,
         .surface = surface,
-        .windowSize = platformWindow->getFramebufferSize()
+        .windowSize = platformWindow->getSize(),
+        .surfaceFormat = surfaceFormat,
+        .presentMode = presentMode
     };
     swapChainImages = renderer->createSwapChain(swapChainInfo);
-}
 
-glm::vec2 Window::getPosition() const { return platformWindow->getPosition(); }
-void Window::setPosition(const glm::vec2& inPosition) { platformWindow->setPosition(inPosition); }
-std::string_view Window::getTitle() { return platformWindow->getTitle(); }
-void Window::setTitle(std::string_view inTitle) { platformWindow->setTitle(inTitle); }
-void* Window::getPlatformHandle() { return platformWindow->getNativeHandle(); }
+    semaphores.resize(swapChainImages.size());
+    for (int i = 0; i < semaphores.size(); i++) {
+        semaphores[i] = std::tuple(renderer->createSemaphore(), renderer->createSemaphore());
+    }
 
-bool Window::isFocused() { return platformWindow->isFocused(); }
-bool Window::isMinimized() { return platformWindow->isMinimized(); }
-
-// TODO: handle visibility
-void Window::updateVisibility(bool inVisible) {}
-
-vk::SurfaceKHR Window::createSurface(vk::Instance instance) {
-    this->surface = platformWindow->createVulkanSurface(instance);
-    return this->surface;
+    if (oldSwapchain)
+        device.destroySwapchainKHR(oldSwapchain);
 }
 
 vk::SubmitInfo Window::render(ImDrawData* drawData) {
-    auto resources = gEngine->getRenderer()->getResources();
+    auto renderer = gEngine->getRenderer();
+    auto resources = renderer->getResources();
+
+    semaphoreIndex = (semaphoreIndex + 1) % semaphores.size();
+    auto& [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[semaphoreIndex];
+    check(imageAvailableSemaphore);
+    check(renderFinishedSemaphore);
+
     auto result = resources.device.acquireNextImageKHR(swapchain, UINT64_MAX, imageAvailableSemaphore, nullptr);
     checkVulkan(result.result);
     imageIndex = result.value;
@@ -88,35 +82,38 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
 
     checkVulkan(commandBuffer.begin(&beginInfo));
 
-    vk::RenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = vk::StructureType::eRenderPassBeginInfo;
-    renderPassInfo.renderPass = renderPass;
-    renderPassInfo.framebuffer = image.frameBuffer;
+    renderer->transitionImageLayout(commandBuffer, image.image, surfaceFormat.format, vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::eColorAttachmentOptimal);
 
-    // make sure to render on the entire screen
-    renderPassInfo.renderArea.offset = vk::Offset2D(0, 0);
-    renderPassInfo.renderArea.extent = size;
+    vk::RenderingAttachmentInfo colorAttachment{};
+    colorAttachment.imageView = image.view;
+    colorAttachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    colorAttachment.resolveMode = vk::ResolveModeFlagBits::eNone;
+    colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+    colorAttachment.clearValue = vk::ClearColorValue(0.f, 0.f, 0.f, 1.f);
 
-    // clear color is black with 100% opacity
-    std::array<vk::ClearValue, 2> clearValues = { vk::ClearColorValue(0.f, 0.f, 0.f, 1.f), vk::ClearDepthStencilValue(1.f, 0.f) };
-    renderPassInfo.clearValueCount = clearValues.size();
-    renderPassInfo.pClearValues = clearValues.data();
+    vk::RenderingInfo renderInfo{};
+    renderInfo.renderArea.offset = vk::Offset2D(0, 0);
+    renderInfo.renderArea.extent = swapChainExtent;
+    renderInfo.layerCount = 1;
+    renderInfo.viewMask = 0;
+    renderInfo.colorAttachmentCount = 1;
+    renderInfo.pColorAttachments = &colorAttachment;
 
-    commandBuffer.beginRenderPass(&renderPassInfo, vk::SubpassContents::eInline);
+    commandBuffer.beginRendering(renderInfo);
 
     ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer);
 
-    commandBuffer.endRenderPass();
+    commandBuffer.endRendering();
+
+    renderer->transitionImageLayout(commandBuffer, image.image, surfaceFormat.format, vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
+
     commandBuffer.end();
 
     vk::SubmitInfo submitInfo{};
-    submitInfo.sType = vk::StructureType::eSubmitInfo;
-
-    // wait semaphores
-    vk::PipelineStageFlags waitStage{ vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    submitInfo.pWaitDstStageMask = &waitStage;
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
-    submitInfo.pWaitDstStageMask = &waitStage;
     // signal semaphores
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
@@ -128,6 +125,7 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
 }
 
 vk::PresentInfoKHR Window::present() {
+    auto [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[semaphoreIndex];
     vk::PresentInfoKHR presentInfo{};
     presentInfo.sType = vk::StructureType::ePresentInfoKHR;
     presentInfo.waitSemaphoreCount = 1;

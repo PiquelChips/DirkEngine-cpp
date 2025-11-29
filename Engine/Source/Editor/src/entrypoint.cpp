@@ -2,6 +2,9 @@
 
 dirk::DirkEngineCreateInfo engineCreateInfo{
     .appName = "DirkEngine",
+    .platformCreateInfo = dirk::Platform::PlatformCreateInfo{
+        .appName = "DirkEngine",
+    },
     .actorCreateInfos{
         dirk::ActorCreateInfo{
             .name = "Shrek",

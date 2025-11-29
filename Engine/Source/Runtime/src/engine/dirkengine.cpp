@@ -21,11 +21,18 @@ IEngine* gEngine;
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     gEngine = this;
 
-    platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
     renderer = std::make_unique<Renderer>();
+    // platform needs renderer init
+    platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
+    // we need renderer var to be initialized for this function to run
+    renderer->init();
     world = std::make_shared<World>(createInfo.actorCreateInfos);
 
-    auto viewport = renderer->createViewport(ViewportCreateInfo{ .world = world });
+    auto viewport = renderer->createViewport(ViewportCreateInfo{
+        .name = "Hello World!",
+        .size = vk::Extent2D(500, 500),
+        .world = world,
+    });
 
     lastTick = std::chrono::high_resolution_clock::now();
 
@@ -54,6 +61,10 @@ void DirkEngine::exit(const std::string& reason) {
 
 void DirkEngine::tick(float deltaTime) {
     platform->tick(deltaTime);
+    // in case we fail platform event polling
+    if (isRequestingExit())
+        return;
+
     world->tick(deltaTime);
 
     renderer->render();
