@@ -3,13 +3,13 @@
     "c_standard": "c++23",
     "is_lib": true,
     "dependencies": [
-        "Shaders"
-    ],
-    "external": [
-        "glfw",
+        "Common",
+        "Shaders",
+        "Platform",
         "glm",
         "tinygltf",
-        "vulkan"
+        "vulkan",
+        "ImGui"
     ],
     "defines": {
         "GLFW_INCLUDE_NONE": "",

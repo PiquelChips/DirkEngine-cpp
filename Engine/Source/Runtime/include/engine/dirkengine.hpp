@@ -5,10 +5,9 @@
 #include <vector>
 
 #include "actor.hpp"
-#include "core/globals.hpp"
-#include "render/vulkan_types.hpp"
-
-#include "GLFW/glfw3.h"
+#include "common.hpp"
+#include "platform/platform.hpp"
+#include "platform/window.hpp"
 
 namespace dirk {
 
@@ -19,14 +18,15 @@ class World;
 class Camera;
 
 struct DirkEngineCreateInfo {
-    RendererCreateInfo rendererInfo;
+    std::string_view appName;
+    Platform::PlatformCreateInfo platformCreateInfo;
     std::vector<ActorCreateInfo> actorCreateInfos;
 };
 
-class DirkEngine {
+class DirkEngine : public IEngine {
 
 public:
-    DirkEngine(DirkEngineCreateInfo& createInfo);
+    DirkEngine(const DirkEngineCreateInfo& createInfo);
     ~DirkEngine();
 
     void exit();
@@ -34,17 +34,13 @@ public:
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 
-public:
-    static DirkEngine* get() { return engine; }
-    static std::shared_ptr<Renderer> getRenderer() { return get()->renderer; }
-    static std::shared_ptr<World> getWorld() { return get()->world; }
-    static std::shared_ptr<Camera> getCamera() { return get()->camera; }
+    IRenderer* getRenderer() const { return (IRenderer*) renderer.get(); }
+    IPlatform* getPlatform() const { return (IPlatform*) platform.get(); }
 
 private:
-    inline static DirkEngine* engine;
-    std::shared_ptr<Renderer> renderer;
+    std::unique_ptr<Platform::Platform> platform;
+    std::unique_ptr<Renderer> renderer;
     std::shared_ptr<World> world;
-    std::shared_ptr<Camera> camera;
 
 private:
     void tick(float deltaTime);

@@ -1,12 +1,11 @@
 #include "engine/dirkengine.hpp"
 
-#include "core/logging.hpp"
+#include "common.hpp"
 #include "engine/world.hpp"
-#include "glm/trigonometric.hpp"
-#include "render/camera.hpp"
+#include "platform/window.hpp"
 #include "render/renderer.hpp"
-
-#include "GLFW/glfw3.h"
+#include "render/viewport.hpp"
+#include "vulkan/vulkan_structs.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -17,16 +16,23 @@ namespace dirk {
 
 DEFINE_LOG_CATEGORY(LogEngine)
 
-DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
-    engine = this;
+IEngine* gEngine;
 
-    renderer = std::make_shared<Renderer>(createInfo.rendererInfo);
-    if (renderer->init() != EXIT_SUCCESS) {
-        DIRK_LOG(LogEngine, FATAL, "unable to initialize renderer");
-        return;
-    }
+DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
+    gEngine = this;
+
+    renderer = std::make_unique<Renderer>();
+    // platform needs renderer init
+    platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
+    // we need renderer var to be initialized for this function to run
+    renderer->init();
     world = std::make_shared<World>(createInfo.actorCreateInfos);
-    camera = std::make_shared<Camera>(glm::vec3(0.f, 1000.f, 1000.f), glm::vec3(0.f, -1.f, -1.f), glm::radians(45.f), .1f, 100000.f);
+
+    auto viewport = renderer->createViewport(ViewportCreateInfo{
+        .name = "Hello World!",
+        .size = vk::Extent2D(500, 500),
+        .world = world,
+    });
 
     lastTick = std::chrono::high_resolution_clock::now();
 
@@ -35,8 +41,6 @@ DirkEngine::DirkEngine(DirkEngineCreateInfo& createInfo) {
 
         if (isRequestingExit())
             break;
-
-        glfwPollEvents();
 
         tick(deltaTime);
     }
@@ -56,10 +60,14 @@ void DirkEngine::exit(const std::string& reason) {
 }
 
 void DirkEngine::tick(float deltaTime) {
-    World::get()->tick(deltaTime);
-    Camera::get()->tick(deltaTime);
+    platform->tick(deltaTime);
+    // in case we fail platform event polling
+    if (isRequestingExit())
+        return;
 
-    Renderer::get()->draw(deltaTime);
+    world->tick(deltaTime);
+
+    renderer->render();
 }
 
 float DirkEngine::captureDeltaTime() {

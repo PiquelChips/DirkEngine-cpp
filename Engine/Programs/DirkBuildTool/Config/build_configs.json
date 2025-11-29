@@ -2,15 +2,16 @@
     "Development": {
         "opmtimize": false,
         "compact": false,
-        "defines": [
-            "DIRK_DEVELOPMENT_BUILD"
-        ]
+        "defines": {
+            "DIRK_DEVELOPMENT_BUILD": "",
+            "DIRK_DEBUG_BUILD": ""
+        }
     },
     "Shipping": {
         "opmtimize": true,
         "compact": true,
-        "defines": [
-            "DIRK_SHIPPING_BUILD"
-        ]
+        "defines": {
+            "DIRK_SHIPPING_BUILD": ""
+        }
     }
 }

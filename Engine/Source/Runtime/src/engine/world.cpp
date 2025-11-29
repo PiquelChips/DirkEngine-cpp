@@ -3,8 +3,8 @@
 namespace dirk {
 
 World::World(const std::vector<ActorCreateInfo>& actors) {
-    for (auto createInfo : actors) {
-        spawnActor(createInfo);
+    for (auto spawnInfo : actors) {
+        spawnActor(spawnInfo);
     }
 }
 
@@ -13,16 +13,15 @@ World::~World() {
 }
 
 void World::tick(float deltaTime) {
-    for (auto pair : actors) {
+    for (auto& pair : actors) {
         pair.second->tick(deltaTime);
     }
 }
 
-std::shared_ptr<Actor> World::spawnActor(ActorCreateInfo spawnInfo) {
+void World::spawnActor(const ActorCreateInfo& spawnInfo) {
     DIRK_LOG(LogEngine, INFO, "spawning actor " << spawnInfo.name);
-    std::shared_ptr<Actor> actor = std::make_shared<Actor>(spawnInfo);
-    actors[actor->getName()] = actor;
-    return actor;
+    auto actor = std::make_unique<Actor>(spawnInfo, *this);
+    actors[actor->getName()] = std::move(actor);
 }
 
 void World::destroyActor(Actor* actor) {

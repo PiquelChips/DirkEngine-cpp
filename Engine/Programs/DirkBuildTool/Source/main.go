@@ -6,6 +6,7 @@ import (
 
 	"DirkBuildTool/build"
 	"DirkBuildTool/config"
+	"DirkBuildTool/models"
 	"DirkBuildTool/setup"
 )
 
@@ -42,9 +43,11 @@ func main() {
 		return
 	}
 
-	buildConfig := &setup.BuildConfig{
-		Target: target,
-		Type:   buildConf,
+	buildConfig := &models.BuildConfig{
+		Target:         target,
+		Type:           buildConf,
+		SearchDirs:     config.Dirs.Modules,
+		ErrOnBuildFail: false,
 	}
 
 	if err := setup.Setup(buildConfig); err != nil {

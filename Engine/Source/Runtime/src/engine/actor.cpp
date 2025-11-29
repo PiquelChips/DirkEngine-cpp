@@ -5,18 +5,19 @@
 #include "render/camera.hpp"
 #include "render/render_types.hpp"
 #include "render/renderer.hpp"
-#include "render/vulkan_types.hpp"
 
 #include "resources/resource_manager.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
 
 #include <cstring>
+#include <memory>
 
 namespace dirk {
 
-Actor::Actor(ActorCreateInfo& spawnInfo)
-    : name(spawnInfo.name),
+Actor::Actor(const ActorCreateInfo& spawnInfo, World& world)
+    : world(world),
+      name(spawnInfo.name),
       transform(spawnInfo.transform),
       transformMatrix(transform.getMatrix()) {
     setModel(spawnInfo.modelName);
@@ -30,7 +31,7 @@ void Actor::setModel(const std::string_view name) {
 void Actor::tick(float deltaTime) {}
 
 void Actor::destroy() {
-    World::get()->destroyActor(this);
+    getWorld().destroyActor(this);
 }
 
 void Actor::setTransform(const Transform& inTransform) {
@@ -55,37 +56,37 @@ void Actor::updateTransformMatrix() {
 }
 
 void Actor::updateData() {
-    vk::Device device = Renderer::get()->getLogicalDevice();
-    vk::PhysicalDevice physicalDevice = Renderer::get()->getPhysicalDevice();
-    vk::CommandBuffer commandBuffer = Renderer::beginSingleTimeCommands();
+    auto renderer = gEngine->getRenderer();
+    auto resources = renderer->getResources();
+    vk::CommandBuffer commandBuffer = renderer->beginSingleTimeCommands();
 
     // ubo
     {
         vk::DeviceSize bufferSize = sizeof(ModelViewProjection);
-        auto [buffer, bufferMemory] = Renderer::createBuffer(
+        auto [buffer, bufferMemory] = renderer->createBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eUniformBuffer,
             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
         uniformBuffer = buffer;
         uniformBufferMemory = bufferMemory;
-        uniformBufferMapped = device.mapMemory(uniformBufferMemory, 0, bufferSize);
+        uniformBufferMapped = resources.device.mapMemory(uniformBufferMemory, 0, bufferSize);
     }
 
     // vertex buffer
     {
         vk::DeviceSize bufferSize = sizeof(model->vertices[0]) * model->vertices.size();
 
-        auto [stagingBuffer, stagingBufferMemory] = Renderer::createBuffer(
+        auto [stagingBuffer, stagingBufferMemory] = renderer->createBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eTransferSrc,
             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-        void* dataStaging = device.mapMemory(stagingBufferMemory, 0, bufferSize);
+        void* dataStaging = resources.device.mapMemory(stagingBufferMemory, 0, bufferSize);
         memcpy(dataStaging, model->vertices.data(), bufferSize);
-        device.unmapMemory(stagingBufferMemory);
+        resources.device.unmapMemory(stagingBufferMemory);
 
-        auto [buffer, bufferMemory] = Renderer::createBuffer(
+        auto [buffer, bufferMemory] = renderer->createBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
             vk::MemoryPropertyFlagBits::eDeviceLocal);
@@ -99,16 +100,16 @@ void Actor::updateData() {
     {
         vk::DeviceSize bufferSize = sizeof(model->indices[0]) * model->indices.size();
 
-        auto [stagingBuffer, stagingBufferMemory] = Renderer::createBuffer(
+        auto [stagingBuffer, stagingBufferMemory] = renderer->createBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eTransferSrc,
             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-        void* data = device.mapMemory(stagingBufferMemory, 0, bufferSize);
+        void* data = resources.device.mapMemory(stagingBufferMemory, 0, bufferSize);
         memcpy(data, model->indices.data(), bufferSize);
-        device.unmapMemory(stagingBufferMemory);
+        resources.device.unmapMemory(stagingBufferMemory);
 
-        auto [buffer, bufferMemory] = Renderer::createBuffer(
+        auto [buffer, bufferMemory] = renderer->createBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
             vk::MemoryPropertyFlagBits::eDeviceLocal);
@@ -127,14 +128,14 @@ void Actor::updateData() {
 
         vk::Format format = vk::Format::eR8G8B8A8Srgb;
 
-        auto [stagingBuffer, stagingBufferMemory] = Renderer::createBuffer(
+        auto [stagingBuffer, stagingBufferMemory] = renderer->createBuffer(
             imageSize,
             vk::BufferUsageFlagBits::eTransferSrc,
             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-        void* data = device.mapMemory(stagingBufferMemory, 0, imageSize);
+        void* data = resources.device.mapMemory(stagingBufferMemory, 0, imageSize);
         memcpy(data, texture.texture.data(), imageSize);
-        device.unmapMemory(stagingBufferMemory);
+        resources.device.unmapMemory(stagingBufferMemory);
 
         CreateImageMemoryViewInfo createInfo{
             .width = static_cast<uint32_t>(model->texture.width),
@@ -145,17 +146,17 @@ void Actor::updateData() {
             .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
             .mipLevels = mipLevels,
         };
-        textureImageMemoryView = Renderer::createImageMemoryView(createInfo);
+        textureImageMemoryView = renderer->createImageMemoryView(createInfo);
 
-        Renderer::transitionImageLayout(commandBuffer, textureImageMemoryView.image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
-        Renderer::copyBufferToImage(commandBuffer, stagingBuffer, textureImageMemoryView.image, texture.width, texture.height);
-        Renderer::generateMipmaps(commandBuffer, textureImageMemoryView.image, format, texture.width, texture.height, mipLevels);
+        renderer->transitionImageLayout(commandBuffer, textureImageMemoryView.image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
+        renderer->copyBufferToImage(commandBuffer, stagingBuffer, textureImageMemoryView.image, texture.width, texture.height);
+        renderer->generateMipmaps(commandBuffer, textureImageMemoryView.image, format, texture.width, texture.height, mipLevels);
         // transitions to vk::ImageLayout::eShaderReadOnlyOptimal while generating mipmaps
     }
 
     // sampler
     {
-        vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
+        vk::PhysicalDeviceProperties properties = resources.physicalDevice.getProperties();
         vk::SamplerCreateInfo samplerInfo{};
 
         samplerInfo.magFilter = vk::Filter::eLinear;
@@ -170,26 +171,25 @@ void Actor::updateData() {
         samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
         samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
 
-        samplerInfo.anisotropyEnable = Renderer::get()->getFeatures().anisotropy ? vk::True : vk::False;
+        samplerInfo.anisotropyEnable = renderer->getProperties().anisotropy ? vk::True : vk::False;
         samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
 
         samplerInfo.compareEnable = vk::False;
         samplerInfo.compareOp = vk::CompareOp::eAlways;
         samplerInfo.unnormalizedCoordinates = vk::False; // the tex coords are normalized
 
-        textureSampler = device.createSampler(samplerInfo);
+        textureSampler = resources.device.createSampler(samplerInfo);
     }
 
-    descriptorSet = Renderer::get()->createDescriptorSets(uniformBuffer, textureSampler, textureImageMemoryView.view, vk::ImageLayout::eShaderReadOnlyOptimal);
-
-    Renderer::endSingleTimeCommands(commandBuffer, Renderer::get()->getQueues().graphicsQueue);
+    descriptorSet = renderer->createDescriptorSets(uniformBuffer, textureSampler, textureImageMemoryView.view, vk::ImageLayout::eShaderReadOnlyOptimal);
+    renderer->endSingleTimeCommands(commandBuffer, resources.queues.graphicsQueue);
 }
 
-void Actor::recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout) {
+void Actor::recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, std::unique_ptr<Camera>& camera) {
     ModelViewProjection mvp{
         .model = getTransformMatrix(),
-        .view = Camera::get()->getView(),
-        .proj = Camera::get()->getProjection(),
+        .view = camera->getView(),
+        .proj = camera->getProjection(),
     };
     std::memcpy(uniformBufferMapped, &mvp, sizeof(mvp));
 

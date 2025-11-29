@@ -1,29 +1,35 @@
 #pragma once
 
-#include "core/globals.hpp"
+#include "common.hpp"
 
-#include "engine/dirkengine.hpp"
+#include "engine/world.hpp"
 #include "glm/glm.hpp"
-#include <cstdint>
-#include <memory>
+#include "render/viewport.hpp"
+#include "vulkan/vulkan_structs.hpp"
 
 namespace dirk {
 
 DECLARE_LOG_CATEGORY_EXTERN(LogCamera)
 
+struct CameraCreateInfo {
+    glm::vec3 positon;
+    glm::vec3 forwardDirection;
+    float fov;
+    float nearClip;
+    float farClip;
+};
+
 class Camera {
 public:
-    Camera(glm::vec3 positon, glm::vec3 forwardDirection, float fov, float nearClip, float farClip);
+    Camera(const CameraCreateInfo& createInfo, Viewport& viewport);
 
     void tick(float deltaTime);
-    void resize(std::uint32_t width, std::uint32_t height);
+    void resize(vk::Extent2D inSize);
 
     inline const glm::mat4& getProjection() const { return projection; }
     inline const glm::mat4& getInverseProjection() const { return inverseProjection; }
     inline const glm::mat4& getView() const { return view; }
     inline const glm::mat4& getInverseView() const { return inverseView; }
-
-    static std::shared_ptr<Camera> get() { return DirkEngine::getCamera(); }
 
 private:
     void updateProjection();
@@ -43,7 +49,10 @@ private:
     glm::vec3 forwardDirection{ 0.f };
 
     glm::vec2 lastMousePosition{ 0.f };
-    std::uint32_t width, height;
+    vk::Extent2D size;
+
+    // camera is owned by the viewport
+    Viewport& viewport;
 
     static constexpr glm::vec3 upDirection{ 0.f, 1.f, 0.f };
     static constexpr float SENSITIVITY = .002f;

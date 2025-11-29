@@ -1,19 +1,13 @@
 package config
 
 import (
+	"DirkBuildTool/models"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 )
-
-type BuildType struct {
-	Name     string   `json:"-"`
-	Optimize bool     `json:"optimize"`
-	Compact  bool     `json:"compact"` // compact the output (essentially statically linking)
-	Defines  []string `json:"defines"`
-}
 
 type DirsConfig struct {
 	Root         string   `json:"-"`
@@ -23,8 +17,14 @@ type DirsConfig struct {
 	Modules      []string `json:"modules"` // dirs that will be searched for modules
 }
 
-var BuildTypes map[string]*BuildType
+type GeneralConfig struct {
+	LibSearchEnvs []string `json:"lib_search_envs"`
+}
+
+var BuildTypes map[string]*models.BuildType
 var Dirs DirsConfig
+var General GeneralConfig
+var Setup *models.SetupConfig
 
 const configDir = "Engine/Programs/DirkBuildTool/Config"
 
@@ -32,10 +32,11 @@ func LoadConfig() {
 	log.Printf("Loading configuration\n")
 	Dirs = loadDirsConfig()
 	BuildTypes = loadBuildTypes()
+	General = loadGeneralConfig()
 }
 
-func loadBuildTypes() map[string]*BuildType {
-	buildTypes := map[string]*BuildType{}
+func loadBuildTypes() map[string]*models.BuildType {
+	buildTypes := map[string]*models.BuildType{}
 	if err := loadConfig("build_configs.json", &buildTypes); err != nil {
 		fmt.Printf("%s\n", err.Error())
 		os.Exit(1)
@@ -81,6 +82,16 @@ func loadDirsConfig() DirsConfig {
 	}
 
 	return dirs
+}
+
+func loadGeneralConfig() GeneralConfig {
+	config := GeneralConfig{}
+	if err := loadConfig("general.json", &config); err != nil {
+		fmt.Printf("%s\n", err.Error())
+		os.Exit(1)
+		return GeneralConfig{}
+	}
+	return config
 }
 
 func loadConfig(file string, out any) error {

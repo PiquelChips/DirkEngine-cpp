@@ -1,15 +1,6 @@
 #include "render/render_types.hpp"
-#include "render/vulkan_types.hpp"
 
 namespace dirk {
-
-RendererCreateInfo::operator RendererProperties() {
-    return RendererProperties{
-        .applicationName = applicationName,
-        .windowWidth = windowWidth,
-        .windowHeight = windowHeight,
-    };
-};
 
 glm::mat4 Transform::getMatrix() {
     glm::mat4 matrix = glm::mat4(1.f);

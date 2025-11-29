@@ -1,10 +1,9 @@
 #include "engine/dirkengine.hpp"
 
 dirk::DirkEngineCreateInfo engineCreateInfo{
-    .rendererInfo = dirk::RendererCreateInfo{
-        .applicationName = "DirkEngine",
-        .windowWidth = 1200,
-        .windowHeight = 800,
+    .appName = "DirkEngine",
+    .platformCreateInfo = dirk::Platform::PlatformCreateInfo{
+        .appName = "DirkEngine",
     },
     .actorCreateInfos{
         dirk::ActorCreateInfo{
@@ -47,6 +46,5 @@ dirk::DirkEngineCreateInfo engineCreateInfo{
 };
 
 int main(int, char**) {
-    auto engine = dirk::DirkEngine(engineCreateInfo);
-    return 0;
+    dirk::DirkEngine engine = dirk::DirkEngine(engineCreateInfo);
 }

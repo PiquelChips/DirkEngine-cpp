@@ -6,7 +6,6 @@
     "dependencies": [
         "Runtime"
     ],
-    "external": [],
     "defines": {
         "WITH_EDITOR": ""
     }

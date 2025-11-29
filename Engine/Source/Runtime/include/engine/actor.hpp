@@ -1,7 +1,6 @@
 #pragma once
 
 #include "render/render_types.hpp"
-#include "render/vulkan_types.hpp"
 
 #include "glm/glm.hpp"
 #include "vulkan/vulkan_handles.hpp"
@@ -12,9 +11,11 @@
 namespace dirk {
 
 class DirkEngine;
+class World;
+class Camera;
 
 struct ActorCreateInfo {
-    const std::string_view name;
+    std::string_view name;
     const std::string_view modelName;
     Transform transform;
 };
@@ -25,7 +26,7 @@ struct ActorCreateInfo {
 class Actor {
 
 public:
-    Actor(ActorCreateInfo& spawnInfo);
+    Actor(const ActorCreateInfo& spawnInfo, World& world);
 
     void tick(float deltaTime);
     void destroy();
@@ -36,7 +37,7 @@ public:
     inline bool isVisible() { return visible; }
 
 private:
-    const std::string_view name;
+    std::string_view name;
     bool visible = false;
 
 public:
@@ -52,6 +53,8 @@ public:
     inline const glm::vec3& getScale() const { return transform.scale; }
     inline void setScale(const glm::vec3& inScale);
 
+    inline World& getWorld() { return world; }
+
 private:
     void updateTransformMatrix();
     Transform transform;
@@ -60,7 +63,7 @@ private:
 public:
     inline const std::string_view getModelName() const noexcept { return model->name; }
     // record draw commands for this mesh
-    void recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout);
+    void recordCommandBuffer(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, std::unique_ptr<Camera>& camera);
     void setModel(const std::string_view name);
 
 private:
@@ -68,6 +71,8 @@ private:
     void updateData();
 
     std::shared_ptr<const Model> model;
+    // owned by world
+    World& world;
 
     vk::DescriptorSet descriptorSet;
 
