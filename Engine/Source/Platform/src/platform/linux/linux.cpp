@@ -152,8 +152,7 @@ void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry*
             .done = wl_OutputHandleDone,
             .scale = [](void*, struct wl_output*, int32_t) {},
             .name = wl_OutputHandleName,
-            .description = [](void*, struct wl_output*, const char*) {},
-
+            .description = wl_OutputHandleDescription,
         };
         wl_output_add_listener(output, &outputListener, &platform->platform.createMonitor(output));
     }
@@ -196,6 +195,8 @@ void LinuxPlatformImpl::wl_OutputHandleGeometry(void* data, struct wl_output* ou
     check(monitor);
     check(monitor->getPlatformHandle() == output);
     monitor->setPosition({ x, y });
+    monitor->setMake(make);
+    monitor->setModel(model);
 }
 
 void LinuxPlatformImpl::wl_OutputHandleMode(void* data, struct wl_output* output, uint32_t flags, int32_t width, int32_t height, int32_t refresh) {
@@ -216,6 +217,13 @@ void LinuxPlatformImpl::wl_OutputHandleDone(void* data, struct wl_output* output
     check(monitor->getPlatformHandle() == output);
 
     monitor->getPlatform().updateMonitors();
+
+    DIRK_LOG(LogPlatform, INFO,
+             "found new monitor: "
+                 << "\n\tname: " << monitor->getName()
+                 << "\n\tmake: " << monitor->getMake()
+                 << "\n\tmodel: " << monitor->getModel()
+                 << "\n\tdescription: " << monitor->getDescription());
 }
 
 void LinuxPlatformImpl::wl_OutputHandleName(void* data, struct wl_output* output, const char* name) {
@@ -223,7 +231,13 @@ void LinuxPlatformImpl::wl_OutputHandleName(void* data, struct wl_output* output
     check(monitor);
     check(monitor->getPlatformHandle() == output);
     monitor->setName(name);
-    DIRK_LOG(LogWayland, INFO, "new monitor " << name)
+}
+
+void LinuxPlatformImpl::wl_OutputHandleDescription(void* data, struct wl_output* output, const char* description) {
+    auto* monitor = static_cast<Monitor*>(data);
+    check(monitor);
+    check(monitor->getPlatformHandle() == output);
+    monitor->setDescription(description);
 }
 
 void LinuxPlatformImpl::wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size) {

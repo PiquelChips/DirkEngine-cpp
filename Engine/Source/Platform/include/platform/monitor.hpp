@@ -30,14 +30,27 @@ public:
     std::string_view getName() { return name; }
     void setName(std::string_view inName) { name = inName; }
 
+    std::string_view getMake() { return make; }
+    void setMake(std::string_view inMake) { make = inMake; }
+
+    std::string_view getModel() { return model; }
+    void setModel(std::string_view inModel) { model = inModel; }
+
+    std::string_view getDescription() { return description; }
+    void setDescription(std::string_view inDescription) { description = inDescription; }
+
     glm::vec2 getPosition() { return position; }
     void setPosition(glm::vec2 inPosition) { position = inPosition; }
 
     // TODO: some function to convert to ImGui monitor
 
 private:
-    void* platformHandle;
     std::string_view name;
+    std::string_view make;
+    std::string_view model;
+    std::string_view description;
+
+    void* platformHandle;
     glm::vec2 position;
     VideoMode videoMode;
     Platform& platform;
