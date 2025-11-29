@@ -121,16 +121,36 @@ void LinuxWindowImpl::setTitle(std::string_view inTitle) {
 
 bool LinuxWindowImpl::isFocused() {
     // TODO: xdg-activation protocol
+    DIRK_LOG(LogWayland, WARNING, "focusing windows not implemented")
     return false;
 }
 
 void LinuxWindowImpl::focus() {
     // TODO: xdg-activation protocol
+    DIRK_LOG(LogWayland, WARNING, "focusing windows not implemented")
 }
 
 void LinuxWindowImpl::setDecorated(bool inDecorated) {
     this->decorated = inDecorated;
     // TODO: xdg-decoration protocol
+    DIRK_LOG(LogWayland, WARNING, "window decoration not implemented")
+}
+
+void LinuxWindowImpl::xdg_ToplevelConfigure(void* data, xdg_toplevel* toplevel, int32_t width, int32_t height, wl_array* states) {
+    auto* window = static_cast<LinuxWindowImpl*>(data);
+
+    vk::Extent2D newSize(width, height);
+    if (newSize == window->size)
+        return;
+
+    window->size = newSize;
+    window->getOwningWindow().onResize();
+    window->linuxPlatform.getPlatform().windowSizeCallback(window->getOwningWindow(), window->size);
+}
+
+void LinuxWindowImpl::xdg_ToplevelClose(void* data, xdg_toplevel* toplevel) {
+    auto* window = static_cast<LinuxWindowImpl*>(data);
+    window->linuxPlatform.getPlatform().windowCloseCallback(window->getOwningWindow());
 }
 
 } // namespace dirk::Platform::Linux

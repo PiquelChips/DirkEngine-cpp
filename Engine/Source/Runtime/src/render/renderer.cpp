@@ -241,7 +241,7 @@ void Renderer::init() {
 
     // ImGui
     {
-        DIRK_LOG(LogVulkan, INFO, "initlializing imgui");
+        DIRK_LOG(LogVulkan, DEBUG, "initlializing imgui");
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
