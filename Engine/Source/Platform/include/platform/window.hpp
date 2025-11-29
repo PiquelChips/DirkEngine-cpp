@@ -100,8 +100,6 @@ public:
     vk::PresentInfoKHR present();
 
 private:
-    void createSwapchain();
-
     // render resources
     vk::SwapchainKHR swapchain;
     vk::SurfaceKHR surface;

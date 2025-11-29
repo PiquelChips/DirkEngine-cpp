@@ -31,7 +31,7 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
     auto presentModes = resources.physicalDevice.getSurfacePresentModesKHR(surface);
     presentMode = renderer->chooseSwapPresentMode(presentModes);
 
-    createSwapchain();
+    onResize();
 
     commandBuffer = gEngine->getRenderer()->createCommandBuffer();
 }
@@ -39,17 +39,7 @@ Window::Window(const WindowCreateInfo& createInfo, Platform& platform, std::uniq
 void Window::onResize() {
     auto renderer = gEngine->getRenderer();
     auto device = renderer->getResources().device;
-
     auto oldSwapchain = swapchain;
-
-    createSwapchain();
-
-    if (oldSwapchain)
-        device.destroySwapchainKHR(oldSwapchain);
-}
-
-void Window::createSwapchain() {
-    auto renderer = gEngine->getRenderer();
 
     SwapChainCreateInfo swapChainInfo{
         .swapChain = swapchain,
@@ -65,6 +55,9 @@ void Window::createSwapchain() {
     for (int i = 0; i < semaphores.size(); i++) {
         semaphores[i] = std::tuple(renderer->createSemaphore(), renderer->createSemaphore());
     }
+
+    if (oldSwapchain)
+        device.destroySwapchainKHR(oldSwapchain);
 }
 
 vk::SubmitInfo Window::render(ImDrawData* drawData) {
