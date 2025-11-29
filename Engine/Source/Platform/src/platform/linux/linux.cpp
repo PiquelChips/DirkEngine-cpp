@@ -21,6 +21,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#define POINTER_SCROLL_SCALE .1f
+
 namespace dirk::Platform::Linux {
 
 DEFINE_LOG_CATEGORY(LogLinux)
@@ -171,6 +173,11 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
             .button = wl_PointerButton,
             .axis = wl_PointerAxis,
             .frame = [](void*, struct wl_pointer*) {},
+            .axis_source = [](void*, struct wl_pointer*, uint32_t) {},
+            .axis_stop = [](void*, struct wl_pointer*, uint32_t, uint32_t) {},
+            .axis_discrete = [](void*, struct wl_pointer*, uint32_t, int32_t) {},
+            .axis_value120 = [](void*, struct wl_pointer*, uint32_t, int32_t) {},
+            .axis_relative_direction = [](void*, struct wl_pointer*, uint32_t, uint32_t) {},
         };
         wl_pointer_add_listener(platform->pointer, &pointerListener, platform);
     }
@@ -298,9 +305,9 @@ void LinuxPlatformImpl::wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t
 
     double delta = wl_fixed_to_double(value);
     if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
-        platform->platform.mouseScrollCallback(window, { 0.f, -delta / 10.f });
+        platform->platform.mouseScrollCallback(window, { 0.f, -delta * POINTER_SCROLL_SCALE });
     } else {
-        platform->platform.mouseScrollCallback(window, { -delta / 10.f, 0.f });
+        platform->platform.mouseScrollCallback(window, { -delta * POINTER_SCROLL_SCALE, 0.f });
     }
 }
 
