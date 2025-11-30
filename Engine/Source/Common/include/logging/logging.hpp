@@ -34,7 +34,7 @@ public:
     Logger();
     ~Logger();
 
-    void log(LogCategory category, LogLevel level, std::string str);
+    void log(LogCategory category, LogLevel level, std::string message);
 
     template <typename... Args>
     void log(LogCategory category, LogLevel level, std::format_string<Args...> fmt, Args&&... args) {

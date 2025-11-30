@@ -1,7 +1,6 @@
 #include "logging/logging.hpp"
 #include "asserts.hpp"
 
-#include <bits/chrono.h>
 #include <chrono>
 #include <csignal>
 #include <cstdio>
@@ -42,7 +41,6 @@ Logger::~Logger() {
 
     try {
         auto now = std::chrono::system_clock::now();
-        // Create a unique filename based on current time
         std::string timestampedName = std::format("{}/log_{:%Y-%m-%d_%H-%M-%S}.log", logPath, now);
 
         std::filesystem::path source = std::format("{}/latest.log", logPath);
@@ -104,13 +102,14 @@ void Logger::log(LogCategory category, LogLevel level, std::string message) {
     std::string msg = std::format("{} {} {} {}", timeStr, levelString, category.name, message);
     std::string coloredMsg = std::format("{} {} {} {}", timeStr, levelColoredString, category.name, message);
 
+    check(logfile.is_open());
     // TODO: why tf does this line segfault
     // logfile << msg << std::endl;
     std::cout << coloredMsg << std::endl;
 
     if (level == FATAL) {
         shutdown();
-        raise(SIGABRT);
+        std::abort();
     }
 }
 
