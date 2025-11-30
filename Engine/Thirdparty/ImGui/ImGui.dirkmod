@@ -6,7 +6,6 @@
         "vulkan"
     ],
     "defines": {
-        "IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING": "",
         "IMGUI_DISABLE_OBSOLETE_FUNCTIONS": ""
     }
 }
