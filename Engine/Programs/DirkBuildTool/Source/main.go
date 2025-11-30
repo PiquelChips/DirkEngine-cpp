@@ -17,6 +17,20 @@ func usage() {
 func main() {
 	config.LoadConfig()
 
+	if len(os.Args) == 2 {
+		switch os.Args[1] {
+		case "clean":
+			clean()
+			return
+		case "clean-all":
+			cleanAll()
+			return
+		case "clean-setup":
+			cleanSetup()
+			return
+		}
+	}
+
 	target := ""
 	buildType := ""
 	switch len(os.Args) {
@@ -57,3 +71,7 @@ func main() {
 		panic(err)
 	}
 }
+
+func clean()      {}
+func cleanAll()   {}
+func cleanSetup() {}
