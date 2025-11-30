@@ -1,9 +1,15 @@
 #pragma once
 
+#include <csignal>
+#include <cstdio>
+#include <ctime>
 #include <format>
 #include <fstream>
+#include <iostream>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <string_view>
 
 #define DECLARE_LOG_CATEGORY_EXTERN(categoryName) extern dirk::Logging::LogCategory categoryName;
 #define DEFINE_LOG_CATEGORY(categoryName) dirk::Logging::LogCategory categoryName{ .name = #categoryName };
@@ -22,7 +28,7 @@ enum LogLevel {
 };
 
 struct LogCategory {
-    const char* name;
+    std::string_view name;
     bool show = true;
 };
 
