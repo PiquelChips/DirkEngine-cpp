@@ -57,9 +57,9 @@ void Platform::initImGui() {
     // io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
     // io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
     // io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
-    // io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
-    // io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport;
     // io.BackendFlags |= ImGuiBackendFlags_HasParentViewport;
+    io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
+    io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // TODO
 
     bd->context = ImGui::GetCurrentContext();
     bd->platform = this;
