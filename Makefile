@@ -11,8 +11,14 @@ run: build
 build: $(BUILD_TOOL)
 	@$(BUILD_TOOL)
 
-clean:
-	@rm -rf Intermediate Saved Binaries compile_commands.json
+clean: $(BUILD_TOOL)
+	@$(BUILD_TOOL) clean
+
+clean-all: $(BUILD_TOOL)
+	@$(BUILD_TOOL) clean-all
+
+clean-setup: $(BUILD_TOOL)
+	@$(BUILD_TOOL) clean-setup
 
 $(BUILD_TOOL): $(BUILD_TOOL_SRC)
 	@echo Building build tool...
