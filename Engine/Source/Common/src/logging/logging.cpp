@@ -24,17 +24,34 @@ void shutdown() {
 }
 
 Logger::Logger() {
-    // TODO: create parent directories as well
-    std::filesystem::create_directory(std::filesystem::path{ logPath });
-    // TODO: clear latest.log
-    logfile = std::ofstream(std::format("{}/latest.log", logPath), std::ios::out | std::ios::app);
+    std::error_code ec;
+    std::filesystem::create_directories(std::filesystem::path{ logPath }, ec);
+
+    if (ec) {
+        std::cerr << "Failed to create log directories: " << ec.message() << std::endl;
+    }
+
+    logfile = std::ofstream(std::format("{}/latest.log", logPath), std::ios::out | std::ios::trunc);
     check(logfile.is_open());
 }
 
 Logger::~Logger() {
+    check(logfile.is_open());
     logfile.flush();
     logfile.close();
-    // TODO: copy latest.log to new file with timestamp
+
+    try {
+        auto now = std::chrono::system_clock::now();
+        // Create a unique filename based on current time
+        std::string timestampedName = std::format("{}/log_{:%Y-%m-%d_%H-%M-%S}.log", logPath, now);
+
+        std::filesystem::path source = std::format("{}/latest.log", logPath);
+        std::filesystem::path target = timestampedName;
+
+        std::filesystem::copy_file(source, target, std::filesystem::copy_options::overwrite_existing);
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to archive log file: " << e.what() << std::endl;
+    }
 }
 
 static std::string makeColoredMessage(int color, const std::string& message) {
