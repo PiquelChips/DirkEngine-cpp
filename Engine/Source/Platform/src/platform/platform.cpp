@@ -50,7 +50,7 @@ void Platform::initImGui() {
 
     ImGuiData* bd = IM_NEW(ImGuiData)();
 
-    io.BackendPlatformUserData = (void*) bd;
+    io.BackendPlatformUserData = bd;
     io.BackendPlatformName = bd->platformName.data();
 
     // TODO: (ImGui) Enable all features
