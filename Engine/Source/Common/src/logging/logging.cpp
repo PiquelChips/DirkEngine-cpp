@@ -26,6 +26,7 @@ void shutdown() {
 Logger::Logger() {
     // TODO: create parent directories as well
     std::filesystem::create_directory(std::filesystem::path{ logPath });
+    // TODO: clear latest.log
     logfile = std::ofstream(std::format("{}/latest.log", logPath), std::ios::out | std::ios::app);
     check(logfile.is_open());
 }
@@ -33,6 +34,7 @@ Logger::Logger() {
 Logger::~Logger() {
     logfile.flush();
     logfile.close();
+    // TODO: copy latest.log to new file with timestamp
 }
 
 static std::string makeColoredMessage(int color, const std::string& message) {
