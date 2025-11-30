@@ -3,6 +3,7 @@
 
 #include <bits/chrono.h>
 #include <chrono>
+#include <csignal>
 #include <cstdio>
 #include <ctime>
 #include <filesystem>
@@ -86,6 +87,11 @@ void Logger::log(LogCategory category, LogLevel level, std::string message) {
     // TODO: why tf does this line segfault
     // logfile << msg << std::endl;
     std::cout << coloredMsg << std::endl;
+
+    if (level == FATAL) {
+        shutdown();
+        raise(SIGABRT);
+    }
 }
 
 bool Logger::shouldLog(LogCategory category, LogLevel level) {
