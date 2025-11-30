@@ -81,10 +81,10 @@ void Logger::log(LogCategory category, LogLevel level, std::string message) {
     levelColoredString += "]";
 
     std::string msg = std::format("{} {} {} {}", time, levelString, category.name, message);
-    std::string coloredMsg = std::format("{} {} {} {}", time, levelString, category.name, message);
+    std::string coloredMsg = std::format("{} {} {} {}", time, levelColoredString, category.name, message);
 
-    // why tf does this line segfault
-    logfile << msg << std::endl;
+    // TODO: why tf does this line segfault
+    // logfile << msg << std::endl;
     std::cout << coloredMsg << std::endl;
 }
 

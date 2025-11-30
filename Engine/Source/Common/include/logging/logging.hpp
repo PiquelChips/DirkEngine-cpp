@@ -9,7 +9,6 @@
 #define DEFINE_LOG_CATEGORY(categoryName) dirk::Logging::LogCategory categoryName{ .name = #categoryName };
 
 #define DIRK_LOG(category, level, message, ...) dirk::Logging::logger->log(category, dirk::Logging::level, message, ##__VA_ARGS__);
-#define DIRK_LOGM(category, level, message) dirk::Logging::logger->log(category, dirk::Logging::level, message);
 
 namespace dirk::Logging {
 
