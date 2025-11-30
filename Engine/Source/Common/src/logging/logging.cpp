@@ -83,7 +83,7 @@ void Logger::log(LogCategory category, LogLevel level, std::string message) {
     std::string msg = std::format("{} {} {} {}", time, levelString, category.name, message);
     std::string coloredMsg = std::format("{} {} {} {}", time, levelString, category.name, message);
 
-    check(logfile.is_open());
+    // why tf does this line segfault
     logfile << msg << std::endl;
     std::cout << coloredMsg << std::endl;
 }
