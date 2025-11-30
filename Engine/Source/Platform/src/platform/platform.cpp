@@ -539,7 +539,7 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     case Input::Key::F23: return ImGuiKey_F23;
     case Input::Key::F24: return ImGuiKey_F24;
     default:
-        DIRK_LOG(LogPlatform, ERROR, "no imgui equivalent for key " << key)
+        DIRK_LOG(LogPlatform, ERROR, "no imgui equivalent for key {}", (uint16_t) key)
         return ImGuiKey_None;
     }
 }
