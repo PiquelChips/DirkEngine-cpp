@@ -35,9 +35,15 @@ public:
     Logger();
     ~Logger();
 
-    template <typename... Args>
-    void log(LogCategory category, LogLevel level, std::format_string<Args...> fmt, Args&&... args);
     void log(LogCategory category, LogLevel level, std::string str);
+
+    template <typename... Args>
+    void log(LogCategory category, LogLevel level, std::format_string<Args...> fmt, Args&&... args) {
+        if (shouldLog(category, level))
+            return;
+
+        log(category, level, std::vformat(fmt.get(), std::make_format_args(args...)));
+    }
 
     static bool shouldLog(LogCategory category, LogLevel level);
 

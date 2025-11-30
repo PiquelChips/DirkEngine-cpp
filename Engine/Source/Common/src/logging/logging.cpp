@@ -34,14 +34,6 @@ Logger::~Logger() {
     logfile.close();
 }
 
-template <typename... Args>
-void Logger::log(LogCategory category, LogLevel level, std::format_string<Args...> fmt, Args&&... args) {
-    if (shouldLog(category, level))
-        return;
-
-    log(category, level, std::vformat(fmt.get(), std::make_format_args(args...)));
-}
-
 void Logger::log(LogCategory category, LogLevel level, std::string message) {
     if (shouldLog(category, level))
         return;
