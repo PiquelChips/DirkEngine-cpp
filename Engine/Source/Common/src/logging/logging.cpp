@@ -102,7 +102,8 @@ void Logger::log(LogCategory category, LogLevel level, std::string message) {
     std::string msg = std::format("{} {} {} {}", timeStr, levelString, category.name, message);
     std::string coloredMsg = std::format("{} {} {} {}", timeStr, levelColoredString, category.name, message);
 
-    std::println(logfile, "{}", msg);
+    // TODO: fix segfault
+    // std::println(logfile, "{}", msg);
     std::println(std::cout, "{}", coloredMsg);
 
     if (level == FATAL) {
