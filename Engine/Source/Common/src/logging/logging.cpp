@@ -46,9 +46,10 @@ void Logger::log(LogCategory category, LogLevel level, std::string message) {
         return;
 
     static auto currentZone = std::chrono::current_zone();
-    const auto zonedTime = std::chrono::zoned_time{ currentZone, std::chrono::system_clock::now() };
-    const auto time = std::chrono::hh_mm_ss(zonedTime.get_local_time() - std::chrono::floor<std::chrono::days>(zonedTime.get_local_time()));
-    std::string timeStr = std::format("[{}]", time);
+    auto time = std::chrono::zoned_time{ currentZone, std::chrono::system_clock::now() };
+    time = std::chrono::floor<std::chrono::seconds>(time.get_local_time());
+    std::string timeStr = std::format("{:%Y/%m/%d %H:%M:%S}", time);
+    timeStr = timeStr.substr(0, 19);
 
     std::string levelString = "[";
     std::string levelColoredString = "[";
@@ -83,8 +84,8 @@ void Logger::log(LogCategory category, LogLevel level, std::string message) {
     levelString += "]";
     levelColoredString += "]";
 
-    std::string msg = std::format("{} {} {} {}", time, levelString, category.name, message);
-    std::string coloredMsg = std::format("{} {} {} {}", time, levelColoredString, category.name, message);
+    std::string msg = std::format("{} {} {} {}", timeStr, levelString, category.name, message);
+    std::string coloredMsg = std::format("{} {} {} {}", timeStr, levelColoredString, category.name, message);
 
     // TODO: why tf does this line segfault
     // logfile << msg << std::endl;
