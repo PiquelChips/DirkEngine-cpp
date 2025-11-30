@@ -34,8 +34,12 @@ Logger::~Logger() {
     logfile.close();
 }
 
+static std::string makeColoredMessage(int color, const std::string& message) {
+    return std::format("\033[{}m{}\033[0m", color, message);
+}
+
 void Logger::log(LogCategory category, LogLevel level, std::string message) {
-    if (shouldLog(category, level))
+    if (!shouldLog(category, level))
         return;
 
     static auto currentZone = std::chrono::current_zone();
@@ -49,37 +53,39 @@ void Logger::log(LogCategory category, LogLevel level, std::string message) {
     switch (level) {
     case TRACE:
         levelString += "TRACE";
-        levelColoredString += "\033[36mTRACE\033[0m"; // cyan
+        levelColoredString += makeColoredMessage(36, "TRACE"); // cyan
         break;
     case DEBUG:
         levelString += "DEBUG";
-        levelColoredString += "\033[34mDEBUG\033[0m"; // blue
+        levelColoredString += makeColoredMessage(34, "TRACE"); // blue
         break;
     case INFO:
         levelString += "INFO";
-        levelColoredString += "\033[32mINFO\033[0m"; // green
+        levelColoredString += makeColoredMessage(32, "INFO"); // green
         break;
     case WARNING:
         levelString += "WARN";
-        levelColoredString += "\033[33mWARN\033[0m"; // yellow
+        levelColoredString += makeColoredMessage(33, "WARN"); // yellow
         break;
     case ERROR:
         levelString += "ERROR";
-        levelColoredString += "\033[31mERROR\033[0m"; // red
+        levelColoredString += makeColoredMessage(31, "ERROR"); // red
         break;
     case FATAL:
         levelString += "FATAL";
-        levelColoredString += "\033[35mFATAL\033[0m"; // magenta
+        levelColoredString += makeColoredMessage(35, "FATAL"); // magenta
         break;
     }
 
     levelString += "]";
-    levelColoredString = "]";
+    levelColoredString += "]";
 
-    logfile << timeStr << " " << levelString << " " << message;
-    logfile.flush();
+    std::string msg = std::format("{} {} {} {}", time, levelString, category.name, message);
+    std::string coloredMsg = std::format("{} {} {} {}", time, levelString, category.name, message);
 
-    std::println(std::cout, "{} {} {}", timeStr, levelColoredString, message);
+    check(logfile.is_open());
+    logfile << msg << std::endl;
+    std::cout << coloredMsg << std::endl;
 }
 
 bool Logger::shouldLog(LogCategory category, LogLevel level) {

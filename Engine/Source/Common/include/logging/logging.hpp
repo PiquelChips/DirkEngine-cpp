@@ -52,8 +52,6 @@ private:
     std::ofstream logfile;
 
     static constexpr std::string_view logPath{ LOG_PATH };
-    static constexpr std::string_view colorStart{ "\033[" };
-    static constexpr std::string_view colorEnd{ "\033[0m" };
 };
 
 static std::unique_ptr<Logger> logger = nullptr;
