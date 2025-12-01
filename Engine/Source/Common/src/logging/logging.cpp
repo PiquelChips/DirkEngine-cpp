@@ -14,6 +14,8 @@
 
 namespace dirk::Logging {
 
+DEFINE_LOG_CATEGORY(Logger)
+
 void init() {
     logger = std::make_unique<Logger>();
 }
@@ -32,9 +34,12 @@ Logger::Logger() {
 
     logfile = std::ofstream(std::format("{}/latest.log", logPath), std::ios::out | std::ios::trunc);
     check(logfile.is_open());
+    DIRK_LOG(Logger, INFO, "initialized logger");
 }
 
 Logger::~Logger() {
+    DIRK_LOG(Logger, INFO, "shutting down logger");
+
     check(logfile.is_open());
     logfile.flush();
     logfile.close();
