@@ -356,7 +356,9 @@ void Renderer::render() {
         }
 
         checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
-        checkVulkan(queues.presentQueue.presentKHR(presentInfos.size(), presentInfos.data()));
+        for (auto& presentInfo : presentInfos) {
+            checkVulkan(queues.presentQueue.presentKHR(presentInfo));
+        }
     }
 }
 
