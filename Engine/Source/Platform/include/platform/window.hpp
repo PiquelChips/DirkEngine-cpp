@@ -96,8 +96,7 @@ public:
     void* getPlatformHandle() { return platformWindow->getPlatformHandle(); }
     vk::SurfaceKHR getVulkanSurface() { return surface; }
 
-    vk::SubmitInfo render(ImDrawData* drawData);
-    vk::PresentInfoKHR present();
+    std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> render();
 
 private:
     // render resources

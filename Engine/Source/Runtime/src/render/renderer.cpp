@@ -313,36 +313,51 @@ void Renderer::render() {
     checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
     checkVulkan(device.resetFences(1, &inFlightFence));
 
-    // render engine viewports
-    std::vector<vk::SubmitInfo> submitInfos(viewports.size());
-    for (auto& viewport : viewports) {
-        submitInfos.emplace_back(viewport->render());
+    // viewports
+    {
+        std::vector<vk::SubmitInfo> submitInfos(viewports.size());
+        for (auto& viewport : viewports) {
+            submitInfos.emplace_back(viewport->render());
+        }
+
+        checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
     }
 
-    checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
+    // ImGui
+    {
+        ImGui_ImplVulkan_NewFrame();
+        ImGui::NewFrame();
 
-    ImGui_ImplVulkan_NewFrame();
-    ImGui::NewFrame();
+        // TODO: process all ImGui rendering
+        ImGui::ShowDemoWindow();
 
-    // TODO: process all ImGui rendering
-    ImGui::ShowDemoWindow();
+        for (auto& viewport : viewports) {
+            viewport->renderImGui();
+        }
 
-    for (auto& viewport : viewports) {
-        viewport->renderImGui();
+        ImGui::Render();
+
+        checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
+        checkVulkan(device.resetFences(1, &inFlightFence));
+
+        ImGui::UpdatePlatformWindows();
     }
 
-    ImGui::Render();
+    // render windows
+    {
+        auto& windows = gEngine->getPlatform()->getWindows();
+        std::vector<vk::SubmitInfo> submitInfos(windows.size());
+        std::vector<vk::PresentInfoKHR> presentInfos(windows.size());
 
-    checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
-    checkVulkan(device.resetFences(1, &inFlightFence));
+        for (auto& window : windows) {
+            auto [submitInfo, presentInfo] = window->render();
+            submitInfos.emplace_back(submitInfos);
+            presentInfos.emplace_back(presentInfos);
+        }
 
-    auto window = &gEngine->getPlatform()->getMainWindow();
-    queues.graphicsQueue.submit(window->render(ImGui::GetDrawData()), inFlightFence);
-
-    ImGui::UpdatePlatformWindows();
-    ImGui::RenderPlatformWindowsDefault();
-
-    checkVulkan(queues.presentQueue.presentKHR(window->present()));
+        checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
+        checkVulkan(queues.presentQueue.presentKHR(presentInfos.size(), presentInfos.data()));
+    }
 }
 
 std::shared_ptr<Viewport> Renderer::createViewport(const ViewportCreateInfo& createInfo) {

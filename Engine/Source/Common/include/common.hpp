@@ -186,6 +186,9 @@ public:
     // TODO: remove
     virtual vk::SurfaceKHR createTempSurface(vk::Instance instance) = 0;
 
+    virtual std::vector<std::unique_ptr<Platform::Window>>& getWindows() = 0;
+    virtual std::vector<std::unique_ptr<Platform::Monitor>>& getMonitors() = 0;
+
     virtual std::string_view getClipboardText() = 0;
     virtual void setClipboardText(const std::string& text) = 0;
 };

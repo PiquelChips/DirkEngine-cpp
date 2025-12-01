@@ -60,7 +60,10 @@ void Window::onResize() {
         device.destroySwapchainKHR(oldSwapchain);
 }
 
-vk::SubmitInfo Window::render(ImDrawData* drawData) {
+std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> Window::render() {
+    // TODO: get actual draw data
+    ImDrawData* drawData = ImGui::GetDrawData();
+
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
 
@@ -121,11 +124,7 @@ vk::SubmitInfo Window::render(ImDrawData* drawData) {
     // command buffers
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
-    return submitInfo;
-}
 
-vk::PresentInfoKHR Window::present() {
-    auto [imageAvailableSemaphore, renderFinishedSemaphore] = semaphores[semaphoreIndex];
     vk::PresentInfoKHR presentInfo{};
     presentInfo.sType = vk::StructureType::ePresentInfoKHR;
     presentInfo.waitSemaphoreCount = 1;
@@ -135,8 +134,8 @@ vk::PresentInfoKHR Window::present() {
     presentInfo.pSwapchains = &swapchain;
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr; // only have one swap chain
-
-    return presentInfo;
+                                    //
+    return std::tuple(submitInfo, presentInfo);
 }
 
 } // namespace dirk::Platform
