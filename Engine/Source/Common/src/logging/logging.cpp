@@ -32,29 +32,26 @@ Logger::Logger() {
         std::cerr << "Failed to create log directories: " << ec.message() << std::endl;
     }
 
-    logfile = std::ofstream(std::format("{}/latest.log", logPath), std::ios::out | std::ios::trunc);
-    check(logfile.is_open());
+    latestLogfile = std::ofstream(std::format("{}/latest.log", logPath), std::ios::out | std::ios::trunc);
+    check(latestLogfile.is_open());
+
+    auto now = std::chrono::system_clock::now();
+    archiveLogfile = std::ofstream(std::format("{}/{:%Y-%m-%d_%H-%M-%S}.log", logPath, now), std::ios::out | std::ios::trunc);
+    check(archiveLogfile.is_open());
+
     DIRK_LOG(LogLogger, INFO, "initialized logger");
 }
 
 Logger::~Logger() {
     DIRK_LOG(LogLogger, INFO, "shutting down logger");
 
-    check(logfile.is_open());
-    logfile.flush();
-    logfile.close();
+    check(latestLogfile.is_open());
+    latestLogfile.flush();
+    latestLogfile.close();
 
-    try {
-        auto now = std::chrono::system_clock::now();
-        std::string timestampedName = std::format("{}/{:%Y-%m-%d_%H-%M-%S}.log", logPath, now);
-
-        std::filesystem::path source = std::format("{}/latest.log", logPath);
-        std::filesystem::path target = timestampedName;
-
-        std::filesystem::copy_file(source, target, std::filesystem::copy_options::overwrite_existing);
-    } catch (const std::exception& e) {
-        std::cerr << "Failed to archive log file: " << e.what() << std::endl;
-    }
+    check(archiveLogfile.is_open());
+    archiveLogfile.flush();
+    archiveLogfile.close();
 }
 
 static std::string makeColoredMessage(int color, const std::string& message) {
@@ -105,10 +102,10 @@ void Logger::log(LogCategory category, LogLevel level, std::string message) {
     levelColoredString += "]";
 
     std::string msg = std::format("{} {} {}: {}", timeStr, levelString, category.name, message);
-    std::string coloredMsg = std::format("{} {} {}: {}", timeStr, levelColoredString, category.name, message);
+    std::println(latestLogfile, "{}", msg);
+    std::println(archiveLogfile, "{}", msg);
 
-    // TODO: fix segfault
-    // std::println(logfile, "{}", msg);
+    std::string coloredMsg = std::format("{} {} {}: {}", timeStr, levelColoredString, category.name, message);
     std::println(std::cout, "{}", coloredMsg);
 
     if (level == FATAL) {

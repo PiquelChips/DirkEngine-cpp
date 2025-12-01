@@ -52,7 +52,8 @@ public:
 
 private:
     std::string filepath;
-    std::ofstream logfile;
+    std::ofstream latestLogfile;
+    std::ofstream archiveLogfile;
 
     static constexpr std::string_view logPath{ LOG_PATH };
 };
