@@ -33,6 +33,8 @@ struct LogCategory {
 void init();
 void shutdown();
 
+DECLARE_LOG_CATEGORY_EXTERN(Logger);
+
 class Logger {
 public:
     Logger();
