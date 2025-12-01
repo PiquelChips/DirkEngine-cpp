@@ -39,11 +39,11 @@ Logger::Logger() {
     archiveLogfile = std::ofstream(std::format("{}/{:%Y-%m-%d_%H-%M-%S}.log", logPath, now), std::ios::out | std::ios::trunc);
     check(archiveLogfile.is_open());
 
-    DIRK_LOG(LogLogger, INFO, "initialized logger");
+    log(LogLogger, INFO, "initialized logger");
 }
 
 Logger::~Logger() {
-    DIRK_LOG(LogLogger, INFO, "shutting down logger");
+    log(LogLogger, INFO, "shutting down logger");
 
     check(latestLogfile.is_open());
     latestLogfile.flush();
