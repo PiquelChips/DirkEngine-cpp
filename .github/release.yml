@@ -4,10 +4,13 @@ changelog:
       - documentation
       - ci-cd
   categories:
-    - title: DirkBuildTool
+    - title: Build Tool
       labels:
         - build-tool
-    - title: Features
+    - title: Platform
+      labels:
+        - platform
+    - title: Other Features
       labels:
         - enhancement
     - title: Bugs and Optimizations

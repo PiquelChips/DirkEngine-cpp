@@ -23,6 +23,9 @@ SRC=$(shell find $(SRC_DIR) -name '*$(SRC_EXT)')
 
 OBJ_DIR=$(INT_DIR)/obj
 OBJ=$(SRC:$(SRC_DIR)/%$(SRC_EXT)=$(OBJ_DIR)/%.o)
+DEP = $(OBJ:.o=.d)
+
+-include $(DEP)
 
 .PHONY: $(TARGET)
 $(TARGET): $(OUT)
