@@ -32,15 +32,15 @@ std::shared_ptr<const Model> ResourceManager::loadModel(const std::string& name)
 
     if (warn != "") {
         warn.pop_back(); // remove trailing return
-        DIRK_LOG(LogResourceManager, WARNING, "tinygltf: " << warn);
+        DIRK_LOG(LogResourceManager, WARNING, "tinygltf: {}", warn);
     }
     if (err != "") {
         err.pop_back(); // remove trailing return
-        DIRK_LOG(LogResourceManager, ERROR, "tinygltf: " << err);
+        DIRK_LOG(LogResourceManager, ERROR, "tinygltf: {}", err);
     }
 
     if (!ret) {
-        DIRK_LOG(LogResourceManager, FATAL, "failed to load model: " << name);
+        DIRK_LOG(LogResourceManager, FATAL, "failed to load model {}", name);
         return nullptr;
     }
 
@@ -145,7 +145,7 @@ std::shared_ptr<const Shader> ResourceManager::loadShader(const std::string& nam
     std::ifstream file(std::string(shaderPath) + "/" + name + ".spv", std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
-        DIRK_LOG(LogResourceManager, FATAL, "unable to load shader: " << name)
+        DIRK_LOG(LogResourceManager, FATAL, "unable to load shader {}", name)
         return nullptr;
     }
 

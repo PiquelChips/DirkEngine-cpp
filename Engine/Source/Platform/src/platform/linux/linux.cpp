@@ -105,7 +105,7 @@ vk::SurfaceKHR LinuxPlatformImpl::createTempSurface(vk::Instance instance) {
     vk::detail::DispatchLoaderDynamic dispatcher(instance, vkGetInstanceProcAddr);
     auto err = instance.createWaylandSurfaceKHR(&createInfo, nullptr, &vkSurface, dispatcher);
     if (err != vk::Result::eSuccess)
-        DIRK_LOG(LogWayland, FATAL, "received error code " << err << " while attempting to create vulkan surface for wayland surface")
+        DIRK_LOG(LogWayland, FATAL, "received error code {} while attempting to create vulkan surface for wayland surface", (int) err)
     check(vkSurface);
 
     free(wlSurface);
@@ -225,12 +225,7 @@ void LinuxPlatformImpl::wl_OutputHandleDone(void* data, struct wl_output* output
 
     monitor->getPlatform().updateMonitors();
 
-    DIRK_LOG(LogPlatform, INFO,
-             "found new monitor: "
-                 << "\n\tname: " << monitor->getName()
-                 << "\n\tmake: " << monitor->getMake()
-                 << "\n\tmodel: " << monitor->getModel()
-                 << "\n\tdescription: " << monitor->getDescription());
+    DIRK_LOG(LogPlatform, INFO, "found new monitor: \n\tname: {}\n\tmake: {}\n\tmodel: {}\n\tdescription: {}", monitor->getName(), monitor->getMake(), monitor->getModel(), monitor->getDescription())
 }
 
 void LinuxPlatformImpl::wl_OutputHandleName(void* data, struct wl_output* output, const char* name) {
@@ -468,7 +463,7 @@ constexpr Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {
     case XKB_KEY_F23: return Input::Key::F23;
     case XKB_KEY_F24: return Input::Key::F24;
     default:
-        DIRK_LOG(LogWayland, ERROR, "keycode " << sym << " is unknown")
+        DIRK_LOG(LogWayland, ERROR, "keycode {} is unknown", sym)
         return Input::Key::Unknown;
     }
     // clang-format on
@@ -487,7 +482,7 @@ constexpr Input::MouseButton LinuxPlatformImpl::getMouseFromCode(uint32_t button
     case BTN_4: return Input::MouseButton::Button4;
     case BTN_5: return Input::MouseButton::Button5;
     default:
-        DIRK_LOG(LogWayland, ERROR, "mouse button " << button << " is unknown")
+        DIRK_LOG(LogWayland, ERROR, "mouse button {} is unknown", button)
         return Input::MouseButton::Left;
     }
     // clang-format on
@@ -500,7 +495,7 @@ constexpr Input::KeyState LinuxPlatformImpl::getKeyStateFromCode(uint32_t state)
     case WL_KEYBOARD_KEY_STATE_RELEASED: return Input::KeyState::Released;
     case WL_KEYBOARD_KEY_STATE_REPEATED: return Input::KeyState::Held;
     default:
-        DIRK_LOG(LogWayland, ERROR, "key state " << state << " is unknown")
+        DIRK_LOG(LogWayland, ERROR, "key state {} is unknown", state)
         return Input::KeyState::None;
     }
     // clang-format on

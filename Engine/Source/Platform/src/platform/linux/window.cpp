@@ -14,7 +14,7 @@
 
 namespace dirk::Platform::Linux {
 
-#define LOG_WAYLAND_NOT_IMPLEMENTED(feature) DIRK_LOG(LogWayland, WARNING, feature << " is not implemented in wayland");
+#define LOG_WAYLAND_NOT_IMPLEMENTED(feature) DIRK_LOG(LogWayland, WARNING, "{} is not implemented in wayland", feature);
 
 LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatformImpl& platformImpl)
     : linuxPlatform(platformImpl), size(createInfo.size) {
@@ -87,7 +87,7 @@ void LinuxWindowImpl::createVulkanSurface(VkInstance instance, VkSurfaceKHR* sur
 
     auto err = vkCreateWaylandSurfaceKHR(instance, createInfo, nullptr, surface);
     if (err != VK_SUCCESS)
-        DIRK_LOG(LogWayland, FATAL, "received error code " << err << " while attempting to create vulkan surface for wayland surface")
+        DIRK_LOG(LogWayland, FATAL, "received error code {} while attempting to create vulkan surface for wayland surface", (int) err)
 
     vkSurface = *surface;
     check(vkSurface);

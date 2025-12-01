@@ -37,7 +37,7 @@ namespace dirk {
 static void checkVkResult(VkResult err) {
     if (err == VK_SUCCESS)
         return;
-    DIRK_LOG(LogVulkan, ERROR, "vk::Result = " << err);
+    DIRK_LOG(LogVulkan, ERROR, "vk::Result = {}", (int) err);
 }
 
 DEFINE_LOG_CATEGORY(LogVulkan)
@@ -122,14 +122,13 @@ void Renderer::init() {
 
         vk::PhysicalDeviceProperties deviceProperties = physicalDevice.getProperties();
         // TODO: get more human readable data (like enum values)
-        DIRK_LOG(LogVulkan, INFO,
-                 "physical device selected: "
-                     << "\n\tvendor id: " << deviceProperties.vendorID
-                     << "\n\tdevice id: " << deviceProperties.deviceID
-                     << "\n\tdevice name: " << deviceProperties.deviceName
-                     //<< "\n\tdevice type: " << deviceProperties.deviceType
-                     << "\n\tapi version: " << deviceProperties.apiVersion
-                     << "\n\tdriver version: " << deviceProperties.driverVersion);
+        DIRK_LOG(LogVulkan, INFO, "physical device selected:\n\tvendor id: {}\n\tdevice id: {}\n\tdevice name: {}\n\tapi version: {}\n\tdriver version: {}",
+                 deviceProperties.vendorID,
+                 deviceProperties.deviceID,
+                 (const char*) deviceProperties.deviceName,
+                 (int) deviceProperties.deviceType,
+                 deviceProperties.apiVersion,
+                 deviceProperties.driverVersion);
 
         auto features = getDeviceFeatures(physicalDevice);
         auto formats = physicalDevice.getSurfaceFormatsKHR(surface);
@@ -443,7 +442,7 @@ bool Renderer::checkRequiredInstanceExtensions(std::vector<const char*>& extensi
                 layerFound = true;
 
         if (!layerFound) {
-            DIRK_LOG(LogVulkan, FATAL, "instance extension \"" << extensionName << "\" not found");
+            DIRK_LOG(LogVulkan, FATAL, "instance extension \"{}\" not found", extensionName);
             return false;
         }
     }
@@ -491,7 +490,7 @@ int Renderer::getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR sur
 
     score += getDeviceFeatures(device).getScore();
 
-    DIRK_LOG(LogVulkan, DEBUG, "found device: " << deviceProperties.deviceName << "(score: " << score << ")");
+    DIRK_LOG(LogVulkan, DEBUG, "found device: {} (score: {})", (const char*) deviceProperties.deviceName, score);
     return score;
 }
 
@@ -584,24 +583,22 @@ vk::Bool32 Renderer::debugCallback(
     vk::DebugUtilsMessageTypeFlagsEXT messageType,
     const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
-    LogLevel level;
 
     switch (messageSeverity) {
     case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
-        level = ERROR;
+        DIRK_LOG(LogVulkanValidation, ERROR, pCallbackData->pMessage);
         break;
     case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
-        level = WARNING;
+        DIRK_LOG(LogVulkanValidation, WARNING, pCallbackData->pMessage);
         break;
     case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
-        level = INFO;
+        DIRK_LOG(LogVulkanValidation, INFO, pCallbackData->pMessage);
         break;
     case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
-        level = DEBUG;
+        DIRK_LOG(LogVulkanValidation, DEBUG, pCallbackData->pMessage);
         break;
     }
 
-    DIRK_LOG(LogVulkanValidation, level, pCallbackData->pMessage);
     return vk::False;
 }
 
@@ -615,7 +612,7 @@ bool Renderer::checkValidationLayerSupport() {
                 layerFound = true;
 
         if (!layerFound) {
-            DIRK_LOG(LogVulkan, ERROR, "validation layer \"" << layerName << "\" not found");
+            DIRK_LOG(LogVulkan, ERROR, "validation layer \"{}\" not found", layerName);
             return false;
         }
     }

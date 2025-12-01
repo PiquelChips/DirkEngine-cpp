@@ -20,6 +20,7 @@ IEngine* gEngine;
 
 DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     gEngine = this;
+    Logging::init();
 
     renderer = std::make_unique<Renderer>();
     // platform needs renderer init
@@ -48,6 +49,7 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
 
 DirkEngine::~DirkEngine() {
     DIRK_LOG(LogEngine, INFO, "exiting");
+    Logging::shutdown();
 }
 
 void DirkEngine::exit() {
@@ -55,7 +57,7 @@ void DirkEngine::exit() {
 }
 
 void DirkEngine::exit(const std::string& reason) {
-    DIRK_LOG(LogEngine, INFO, "engine exit has been requested with reason: " << reason);
+    DIRK_LOG(LogEngine, INFO, "engine exit has been requested with reason: {}", reason);
     this->exit();
 }
 
