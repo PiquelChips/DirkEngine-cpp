@@ -13,3 +13,5 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%$(SRC_EXT)
 	@echo Compiling $*$(SRC_EXT)...
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CFLAGS) $(CXXFLAGS) $(DEFINES) -MMD -MP -c $< -o $@
+
+-include $(DEP)
