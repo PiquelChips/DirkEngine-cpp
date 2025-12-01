@@ -1,9 +1,20 @@
 #pragma once
 
-#include <sstream>
+#include <csignal>
+#include <cstdio>
+#include <ctime>
+#include <format>
+#include <fstream>
+#include <memory>
 #include <string>
+#include <string_view>
 
-namespace dirk {
+#define DECLARE_LOG_CATEGORY_EXTERN(categoryName) extern dirk::Logging::LogCategory categoryName;
+#define DEFINE_LOG_CATEGORY(categoryName) dirk::Logging::LogCategory categoryName{ .name = #categoryName };
+
+#define DIRK_LOG(category, level, message, ...) dirk::Logging::logger->log(category, dirk::Logging::level, message, ##__VA_ARGS__);
+
+namespace dirk::Logging {
 
 enum LogLevel {
     FATAL,
@@ -15,37 +26,38 @@ enum LogLevel {
 };
 
 struct LogCategory {
-    const char* name;
+    std::string_view name;
     bool show = true;
 };
 
-const std::string logPath{ LOG_PATH };
+void init();
+void shutdown();
 
-/**
- * will log the log category, the log level and return a stream for the rest of the message
- * this will not actually output anything
- */
-std::stringstream beginLogEntry(LogCategory category, LogLevel level);
+class Logger {
+public:
+    Logger();
+    ~Logger();
 
-/**
- * will actually output to the outputs (std::cout and/or a file)
- */
-void endLogEntry(std::stringstream stream);
+    void log(LogCategory category, LogLevel level, std::string message);
 
-/**
- * return if a message should be logged based on level and the specific category
- */
-bool shouldLog(LogCategory category, LogLevel level);
+    template <typename... Args>
+    void log(LogCategory category, LogLevel level, std::format_string<Args...> fmt, Args&&... args) {
+        if (!shouldLog(category, level))
+            return;
 
-#define DECLARE_LOG_CATEGORY_EXTERN(categoryName) extern dirk::LogCategory categoryName;
-#define DEFINE_LOG_CATEGORY(categoryName) dirk::LogCategory categoryName{ .name = #categoryName };
-
-#define DIRK_LOG(category, level, messages)                                  \
-    if (dirk::shouldLog(category, level)) {                                  \
-        dirk::endLogEntry(dirk::beginLogEntry(category, level) << messages); \
+        log(category, level, std::vformat(fmt.get(), std::make_format_args(args...)));
     }
 
-std::string getLevelString(LogLevel level);
-std::string getLevelColor(LogLevel level);
+    static bool shouldLog(LogCategory category, LogLevel level);
 
-} // namespace dirk
+private:
+    std::string filepath;
+    std::ofstream latestLogfile;
+    std::ofstream archiveLogfile;
+
+    static constexpr std::string_view logPath{ LOG_PATH };
+};
+
+static std::unique_ptr<Logger> logger = nullptr;
+
+} // namespace dirk::Logging

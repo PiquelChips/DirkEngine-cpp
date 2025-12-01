@@ -19,7 +19,7 @@ void World::tick(float deltaTime) {
 }
 
 void World::spawnActor(const ActorCreateInfo& spawnInfo) {
-    DIRK_LOG(LogEngine, INFO, "spawning actor " << spawnInfo.name);
+    DIRK_LOG(LogEngine, INFO, "spawning actor {}", spawnInfo.name);
     auto actor = std::make_unique<Actor>(spawnInfo, *this);
     actors[actor->getName()] = std::move(actor);
 }
