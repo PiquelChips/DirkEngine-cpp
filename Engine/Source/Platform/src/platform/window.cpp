@@ -104,9 +104,7 @@ std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> Window::render() {
     renderInfo.pColorAttachments = &colorAttachment;
 
     commandBuffer.beginRendering(renderInfo);
-
-    ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer);
-
+    renderer->renderImGui(drawData, commandBuffer);
     commandBuffer.endRendering();
 
     renderer->transitionImageLayout(commandBuffer, image.image, surfaceFormat.format, vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);

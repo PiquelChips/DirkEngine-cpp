@@ -40,7 +40,7 @@ Platform::~Platform() {
 void Platform::initImGui() {
     windows.clear();
 
-    auto mainWindow = createWindow(WindowCreateInfo{ .title = appName });
+    auto mainWindow = createWindow(WindowCreateInfo{ .title = appName, .visible = true });
     check(mainWindow);
     focusedWindow = mainWindow;
 

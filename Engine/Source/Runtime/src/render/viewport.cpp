@@ -232,7 +232,7 @@ void Viewport::createRenderResources() {
     samplerInfo.maxAnisotropy = 1.0f;
     sampler = resources.device.createSampler(samplerInfo);
 
-    descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, outImageMemoryView.view, (VkImageLayout) vk::ImageLayout::eShaderReadOnlyOptimal);
+    descriptorSet = renderer->addTexture(sampler, outImageMemoryView.view, vk::ImageLayout::eShaderReadOnlyOptimal);
 }
 
 vk::SubmitInfo Viewport::render() {

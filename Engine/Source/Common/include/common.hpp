@@ -137,6 +137,9 @@ public:
     virtual vk::CommandBuffer createCommandBuffer() = 0;
     virtual vk::Semaphore createSemaphore() = 0;
     virtual vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout) = 0;
+    virtual vk::DescriptorSet addTexture(vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout) = 0;
+
+    virtual void renderImGui(ImDrawData* drawData, vk::CommandBuffer commandBuffer) = 0;
 
     virtual RendererResources getResources() = 0;
     virtual const RendererProperties& getProperties() = 0;
