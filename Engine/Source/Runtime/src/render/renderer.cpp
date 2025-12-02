@@ -351,8 +351,8 @@ void Renderer::render() {
 
         for (auto& window : windows) {
             auto [submitInfo, presentInfo] = window->render();
-            submitInfos.emplace_back(submitInfos);
-            presentInfos.emplace_back(presentInfos);
+            submitInfos.emplace_back(submitInfo);
+            presentInfos.emplace_back(presentInfo);
         }
 
         checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
