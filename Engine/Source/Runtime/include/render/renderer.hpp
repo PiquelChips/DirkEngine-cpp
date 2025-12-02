@@ -51,7 +51,7 @@ public:
     Renderer();
     ~Renderer();
 
-    void init();
+    void init(vk::SurfaceKHR surface);
     void initImGui();
     void render();
 

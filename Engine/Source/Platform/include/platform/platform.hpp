@@ -66,7 +66,7 @@ public:
     virtual void setClipboardText(const std::string& text) = 0;
 };
 
-class Platform : public IPlatform {
+class Platform {
 public:
     Platform(const PlatformCreateInfo& createInfo);
     ~Platform();

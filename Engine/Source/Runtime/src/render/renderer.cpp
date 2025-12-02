@@ -98,9 +98,7 @@ Renderer::Renderer() {
 #endif
 }
 
-void Renderer::init() {
-    vk::SurfaceKHR surface = gEngine->getPlatform()->createTempSurface(instance);
-
+void Renderer::init(vk::SurfaceKHR surface) {
     // PHYSICAL DEVICE
     {
         auto physicalDevices = instance.enumeratePhysicalDevices();

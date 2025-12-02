@@ -26,7 +26,7 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     {
         renderer = std::make_unique<Renderer>();
         platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
-        renderer->init();
+        renderer->init(platform->createTempSurface(renderer->getResources().instance));
         world = std::make_shared<World>(createInfo.actorCreateInfos);
     }
 

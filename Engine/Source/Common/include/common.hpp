@@ -22,7 +22,6 @@
 #include "vulkan/vulkan_structs.hpp"
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-#include "backends/imgui_impl_vulkan.h"
 #include "imgui.h"
 
 namespace dirk {
@@ -170,32 +169,6 @@ public:
     virtual void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) = 0;
 };
 
-namespace Platform {
-class Window;
-class Monitor;
-} // namespace Platform
-
-class IPlatform {
-public:
-    virtual ~IPlatform() = default;
-
-    virtual void initImGui() = 0;
-    virtual void tick(float deltaTime) = 0;
-    virtual void shutdownImGui() = 0;
-
-    virtual Platform::Window& getMainWindow() = 0;
-    virtual Platform::Window& getFocusedWindow() = 0;
-    virtual Platform::Monitor& createMonitor(void* platformHandle) = 0;
-    // TODO: remove
-    virtual vk::SurfaceKHR createTempSurface(vk::Instance instance) = 0;
-
-    virtual std::vector<std::unique_ptr<Platform::Window>>& getWindows() = 0;
-    virtual std::vector<std::unique_ptr<Platform::Monitor>>& getMonitors() = 0;
-
-    virtual std::string_view getClipboardText() = 0;
-    virtual void setClipboardText(const std::string& text) = 0;
-};
-
 class IEngine {
 public:
     virtual ~IEngine() = default;
@@ -204,7 +177,6 @@ public:
     virtual void exit(const std::string& reason) = 0;
 
     virtual IRenderer* getRenderer() const = 0;
-    virtual IPlatform* getPlatform() const = 0;
 };
 
 } // namespace dirk

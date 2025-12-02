@@ -35,7 +35,6 @@ public:
     bool isRequestingExit() const noexcept { return requestingExit; }
 
     IRenderer* getRenderer() const { return (IRenderer*) renderer.get(); }
-    IPlatform* getPlatform() const { return (IPlatform*) platform.get(); }
 
 private:
     std::unique_ptr<Platform::Platform> platform;
