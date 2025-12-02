@@ -46,7 +46,7 @@ void Platform::initImGui() {
 
     ImGuiIO& io = ImGui::GetIO();
     IMGUI_CHECKVERSION();
-    IM_ASSERT(io.BackendPlatformUserData == nullptr && "Already initialized a platform backend!");
+    checkm(io.BackendPlatformUserData == nullptr, "Already initialized a platform backend!");
 
     ImGuiData* bd = IM_NEW(ImGuiData)();
 
