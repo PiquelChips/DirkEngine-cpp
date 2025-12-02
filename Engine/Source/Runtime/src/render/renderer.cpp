@@ -741,6 +741,9 @@ vk::DescriptorSet Renderer::addTexture(vk::Sampler sampler, vk::ImageView view, 
     return descriptorSet;
 }
 
+void Renderer::renderImGui(ImDrawData* drawData, vk::CommandBuffer commandBuffer) {
+}
+
 #ifdef ENABLE_VALIDATION_LAYERS
 vk::Bool32 Renderer::debugCallback(
     vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
