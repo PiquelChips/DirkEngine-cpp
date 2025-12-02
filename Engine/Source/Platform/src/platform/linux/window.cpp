@@ -29,6 +29,9 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
     setDecorated(createInfo.decorated);
 
     wl_surface_commit(wlSurface);
+
+    if (createInfo.visible)
+        show();
 }
 
 LinuxWindowImpl::~LinuxWindowImpl() {
