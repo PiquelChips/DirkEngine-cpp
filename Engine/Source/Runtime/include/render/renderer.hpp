@@ -29,6 +29,20 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 #define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
 
+struct ImGuiRendererData {
+    Renderer* platform;
+    static constexpr std::string_view platformName = "imgui_impl_dirk";
+
+    vk::Sampler texSamplerLinear;
+    vk::DescriptorSetLayout descriptorSetLayout;
+    vk::DescriptorPool descriptorPool;
+    vk::PipelineLayout pipelineLayout;
+    vk::Pipeline pipeline;
+
+    vk::ShaderModule shaderModuleVert;
+    vk::ShaderModule shaderModuleFrag;
+};
+
 /**
  * The vulkan implementation of the renderer
  */
@@ -38,6 +52,7 @@ public:
     ~Renderer();
 
     void init();
+    void initImGui();
     void render();
 
     std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);
@@ -49,6 +64,9 @@ public:
     vk::Semaphore createSemaphore();
     vk::CommandBuffer createCommandBuffer();
     vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
+    vk::DescriptorSet addTexture(vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
+
+    void renderImGui(ImDrawData* drawData, vk::CommandBuffer commandBuffer);
 
     inline RendererResources getResources() { return RendererResources{
         .instance = instance,
@@ -75,6 +93,8 @@ private:
     int getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR surface);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
+
+    static ImGuiRendererData* getBackendData();
 
 #ifdef ENABLE_VALIDATION_LAYERS
 private:
