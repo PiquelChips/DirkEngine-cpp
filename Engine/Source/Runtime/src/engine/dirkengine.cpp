@@ -22,18 +22,50 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     gEngine = this;
     Logging::init();
 
-    renderer = std::make_unique<Renderer>();
-    // platform needs renderer init
-    platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
-    // we need renderer var to be initialized for this function to run
-    renderer->init();
-    world = std::make_shared<World>(createInfo.actorCreateInfos);
+    // main engine objects
+    {
+        renderer = std::make_unique<Renderer>();
+        platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
+        renderer->init();
+        world = std::make_shared<World>(createInfo.actorCreateInfos);
+    }
 
-    auto viewport = renderer->createViewport(ViewportCreateInfo{
-        .name = "Hello World!",
-        .size = vk::Extent2D(500, 500),
-        .world = world,
-    });
+    // ImGui
+    {
+        DIRK_LOG(LogVulkan, DEBUG, "initlializing imgui");
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+        io.ConfigDpiScaleFonts = true;
+        io.ConfigDpiScaleViewports = true;
+
+        ImGui::StyleColorsDark();
+
+        // Setup scaling
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.ScaleAllSizes(1.f);
+        style.FontScaleDpi = 1.f;
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+
+        // TODO: change the path for imgui.ini
+
+        platform->initImGui();
+        renderer->initImGui();
+    }
+
+    // initial engine state
+    {
+        auto viewport = renderer->createViewport(ViewportCreateInfo{
+            .name = "Hello World!",
+            .size = vk::Extent2D(500, 500),
+            .world = world,
+        });
+    }
 
     lastTick = std::chrono::high_resolution_clock::now();
 
