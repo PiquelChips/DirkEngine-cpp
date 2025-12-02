@@ -5,6 +5,7 @@
 
 // GLM
 #include <memory>
+#include <vector>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES // properly aligns types in memory; this doesn't affect nested structs!!!
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE        // vulkan uses the 0.0 to 1.0 ranges; opengl uses the -1.0 to 1.0 range
@@ -169,12 +170,18 @@ public:
     virtual void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) = 0;
 };
 
+namespace Platform {
+class Window;
+}
+
 class IEngine {
 public:
     virtual ~IEngine() = default;
 
     virtual void exit() = 0;
     virtual void exit(const std::string& reason) = 0;
+
+    virtual std::vector<std::unique_ptr<Platform::Window>>& getWindows() = 0;
 
     virtual IRenderer* getRenderer() const = 0;
 };

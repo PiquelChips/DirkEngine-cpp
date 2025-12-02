@@ -33,8 +33,19 @@ Platform::Platform(const PlatformCreateInfo& createInfo)
 }
 
 Platform::~Platform() {
-    if (getBackendData() != nullptr)
-        shutdownImGui();
+    ImGuiData* bd = getBackendData();
+    checkm(bd != nullptr, "No platform backend to shutdown, or already shutdown?");
+
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+
+    ImGui::DestroyPlatformWindows();
+
+    io.BackendPlatformName = nullptr;
+    io.BackendPlatformUserData = nullptr;
+    platformIO.ClearPlatformHandlers();
+    contextMap.erase(bd->window);
+    IM_DELETE(bd);
 }
 
 void Platform::initImGui() {
@@ -116,23 +127,6 @@ void Platform::tick(float deltaTime) {
     // io.DisplayFramebufferScale = ImVec2((float) fbSize.width / (float) size.width, (float) fbSize.height / (float) size.height);
 
     platformImpl->pollPlatformEvents();
-}
-
-void Platform::shutdownImGui() {
-    ImGuiData* bd = getBackendData();
-    checkm(bd != nullptr, "No platform backend to shutdown, or already shutdown?");
-
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
-
-    ImGui::DestroyPlatformWindows();
-
-    io.BackendPlatformName = nullptr;
-    io.BackendPlatformUserData = nullptr;
-    io.BackendFlags &= ~(ImGuiBackendFlags_HasMouseCursors | ImGuiBackendFlags_HasSetMousePos | ImGuiBackendFlags_HasGamepad | ImGuiBackendFlags_PlatformHasViewports | ImGuiBackendFlags_HasMouseHoveredViewport);
-    platformIO.ClearPlatformHandlers();
-    contextMap.erase(bd->window);
-    IM_DELETE(bd);
 }
 
 Monitor& Platform::createMonitor(void* platformHandle) {

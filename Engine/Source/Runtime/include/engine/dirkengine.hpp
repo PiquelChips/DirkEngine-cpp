@@ -32,6 +32,8 @@ public:
     void exit();
     void exit(const std::string& reason);
 
+    std::vector<std::unique_ptr<Platform::Window>>& getWindows() { return platform->getWindows(); }
+
     bool isRequestingExit() const noexcept { return requestingExit; }
 
     IRenderer* getRenderer() const { return (IRenderer*) renderer.get(); }

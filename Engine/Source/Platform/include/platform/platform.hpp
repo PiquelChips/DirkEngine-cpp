@@ -73,7 +73,6 @@ public:
 
     void initImGui();
     void tick(float deltaTime);
-    void shutdownImGui();
 
     // clang-format off
     Window& getMainWindow() { check(windows[0]); return *windows[0]; }

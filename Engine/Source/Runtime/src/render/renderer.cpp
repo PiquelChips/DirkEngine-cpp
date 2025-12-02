@@ -427,7 +427,6 @@ Renderer::~Renderer() {
     io.BackendRendererUserData = nullptr;
     platformIO.ClearRendererHandlers();
 
-    gEngine->getPlatform()->shutdownImGui();
     ImGui::DestroyContext();
 }
 
@@ -467,7 +466,7 @@ void Renderer::render() {
 
     // render windows
     {
-        auto& windows = gEngine->getPlatform()->getWindows();
+        auto& windows = gEngine->getWindows();
         std::vector<vk::SubmitInfo> submitInfos{};
         std::vector<vk::PresentInfoKHR> presentInfos{};
 
