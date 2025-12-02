@@ -61,8 +61,8 @@ void Window::onResize() {
 }
 
 std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> Window::render() {
-    // TODO: get actual draw data
-    ImDrawData* drawData = ImGui::GetDrawData();
+    auto* viewport = ImGui::FindViewportByPlatformHandle(this->getPlatformHandle());
+    ImDrawData* drawData = viewport->DrawData;
 
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();

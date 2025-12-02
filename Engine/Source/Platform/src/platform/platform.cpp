@@ -82,7 +82,7 @@ void Platform::initImGui() {
     platformIO.Platform_GetWindowMinimized = [](ImGuiViewport* vp) { return false; };
     platformIO.Platform_SetWindowTitle = ImGui_SetWindowTitle;
     platformIO.Platform_SetWindowAlpha = [](ImGuiViewport*, float) {};
-    platformIO.Platform_CreateVkSurface = ImGui_CreateVkSurface;
+    platformIO.Platform_CreateVkSurface = [](ImGuiViewport*, ImU64, const void*, ImU64*) { return 0; }; // ImGui_CreateVkSurface;
 
     platformIO.Platform_GetClipboardTextFn = ImGui_GetClipboardText;
     platformIO.Platform_SetClipboardTextFn = ImGui_SetClipboardText;

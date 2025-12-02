@@ -294,6 +294,14 @@ void Renderer::init() {
         initInfo.UseDynamicRendering = true;
         ImGui_ImplVulkan_Init(&initInfo);
         DIRK_LOG(LogRenderer, INFO, "initlialized ImGui")
+
+        ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+        // all of this is handled by the paltform backend so these settings are not needed
+        platformIO.Renderer_CreateWindow = nullptr;
+        platformIO.Renderer_DestroyWindow = nullptr;
+        platformIO.Renderer_SetWindowSize = nullptr;
+        platformIO.Renderer_RenderWindow = nullptr;
+        platformIO.Renderer_SwapBuffers = nullptr;
     }
 }
 
