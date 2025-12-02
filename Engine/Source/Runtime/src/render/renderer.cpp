@@ -237,72 +237,180 @@ void Renderer::init() {
     }
 
     DIRK_LOG(LogVulkan, INFO, "vulkan initialized successfully");
+}
 
-    // ImGui
+void Renderer::initImGui() {
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiRendererData* bd = IM_NEW(ImGuiRendererData)();
+
+    checkm(io.BackendRendererUserData == nullptr, "Already initialized a renderer backend!");
+
+    // Setup backend capabilities flags
+    io.BackendRendererUserData = bd;
+    io.BackendRendererName = bd->platformName.data();
+
+    // TODO: make sure we properly support this
+    // io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset; // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;  // We can honor ImGuiPlatformIO::Textures[] requests during render.
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports; // We can create multi-viewports on the Renderer side (optional)
+
+    // sampler
     {
-        DIRK_LOG(LogVulkan, DEBUG, "initlializing imgui");
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+        // Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling.
+        vk::SamplerCreateInfo createInfo{};
+        createInfo.magFilter = vk::Filter::eLinear;
+        createInfo.minFilter = vk::Filter::eLinear;
+        createInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
+        createInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+        createInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
+        createInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
+        createInfo.minLod = -1000;
+        createInfo.maxLod = 1000;
+        createInfo.maxAnisotropy = 1.0f;
+        bd->texSamplerLinear = device.createSampler(createInfo);
+    }
 
-        io.ConfigDpiScaleFonts = true;
-        io.ConfigDpiScaleViewports = true;
+    // descriptor layout
+    {
+        vk::DescriptorSetLayoutBinding binding[1];
+        binding[0].descriptorType = vk::DescriptorType::eCombinedImageSampler;
+        binding[0].descriptorCount = 1;
+        binding[0].stageFlags = vk::ShaderStageFlagBits::eFragment;
+        vk::DescriptorSetLayoutCreateInfo info;
+        info.bindingCount = 1;
+        info.pBindings = binding;
+        bd->descriptorSetLayout = device.createDescriptorSetLayout(info);
+    }
 
-        ImGui::StyleColorsDark();
+    // descriptor pool
+    {
+        vk::DescriptorPoolSize poolSize = { vk::DescriptorType::eCombinedImageSampler, MAX_DESCRIPTOR_SET_COUNT };
+        vk::DescriptorPoolCreateInfo poolInfo;
+        poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+        poolInfo.maxSets = MAX_DESCRIPTOR_SET_COUNT;
+        poolInfo.poolSizeCount = 1;
+        poolInfo.pPoolSizes = &poolSize;
 
-        // Setup scaling
-        ImGuiStyle& style = ImGui::GetStyle();
-        style.ScaleAllSizes(1.f);
-        style.FontScaleDpi = 1.f;
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        bd->descriptorPool = device.createDescriptorPool(poolInfo);
+    }
 
-        // TODO: change the path for imgui.ini
+    // pipeline layout
+    {
+        // Constants: we are using 'vec2 offset' and 'vec2 scale' instead of a full 3d projection matrix
+        vk::PushConstantRange pushConstants[1];
+        pushConstants[0].stageFlags = vk::ShaderStageFlagBits::eVertex;
+        pushConstants[0].offset = sizeof(float) * 0;
+        pushConstants[0].size = sizeof(float) * 4;
+        vk::DescriptorSetLayout setLayout[1] = { bd->descriptorSetLayout };
+        vk::PipelineLayoutCreateInfo layoutInfo;
+        layoutInfo.setLayoutCount = 1;
+        layoutInfo.pSetLayouts = setLayout;
+        layoutInfo.pushConstantRangeCount = 1;
+        layoutInfo.pPushConstantRanges = pushConstants;
+        bd->pipelineLayout = device.createPipelineLayout(layoutInfo);
+    }
 
-        // TODO: have these be engine functions. renderer should not interact with platform
-        gEngine->getPlatform()->initImGui();
-        auto mainWindow = &gEngine->getPlatform()->getMainWindow();
-        check(mainWindow);
-        mainWindow->show();
+    // shaders
+    {
+        bd->shaderModuleVert = loadShaderModule("imgui.vert");
+        bd->shaderModuleFrag = loadShaderModule("imgui.frag");
+    }
 
-        auto formats = physicalDevice.getSurfaceFormatsKHR(surface);
-        auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
-        auto swapChainImageFormat = chooseSwapSurfaceFormat(formats);
-
+    // pipeline
+    {
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{};
         pipelineRenderingCreateInfo.colorAttachmentCount = 1;
-        pipelineRenderingCreateInfo.pColorAttachmentFormats = &swapChainImageFormat.format;
+        pipelineRenderingCreateInfo.pColorAttachmentFormats = &properties.surfaceFormat.format;
         pipelineRenderingCreateInfo.depthAttachmentFormat = properties.depthFormat;
 
-        ImGui_ImplVulkan_InitInfo initInfo = {};
-        initInfo.Instance = instance;
-        initInfo.PhysicalDevice = physicalDevice;
-        initInfo.Device = device;
-        initInfo.QueueFamily = properties.queueFamilyIndices.graphicsFamily.value();
-        initInfo.Queue = queues.graphicsQueue;
-        initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
-        initInfo.MinImageCount = capabilities.minImageCount;
-        initInfo.ImageCount = mainWindow->getImageCount();
-        initInfo.Allocator = nullptr;
-        initInfo.PipelineInfoMain.Subpass = 0;
-        initInfo.PipelineInfoMain.MSAASamples = (VkSampleCountFlagBits) vk::SampleCountFlagBits::e1;
-        initInfo.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingCreateInfo;
-        initInfo.CheckVkResultFn = checkVkResult;
-        initInfo.UseDynamicRendering = true;
-        ImGui_ImplVulkan_Init(&initInfo);
-        DIRK_LOG(LogRenderer, INFO, "initlialized ImGui")
+        vk::PipelineShaderStageCreateInfo stage[2];
+        stage[0].stage = vk::ShaderStageFlagBits::eVertex;
+        stage[0].module = bd->shaderModuleVert;
+        stage[0].pName = "main";
+        stage[1].stage = vk::ShaderStageFlagBits::eFragment;
+        stage[1].module = bd->shaderModuleFrag;
+        stage[1].pName = "main";
 
-        ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
-        // all of this is handled by the paltform backend so these settings are not needed
-        platformIO.Renderer_CreateWindow = nullptr;
-        platformIO.Renderer_DestroyWindow = nullptr;
-        platformIO.Renderer_SetWindowSize = nullptr;
-        platformIO.Renderer_RenderWindow = nullptr;
-        platformIO.Renderer_SwapBuffers = nullptr;
+        vk::VertexInputBindingDescription bindingDesc[1];
+        bindingDesc[0].stride = sizeof(ImDrawVert);
+        bindingDesc[0].inputRate = vk::VertexInputRate::eVertex;
+
+        vk::VertexInputAttributeDescription attributeDescription[3];
+        attributeDescription[0].location = 0;
+        attributeDescription[0].binding = bindingDesc[0].binding;
+        attributeDescription[0].format = vk::Format::eR32G32Sfloat;
+        attributeDescription[0].offset = offsetof(ImDrawVert, pos);
+        attributeDescription[1].location = 1;
+        attributeDescription[1].binding = bindingDesc[0].binding;
+        attributeDescription[1].format = vk::Format::eR32G32Sfloat;
+        attributeDescription[1].offset = offsetof(ImDrawVert, uv);
+        attributeDescription[2].location = 2;
+        attributeDescription[2].binding = bindingDesc[0].binding;
+        attributeDescription[2].format = vk::Format::eR8G8B8A8Unorm;
+        attributeDescription[2].offset = offsetof(ImDrawVert, col);
+
+        vk::PipelineVertexInputStateCreateInfo vertexInfo;
+        vertexInfo.vertexBindingDescriptionCount = 1;
+        vertexInfo.pVertexBindingDescriptions = bindingDesc;
+        vertexInfo.vertexAttributeDescriptionCount = 3;
+        vertexInfo.pVertexAttributeDescriptions = attributeDescription;
+
+        vk::PipelineInputAssemblyStateCreateInfo iaInfo;
+        iaInfo.topology = vk::PrimitiveTopology::eTriangleList;
+
+        vk::PipelineViewportStateCreateInfo viewportInfo;
+        viewportInfo.viewportCount = 1;
+        viewportInfo.scissorCount = 1;
+
+        vk::PipelineRasterizationStateCreateInfo rasterInfo;
+        rasterInfo.polygonMode = vk::PolygonMode::eFill;
+        rasterInfo.cullMode = vk::CullModeFlagBits::eNone;
+        rasterInfo.frontFace = vk::FrontFace::eCounterClockwise;
+        rasterInfo.lineWidth = 1.0f;
+
+        vk::PipelineMultisampleStateCreateInfo msInfo;
+        msInfo.rasterizationSamples = properties.msaaSamples;
+
+        vk::PipelineColorBlendAttachmentState colorAttachment[1];
+        colorAttachment[0].blendEnable = VK_TRUE;
+        colorAttachment[0].srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
+        colorAttachment[0].dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+        colorAttachment[0].colorBlendOp = vk::BlendOp::eAdd;
+        colorAttachment[0].srcAlphaBlendFactor = vk::BlendFactor::eOne;
+        colorAttachment[0].dstAlphaBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+        colorAttachment[0].alphaBlendOp = vk::BlendOp::eAdd;
+        colorAttachment[0].colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+        vk::PipelineDepthStencilStateCreateInfo depthInfo{};
+
+        vk::PipelineColorBlendStateCreateInfo blendInfo{};
+        blendInfo.attachmentCount = 1;
+        blendInfo.pAttachments = colorAttachment;
+
+        std::array<vk::DynamicState, 2> dynamicStates{ vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+        vk::PipelineDynamicStateCreateInfo dynamicState{};
+        dynamicState.dynamicStateCount = dynamicStates.size();
+        dynamicState.pDynamicStates = dynamicStates.data();
+
+        vk::GraphicsPipelineCreateInfo createInfo;
+        createInfo.stageCount = 2;
+        createInfo.pStages = stage;
+        createInfo.pVertexInputState = &vertexInfo;
+        createInfo.pInputAssemblyState = &iaInfo;
+        createInfo.pViewportState = &viewportInfo;
+        createInfo.pRasterizationState = &rasterInfo;
+        createInfo.pMultisampleState = &msInfo;
+        createInfo.pDepthStencilState = &depthInfo;
+        createInfo.pColorBlendState = &blendInfo;
+        createInfo.pDynamicState = &dynamicState;
+        createInfo.layout = bd->pipelineLayout;
+        createInfo.renderPass = VK_NULL_HANDLE;
+        createInfo.pNext = &pipelineRenderingCreateInfo;
+
+        bd->pipeline = device.createGraphicsPipeline(nullptr, createInfo).value;
     }
+
+    DIRK_LOG(LogRenderer, INFO, "initlialized ImGui")
 }
 
 Renderer::~Renderer() {
@@ -312,7 +420,15 @@ Renderer::~Renderer() {
 
     viewports.clear();
 
-    ImGui_ImplVulkan_Shutdown();
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+
+    ImGui::DestroyPlatformWindows();
+
+    io.BackendRendererName = nullptr;
+    io.BackendRendererUserData = nullptr;
+    platformIO.ClearRendererHandlers();
+
     gEngine->getPlatform()->shutdownImGui();
     ImGui::DestroyContext();
 }
@@ -1013,6 +1129,10 @@ QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device, vk::Su
     }
 
     return indices;
+}
+
+ImGuiRendererData* Renderer::getBackendData() {
+    return ImGui::GetCurrentContext() ? (ImGuiRendererData*) ImGui::GetIO().BackendRendererUserData : nullptr;
 }
 
 } // namespace dirk
