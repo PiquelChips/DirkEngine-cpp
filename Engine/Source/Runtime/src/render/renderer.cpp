@@ -346,8 +346,8 @@ void Renderer::render() {
     // render windows
     {
         auto& windows = gEngine->getPlatform()->getWindows();
-        std::vector<vk::SubmitInfo> submitInfos(windows.size());
-        std::vector<vk::PresentInfoKHR> presentInfos(windows.size());
+        std::vector<vk::SubmitInfo> submitInfos{};
+        std::vector<vk::PresentInfoKHR> presentInfos{};
 
         for (auto& window : windows) {
             auto [submitInfo, presentInfo] = window->render();
