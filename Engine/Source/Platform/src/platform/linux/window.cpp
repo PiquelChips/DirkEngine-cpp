@@ -14,7 +14,7 @@
 
 namespace dirk::Platform::Linux {
 
-#define LOG_WAYLAND_NOT_IMPLEMENTED(feature) DIRK_LOG(LogWayland, WARNING, "{} is not implemented in wayland", feature);
+#define LOG_WAYLAND_NOT_IMPLEMENTED(feature) ; // DIRK_LOG(LogWayland, WARNING, "{} is not implemented in wayland", feature);
 
 LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatformImpl& platformImpl)
     : linuxPlatform(platformImpl), size(createInfo.size) {
@@ -110,19 +110,19 @@ void LinuxWindowImpl::setTitle(std::string_view inTitle) {
 
 bool LinuxWindowImpl::isFocused() {
     // TODO: xdg-activation protocol
-    DIRK_LOG(LogWayland, WARNING, "focusing windows not implemented")
+    LOG_WAYLAND_NOT_IMPLEMENTED("focusing windows")
     return false;
 }
 
 void LinuxWindowImpl::focus() {
     // TODO: xdg-activation protocol
-    DIRK_LOG(LogWayland, WARNING, "focusing windows not implemented")
+    LOG_WAYLAND_NOT_IMPLEMENTED("focusing windows")
 }
 
 void LinuxWindowImpl::setDecorated(bool inDecorated) {
     this->decorated = inDecorated;
     // TODO: xdg-decoration protocol
-    DIRK_LOG(LogWayland, WARNING, "window decoration not implemented")
+    LOG_WAYLAND_NOT_IMPLEMENTED("decorating windows")
 }
 
 void LinuxWindowImpl::xdg_ToplevelConfigure(void* data, xdg_toplevel* toplevel, int32_t width, int32_t height, wl_array* states) {

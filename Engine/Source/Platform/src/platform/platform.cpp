@@ -79,9 +79,9 @@ void Platform::initImGui() {
     platformIO.Platform_GetWindowFramebufferScale = ImGui_GetWindowFramebufferScale;
     platformIO.Platform_SetWindowFocus = ImGui_SetWindowFocus;
     platformIO.Platform_GetWindowFocus = ImGui_GetWindowFocus;
-    platformIO.Platform_GetWindowMinimized = [](ImGuiViewport* vp) { DIRK_LOG(LogPlatform, WARNING, "ImGui::Platform_GetWindowMinimized not implemented"); return false; };
+    platformIO.Platform_GetWindowMinimized = [](ImGuiViewport* vp) { return false; };
     platformIO.Platform_SetWindowTitle = ImGui_SetWindowTitle;
-    platformIO.Platform_SetWindowAlpha = [](ImGuiViewport*, float) { DIRK_LOG(LogPlatform, WARNING, "ImGui::Platform_SetWindowAlpha not implemented") };
+    platformIO.Platform_SetWindowAlpha = [](ImGuiViewport*, float) {};
     platformIO.Platform_CreateVkSurface = ImGui_CreateVkSurface;
 
     platformIO.Platform_GetClipboardTextFn = ImGui_GetClipboardText;
@@ -120,7 +120,7 @@ void Platform::tick(float deltaTime) {
 
 void Platform::shutdownImGui() {
     ImGuiData* bd = getBackendData();
-    IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
+    checkm(bd != nullptr, "No platform backend to shutdown, or already shutdown?");
 
     ImGuiIO& io = ImGui::GetIO();
     ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
