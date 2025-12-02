@@ -718,6 +718,31 @@ vk::DescriptorSet Renderer::createDescriptorSets(vk::Buffer uniformBuffer, vk::S
     return descriptorSet;
 }
 
+vk::DescriptorSet Renderer::addTexture(vk::Sampler sampler, vk::ImageView view, vk::ImageLayout layout) {
+    ImGuiRendererData* bd = getBackendData();
+    vk::DescriptorPool pool = bd->descriptorPool;
+
+    vk::DescriptorSetAllocateInfo allocInfo{};
+    allocInfo.descriptorPool = pool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &bd->descriptorSetLayout;
+    auto descriptorSet = device.allocateDescriptorSets(allocInfo)[0];
+
+    std::array<vk::DescriptorImageInfo, 1> descImage{};
+    descImage[0].sampler = sampler;
+    descImage[0].imageView = view;
+    descImage[0].imageLayout = layout;
+    std::array<vk::WriteDescriptorSet, 1> writeDesc{};
+    writeDesc[0].dstSet = descriptorSet;
+    writeDesc[0].descriptorCount = 1;
+    writeDesc[0].descriptorType = vk::DescriptorType::eCombinedImageSampler;
+    writeDesc[0].pImageInfo = descImage.data();
+
+    device.updateDescriptorSets(writeDesc.size(), writeDesc.data(), 0, nullptr);
+
+    return descriptorSet;
+}
+
 #ifdef ENABLE_VALIDATION_LAYERS
 vk::Bool32 Renderer::debugCallback(
     vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
