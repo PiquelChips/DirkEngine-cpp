@@ -21,7 +21,6 @@
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
-#define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 #include "backends/imgui_impl_vulkan.h"
 #include "imgui.h"

@@ -1,53 +1,125 @@
 #include "logging/logging.hpp"
-#include "common.hpp"
+#include "asserts.hpp"
 
+#include <chrono>
+#include <csignal>
+#include <cstdio>
 #include <ctime>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
-#include <sstream>
-#include <string_view>
+#include <memory>
+#include <ostream>
 
-namespace dirk {
+namespace dirk::Logging {
 
-constexpr std::string_view colorEnd{ "\033[0m" };
+static LogCategory LogLogger{ .name = "Logger" };
 
-std::stringstream beginLogEntry(LogCategory category, LogLevel level) {
-    std::stringstream stream{};
-
-    std::string levelString = std::format("[{}{}{}] ", getLevelColor(level), getLevelString(level), colorEnd);
-    char timestamp[25];
-    time_t now = std::time(0);
-    strftime(timestamp, sizeof(timestamp), "[%Y-%m-%d %H:%M:%S] ", localtime(&now));
-
-    stream << timestamp << levelString << category.name << ": ";
-
-    return stream;
+void init() {
+    logger = std::make_unique<Logger>();
 }
 
-void endLogEntry(std::stringstream stream) {
-    stream << colorEnd;
-    std::string out = stream.str();
+void shutdown() {
+    logger = nullptr;
+}
 
-    std::cout << out << std::endl;
+Logger::Logger() {
+    std::error_code ec;
+    std::filesystem::create_directories(std::filesystem::path{ logPath }, ec);
 
-    if (logPath == "")
+    if (ec) {
+        std::cerr << "Failed to create log directories: " << ec.message() << std::endl;
+    }
+
+    latestLogfile = std::ofstream(std::format("{}/latest.log", logPath), std::ios::out | std::ios::trunc);
+    check(latestLogfile.is_open());
+
+    auto now = std::chrono::system_clock::now();
+    archiveLogfile = std::ofstream(std::format("{}/{:%Y-%m-%d_%H-%M-%S}.log", logPath, now), std::ios::out | std::ios::trunc);
+    check(archiveLogfile.is_open());
+
+    log(LogLogger, INFO, "initialized logger");
+}
+
+Logger::~Logger() {
+    log(LogLogger, INFO, "shutting down logger");
+
+    check(latestLogfile.is_open());
+    latestLogfile.flush();
+    latestLogfile.close();
+
+    check(archiveLogfile.is_open());
+    archiveLogfile.flush();
+    archiveLogfile.close();
+}
+
+static std::string makeColoredMessage(int color, const std::string& message) {
+    return std::format("\033[{}m{}\033[0m", color, message);
+}
+
+void Logger::log(LogCategory category, LogLevel level, std::string message) {
+    if (!shouldLog(category, level))
         return;
 
-    std::filesystem::create_directory(std::filesystem::path{ logPath });
-    std::ofstream file(logPath + "/latest.log", std::ios::app);
-    check(file.is_open());
+    static auto currentZone = std::chrono::current_zone();
+    auto time = std::chrono::zoned_time{ currentZone, std::chrono::system_clock::now() };
+    time = std::chrono::floor<std::chrono::seconds>(time.get_local_time());
+    std::string timeStr = std::format("{:%Y/%m/%d %H:%M:%S}", time);
+    timeStr = timeStr.substr(0, 19);
 
-    file << out << std::endl;
+    std::string levelString = "[";
+    std::string levelColoredString = "[";
 
-    file.flush();
-    file.close();
+    switch (level) {
+    case TRACE:
+        levelString += "TRACE";
+        levelColoredString += makeColoredMessage(36, "TRACE"); // cyan
+        break;
+    case DEBUG:
+        levelString += "DEBUG";
+        levelColoredString += makeColoredMessage(34, "TRACE"); // blue
+        break;
+    case INFO:
+        levelString += "INFO";
+        levelColoredString += makeColoredMessage(32, "INFO"); // green
+        break;
+    case WARNING:
+        levelString += "WARN";
+        levelColoredString += makeColoredMessage(33, "WARN"); // yellow
+        break;
+    case ERROR:
+        levelString += "ERROR";
+        levelColoredString += makeColoredMessage(31, "ERROR"); // red
+        break;
+    case FATAL:
+        levelString += "FATAL";
+        levelColoredString += makeColoredMessage(35, "FATAL"); // magenta
+        break;
+    }
 
-    // TODO: if fatal error, request engine exit
+    levelString += "]";
+    levelColoredString += "]";
+
+    std::string msg = std::format("{} {} {}: {}", timeStr, levelString, category.name, message);
+    // TODO: fix logging segfault
+    // std::println(latestLogfile, "{}", msg);
+    // std::println(archiveLogfile, "{}", msg);
+
+    std::string coloredMsg = std::format("{} {} {}: {}", timeStr, levelColoredString, category.name, message);
+    std::println(std::cout, "{}", coloredMsg);
+
+    if (level == FATAL) {
+        shutdown();
+        std::abort();
+    }
 }
 
-bool shouldLog(LogCategory category, LogLevel level) {
+bool Logger::shouldLog(LogCategory category, LogLevel level) {
+#ifdef NO_LOGGING
+    return false;
+#endif
+
     switch (level) {
 #ifndef DIRK_DEBUG_BUILD
     case DEBUG:
@@ -56,62 +128,10 @@ bool shouldLog(LogCategory category, LogLevel level) {
         return false;
 #endif
     default:
-#ifdef NO_LOGGING
-        return false;
-#else
         break;
-#endif
     }
 
     return category.show;
 }
 
-std::string getLevelString(LogLevel level) {
-    switch (level) {
-    case TRACE:
-        return "TRACE";
-    case DEBUG:
-        return "DEBUG";
-    case INFO:
-        return "INFO";
-    case WARNING:
-        return "WARN";
-    case ERROR:
-        return "ERROR";
-    case FATAL:
-        return "FATAL";
-    }
-    return "";
-}
-
-std::string getLevelColor(LogLevel level) {
-    std::string color{ "\033[" };
-
-    switch (level) {
-    case TRACE:
-        color += "36"; // cyan
-        break;
-    case DEBUG:
-        color += "34"; // blue
-        break;
-    case INFO:
-        color += "32"; // green
-        break;
-    case WARNING:
-        color += "33"; // yellow
-        break;
-    case ERROR:
-        color += "31"; // red
-        break;
-    case FATAL:
-        color += "35"; // magenta
-        break;
-    default:
-        return "";
-    }
-
-    color += "m";
-    return color;
-}
-
-} // namespace dirk
+} // namespace dirk::Logging
