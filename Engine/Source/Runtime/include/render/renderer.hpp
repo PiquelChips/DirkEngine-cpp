@@ -95,6 +95,8 @@ private:
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 
+    void updateImGuiTexture(ImTextureData* tex);
+
     static ImGuiRendererData* getBackendData();
 
 #ifdef ENABLE_VALIDATION_LAYERS

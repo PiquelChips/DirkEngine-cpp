@@ -1322,6 +1322,117 @@ QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device, vk::Su
     return indices;
 }
 
+void Renderer::updateImGuiTexture(ImTextureData* tex) {
+    ImGuiRendererData* bd = getBackendData();
+    if (tex->Status == ImTextureStatus_OK)
+        return;
+
+    if (tex->Status == ImTextureStatus_WantCreate) {
+        // Create and upload new texture to graphics system
+        // IMGUI_DEBUG_LOG("UpdateTexture #%03d: WantCreate %dx%d\n", tex->UniqueID, tex->Width, tex->Height);
+        IM_ASSERT(tex->TexID == ImTextureID_Invalid && tex->BackendUserData == nullptr);
+        IM_ASSERT(tex->Format == ImTextureFormat_RGBA32);
+        VulkanTexture* backendTex = IM_NEW(VulkanTexture)();
+
+        auto [image, memory] = createImage(
+            tex->Width, tex->Height,
+            vk::Format::eR8G8B8A8Unorm, vk::ImageTiling::eOptimal,
+            vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+            vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+        backendTex->image = image;
+        backendTex->memory = memory;
+        backendTex->imageView = createImageView(backendTex->image, vk::Format::eR8G8B8A8Unorm, vk::ImageAspectFlagBits::eColor);
+
+        backendTex->descriptorSet = addTexture(bd->texSamplerLinear, backendTex->imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+        // Store identifiers
+        tex->SetTexID((ImTextureID) (VkDescriptorSet) backendTex->descriptorSet);
+        tex->BackendUserData = backendTex;
+    }
+
+    if (tex->Status == ImTextureStatus_WantCreate || tex->Status == ImTextureStatus_WantUpdates) {
+        VulkanTexture* backendTex = (VulkanTexture*) tex->BackendUserData;
+
+        // Update full texture or selected blocks. We only ever write to textures regions which have never been used before!
+        // This backend choose to use tex->UpdateRect but you can use tex->Updates[] to upload individual regions.
+        // We could use the smaller rect on _WantCreate but using the full rect allows us to clear the texture.
+        const int uploadX = (tex->Status == ImTextureStatus_WantCreate) ? 0 : tex->UpdateRect.x;
+        const int uploadY = (tex->Status == ImTextureStatus_WantCreate) ? 0 : tex->UpdateRect.y;
+        const int uploadW = (tex->Status == ImTextureStatus_WantCreate) ? tex->Width : tex->UpdateRect.w;
+        const int uploadH = (tex->Status == ImTextureStatus_WantCreate) ? tex->Height : tex->UpdateRect.h;
+
+        vk::DeviceSize uploadPitch = uploadW * tex->BytesPerPixel;
+        vk::DeviceSize uploadSize = uploadH * uploadPitch;
+
+        auto [uploadBuffer, uploadBufferMemory] = createBuffer(uploadSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible);
+
+        // upload data
+        {
+            char* map = nullptr;
+            checkVulkan(device.mapMemory(uploadBufferMemory, 0, uploadSize, (vk::MemoryMapFlags) 0, (void**) &map));
+            for (int y = 0; y < uploadH; y++)
+                memcpy(map + uploadPitch * y, tex->GetPixelsAt(uploadX, uploadY + y), (size_t) uploadPitch);
+
+            std::array<vk::MappedMemoryRange, 1> ranges{};
+            ranges[0].memory = uploadBufferMemory;
+            ranges[0].size = uploadSize;
+            checkVulkan(device.flushMappedMemoryRanges(ranges.size(), ranges.data()));
+            device.unmapMemory(uploadBufferMemory);
+        }
+
+        vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
+
+        /*
+        {
+            VkBufferMemoryBarrier upload_barrier[1] = {};
+            upload_barrier[0].sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+            upload_barrier[0].srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+            upload_barrier[0].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            upload_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            upload_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            upload_barrier[0].buffer = upload_buffer;
+            upload_barrier[0].offset = 0;
+            upload_barrier[0].size = upload_size;
+
+            VkImageMemoryBarrier copy_barrier[1] = {};
+            copy_barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            copy_barrier[0].dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            copy_barrier[0].oldLayout = (tex->Status == ImTextureStatus_WantCreate) ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            copy_barrier[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            copy_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            copy_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            copy_barrier[0].image = backendTex->Image;
+            copy_barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            copy_barrier[0].subresourceRange.levelCount = 1;
+            copy_barrier[0].subresourceRange.layerCount = 1;
+            vkCmdPipelineBarrier(bd->TexCommandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, upload_barrier, 1, copy_barrier);
+        }
+        */
+        transitionImageLayout(commandBuffer, backendTex->image, vk::Format::eUndefined, (tex->Status == ImTextureStatus_WantCreate) ? vk::ImageLayout::eUndefined : vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eTransferDstOptimal);
+        copyBufferToImage(commandBuffer, uploadBuffer, backendTex->image, uploadW, uploadH, uploadX, uploadY);
+        transitionImageLayout(commandBuffer, backendTex->image, vk::Format::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+        commandBuffer.end();
+
+        vk::SubmitInfo submitInfo{};
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        queues.graphicsQueue.submit(submitInfo);
+        queues.graphicsQueue.waitIdle();
+
+        tex->SetStatus(ImTextureStatus_OK);
+    }
+
+    if (tex->Status == ImTextureStatus_WantDestroy) {
+        tex->SetTexID(ImTextureID_Invalid);
+        IM_DELETE(tex->BackendUserData);
+        tex->BackendUserData = nullptr;
+        tex->SetStatus(ImTextureStatus_Destroyed);
+    }
+}
+
 ImGuiRendererData* Renderer::getBackendData() {
     return ImGui::GetCurrentContext() ? (ImGuiRendererData*) ImGui::GetIO().BackendRendererUserData : nullptr;
 }
