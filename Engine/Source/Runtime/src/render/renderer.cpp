@@ -746,13 +746,10 @@ vk::DescriptorSet Renderer::addTexture(vk::Sampler sampler, vk::ImageView view, 
 void Renderer::renderImGui(ImDrawData* drawData, vk::CommandBuffer commandBuffer) {
     ImGuiRendererData* bd = getBackendData();
 
-    // TODO: we might need this
-    /*
     if (drawData->Textures != nullptr)
         for (ImTextureData* tex : *drawData->Textures)
             if (tex->Status != ImTextureStatus_OK)
-                ImGui_ImplVulkan_UpdateTexture(tex);
-    */
+                updateImGuiTexture(tex);
 
     int fbWidth = (int) (drawData->DisplaySize.x * drawData->FramebufferScale.x);
     int fbHeight = (int) (drawData->DisplaySize.y * drawData->FramebufferScale.y);
