@@ -9,6 +9,7 @@
 #include "platform/platform.hpp"
 #include "platform/window.hpp"
 #include "render/camera.hpp"
+#include "render/render_types.hpp"
 #include "render/viewport.hpp"
 
 #include "glm/glm.hpp"
@@ -1192,13 +1193,13 @@ void Renderer::transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::
     commandBuffer.pipelineBarrier(sourceStage, destinationStage, {}, {}, nullptr, barrier);
 }
 
-void Renderer::copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height) {
+void Renderer::copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height, uint32_t offsetX, uint32_t offsetY) {
     vk::BufferImageCopy region{};
     region.bufferOffset = 0;
     region.bufferRowLength = 0;
     region.bufferImageHeight = 0;
     region.imageSubresource = { vk::ImageAspectFlagBits::eColor, 0, 0, 1 };
-    region.imageOffset = 0;
+    region.imageOffset = vk::Offset3D(offsetX, offsetY, 0);
     region.imageExtent = vk::Extent3D(width, height, 1);
 
     commandBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, { region });

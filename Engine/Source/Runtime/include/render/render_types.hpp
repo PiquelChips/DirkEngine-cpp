@@ -78,6 +78,17 @@ struct Texture {
 };
 
 /**
+ * TODO: this should become the Texture struct. When loading a texture it
+ * should immediately be uploaded to Vulkan it this struct.
+ */
+struct VulkanTexture {
+    vk::DeviceMemory memory;
+    vk::Image image;
+    vk::ImageView imageView;
+    vk::DescriptorSet descriptorSet;
+};
+
+/**
  * DirkEngine's representation of a 3D model.
  *
  * This is essentially an object created by the resource manager from a glTF file.

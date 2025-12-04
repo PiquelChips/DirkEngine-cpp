@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "engine/dirkengine.hpp"
+#include "imgui.h"
 #include "render/viewport.hpp"
 
 #include "vulkan/vulkan.hpp"
@@ -146,7 +147,7 @@ public:
     void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue);
 
     void transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels = 1);
-    void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
+    void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height, uint32_t offsetX = 0, uint32_t offsetY = 0);
     void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels);
 
 public:
