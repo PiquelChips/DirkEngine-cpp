@@ -30,7 +30,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 #define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
 
 struct ImGuiRendererData {
-    Renderer* platform;
+    Renderer* renderer;
     static constexpr std::string_view platformName = "imgui_impl_dirk";
 
     vk::Sampler texSamplerLinear;
