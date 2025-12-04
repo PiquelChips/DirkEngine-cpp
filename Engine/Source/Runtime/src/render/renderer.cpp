@@ -370,7 +370,7 @@ void Renderer::initImGui() {
         rasterInfo.lineWidth = 1.0f;
 
         vk::PipelineMultisampleStateCreateInfo msInfo;
-        msInfo.rasterizationSamples = properties.msaaSamples;
+        msInfo.rasterizationSamples = vk::SampleCountFlagBits::e1;
 
         vk::PipelineColorBlendAttachmentState colorAttachment[1];
         colorAttachment[0].blendEnable = VK_TRUE;
