@@ -1383,6 +1383,7 @@ void Renderer::updateImGuiTexture(ImTextureData* tex) {
 
         vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
 
+        // TODO: do this
         /*
         {
             VkBufferMemoryBarrier upload_barrier[1] = {};
@@ -1427,7 +1428,8 @@ void Renderer::updateImGuiTexture(ImTextureData* tex) {
 
     if (tex->Status == ImTextureStatus_WantDestroy) {
         tex->SetTexID(ImTextureID_Invalid);
-        IM_DELETE(tex->BackendUserData);
+        auto data = (VulkanTexture*) tex->BackendUserData;
+        IM_DELETE(data);
         tex->BackendUserData = nullptr;
         tex->SetStatus(ImTextureStatus_Destroyed);
     }
