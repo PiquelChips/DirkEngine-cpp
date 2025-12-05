@@ -266,6 +266,8 @@ void Renderer::initImGui(vk::SurfaceKHR surface) {
     initInfo.CheckVkResultFn = checkVkResult;
     initInfo.UseDynamicRendering = true;
     ImGui_ImplVulkan_Init(&initInfo);
+
+    createImGuiWindow(ImGui::GetMainViewport());
 }
 
 void Renderer::shutdownImGui() {
@@ -311,7 +313,7 @@ void Renderer::render() {
         checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
         checkVulkan(device.resetFences(1, &inFlightFence));
 
-        // TODO: render main window
+        renderImGuiWindow(ImGui::GetMainViewport());
 
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
@@ -961,6 +963,116 @@ QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device, vk::Su
     }
 
     return indices;
+}
+
+void Renderer::createImGuiWindow(ImGuiViewport* viewport) {
+    ImGuiViewportRendererData* vd = IM_NEW(ImGuiViewportRendererData)();
+    viewport->RendererUserData = vd;
+
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+    auto size = platformIO.Platform_GetWindowSize(viewport);
+
+    checkVulkan((vk::Result) platformIO.Platform_CreateVkSurface(viewport, (ImU64) (VkInstance) instance, nullptr, (ImU64*) &vd->surface));
+
+    auto formats = physicalDevice.getSurfaceFormatsKHR(vd->surface);
+    vd->surfaceFormat = chooseSwapSurfaceFormat(formats);
+    auto presentModes = physicalDevice.getSurfacePresentModesKHR(vd->surface);
+    vd->presentMode = chooseSwapPresentMode(presentModes);
+
+    SwapChainCreateInfo swapChainInfo{
+        .swapChain = vd->swapchain,
+        .swapChainExtent = vd->swapChainExtent,
+        .surface = vd->surface,
+        .windowSize = { static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y) },
+        .surfaceFormat = vd->surfaceFormat,
+        .presentMode = vd->presentMode
+    };
+    vd->swapChainImages = createSwapChain(swapChainInfo);
+
+    vd->semaphores.resize(vd->swapChainImages.size());
+    for (int i = 0; i < vd->semaphores.size(); i++) {
+        vd->semaphores[i] = std::tuple(createSemaphore(), createSemaphore());
+    }
+
+    vd->commandBuffer = gEngine->getRenderer()->createCommandBuffer();
+}
+
+void Renderer::renderImGuiWindow(ImGuiViewport* viewport) {
+    ImGuiViewportRendererData* vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+
+    vd->semaphoreIndex = (vd->semaphoreIndex + 1) % vd->semaphores.size();
+    auto& [imageAvailableSemaphore, renderFinishedSemaphore] = vd->semaphores[vd->semaphoreIndex];
+    check(imageAvailableSemaphore);
+    check(renderFinishedSemaphore);
+
+    auto result = device.acquireNextImageKHR(vd->swapchain, UINT64_MAX, imageAvailableSemaphore, nullptr);
+    checkVulkan(result.result);
+    vd->imageIndex = result.value;
+    auto image = vd->swapChainImages[vd->imageIndex];
+
+    vd->commandBuffer.reset();
+
+    vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    checkVulkan(vd->commandBuffer.begin(&beginInfo));
+
+    transitionImageLayout(vd->commandBuffer, image.image, vd->surfaceFormat.format, vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::eColorAttachmentOptimal);
+
+    vk::RenderingAttachmentInfo colorAttachment{};
+    colorAttachment.imageView = image.view;
+    colorAttachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    colorAttachment.resolveMode = vk::ResolveModeFlagBits::eNone;
+    colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+    colorAttachment.clearValue = vk::ClearColorValue(0.f, 0.f, 0.f, 1.f);
+
+    vk::RenderingInfo renderInfo{};
+    renderInfo.renderArea.offset = vk::Offset2D(0, 0);
+    renderInfo.renderArea.extent = vd->swapChainExtent;
+    renderInfo.layerCount = 1;
+    renderInfo.viewMask = 0;
+    renderInfo.colorAttachmentCount = 1;
+    renderInfo.pColorAttachments = &colorAttachment;
+
+    vd->commandBuffer.beginRendering(renderInfo);
+
+    ImGui_ImplVulkan_RenderDrawData(viewport->DrawData, vd->commandBuffer);
+
+    vd->commandBuffer.endRendering();
+
+    transitionImageLayout(vd->commandBuffer, image.image, vd->surfaceFormat.format, vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
+
+    vd->commandBuffer.end();
+
+    vk::SubmitInfo submitInfo{};
+    submitInfo.pWaitDstStageMask = &vd->waitStage;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
+    // signal semaphores
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
+
+    // command buffers
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &vd->commandBuffer;
+
+    vk::PresentInfoKHR presentInfo{};
+    presentInfo.sType = vk::StructureType::ePresentInfoKHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
+
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &vd->swapchain;
+    presentInfo.pImageIndices = &vd->imageIndex;
+    presentInfo.pResults = nullptr; // only have one swap chain
+}
+
+void Renderer::destroyImGuiWindow(ImGuiViewport* viewport) {
+    ImGuiViewportRendererData* vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+    IM_DELETE(vd);
+    viewport->RendererUserData = nullptr;
 }
 
 } // namespace dirk
