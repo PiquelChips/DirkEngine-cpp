@@ -766,14 +766,12 @@ void Renderer::renderImGui(ImDrawData* drawData, vk::CommandBuffer commandBuffer
         vertexBufferSize = drawData->TotalVtxCount * sizeof(ImDrawVert);
         indexBufferSize = drawData->TotalIdxCount * sizeof(ImDrawIdx);
 
-        // vertex
         {
             auto [buffer, memory] = createBuffer(vertexBufferSize, vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eHostVisible);
             vertexBuffer = buffer;
             vertexBufferMemory = memory;
         }
 
-        // index
         {
             auto [buffer, memory] = createBuffer(indexBufferSize, vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eHostVisible);
             indexBuffer = buffer;
