@@ -106,7 +106,6 @@ public:
 class Platform {
 public:
     Platform(const PlatformCreateInfo& createInfo);
-    ~Platform();
 
     void initImGui();
     void tick(float deltaTime);

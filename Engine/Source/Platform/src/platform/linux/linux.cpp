@@ -1,13 +1,13 @@
-#include "imgui.h"
 #ifdef PLATFORM_LINUX
 
+#include "platform/linux/linux.hpp"
 #include "common.hpp"
 #include "input/keys.hpp"
-#include "platform/linux/linux.hpp"
 #include "platform/linux/window.hpp"
 #include "platform/monitor.hpp"
 #include "platform/platform.hpp"
 
+#include "imgui.h"
 #include "linux/input-event-codes.h"
 #include "vulkan/vulkan_handles.hpp"
 #include "wayland-client-core.h"

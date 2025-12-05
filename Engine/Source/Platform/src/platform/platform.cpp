@@ -31,22 +31,6 @@ Platform::Platform(const PlatformCreateInfo& createInfo)
 #endif
 }
 
-Platform::~Platform() {
-    ImGuiPlatformData* bd = getBackendData();
-    checkm(bd != nullptr, "No platform backend to shutdown, or already shutdown?");
-
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
-
-    ImGui::DestroyPlatformWindows();
-
-    io.BackendPlatformName = nullptr;
-    io.BackendPlatformUserData = nullptr;
-    platformIO.ClearPlatformHandlers();
-    contextMap.erase(bd->mainWindow);
-    IM_DELETE(bd);
-}
-
 void Platform::initImGui() {
     ImGuiPlatformData* bd = IM_NEW(ImGuiPlatformData)();
 
@@ -128,10 +112,11 @@ void Platform::tick(float deltaTime) {
 
 void Platform::shutdownImGui() {
     ImGuiPlatformData* bd = getBackendData();
-    IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
+    checkm(bd != nullptr, "No platform backend to shutdown, or already shutdown?");
 
     ImGuiIO& io = ImGui::GetIO();
     ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+
     ImGui::DestroyPlatformWindows();
 
     io.BackendPlatformName = nullptr;
