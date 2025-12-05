@@ -51,7 +51,7 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 
-        // TODO: change the path for imgui.ini
+        // TODO: save imgui.ini in saved directory
 
         platform->initImGui();
         renderer->initImGui(platform->createTempSurface(renderer->getResources().instance));
