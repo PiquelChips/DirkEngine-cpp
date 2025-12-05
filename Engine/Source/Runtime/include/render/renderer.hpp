@@ -41,6 +41,7 @@ public:
     void init(vk::SurfaceKHR surface);
     void initImGui(vk::SurfaceKHR surface);
     void render();
+    void shutdownImGui();
 
     std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);
     void destroyViewport(std::shared_ptr<Viewport> viewport);

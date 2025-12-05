@@ -126,6 +126,22 @@ void Platform::tick(float deltaTime) {
     platformImpl->pollPlatformEvents();
 }
 
+void Platform::shutdownImGui() {
+    ImGuiPlatformData* bd = getBackendData();
+    IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
+
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+    ImGui::DestroyPlatformWindows();
+
+    io.BackendPlatformName = nullptr;
+    io.BackendPlatformUserData = nullptr;
+    io.BackendFlags &= ~(ImGuiBackendFlags_HasMouseCursors | ImGuiBackendFlags_HasSetMousePos | ImGuiBackendFlags_HasGamepad | ImGuiBackendFlags_PlatformHasViewports | ImGuiBackendFlags_HasMouseHoveredViewport);
+    platformIO.ClearPlatformHandlers();
+    contextMap.erase(bd->mainWindow);
+    IM_DELETE(bd);
+}
+
 Monitor& Platform::createMonitor(void* platformHandle) {
     monitors.push_back(std::make_unique<Monitor>(platformHandle, *this));
     return *monitors.back();

@@ -76,6 +76,9 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
 
         tick(deltaTime);
     }
+
+    renderer->shutdownImGui();
+    platform->shutdownImGui();
 }
 
 DirkEngine::~DirkEngine() {

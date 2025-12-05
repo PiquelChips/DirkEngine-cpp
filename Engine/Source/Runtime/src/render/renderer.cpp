@@ -268,23 +268,16 @@ void Renderer::initImGui(vk::SurfaceKHR surface) {
     ImGui_ImplVulkan_Init(&initInfo);
 }
 
+void Renderer::shutdownImGui() {
+    ImGui_ImplVulkan_Shutdown();
+}
+
 Renderer::~Renderer() {
     // make sure all device ops are finished
     device.waitIdle();
     DIRK_LOG(LogVulkan, INFO, "cleaning up renderer");
 
     viewports.clear();
-
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
-
-    ImGui::DestroyPlatformWindows();
-
-    io.BackendRendererName = nullptr;
-    io.BackendRendererUserData = nullptr;
-    platformIO.ClearRendererHandlers();
-
-    ImGui::DestroyContext();
 }
 
 void Renderer::render() {
