@@ -110,6 +110,7 @@ public:
 
     void initImGui();
     void tick(float deltaTime);
+    void shutdownImGui();
 
     Monitor& createMonitor(void* platformHandle);
     vk::SurfaceKHR createTempSurface(vk::Instance instance) { return platformImpl->createTempSurface(instance); }

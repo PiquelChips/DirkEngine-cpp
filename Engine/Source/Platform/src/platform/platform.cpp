@@ -93,6 +93,7 @@ void Platform::initImGui() {
     platformIO.Platform_GetWindowMinimized = [](ImGuiViewport* vp) { return false; };
     platformIO.Platform_SetWindowTitle = ImGui_SetWindowTitle;
     platformIO.Platform_SetWindowAlpha = [](ImGuiViewport*, float) {};
+    platformIO.Platform_CreateVkSurface = ImGui_CreateVkSurface;
 
     platformIO.Platform_GetClipboardTextFn = ImGui_GetClipboardText;
     platformIO.Platform_SetClipboardTextFn = ImGui_SetClipboardText;
@@ -228,6 +229,15 @@ bool Platform::ImGui_GetWindowFocus(ImGuiViewport* viewport) {
 void Platform::ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title) {
     ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
     vd->window->setTitle(title);
+}
+
+int Platform::ImGui_CreateVkSurface(ImGuiViewport* viewport, ImU64 instance, const void*, ImU64* outSurface) {
+    ImGuiPlatformData* bd = getBackendData();
+    ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
+    IM_UNUSED(bd);
+
+    vd->window->createVulkanSurface((VkInstance) instance, (VkSurfaceKHR*) outSurface);
+    return (int) vk::Result::eSuccess;
 }
 
 const char* Platform::ImGui_GetClipboardText(ImGuiContext* ctx) {
