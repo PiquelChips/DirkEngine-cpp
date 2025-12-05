@@ -57,6 +57,9 @@ void Platform::initImGui() {
     io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
     io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // TODO
 
+    auto displaySize = bd->mainWindow->getSize();
+    io.DisplaySize = { static_cast<float>(displaySize.width), static_cast<float>(displaySize.height) };
+
     bd->context = ImGui::GetCurrentContext();
     bd->platform = this;
 
@@ -202,6 +205,7 @@ void Platform::ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size) {
 ImVec2 Platform::ImGui_GetWindowSize(ImGuiViewport* viewport) {
     ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
     auto size = vd->window->getSize();
+
     return ImVec2(size.width, size.height);
 }
 
