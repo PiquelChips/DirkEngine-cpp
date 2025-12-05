@@ -266,8 +266,6 @@ void Renderer::initImGui(vk::SurfaceKHR surface) {
     initInfo.CheckVkResultFn = checkVkResult;
     initInfo.UseDynamicRendering = true;
     ImGui_ImplVulkan_Init(&initInfo);
-
-    createImGuiWindow(ImGui::GetMainViewport());
 }
 
 void Renderer::shutdownImGui() {
@@ -313,7 +311,7 @@ void Renderer::render() {
         checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
         checkVulkan(device.resetFences(1, &inFlightFence));
 
-        renderImGuiWindow(ImGui::GetMainViewport());
+        // TODO: render ImGui stuff
 
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
