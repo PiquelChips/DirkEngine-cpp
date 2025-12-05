@@ -255,6 +255,11 @@ void Renderer::initImGui() {
     io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;  // We can honor ImGuiPlatformIO::Textures[] requests during render.
     io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports; // We can create multi-viewports on the Renderer side (optional)
 
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+    platformIO.Renderer_CreateWindow = ImGui_CreateWindow;
+    platformIO.Renderer_DestroyWindow = ImGui_DestroyWindow;
+    platformIO.Renderer_SetWindowSize = ImGui_SetWindowSize;
+
     // sampler
     {
         // Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling.
@@ -1315,6 +1320,64 @@ QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device, vk::Su
     }
 
     return indices;
+}
+
+void Renderer::ImGui_CreateWindow(ImGuiViewport* viewport) {
+    ImGuiRendererData* bd = getBackendData();
+    ImGuiViewportRendererData* vd = IM_NEW(ImGuiViewportRendererData)();
+    viewport->RendererUserData = vd;
+
+    // TODO: surface
+    // vd->surface = platformWindow->getVulkanSurface(resources.instance);
+
+    auto formats = bd->renderer->physicalDevice.getSurfaceFormatsKHR(vd->surface);
+    vd->surfaceFormat = bd->renderer->chooseSwapSurfaceFormat(formats);
+    auto presentModes = bd->renderer->physicalDevice.getSurfacePresentModesKHR(vd->surface);
+    vd->presentMode = bd->renderer->chooseSwapPresentMode(presentModes);
+
+    bd->renderer->resizeImGuiWindow(viewport);
+
+    vd->commandBuffer = bd->renderer->createCommandBuffer();
+}
+
+void Renderer::ImGui_DestroyWindow(ImGuiViewport* viewport) {
+    ImGuiRendererData* bd = getBackendData();
+    ImGuiViewportRendererData* vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+
+    IM_DELETE(vd);
+    viewport->RendererUserData = nullptr;
+}
+
+void Renderer::ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size) {
+    ImGuiRendererData* bd = getBackendData();
+    ImGuiViewportRendererData* vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+
+    bd->renderer->resizeImGuiWindow(viewport);
+}
+
+void Renderer::resizeImGuiWindow(ImGuiViewport* viewport) {
+    ImGuiViewportRendererData* vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+    auto oldSwapchain = vd->swapchain;
+
+    auto size = viewport->Size;
+
+    SwapChainCreateInfo swapChainInfo{
+        .swapChain = vd->swapchain,
+        .swapChainExtent = vd->swapChainExtent,
+        .surface = vd->surface,
+        .windowSize = { static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y) },
+        .surfaceFormat = vd->surfaceFormat,
+        .presentMode = vd->presentMode
+    };
+    vd->swapChainImages = createSwapChain(swapChainInfo);
+
+    vd->semaphores.resize(vd->swapChainImages.size());
+    for (int i = 0; i < vd->semaphores.size(); i++) {
+        vd->semaphores[i] = std::tuple(createSemaphore(), createSemaphore());
+    }
+
+    if (oldSwapchain)
+        device.destroySwapchainKHR(oldSwapchain);
 }
 
 void Renderer::updateImGuiTexture(ImTextureData* tex) {

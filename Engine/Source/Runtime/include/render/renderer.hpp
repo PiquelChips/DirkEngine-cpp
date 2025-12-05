@@ -30,6 +30,25 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 #define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
 
+struct ImGuiViewportRendererData {
+    // render resources
+    vk::SwapchainKHR swapchain;
+    vk::SurfaceKHR surface;
+    vk::CommandBuffer commandBuffer;
+
+    // renderer settings
+    vk::Extent2D swapChainExtent;
+    vk::SurfaceFormatKHR surfaceFormat;
+    vk::PresentModeKHR presentMode;
+
+    std::vector<SwapchainImage> swapChainImages;
+    std::vector<std::tuple<vk::Semaphore, vk::Semaphore>> semaphores;
+
+    // state
+    std::uint32_t imageIndex = 0;
+    std::uint32_t semaphoreIndex = 0;
+};
+
 struct ImGuiRendererData {
     Renderer* renderer;
     static constexpr std::string_view platformName = "imgui_impl_dirk";
