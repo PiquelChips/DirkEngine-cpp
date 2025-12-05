@@ -3,7 +3,6 @@
 #pragma once
 
 #include "platform/platform.hpp"
-#include "platform/window.hpp"
 
 #include "vulkan/vulkan_handles.hpp"
 #include "wayland-client-core.h"
@@ -44,8 +43,6 @@ public:
     static constexpr Input::KeyState getKeyStateFromCode(uint32_t state);
 
 private:
-    Window& getWindowWithSurface(wl_surface* surface);
-
     static void wl_GlobalRegistryHandler(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version);
     static void wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t caps);
 

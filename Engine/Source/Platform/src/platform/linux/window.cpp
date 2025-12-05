@@ -136,13 +136,12 @@ void LinuxWindowImpl::xdg_ToplevelConfigure(void* data, xdg_toplevel* toplevel, 
         return;
 
     window->size = newSize;
-    window->getOwningWindow().onResize();
-    window->linuxPlatform.getPlatform().windowSizeCallback(window->getOwningWindow(), window->size);
+    window->linuxPlatform.getPlatform().windowSizeCallback(*window, window->size);
 }
 
 void LinuxWindowImpl::xdg_ToplevelClose(void* data, xdg_toplevel* toplevel) {
     auto* window = static_cast<LinuxWindowImpl*>(data);
-    window->linuxPlatform.getPlatform().windowCloseCallback(window->getOwningWindow());
+    window->linuxPlatform.getPlatform().windowCloseCallback(*window);
 }
 
 } // namespace dirk::Platform::Linux

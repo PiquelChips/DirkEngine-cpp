@@ -10,7 +10,6 @@
 
 #include "imgui.h"
 #include "input/keys.hpp"
-#include "platform/window.hpp"
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_enums.hpp"
 

@@ -2,9 +2,9 @@
 
 #include "common.hpp"
 #include "engine/dirkengine.hpp"
-#include "imgui.h"
 #include "render/viewport.hpp"
 
+#include "imgui.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
@@ -30,39 +30,6 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 #define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
 
-struct ImGuiViewportRendererData {
-    // render resources
-    vk::SwapchainKHR swapchain;
-    vk::SurfaceKHR surface;
-    vk::CommandBuffer commandBuffer;
-
-    // renderer settings
-    vk::Extent2D swapChainExtent;
-    vk::SurfaceFormatKHR surfaceFormat;
-    vk::PresentModeKHR presentMode;
-
-    std::vector<SwapchainImage> swapChainImages;
-    std::vector<std::tuple<vk::Semaphore, vk::Semaphore>> semaphores;
-
-    // state
-    std::uint32_t imageIndex = 0;
-    std::uint32_t semaphoreIndex = 0;
-};
-
-struct ImGuiRendererData {
-    Renderer* renderer;
-    static constexpr std::string_view platformName = "imgui_impl_dirk";
-
-    vk::Sampler texSamplerLinear;
-    vk::DescriptorSetLayout descriptorSetLayout;
-    vk::DescriptorPool descriptorPool;
-    vk::PipelineLayout pipelineLayout;
-    vk::Pipeline pipeline;
-
-    vk::ShaderModule shaderModuleVert;
-    vk::ShaderModule shaderModuleFrag;
-};
-
 /**
  * The vulkan implementation of the renderer
  */
@@ -72,7 +39,7 @@ public:
     ~Renderer();
 
     void init(vk::SurfaceKHR surface);
-    void initImGui();
+    void initImGui(vk::SurfaceKHR surface);
     void render();
 
     std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);
@@ -84,9 +51,6 @@ public:
     vk::Semaphore createSemaphore();
     vk::CommandBuffer createCommandBuffer();
     vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
-    vk::DescriptorSet addTexture(vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout);
-
-    void renderImGui(ImDrawData* drawData, vk::CommandBuffer commandBuffer);
 
     inline RendererResources getResources() { return RendererResources{
         .instance = instance,
@@ -113,10 +77,6 @@ private:
     int getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR surface);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
-
-    void updateImGuiTexture(ImTextureData* tex);
-
-    static ImGuiRendererData* getBackendData();
 
 #ifdef ENABLE_VALIDATION_LAYERS
 private:

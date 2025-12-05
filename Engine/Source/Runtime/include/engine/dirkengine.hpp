@@ -7,7 +7,6 @@
 #include "actor.hpp"
 #include "common.hpp"
 #include "platform/platform.hpp"
-#include "platform/window.hpp"
 
 namespace dirk {
 
@@ -31,8 +30,6 @@ public:
 
     void exit();
     void exit(const std::string& reason);
-
-    std::vector<std::unique_ptr<Platform::Window>>& getWindows() { return platform->getWindows(); }
 
     bool isRequestingExit() const noexcept { return requestingExit; }
 

@@ -137,9 +137,6 @@ public:
     virtual vk::CommandBuffer createCommandBuffer() = 0;
     virtual vk::Semaphore createSemaphore() = 0;
     virtual vk::DescriptorSet createDescriptorSets(vk::Buffer uniformBuffer, vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout) = 0;
-    virtual vk::DescriptorSet addTexture(vk::Sampler sampler, vk::ImageView imageView, vk::ImageLayout layout) = 0;
-
-    virtual void renderImGui(ImDrawData* drawData, vk::CommandBuffer commandBuffer) = 0;
 
     virtual RendererResources getResources() = 0;
     virtual const RendererProperties& getProperties() = 0;
@@ -170,18 +167,12 @@ public:
     virtual void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) = 0;
 };
 
-namespace Platform {
-class Window;
-}
-
 class IEngine {
 public:
     virtual ~IEngine() = default;
 
     virtual void exit() = 0;
     virtual void exit(const std::string& reason) = 0;
-
-    virtual std::vector<std::unique_ptr<Platform::Window>>& getWindows() = 0;
 
     virtual IRenderer* getRenderer() const = 0;
 };

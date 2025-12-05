@@ -2,7 +2,6 @@
 
 #include "common.hpp"
 #include "engine/world.hpp"
-#include "platform/window.hpp"
 #include "render/renderer.hpp"
 #include "render/viewport.hpp"
 #include "vulkan/vulkan_structs.hpp"
@@ -55,7 +54,7 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         // TODO: change the path for imgui.ini
 
         platform->initImGui();
-        renderer->initImGui();
+        renderer->initImGui(platform->createTempSurface(renderer->getResources().instance));
     }
 
     // initial engine state

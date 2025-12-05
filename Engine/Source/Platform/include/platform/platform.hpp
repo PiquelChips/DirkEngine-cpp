@@ -3,7 +3,6 @@
 #include "common.hpp"
 #include "input/keys.hpp"
 #include "monitor.hpp"
-#include "window.hpp"
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -20,7 +19,42 @@ namespace dirk::Platform {
 DECLARE_LOG_CATEGORY_EXTERN(LogPlatform)
 DECLARE_LOG_CATEGORY_EXTERN(LogImGui)
 
-struct Cursor {};
+struct WindowCreateInfo {
+    std::string_view title;
+    vk::Extent2D size = { 550, 680 };
+
+    bool focused;
+    bool visible;
+    bool decorated;
+    bool floating;
+};
+
+class PlatformWindowImpl {
+public:
+    virtual ~PlatformWindowImpl() = default;
+
+    virtual void show() = 0;
+    virtual void hide() = 0;
+
+    virtual vk::SurfaceKHR getVulkanSurface(vk::Instance instance) = 0;
+    virtual void createVulkanSurface(VkInstance instance, VkSurfaceKHR* surface) = 0;
+    virtual void* getPlatformHandle() = 0;
+
+    virtual vk::Extent2D getSize() = 0;
+    virtual void setSize(vk::Extent2D inSize) = 0;
+
+    virtual glm::vec2 getPosition() = 0;
+    virtual void setPosition(const glm::vec2 inPosition) = 0;
+
+    virtual std::string_view getTitle() = 0;
+    virtual void setTitle(std::string_view inTitle) = 0;
+
+    virtual bool isFocused() = 0;
+    virtual void focus() = 0;
+
+    virtual bool isDecorated() = 0;
+    virtual void setDecorated(bool inDecorated) = 0;
+};
 
 struct PlatformCreateInfo {
     std::string_view appName;
@@ -48,7 +82,6 @@ struct ImGuiPlatformData {
     PlatformWindowImpl* focusedWindow;
 
     static constexpr std::string_view platformName = "imgui_impl_dirk";
-    std::array<Cursor, ImGuiMouseCursor_COUNT> mouseCursors;
 
     std::array<PlatformWindowImpl*, Input::KeyLast> keyOwnerWindows; // keys used as indexes, window is which window currently has that key
 
@@ -118,9 +151,9 @@ public:
     void keyCallback(PlatformWindowImpl& window, Input::Key key, Input::KeyState action);
     void charCallback(PlatformWindowImpl& window, unsigned int c);
 
-private:
     static ImGuiPlatformData* getBackendData();
 
+private:
     std::unordered_map<PlatformWindowImpl*, ImGuiContext*> contextMap;
     std::vector<std::unique_ptr<Monitor>> monitors;
 
