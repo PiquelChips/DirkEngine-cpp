@@ -3,9 +3,7 @@
     "c_standard": "c++23",
     "is_lib": true,
     "dependencies": [
-        "vulkan"
-    ],
-    "defines": {
-        "IMGUI_DISABLE_OBSOLETE_FUNCTIONS": ""
-    }
+        "vulkan",
+        "Common"
+    ]
 }
