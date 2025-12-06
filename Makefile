@@ -14,9 +14,6 @@ build: $(BUILD_TOOL)
 clean: $(BUILD_TOOL)
 	@$(BUILD_TOOL) clean
 
-clean-all: $(BUILD_TOOL)
-	@$(BUILD_TOOL) clean-all
-
 clean-setup: $(BUILD_TOOL)
 	@$(BUILD_TOOL) clean-setup
 

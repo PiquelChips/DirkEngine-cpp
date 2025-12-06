@@ -15,12 +15,12 @@ import (
 	"time"
 )
 
-const setupFile = "setup.json"
+const SetupFile = "setup.json"
 const thirdpartyFile = "thirdparty.json"
 
 func isSetupValid(buildConfig *models.BuildConfig) bool {
 	// attempt to read setup file
-	data, err := output.ReadIntFile(setupFile)
+	data, err := output.ReadIntFile(SetupFile)
 	if err != nil {
 		return false
 	}
@@ -31,7 +31,7 @@ func isSetupValid(buildConfig *models.BuildConfig) bool {
 	}
 
 	// get file info
-	info, err := output.GetIntFileInfo(setupFile)
+	info, err := output.GetIntFileInfo(SetupFile)
 	if err != nil {
 		return false
 	}
@@ -149,7 +149,7 @@ func Setup(buildConfig *models.BuildConfig) error {
 	}
 
 	log.Printf("Writting setup file\n")
-	return output.WriteIntFile(setupFile, data, true)
+	return output.WriteIntFile(SetupFile, data, true)
 }
 
 func getDir(name string) (string, error) {

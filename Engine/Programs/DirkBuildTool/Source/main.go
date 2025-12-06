@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"DirkBuildTool/build"
@@ -21,9 +22,6 @@ func main() {
 		switch os.Args[1] {
 		case "clean":
 			clean()
-			return
-		case "clean-all":
-			cleanAll()
 			return
 		case "clean-setup":
 			cleanSetup()
@@ -72,6 +70,13 @@ func main() {
 	}
 }
 
-func clean()      {}
-func cleanAll()   {}
-func cleanSetup() {}
+func clean() {
+	log.Printf("Cleaning...")
+	os.RemoveAll(config.Dirs.Binaries)
+	os.RemoveAll(config.Dirs.Intermediate)
+}
+
+func cleanSetup() {
+	log.Printf("Cleaning setup...")
+	os.RemoveAll(fmt.Sprintf("%s/%s", config.Dirs.Intermediate, setup.SetupFile))
+}
