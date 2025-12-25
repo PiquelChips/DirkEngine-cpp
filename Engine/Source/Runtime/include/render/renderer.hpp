@@ -46,6 +46,7 @@ struct ImGuiViewportRendererData {
     // state
     std::uint32_t imageIndex = 0;
     std::uint32_t semaphoreIndex = 0;
+    bool swapchainNeedsRecreation = true; // swap chain will thus be created on first render call
 
     static constexpr vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 };
@@ -102,7 +103,7 @@ private:
 
     // TODO: custom ImGui rendering backend
     void createImGuiWindow(ImGuiViewport* viewport);
-    std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> renderImGuiWindow(ImGuiViewport* viewport);
+    void renderImGuiWindow(ImGuiViewport* viewport);
     void destroyImGuiWindow(ImGuiViewport* viewport);
 
 #ifdef ENABLE_VALIDATION_LAYERS

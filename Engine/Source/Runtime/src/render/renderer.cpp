@@ -263,7 +263,7 @@ void Renderer::initImGui(vk::SurfaceKHR surface) {
     initInfo.ImageCount = imageCount;
     initInfo.Allocator = nullptr;
     initInfo.PipelineInfoMain.Subpass = 0;
-    initInfo.PipelineInfoMain.MSAASamples = (VkSampleCountFlagBits) properties.msaaSamples;
+    initInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT; // (VkSampleCountFlagBits) properties.msaaSamples;
     initInfo.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingCreateInfo;
     initInfo.CheckVkResultFn = checkVkResult;
     initInfo.UseDynamicRendering = true;
@@ -293,7 +293,6 @@ void Renderer::render() {
         for (auto& viewport : viewports) {
             submitInfos.emplace_back(viewport->render());
         }
-
         checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
     }
 
@@ -314,9 +313,7 @@ void Renderer::render() {
         checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
         checkVulkan(device.resetFences(1, &inFlightFence));
 
-        auto [submitInfo, presentInfo] = renderImGuiWindow(nullptr);
-        checkVulkan(queues.graphicsQueue.submit(1, &submitInfo, inFlightFence));
-        checkVulkan(queues.presentQueue.presentKHR(presentInfo));
+        renderImGuiWindow(nullptr);
 
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
@@ -978,8 +975,6 @@ void Renderer::createImGuiWindow(ImGuiViewport* viewport) {
     }
 
     ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
-    auto size = platformIO.Platform_GetWindowSize(viewport);
-
     checkVulkan((vk::Result) platformIO.Platform_CreateVkSurface(viewport, (ImU64) (VkInstance) instance, nullptr, (ImU64*) &vd->surface));
 
     auto formats = physicalDevice.getSurfaceFormatsKHR(vd->surface);
@@ -987,25 +982,10 @@ void Renderer::createImGuiWindow(ImGuiViewport* viewport) {
     auto presentModes = physicalDevice.getSurfacePresentModesKHR(vd->surface);
     vd->presentMode = chooseSwapPresentMode(presentModes);
 
-    SwapChainCreateInfo swapChainInfo{
-        .swapChain = vd->swapchain,
-        .swapChainExtent = vd->swapChainExtent,
-        .surface = vd->surface,
-        .windowSize = { static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y) },
-        .surfaceFormat = vd->surfaceFormat,
-        .presentMode = vd->presentMode
-    };
-    vd->swapChainImages = createSwapChain(swapChainInfo);
-
-    vd->semaphores.resize(vd->swapChainImages.size());
-    for (int i = 0; i < vd->semaphores.size(); i++) {
-        vd->semaphores[i] = std::tuple(createSemaphore(), createSemaphore());
-    }
-
     vd->commandBuffer = gEngine->getRenderer()->createCommandBuffer();
 }
 
-std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> Renderer::renderImGuiWindow(ImGuiViewport* viewport) {
+void Renderer::renderImGuiWindow(ImGuiViewport* viewport) {
     ImGuiViewportRendererData* vd = nullptr;
     if (viewport) {
         vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
@@ -1015,14 +995,43 @@ std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> Renderer::renderImGuiWindow(ImGui
         viewport = ImGui::GetMainViewport();
     }
 
+    if (vd->swapchainNeedsRecreation) {
+        ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+        auto size = platformIO.Platform_GetWindowSize(viewport);
+        SwapChainCreateInfo swapChainInfo{
+            .swapChain = vd->swapchain,
+            .swapChainExtent = vd->swapChainExtent,
+            .surface = vd->surface,
+            .windowSize = { static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y) },
+            .surfaceFormat = vd->surfaceFormat,
+            .presentMode = vd->presentMode
+        };
+        vd->swapChainImages = createSwapChain(swapChainInfo);
+
+        vd->semaphores.resize(vd->swapChainImages.size());
+        for (int i = 0; i < vd->semaphores.size(); i++) {
+            vd->semaphores[i] = std::tuple(createSemaphore(), createSemaphore());
+        }
+
+        vd->swapchainNeedsRecreation = false;
+    }
+
     vd->semaphoreIndex = (vd->semaphoreIndex + 1) % vd->semaphores.size();
     auto& [imageAvailableSemaphore, renderFinishedSemaphore] = vd->semaphores[vd->semaphoreIndex];
     check(imageAvailableSemaphore);
     check(renderFinishedSemaphore);
 
-    auto result = device.acquireNextImageKHR(vd->swapchain, UINT64_MAX, imageAvailableSemaphore, nullptr);
-    checkVulkan(result.result);
-    vd->imageIndex = result.value;
+    auto [err, index] = device.acquireNextImageKHR(vd->swapchain, UINT64_MAX, imageAvailableSemaphore, nullptr);
+    if (err == vk::Result::eErrorOutOfDateKHR) {
+        vd->swapchainNeedsRecreation = true;
+        return;
+    }
+    if (err == vk::Result::eSuboptimalKHR) {
+        vd->swapchainNeedsRecreation = true;
+    } else
+        checkVulkan(err);
+
+    vd->imageIndex = index;
     auto image = vd->swapChainImages[vd->imageIndex];
 
     vd->commandBuffer.reset();
@@ -1073,6 +1082,8 @@ std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> Renderer::renderImGuiWindow(ImGui
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &vd->commandBuffer;
 
+    checkVulkan(queues.graphicsQueue.submit(1, &submitInfo, inFlightFence));
+
     vk::PresentInfoKHR presentInfo{};
     presentInfo.sType = vk::StructureType::ePresentInfoKHR;
     presentInfo.waitSemaphoreCount = 1;
@@ -1083,7 +1094,13 @@ std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> Renderer::renderImGuiWindow(ImGui
     presentInfo.pImageIndices = &vd->imageIndex;
     presentInfo.pResults = nullptr; // only have one swap chain
 
-    return std::tuple(submitInfo, presentInfo);
+    auto result = queues.presentQueue.presentKHR(presentInfo);
+    if (result == vk::Result::eErrorOutOfDateKHR)
+        vd->swapchainNeedsRecreation = true;
+    if (result == vk::Result::eSuboptimalKHR) {
+        vd->swapchainNeedsRecreation = true;
+    } else
+        checkVulkan(result);
 }
 
 void Renderer::destroyImGuiWindow(ImGuiViewport* viewport) {
