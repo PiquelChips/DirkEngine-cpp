@@ -78,7 +78,7 @@ void Logger::log(LogCategory category, LogLevel level, std::string message) {
         break;
     case DEBUG:
         levelString += "DEBUG";
-        levelColoredString += makeColoredMessage(34, "TRACE"); // blue
+        levelColoredString += makeColoredMessage(34, "DEBUG"); // blue
         break;
     case INFO:
         levelString += "INFO";
