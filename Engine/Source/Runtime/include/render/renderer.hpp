@@ -91,6 +91,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<Viewport>> viewports;
+    ImGuiViewportRendererData* mainViewportData = nullptr; // TODO: remove for custom backend
 
 private:
     bool checkRequiredInstanceExtensions(std::vector<const char*>& extensions);
@@ -101,7 +102,7 @@ private:
 
     // TODO: custom ImGui rendering backend
     void createImGuiWindow(ImGuiViewport* viewport);
-    void renderImGuiWindow(ImGuiViewport* viewport);
+    std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> renderImGuiWindow(ImGuiViewport* viewport);
     void destroyImGuiWindow(ImGuiViewport* viewport);
 
 #ifdef ENABLE_VALIDATION_LAYERS

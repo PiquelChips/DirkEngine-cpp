@@ -113,6 +113,7 @@ float DirkEngine::captureDeltaTime() {
 
     lastTick = currentTime;
 
+    // TODO: have main editor engine ImGui window that displays these things
     // DIRK_LOG(LogDirkEngine, INFO) << "delta time: " << deltaTime;
     // DIRK_LOG(LogDirkEngine, INFO) << "fps: " << 1.0 / deltaTime;
 

@@ -250,6 +250,8 @@ void Renderer::initImGui(vk::SurfaceKHR surface) {
     pipelineRenderingCreateInfo.pColorAttachmentFormats = &swapChainImageFormat.format;
     pipelineRenderingCreateInfo.depthAttachmentFormat = properties.depthFormat;
 
+    createImGuiWindow(nullptr);
+
     ImGui_ImplVulkan_InitInfo initInfo = {};
     initInfo.Instance = instance;
     initInfo.PhysicalDevice = physicalDevice;
@@ -269,6 +271,7 @@ void Renderer::initImGui(vk::SurfaceKHR surface) {
 }
 
 void Renderer::shutdownImGui() {
+    destroyImGuiWindow(nullptr);
     ImGui_ImplVulkan_Shutdown();
 }
 
@@ -311,7 +314,9 @@ void Renderer::render() {
         checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
         checkVulkan(device.resetFences(1, &inFlightFence));
 
-        // TODO: render ImGui stuff
+        auto [submitInfo, presentInfo] = renderImGuiWindow(nullptr);
+        checkVulkan(queues.graphicsQueue.submit(1, &submitInfo, inFlightFence));
+        checkVulkan(queues.presentQueue.presentKHR(presentInfo));
 
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
@@ -965,7 +970,12 @@ QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device, vk::Su
 
 void Renderer::createImGuiWindow(ImGuiViewport* viewport) {
     ImGuiViewportRendererData* vd = IM_NEW(ImGuiViewportRendererData)();
-    viewport->RendererUserData = vd;
+    if (viewport) {
+        viewport->RendererUserData = vd;
+    } else {
+        viewport = ImGui::GetMainViewport();
+        mainViewportData = vd;
+    }
 
     ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
     auto size = platformIO.Platform_GetWindowSize(viewport);
@@ -995,8 +1005,15 @@ void Renderer::createImGuiWindow(ImGuiViewport* viewport) {
     vd->commandBuffer = gEngine->getRenderer()->createCommandBuffer();
 }
 
-void Renderer::renderImGuiWindow(ImGuiViewport* viewport) {
-    ImGuiViewportRendererData* vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+std::tuple<vk::SubmitInfo, vk::PresentInfoKHR> Renderer::renderImGuiWindow(ImGuiViewport* viewport) {
+    ImGuiViewportRendererData* vd = nullptr;
+    if (viewport) {
+        vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+    } else {
+        check(mainViewportData);
+        vd = mainViewportData;
+        viewport = ImGui::GetMainViewport();
+    }
 
     vd->semaphoreIndex = (vd->semaphoreIndex + 1) % vd->semaphores.size();
     auto& [imageAvailableSemaphore, renderFinishedSemaphore] = vd->semaphores[vd->semaphoreIndex];
@@ -1065,12 +1082,27 @@ void Renderer::renderImGuiWindow(ImGuiViewport* viewport) {
     presentInfo.pSwapchains = &vd->swapchain;
     presentInfo.pImageIndices = &vd->imageIndex;
     presentInfo.pResults = nullptr; // only have one swap chain
+
+    return std::tuple(submitInfo, presentInfo);
 }
 
 void Renderer::destroyImGuiWindow(ImGuiViewport* viewport) {
-    ImGuiViewportRendererData* vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+    ImGuiViewportRendererData* vd = nullptr;
+    if (viewport) {
+        vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+    } else {
+        check(mainViewportData);
+        vd = mainViewportData;
+        viewport = ImGui::GetMainViewport();
+    }
+
     IM_DELETE(vd);
-    viewport->RendererUserData = nullptr;
+
+    if (viewport) {
+        viewport->RendererUserData = nullptr;
+    } else {
+        mainViewportData = nullptr;
+    }
 }
 
 } // namespace dirk
