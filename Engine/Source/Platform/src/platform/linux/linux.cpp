@@ -159,7 +159,7 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
 
         static const wl_pointer_listener pointerListener = {
             .enter = wl_PointerEnter,
-            .leave = [](void*, struct wl_pointer*, uint32_t, struct wl_surface*) {},
+            .leave = wl_PointerLeave,
             .motion = wl_PointerMotion,
             .button = wl_PointerButton,
             .axis = wl_PointerAxis,
@@ -179,7 +179,7 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
         static const wl_keyboard_listener keyboardListener = {
             .keymap = wl_KeyboardKeymap,
             .enter = wl_KeyboardEnter,
-            .leave = [](void*, struct wl_keyboard*, uint32_t, struct wl_surface*) {},
+            .leave = wl_KeyboardLeave,
             .key = wl_KeyboardKey,
             .modifiers = wl_KeyboardModifiers,
             .repeat_info = [](void* data, struct wl_keyboard* keyboard, int32_t rate, int32_t delay) {},
@@ -260,7 +260,15 @@ void LinuxPlatformImpl::wl_PointerEnter(void* data, wl_pointer* pointer, uint32_
     check(platform->pointer == pointer);
     auto window = ImGui::FindViewportByPlatformHandle(surface);
 
-    platform->platform.focusWindowCallback(*((ImGuiViewportPlatformData*) window->PlatformUserData)->window.get());
+    platform->platform.focusWindowCallback(*((ImGuiViewportPlatformData*) window->PlatformUserData)->window.get(), true);
+}
+
+void LinuxPlatformImpl::wl_PointerLeave(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->pointer == pointer);
+    auto window = ImGui::FindViewportByPlatformHandle(surface);
+
+    platform->platform.focusWindowCallback(*((ImGuiViewportPlatformData*) window->PlatformUserData)->window.get(), false);
 }
 
 void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
@@ -302,7 +310,15 @@ void LinuxPlatformImpl::wl_KeyboardEnter(void* data, wl_keyboard* keyboard, uint
     check(platform->keyboard == keyboard);
     auto window = ImGui::FindViewportByPlatformHandle(surface);
 
-    platform->platform.focusWindowCallback(*((ImGuiViewportPlatformData*) window->PlatformUserData)->window.get());
+    platform->platform.focusWindowCallback(*((ImGuiViewportPlatformData*) window->PlatformUserData)->window.get(), true);
+}
+
+void LinuxPlatformImpl::wl_KeyboardLeave(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->keyboard == keyboard);
+    auto window = ImGui::FindViewportByPlatformHandle(surface);
+
+    platform->platform.focusWindowCallback(*((ImGuiViewportPlatformData*) window->PlatformUserData)->window.get(), false);
 }
 
 void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t inKey, uint32_t inState) {

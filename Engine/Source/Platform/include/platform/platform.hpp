@@ -144,7 +144,7 @@ public:
     void windowSizeCallback(PlatformWindowImpl& window, vk::Extent2D inSize);
     void windowMoveCallback(PlatformWindowImpl& window);
     void windowCloseCallback(PlatformWindowImpl& window);
-    void focusWindowCallback(PlatformWindowImpl& window);
+    void focusWindowCallback(PlatformWindowImpl& window, bool focused);
     void cursorPosCallback(PlatformWindowImpl& window, glm::vec2 pos);
     void mouseButtonCallback(PlatformWindowImpl& window, Input::MouseButton button, Input::KeyState action);
     void mouseScrollCallback(PlatformWindowImpl& window, glm::vec2 offset);

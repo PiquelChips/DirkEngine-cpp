@@ -289,27 +289,15 @@ void Platform::windowCloseCallback(PlatformWindowImpl& window) {
         gEngine->exit("main window closed");
 }
 
-void Platform::focusWindowCallback(PlatformWindowImpl& window) {
-    {
-        ImGuiPlatformData* bd = getBackendData();
+void Platform::focusWindowCallback(PlatformWindowImpl& window, bool focused) {
+    auto* bd = getBackendData();
 
-        // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
-        bd->mouseIgnoreButtonUp = bd->mouseIgnoreButtonUpWaitForFocusLoss;
-        bd->mouseIgnoreButtonUpWaitForFocusLoss = false;
+    // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
+    bd->mouseIgnoreButtonUp = (bd->mouseIgnoreButtonUpWaitForFocusLoss && focused == 0);
+    bd->mouseIgnoreButtonUpWaitForFocusLoss = false;
 
-        ImGuiIO& io = ImGui::GetIO(bd->context);
-        io.AddFocusEvent(false);
-    }
-    {
-        ImGuiPlatformData* bd = getBackendData();
-
-        // Workaround for Linux: when losing focus with MouseIgnoreButtonUpWaitForFocusLoss set, we will temporarily ignore subsequent Mouse Up events
-        bd->mouseIgnoreButtonUp = false;
-        bd->mouseIgnoreButtonUpWaitForFocusLoss = false;
-
-        ImGuiIO& io = ImGui::GetIO(bd->context);
-        io.AddFocusEvent(true);
-    }
+    ImGuiIO& io = ImGui::GetIO(bd->context);
+    io.AddFocusEvent(focused);
 }
 
 void Platform::cursorPosCallback(PlatformWindowImpl& window, glm::vec2 pos) {
