@@ -3,7 +3,9 @@
     "c_standard": "c++23",
     "is_lib": true,
     "dependencies": [
-        "vulkan"
+        "vulkan",
+        "xkbcommon",
+        "wayland-protocols"
     ],
     "defines": {
         "IMGUI_DISABLE_OBSOLETE_FUNCTIONS": ""
