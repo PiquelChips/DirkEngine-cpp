@@ -45,7 +45,7 @@ static const struct wl_message xdg_toplevel_drag_manager_v1_requests[] = {
 	{ "get_xdg_toplevel_drag", "no", xdg_toplevel_drag_v1_types + 0 },
 };
 
-WL_EXPORT const struct wl_interface xdg_toplevel_drag_manager_v1_interface = {
+struct wl_interface xdg_toplevel_drag_manager_v1_interface = {
 	"xdg_toplevel_drag_manager_v1", 1,
 	2, xdg_toplevel_drag_manager_v1_requests,
 	0, NULL,
