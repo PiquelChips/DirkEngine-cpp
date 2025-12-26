@@ -55,7 +55,7 @@ void Platform::initImGui() {
     // io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
     // io.BackendFlags |= ImGuiBackendFlags_HasParentViewport;
     io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
-    io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // TODO
+    io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport;
 
     auto displaySize = bd->mainWindow->getSize();
     io.DisplaySize = { static_cast<float>(displaySize.width), static_cast<float>(displaySize.height) };
@@ -136,7 +136,6 @@ Monitor& Platform::createMonitor(void* platformHandle) {
 }
 
 void Platform::ImGui_CreateWindow(ImGuiViewport* viewport) {
-    DIRK_LOG(LogImGui, DEBUG, "creating window")
     ImGuiPlatformData* bd = getBackendData();
     ImGuiViewportPlatformData* vd = IM_NEW(ImGuiViewportPlatformData)();
     viewport->PlatformUserData = vd;
@@ -298,6 +297,10 @@ void Platform::focusWindowCallback(PlatformWindowImpl& window, bool focused) {
 
     ImGuiIO& io = ImGui::GetIO(bd->context);
     io.AddFocusEvent(focused);
+
+    ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle());
+    if (viewport && io.BackendFlags & ImGuiBackendFlags_HasMouseHoveredViewport)
+        io.AddMouseViewportEvent(viewport->ID);
 }
 
 void Platform::cursorPosCallback(PlatformWindowImpl& window, glm::vec2 pos) {
