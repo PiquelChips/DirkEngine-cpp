@@ -46,6 +46,12 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
 
         // Setup scaling
         ImGuiStyle& style = ImGui::GetStyle();
+
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            style.WindowRounding = 0.0f;
+            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        }
+
         style.ScaleAllSizes(1.f);
         style.FontScaleDpi = 1.f;
         style.WindowRounding = 0.0f;

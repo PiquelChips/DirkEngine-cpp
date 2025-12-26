@@ -9,6 +9,7 @@
 #include "vulkan/vulkan_handles.hpp"
 
 #include <array>
+#include <cstdint>
 #include <memory>
 #include <string_view>
 #include <unordered_map>
@@ -19,22 +20,24 @@ namespace dirk::Platform {
 DECLARE_LOG_CATEGORY_EXTERN(LogPlatform)
 DECLARE_LOG_CATEGORY_EXTERN(LogImGui)
 
+class PlatformWindowImpl;
+
 struct WindowCreateInfo {
     std::string_view title;
     vk::Extent2D size = { 550, 680 };
+    glm::vec2 pos = { 0, 0 };
+
+    PlatformWindowImpl* parent = nullptr;
 
     bool focused;
-    bool visible;
     bool decorated;
-    bool floating;
+    // TODO: floating (maybe set the min & max size to be equal to the size, would probably make floating)
+    // bool floating;
 };
 
 class PlatformWindowImpl {
 public:
     virtual ~PlatformWindowImpl() = default;
-
-    virtual void show() = 0;
-    virtual void hide() = 0;
 
     virtual vk::SurfaceKHR getVulkanSurface(vk::Instance instance) = 0;
     virtual void createVulkanSurface(VkInstance instance, VkSurfaceKHR* surface) = 0;
@@ -63,6 +66,8 @@ struct PlatformCreateInfo {
 struct ImGuiViewportPlatformData {
     std::unique_ptr<PlatformWindowImpl> window;
 
+    std::uint32_t pointerSerial;
+
     bool windowOwned;
     int ignoreWindowSizeEventFrame;
     int ignoreWindowPosEventFrame;
@@ -79,14 +84,10 @@ struct ImGuiPlatformData {
     Platform* platform;
 
     PlatformWindowImpl* mainWindow;
-    PlatformWindowImpl* focusedWindow;
 
     static constexpr std::string_view platformName = "imgui_impl_dirk";
 
     std::array<PlatformWindowImpl*, Input::KeyLast> keyOwnerWindows; // keys used as indexes, window is which window currently has that key
-
-    bool mouseIgnoreButtonUpWaitForFocusLoss;
-    bool mouseIgnoreButtonUp;
 
     ImGuiPlatformData() { memset((void*) this, 0, sizeof(*this)); }
 };
@@ -130,7 +131,6 @@ private:
     static ImVec2 ImGui_GetWindowPos(ImGuiViewport* viewport);
     static void ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size);
     static ImVec2 ImGui_GetWindowSize(ImGuiViewport* viewport);
-    static ImVec2 ImGui_GetWindowFramebufferScale(ImGuiViewport* viewport);
     static void ImGui_SetWindowFocus(ImGuiViewport* viewport);
     static bool ImGui_GetWindowFocus(ImGuiViewport* viewport);
     static void ImGui_SetWindowTitle(ImGuiViewport* viewport, const char* title);
@@ -141,20 +141,19 @@ private:
 
 public:
     // callbacks for platform events
-    void windowSizeCallback(PlatformWindowImpl& window, vk::Extent2D inSize);
-    void windowMoveCallback(PlatformWindowImpl& window);
-    void windowCloseCallback(PlatformWindowImpl& window);
-    void focusWindowCallback(PlatformWindowImpl& window, bool focused);
-    void cursorPosCallback(PlatformWindowImpl& window, glm::vec2 pos);
-    void mouseButtonCallback(PlatformWindowImpl& window, Input::MouseButton button, Input::KeyState action);
-    void mouseScrollCallback(PlatformWindowImpl& window, glm::vec2 offset);
-    void keyCallback(PlatformWindowImpl& window, Input::Key key, Input::KeyState action);
-    void charCallback(PlatformWindowImpl& window, unsigned int c);
+    void windowSizeCallback(ImGuiViewport* window, vk::Extent2D inSize);
+    void windowMoveCallback(ImGuiViewport* window);
+    void windowCloseCallback(ImGuiViewport* window);
+    void focusWindowCallback(ImGuiViewport* window, bool focused);
+    void cursorPosCallback(ImGuiViewport* window, glm::vec2 pos);
+    void mouseButtonCallback(ImGuiViewport* window, Input::MouseButton button, Input::KeyState action);
+    void mouseScrollCallback(ImGuiViewport* window, glm::vec2 offset);
+    void keyCallback(ImGuiViewport* window, Input::Key key, Input::KeyState action);
+    void charCallback(ImGuiViewport* window, unsigned int c);
 
     static ImGuiPlatformData* getBackendData();
 
 private:
-    std::unordered_map<PlatformWindowImpl*, ImGuiContext*> contextMap;
     std::vector<std::unique_ptr<Monitor>> monitors;
 
     std::string_view appName;

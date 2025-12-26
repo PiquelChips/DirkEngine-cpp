@@ -8,6 +8,7 @@
 #include "wayland-client-core.h"
 #include "wayland-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
+#include "xdg-toplevel-drag-v1-client-protocol.h"
 #include "xkbcommon/xkbcommon.h"
 
 #include <cstdint>
@@ -19,6 +20,8 @@ namespace dirk::Platform::Linux {
 DECLARE_LOG_CATEGORY_EXTERN(LogLinux)
 DECLARE_LOG_CATEGORY_EXTERN(LogWayland)
 
+class LinuxWindowImpl;
+
 class LinuxPlatformImpl : public PlatformImpl {
 
 public:
@@ -28,10 +31,6 @@ public:
 
     std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) override;
     vk::SurfaceKHR createTempSurface(vk::Instance instance) override;
-
-    wl_display* getDisplay() { return display; }
-    wl_compositor* getCompositor() { return compositor; }
-    xdg_wm_base* getXdgWmBase() { return xdgWmBase; }
 
     Platform& getPlatform() { return platform; }
 
@@ -70,6 +69,10 @@ private:
     wl_compositor* compositor;
     xdg_wm_base* xdgWmBase;
 
+    xdg_toplevel_drag_manager_v1* toplevelDragManager;
+    wl_data_device_manager* dataDeviceManager;
+    wl_data_device* dataDevice;
+
     // input
     wl_seat* seat;
     wl_pointer* pointer;
@@ -80,6 +83,16 @@ private:
     xkb_state* xkbState;
 
     Platform& platform;
+
+    // state
+    wl_surface* pointerSurface = nullptr; // current surface the pointer is on
+    std::uint32_t pointerSerial = 0;      // the last pointer click serial
+    bool dragFinished;
+
+    wl_surface* keyboardSurface = nullptr;
+    std::uint32_t keyboardSerial = 0;
+
+    friend LinuxWindowImpl;
 };
 
 }; // namespace dirk::Platform::Linux

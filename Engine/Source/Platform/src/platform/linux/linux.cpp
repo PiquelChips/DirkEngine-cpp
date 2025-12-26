@@ -16,6 +16,7 @@
 #include "xkbcommon/xkbcommon-keysyms.h"
 #include "xkbcommon/xkbcommon.h"
 
+#include <cfloat>
 #include <cstdint>
 #include <cstring>
 #include <sys/mman.h>
@@ -49,9 +50,13 @@ LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo, Platf
         .global_remove = [](void* data, struct wl_registry* registry, uint32_t name) {},
     };
     wl_registry_add_listener(registry, &registryListener, this);
-    wl_display_roundtrip(display);
 
     xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    check(xkbContext);
+
+    wl_display_roundtrip(display);
+
+    check(compositor && xdgWmBase);
 }
 
 LinuxPlatformImpl::~LinuxPlatformImpl() {
@@ -148,6 +153,10 @@ void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry*
             .description = wl_OutputHandleDescription,
         };
         wl_output_add_listener(output, &outputListener, &platform->platform.createMonitor(output));
+    } else if (strcmp(interface, wl_data_device_manager_interface.name) == 0) {
+        platform->dataDeviceManager = static_cast<wl_data_device_manager*>(wl_registry_bind(registry, name, &wl_data_device_manager_interface, version));
+    } else if (strcmp(interface, xdg_toplevel_drag_manager_v1_interface.name) == 0) {
+        platform->toplevelDragManager = static_cast<xdg_toplevel_drag_manager_v1*>(wl_registry_bind(registry, name, &xdg_toplevel_drag_manager_v1_interface, version));
     }
 }
 
@@ -186,6 +195,9 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
         };
         wl_keyboard_add_listener(platform->keyboard, &keyboardListener, platform);
     }
+
+    check(platform->dataDeviceManager && !platform->dataDevice);
+    platform->dataDevice = wl_data_device_manager_get_data_device(platform->dataDeviceManager, seat);
 }
 
 void LinuxPlatformImpl::wl_OutputHandleGeometry(void* data, struct wl_output* output, int32_t x, int32_t y, int32_t physicalWidth, int32_t physicalHeight, int32_t subpixel, const char* make, const char* model, int32_t transform) {
@@ -233,11 +245,76 @@ void LinuxPlatformImpl::wl_OutputHandleDescription(void* data, struct wl_output*
     monitor->setDescription(description);
 }
 
+void LinuxPlatformImpl::wl_PointerEnter(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->pointer == pointer);
+    auto viewport = ImGui::FindViewportByPlatformHandle(surface);
+    check(viewport);
+
+    platform->pointerSurface = surface;
+
+    auto posX = static_cast<float>(wl_fixed_to_double(x));
+    auto posY = static_cast<float>(wl_fixed_to_double(y));
+    platform->platform.cursorPosCallback(viewport, { posX, posY });
+}
+
+void LinuxPlatformImpl::wl_PointerLeave(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->pointer == pointer);
+    auto viewport = ImGui::FindViewportByPlatformHandle(surface);
+    check(viewport);
+
+    platform->pointerSurface = nullptr;
+    platform->platform.cursorPosCallback(viewport, { -FLT_MAX, -FLT_MAX });
+}
+
+void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->pointer == pointer);
+    auto viewport = ImGui::FindViewportByPlatformHandle(platform->pointerSurface);
+    check(viewport);
+
+    auto posX = static_cast<float>(wl_fixed_to_double(x));
+    auto posY = static_cast<float>(wl_fixed_to_double(y));
+    platform->platform.cursorPosCallback(viewport, { posX, posY });
+}
+
+void LinuxPlatformImpl::wl_PointerButton(void* data, wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t inButton, uint32_t inState) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->pointer == pointer);
+    auto viewport = ImGui::FindViewportByPlatformHandle(platform->pointerSurface);
+    check(viewport);
+
+    Input::KeyState state = getKeyStateFromCode(inState);
+    Input::MouseButton button = getMouseFromCode(inButton);
+
+    if (state == Input::KeyState::Pressed && serial != 0) {
+        platform->pointerSerial = serial;
+        platform->dragFinished = false; // Reset so we can try a new drag with this serial
+    }
+
+    platform->platform.mouseButtonCallback(viewport, button, state);
+}
+
+void LinuxPlatformImpl::wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value) {
+    auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->pointer == pointer);
+    auto viewport = ImGui::FindViewportByPlatformHandle(platform->pointerSurface);
+    check(viewport);
+
+    double delta = wl_fixed_to_double(value);
+    if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+        platform->platform.mouseScrollCallback(viewport, { 0.f, -delta * POINTER_SCROLL_SCALE });
+    } else {
+        platform->platform.mouseScrollCallback(viewport, { delta * POINTER_SCROLL_SCALE, 0.f });
+    }
+}
+
 void LinuxPlatformImpl::wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
 
     check(format == WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1);
-    char* keymapStr = static_cast<char*>(mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0));
+    char* keymapStr = static_cast<char*>(mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0));
     check(keymapStr != MAP_FAILED);
 
     if (platform->xkbKeymap) {
@@ -255,67 +332,16 @@ void LinuxPlatformImpl::wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uin
     platform->xkbState = xkb_state_new(platform->xkbKeymap);
 }
 
-void LinuxPlatformImpl::wl_PointerEnter(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y) {
-    auto* platform = static_cast<LinuxPlatformImpl*>(data);
-    check(platform->pointer == pointer);
-    auto window = ImGui::FindViewportByPlatformHandle(surface);
-
-    platform->platform.focusWindowCallback(*((ImGuiViewportPlatformData*) window->PlatformUserData)->window.get(), true);
-}
-
-void LinuxPlatformImpl::wl_PointerLeave(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface) {
-    auto* platform = static_cast<LinuxPlatformImpl*>(data);
-    check(platform->pointer == pointer);
-    auto viewport = ImGui::FindViewportByPlatformHandle(surface);
-    check(viewport);
-
-    ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
-    check(vd);
-    auto& window = vd->window;
-    check(window);
-    platform->platform.focusWindowCallback(*window, false);
-}
-
-void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
-    auto* platform = static_cast<LinuxPlatformImpl*>(data);
-    check(platform->pointer == pointer);
-    auto window = platform->platform.getBackendData()->focusedWindow;
-
-    auto posX = static_cast<float>(wl_fixed_to_double(x));
-    auto posY = static_cast<float>(wl_fixed_to_double(y));
-    platform->platform.cursorPosCallback(*window, { posX, posY });
-}
-
-void LinuxPlatformImpl::wl_PointerButton(void* data, wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t inButton, uint32_t inState) {
-    auto* platform = static_cast<LinuxPlatformImpl*>(data);
-    check(platform->pointer == pointer);
-    auto window = platform->platform.getBackendData()->focusedWindow;
-
-    Input::KeyState state = getKeyStateFromCode(inState);
-    Input::MouseButton button = getMouseFromCode(inButton);
-
-    platform->platform.mouseButtonCallback(*window, button, state);
-}
-
-void LinuxPlatformImpl::wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value) {
-    auto* platform = static_cast<LinuxPlatformImpl*>(data);
-    check(platform->pointer == pointer);
-    auto window = platform->platform.getBackendData()->focusedWindow;
-
-    double delta = wl_fixed_to_double(value);
-    if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
-        platform->platform.mouseScrollCallback(*window, { 0.f, -delta * POINTER_SCROLL_SCALE });
-    } else {
-        platform->platform.mouseScrollCallback(*window, { -delta * POINTER_SCROLL_SCALE, 0.f });
-    }
-}
-
 void LinuxPlatformImpl::wl_KeyboardEnter(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface, wl_array* keys) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->keyboard == keyboard);
-    auto window = ImGui::FindViewportByPlatformHandle(surface);
+    auto viewport = ImGui::FindViewportByPlatformHandle(surface);
+    check(viewport);
 
-    platform->platform.focusWindowCallback(*((ImGuiViewportPlatformData*) window->PlatformUserData)->window.get(), true);
+    platform->keyboardSerial = serial;
+    platform->keyboardSurface = surface;
+
+    platform->platform.focusWindowCallback(viewport, true);
 }
 
 void LinuxPlatformImpl::wl_KeyboardLeave(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface) {
@@ -324,35 +350,34 @@ void LinuxPlatformImpl::wl_KeyboardLeave(void* data, wl_keyboard* keyboard, uint
     auto viewport = ImGui::FindViewportByPlatformHandle(surface);
     check(viewport);
 
-    ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
-    check(vd);
-    auto& window = vd->window;
-    check(window);
-    platform->platform.focusWindowCallback(*window, false);
+    platform->keyboardSurface = nullptr;
+
+    platform->platform.focusWindowCallback(viewport, false);
 }
 
 void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t inKey, uint32_t inState) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->keyboard == keyboard);
     check(platform->xkbState);
-    auto window = platform->platform.getBackendData()->focusedWindow;
-
-    Input::KeyState state = getKeyStateFromCode(inState);
+    auto viewport = ImGui::FindViewportByPlatformHandle(platform->keyboardSurface);
 
     xkb_keysym_t sym = xkb_state_key_get_one_sym(platform->xkbState, inKey);
+
+    Input::KeyState state = getKeyStateFromCode(inState);
     Input::Key key = getKeyFromSym(sym);
 
-    platform->platform.keyCallback(*window, key, state);
+    platform->platform.keyCallback(viewport, key, state);
 
     if (state == Input::KeyState::Pressed) {
-        uint32_t c = xkb_state_key_get_utf32(platform->xkbState, sym);
-        platform->platform.charCallback(*window, c);
+        uint32_t unicode = xkb_state_key_get_utf32(platform->xkbState, inKey);
+        platform->platform.charCallback(viewport, unicode);
     }
 }
 
 void LinuxPlatformImpl::wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t depressed, uint32_t latched, uint32_t locked, uint32_t group) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->keyboard == keyboard);
+    check(platform->xkbState);
     xkb_state_update_mask(platform->xkbState, depressed, latched, locked, 0, 0, group);
 }
 

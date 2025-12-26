@@ -16,9 +16,6 @@ public:
     LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatformImpl& platformImpl);
     ~LinuxWindowImpl();
 
-    void show() override;
-    void hide() override;
-
     vk::SurfaceKHR getVulkanSurface(vk::Instance instance) override;
     void createVulkanSurface(VkInstance instance, VkSurfaceKHR* surface) override;
     void* getPlatformHandle() override { return wlSurface; }
@@ -37,7 +34,7 @@ public:
     bool isDecorated() override { return decorated; }
     void setDecorated(bool inDecorated) override;
 
-    glm::vec2 getPosition() override;
+    glm::vec2 getPosition() override { return pos; }
     void setPosition(const glm::vec2 inPosition) override;
 
 private:
@@ -47,6 +44,7 @@ private:
 private:
     // window properties
     vk::Extent2D size;
+    glm::vec2 pos;
     std::string_view title;
     bool decorated;
 
@@ -57,6 +55,9 @@ private:
     xdg_toplevel* xdgToplevel = nullptr;
 
     vk::SurfaceKHR vkSurface;
+
+    // state
+    bool configured = false;
 };
 
 } // namespace dirk::Platform::Linux
