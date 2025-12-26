@@ -258,14 +258,16 @@ void Platform::ImGui_SetClipboardText(ImGuiContext* ctx, const char* text) {
 }
 
 void Platform::windowSizeCallback(PlatformWindowImpl& window, vk::Extent2D inSize) {
-    if (ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle())) {
-        if (ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData) {
-            bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowSizeEventFrame + 1);
-            if (ignore_event)
-                return;
-        }
-        viewport->PlatformRequestResize = true;
-    }
+    ImGuiViewport* viewport = ImGui::FindViewportByPlatformHandle(window.getPlatformHandle());
+    check(viewport);
+    ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
+    check(vd);
+
+    bool ignore_event = (ImGui::GetFrameCount() <= vd->ignoreWindowSizeEventFrame + 1);
+    if (ignore_event)
+        return;
+
+    viewport->PlatformRequestResize = true;
 }
 
 void Platform::windowMoveCallback(PlatformWindowImpl& window) {
