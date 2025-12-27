@@ -475,7 +475,9 @@ void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32
     check(platform->xkbState);
     auto viewport = ImGui::FindViewportByPlatformHandle(platform->keyboardSurface);
 
-    xkb_keysym_t sym = xkb_state_key_get_one_sym(platform->xkbState, inKey);
+    uint32_t keycode = inKey + 8;
+
+    xkb_keysym_t sym = xkb_state_key_get_one_sym(platform->xkbState, keycode);
 
     Input::KeyState state = getKeyStateFromCode(inState);
     Input::Key key = getKeyFromSym(sym);
@@ -486,7 +488,7 @@ void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32
     platform->platform.keyCallback(viewport, key, state);
 
     if (state == Input::KeyState::Pressed) {
-        uint32_t unicode = xkb_state_key_get_utf32(platform->xkbState, inKey);
+        uint32_t unicode = xkb_state_key_get_utf32(platform->xkbState, keycode);
         platform->platform.charCallback(viewport, unicode);
     }
 }
