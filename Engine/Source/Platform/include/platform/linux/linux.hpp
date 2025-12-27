@@ -64,23 +64,23 @@ private:
     static void wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group);
 
 private:
-    wl_display* display;
-    wl_registry* registry;
-    wl_compositor* compositor;
-    xdg_wm_base* xdgWmBase;
+    wl_display* display = nullptr;
+    wl_registry* registry = nullptr;
+    wl_compositor* compositor = nullptr;
+    xdg_wm_base* xdgWmBase = nullptr;
 
-    xdg_toplevel_drag_manager_v1* toplevelDragManager;
-    wl_data_device_manager* dataDeviceManager;
-    wl_data_device* dataDevice;
+    xdg_toplevel_drag_manager_v1* toplevelDragManager = nullptr;
+    wl_data_device_manager* dataDeviceManager = nullptr;
+    wl_data_device* dataDevice = nullptr;
 
     // input
-    wl_seat* seat;
-    wl_pointer* pointer;
-    wl_keyboard* keyboard;
+    wl_seat* seat = nullptr;
+    wl_pointer* pointer = nullptr;
+    wl_keyboard* keyboard = nullptr;
 
-    xkb_context* xkbContext;
-    xkb_keymap* xkbKeymap;
-    xkb_state* xkbState;
+    xkb_context* xkbContext = nullptr;
+    xkb_keymap* xkbKeymap = nullptr;
+    xkb_state* xkbState = nullptr;
 
     Platform& platform;
 
