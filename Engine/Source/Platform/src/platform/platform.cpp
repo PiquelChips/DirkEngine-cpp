@@ -289,6 +289,8 @@ void Platform::cursorPosCallback(ImGuiViewport* viewport, glm::vec2 pos) {
     check(viewport);
     io.AddMouseViewportEvent(viewport->ID);
 
+    bd->platform->mouseLocalPos = pos;
+
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         pos.x += viewport->Pos.x;
         pos.y += viewport->Pos.y;

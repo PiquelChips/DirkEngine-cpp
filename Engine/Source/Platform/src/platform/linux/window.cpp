@@ -67,7 +67,17 @@ LinuxWindowImpl::LinuxWindowImpl(const WindowCreateInfo& createInfo, LinuxPlatfo
     if (createInfo.focused)
         focus();
 
-    setPosition(createInfo.pos);
+    ImGuiIO& io = ImGui::GetIO();
+    bool shouldDrag = io.MouseDown[0] && (linuxPlatform.pointerSerial != 0);
+
+    if (shouldDrag) {
+        // Calculate offset using local surface coordinates from the source surface
+        // The offset is relative to the toplevel geometry being attached
+        auto offset = linuxPlatform.platform.getMouseLocalPos();
+
+        // Start the drag operation - attaching the already-mapped toplevel
+        linuxPlatform.beginDrag(*this, offset);
+    }
 }
 
 LinuxWindowImpl::~LinuxWindowImpl() {
@@ -105,8 +115,42 @@ void LinuxWindowImpl::createVulkanSurface(VkInstance instance, VkSurfaceKHR* sur
 
 void LinuxWindowImpl::setPosition(const glm::vec2 inPosition) {
     LOG_WAYLAND_NOT_IMPLEMENTED("setting window position");
-    // TODO: start toplevel drag to move into position
 
+    // During a toplevel drag, the compositor controls the window position.
+    // Ignore SetWindowPos calls for the dragged toplevel - they come from ImGui
+    // trying to sync position, but the compositor is in charge during drag.
+    if (linuxPlatform.dragInProgress && linuxPlatform.draggedWindow == this) {
+        // Don't update position during drag - the compositor handles it
+        return;
+    }
+
+    // Ignore obviously bogus positions (INT_MIN converted to float)
+    if (pos.y < -1000000.0f || pos.x < -1000000.0f) {
+        return;
+    }
+
+    // Wayland does not allow clients to set window position directly.
+    // However, we can use xdg_toplevel_drag to move existing windows.
+    // Per protocol: "Dragging an existing window is similar. The client creates
+    // a xdg_toplevel_drag_v1 object and attaches the existing toplevel before
+    // starting the drag."
+    //
+    // Important: Only try once per drag operation. If the drag was cancelled,
+    // don't retry until a new button press (new serial).
+    bool dominatedByDrag = !linuxPlatform.dragInProgress && !linuxPlatform.dragFinished && xdgToplevel &&
+                           linuxPlatform.toplevelDragManager && linuxPlatform.dataDeviceManager && linuxPlatform.seat;
+
+    if (dominatedByDrag) {
+        // Calculate offset: use local surface coordinates (relative to toplevel geometry)
+        // This matches how Chromium passes offsets to xdg_toplevel_drag_v1_attach
+        auto offset = linuxPlatform.platform.getMouseLocalPos();
+
+        linuxPlatform.beginDrag(*this, offset);
+    }
+
+    // Track the position that ImGui wants internally so that
+    // GetWindowPos can return it and input coordinate transformations work.
+    this->pos = inPosition;
 }
 
 void LinuxWindowImpl::setTitle(std::string_view inTitle) {
@@ -138,6 +182,50 @@ void LinuxWindowImpl::setDecorated(bool inDecorated) {
 
 void LinuxWindowImpl::xdg_ToplevelConfigure(void* data, xdg_toplevel* toplevel, int32_t width, int32_t height, wl_array* states) {
     auto* window = static_cast<LinuxWindowImpl*>(data);
+
+    bool isFullscreen = false;
+    for (uint32_t* state = (uint32_t*) states->data;
+         (const char*) state < ((const char*) states->data + states->size);
+         state++) {
+        if (*state == XDG_TOPLEVEL_STATE_FULLSCREEN)
+            isFullscreen = true;
+    }
+
+    // Handle fullscreen state changes - unset parent when fullscreen to allow
+    // other windows to receive input (important for multi-monitor setups)
+    if (window->fullscreen != isFullscreen) {
+        window->fullscreen = isFullscreen;
+
+        // Find the viewport to update its position
+        ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+        ImGuiViewport* viewport = nullptr;
+        for (int i = 0; i < platformIO.Viewports.Size; i++) {
+            if (platformIO.Viewports[i]->PlatformHandle == window->getPlatformHandle()) {
+                viewport = platformIO.Viewports[i];
+                break;
+            }
+        }
+
+        if (window->fullscreen) {
+            // Unset parent so this fullscreen window doesn't block input to others
+            xdg_toplevel_set_parent(toplevel, nullptr);
+
+            // Save current position and reset to (0,0) for fullscreen
+            // TODO: For multi-monitor, determine which monitor and use its origin
+            window->savedPos = window->pos;
+            window->pos = { 0, 0 };
+        } else {
+            // Restore parent relationship when exiting fullscreen
+            auto* bd = window->linuxPlatform.getPlatform().getBackendData();
+            xdg_toplevel_set_parent(toplevel, static_cast<LinuxWindowImpl*>(bd->mainWindow)->xdgToplevel);
+
+            // Restore saved position
+            window->pos = window->savedPos;
+        }
+        // Notify ImGui that position changed
+        check(viewport);
+        viewport->PlatformRequestMove = true;
+    }
 
     vk::Extent2D newSize(width, height);
     if (newSize == window->size)

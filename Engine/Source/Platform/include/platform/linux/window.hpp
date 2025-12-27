@@ -19,6 +19,7 @@ public:
     vk::SurfaceKHR getVulkanSurface(vk::Instance instance) override;
     void createVulkanSurface(VkInstance instance, VkSurfaceKHR* surface) override;
     void* getPlatformHandle() override { return wlSurface; }
+    xdg_toplevel* getToplevel() { return xdgToplevel; }
 
     vk::Extent2D getSize() override { return size; }
     void setSize(vk::Extent2D inSize) override { size = inSize; }
@@ -44,7 +45,6 @@ private:
 private:
     // window properties
     vk::Extent2D size;
-    glm::vec2 pos;
     std::string_view title;
     bool decorated;
 
@@ -58,6 +58,12 @@ private:
 
     // state
     bool configured = false;
+    bool fullscreen = false;
+
+    glm::vec2 pos;
+    glm::vec2 savedPos; // saved on fullscreen to restore previous position
+
+    friend LinuxPlatformImpl;
 };
 
 } // namespace dirk::Platform::Linux

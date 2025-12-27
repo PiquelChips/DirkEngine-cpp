@@ -117,6 +117,8 @@ public:
     // updated the ImGui monitors list with current platform monitors list
     void updateMonitors();
 
+    glm::vec2 getMouseLocalPos() { return mouseLocalPos; }
+
     std::vector<std::unique_ptr<Monitor>>& getMonitors() { return monitors; }
 
     std::string_view getClipboardText() { return platformImpl->getClipboardText(); }
@@ -156,6 +158,7 @@ public:
 private:
     std::vector<std::unique_ptr<Monitor>> monitors;
 
+    glm::vec2 mouseLocalPos = { 0, 0 };
     std::string_view appName;
     std::unique_ptr<PlatformImpl> platformImpl;
 
