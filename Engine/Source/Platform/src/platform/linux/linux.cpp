@@ -366,6 +366,9 @@ void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32
     Input::KeyState state = getKeyStateFromCode(inState);
     Input::Key key = getKeyFromSym(sym);
 
+    if (key == Input::Key::Unknown)
+        return;
+
     platform->platform.keyCallback(viewport, key, state);
 
     if (state == Input::KeyState::Pressed) {
@@ -489,7 +492,7 @@ constexpr Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {
         
     // Numpad
     case XKB_KEY_Num_Lock: return Input::Key::NumLock;
-    case XKB_KEY_KP_Divide: return Input::Key::KPDivided;
+    case XKB_KEY_KP_Divide: return Input::Key::KPDivide;
     case XKB_KEY_KP_Multiply: return Input::Key::KPMultiply;
     case XKB_KEY_KP_Subtract: return Input::Key::KPMinus;
     case XKB_KEY_KP_Add: return Input::Key::KPPlus;

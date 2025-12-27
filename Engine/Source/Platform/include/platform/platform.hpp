@@ -87,7 +87,7 @@ struct ImGuiPlatformData {
 
     static constexpr std::string_view platformName = "imgui_impl_dirk";
 
-    std::array<PlatformWindowImpl*, Input::KeyLast> keyOwnerWindows; // keys used as indexes, window is which window currently has that key
+    std::array<PlatformWindowImpl*, Input::Key::NumKeys> keyOwnerWindows; // keys used as indexes, window is which window currently has that key
 
     ImGuiPlatformData() { memset((void*) this, 0, sizeof(*this)); }
 };

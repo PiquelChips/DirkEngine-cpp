@@ -92,7 +92,7 @@ enum Key : std::uint16_t {
     VolumeUp = 0x80,
     VolumeDown = 0x81,
 
-    KeyCount,
+    NumKeys = 0x82,
     // clang-format on
 };
 

@@ -279,9 +279,7 @@ void Platform::focusWindowCallback(ImGuiViewport* viewport, bool focused) {
     io.AddFocusEvent(focused);
 
     check(viewport);
-
-    if (io.BackendFlags & ImGuiBackendFlags_HasMouseHoveredViewport)
-        io.AddMouseViewportEvent(viewport->ID);
+    io.AddMouseViewportEvent(viewport->ID);
 }
 
 void Platform::cursorPosCallback(ImGuiViewport* viewport, glm::vec2 pos) {
@@ -298,8 +296,6 @@ void Platform::cursorPosCallback(ImGuiViewport* viewport, glm::vec2 pos) {
 
     io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
     io.AddMousePosEvent(pos.x, pos.y);
-
-    // TODO: ImGui_ImplWayland_UpdateDraggedViewportPosition(x, y);
 }
 
 void Platform::mouseButtonCallback(ImGuiViewport* viewport, Input::MouseButton button, Input::KeyState action) {

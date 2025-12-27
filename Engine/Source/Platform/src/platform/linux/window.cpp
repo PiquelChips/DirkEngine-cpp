@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "logging/logging.hpp"
 #include "platform/linux/linux.hpp"
+#include "platform/platform.hpp"
 
 #include "imgui.h"
 #include "vulkan/vulkan.hpp"
