@@ -31,7 +31,7 @@ struct WindowCreateInfo {
 
     bool focused;
     bool decorated;
-    // TODO: floating (maybe set the min & max size to be equal to the size, would probably make floating)
+    // TODO: create floating window
     // bool floating;
 };
 
