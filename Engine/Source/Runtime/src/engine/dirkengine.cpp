@@ -42,6 +42,9 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         io.ConfigDpiScaleFonts = true;
         io.ConfigDpiScaleViewports = true;
 
+        static constexpr std::string_view iniFilename = SAVED_PATH "/imgui.ini";
+        io.IniFilename = iniFilename.data();
+
         ImGui::StyleColorsDark();
 
         // Setup scaling
@@ -56,8 +59,6 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         style.FontScaleDpi = 1.f;
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-
-        // TODO: save imgui.ini in saved directory
 
         platform->initImGui();
         renderer->initImGui(platform->createTempSurface(renderer->getResources().instance));

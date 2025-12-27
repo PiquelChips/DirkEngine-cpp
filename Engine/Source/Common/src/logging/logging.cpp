@@ -24,7 +24,7 @@ void shutdown() {
     logger = nullptr;
 }
 
-Logger::Logger() {
+Logger::Logger() : logPath(std::string{ std::string(SAVED_PATH) + "/log" }) {
     std::error_code ec;
     std::filesystem::create_directories(std::filesystem::path{ logPath }, ec);
 

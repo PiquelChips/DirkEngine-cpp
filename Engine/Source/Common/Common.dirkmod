@@ -7,5 +7,8 @@
         "tinygltf",
         "vulkan",
         "ImGui"
-    ]
+    ],
+    "defines": {
+        "SAVED_PATH": "Saved"
+    }
 }
