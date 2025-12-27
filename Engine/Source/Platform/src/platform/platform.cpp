@@ -55,8 +55,8 @@ void Platform::initImGui() {
     io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport;
 
     // TODO: this shouldn't be necessary
-    // auto displaySize = bd->mainWindow->getSize();
-    // io.DisplaySize = { static_cast<float>(displaySize.width), static_cast<float>(displaySize.height) };
+    auto displaySize = bd->mainWindow->getSize();
+    io.DisplaySize = { static_cast<float>(displaySize.width), static_cast<float>(displaySize.height) };
 
     bd->context = ImGui::GetCurrentContext();
     bd->platform = this;
@@ -147,6 +147,9 @@ void Platform::ImGui_CreateWindow(ImGuiViewport* viewport) {
     vd->window = bd->platform->platformImpl->createPlatformWindow(createInfo);
     vd->windowOwned = true;
     viewport->PlatformHandle = (void*) vd->window->getPlatformHandle();
+
+    // TODO: see comment in LinuxWindowImpl::xdg_ToplevelConfigure
+    viewport->PlatformRequestResize = true;
 }
 
 void Platform::ImGui_DestroyWindow(ImGuiViewport* viewport) {

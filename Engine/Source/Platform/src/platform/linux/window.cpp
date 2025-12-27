@@ -137,15 +137,17 @@ void LinuxWindowImpl::setDecorated(bool inDecorated) {
 
 void LinuxWindowImpl::xdg_ToplevelConfigure(void* data, xdg_toplevel* toplevel, int32_t width, int32_t height, wl_array* states) {
     auto* window = static_cast<LinuxWindowImpl*>(data);
-    auto* viewport = ImGui::FindViewportByPlatformHandle(window->wlSurface);
-    check(viewport);
 
     vk::Extent2D newSize(width, height);
     if (newSize == window->size)
         return;
 
     window->size = newSize;
-    window->linuxPlatform.getPlatform().windowSizeCallback(viewport, window->size);
+    // TODO: as we wait for configuration to finish before returning the constructor,
+    // the platform handle is not yet set in the viewport variable. it thus cannot find it
+    auto* viewport = ImGui::FindViewportByPlatformHandle(window->wlSurface);
+    if (viewport)
+        window->linuxPlatform.getPlatform().windowSizeCallback(viewport, window->size);
 }
 
 void LinuxWindowImpl::xdg_ToplevelClose(void* data, xdg_toplevel* toplevel) {
