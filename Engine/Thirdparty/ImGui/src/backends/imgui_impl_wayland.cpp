@@ -24,6 +24,10 @@
 //  2025-XX-XX: Added multi-viewport support
 //  2025-03-27: Forked imgui_impl_sdl3 into imgl_impl_wayland
 
+#ifdef ENABLE_WAYLAND_IMPL
+
+#define IMGUI_IMPL_WAYLAND_USE_XDG_SHELL
+
 #include "imgui.h"
 #include <cstdint>
 #include <cstdio>
@@ -2425,3 +2429,5 @@ static void ImGui_ImplWayland_ShutdownMultiViewportSupport()
 #endif
 
 #endif // #ifndef IMGUI_DISABLE
+#endif // #ifdef ENABLE_WAYLAND_IMPL
+
