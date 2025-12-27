@@ -54,6 +54,15 @@ void Platform::initImGui() {
     io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
     io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport;
 
+#ifdef PLATFORM_LINUX
+    Linux::LinuxPlatformImpl* linuxPlatform = static_cast<Linux::LinuxPlatformImpl*>(platformImpl.get());
+    if (!linuxPlatform->supportsDragging()) {
+        io.BackendFlags &= ~(ImGuiBackendFlags_PlatformHasViewports);
+        DIRK_LOG(Linux::LogWayland, WARNING, "protocol xdg_toplevel_drag_manager_v1 is not implemented by your compositor");
+        DIRK_LOG(LogPlatform, ERROR, "multi viewports are disabled due to compositor incompatibility");
+    }
+#endif
+
     // TODO: this shouldn't be necessary
     auto displaySize = bd->mainWindow->getSize();
     io.DisplaySize = { static_cast<float>(displaySize.width), static_cast<float>(displaySize.height) };
