@@ -385,99 +385,66 @@ constexpr Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {
     // clang-format off
     switch (sym)
     {
-    case XKB_KEY_Tab: return Input::Key::Tab;
-    case XKB_KEY_Left: return Input::Key::Left;
-    case XKB_KEY_Right: return Input::Key::Right;
-    case XKB_KEY_Up: return Input::Key::Up;
-    case XKB_KEY_Down: return Input::Key::Down;
-    case XKB_KEY_Page_Up: return Input::Key::PageUp;
-    case XKB_KEY_Page_Down: return Input::Key::PageDown;
-    case XKB_KEY_Home: return Input::Key::Home;
-    case XKB_KEY_End: return Input::Key::End;
-    case XKB_KEY_Insert: return Input::Key::Insert;
-    case XKB_KEY_Delete: return Input::Key::Delete;
-    case XKB_KEY_BackSpace: return Input::Key::Backspace;
-    case XKB_KEY_space: return Input::Key::Space;
+    // Letters
+    case XKB_KEY_a: case XKB_KEY_A: return Input::Key::A;
+    case XKB_KEY_b: case XKB_KEY_B: return Input::Key::B;
+    case XKB_KEY_c: case XKB_KEY_C: return Input::Key::C;
+    case XKB_KEY_d: case XKB_KEY_D: return Input::Key::D;
+    case XKB_KEY_e: case XKB_KEY_E: return Input::Key::E;
+    case XKB_KEY_f: case XKB_KEY_F: return Input::Key::F;
+    case XKB_KEY_g: case XKB_KEY_G: return Input::Key::G;
+    case XKB_KEY_h: case XKB_KEY_H: return Input::Key::H;
+    case XKB_KEY_i: case XKB_KEY_I: return Input::Key::I;
+    case XKB_KEY_j: case XKB_KEY_J: return Input::Key::J;
+    case XKB_KEY_k: case XKB_KEY_K: return Input::Key::K;
+    case XKB_KEY_l: case XKB_KEY_L: return Input::Key::L;
+    case XKB_KEY_m: case XKB_KEY_M: return Input::Key::M;
+    case XKB_KEY_n: case XKB_KEY_N: return Input::Key::N;
+    case XKB_KEY_o: case XKB_KEY_O: return Input::Key::O;
+    case XKB_KEY_p: case XKB_KEY_P: return Input::Key::P;
+    case XKB_KEY_q: case XKB_KEY_Q: return Input::Key::Q;
+    case XKB_KEY_r: case XKB_KEY_R: return Input::Key::R;
+    case XKB_KEY_s: case XKB_KEY_S: return Input::Key::S;
+    case XKB_KEY_t: case XKB_KEY_T: return Input::Key::T;
+    case XKB_KEY_u: case XKB_KEY_U: return Input::Key::U;
+    case XKB_KEY_v: case XKB_KEY_V: return Input::Key::V;
+    case XKB_KEY_w: case XKB_KEY_W: return Input::Key::W;
+    case XKB_KEY_x: case XKB_KEY_X: return Input::Key::X;
+    case XKB_KEY_y: case XKB_KEY_Y: return Input::Key::Y;
+    case XKB_KEY_z: case XKB_KEY_Z: return Input::Key::Z;
+        
+    // Numbers
+    case XKB_KEY_1: case XKB_KEY_exclam: return Input::Key::D1;
+    case XKB_KEY_2: case XKB_KEY_at: return Input::Key::D2;
+    case XKB_KEY_3: case XKB_KEY_numbersign: return Input::Key::D3;
+    case XKB_KEY_4: case XKB_KEY_dollar: return Input::Key::D4;
+    case XKB_KEY_5: case XKB_KEY_percent: return Input::Key::D5;
+    case XKB_KEY_6: case XKB_KEY_asciicircum: return Input::Key::D6;
+    case XKB_KEY_7: case XKB_KEY_ampersand: return Input::Key::D7;
+    case XKB_KEY_8: case XKB_KEY_asterisk: return Input::Key::D8;
+    case XKB_KEY_9: case XKB_KEY_parenleft: return Input::Key::D9;
+    case XKB_KEY_0: case XKB_KEY_parenright: return Input::Key::D0;
+        
+    // Special keys
     case XKB_KEY_Return: return Input::Key::Enter;
     case XKB_KEY_Escape: return Input::Key::Escape;
-    case XKB_KEY_apostrophe: return Input::Key::Apostrophe;
-    case XKB_KEY_comma: return Input::Key::Comma;
-    case XKB_KEY_minus: return Input::Key::Minus;
-    case XKB_KEY_period: return Input::Key::Period;
-    case XKB_KEY_slash: return Input::Key::Slash;
-    case XKB_KEY_semicolon: return Input::Key::Semicolon;
-    case XKB_KEY_equal: return Input::Key::Equal;
-    case XKB_KEY_leftanglebracket: return Input::Key::LeftBracket;
-    case XKB_KEY_backslash: return Input::Key::Backslash;
-    case XKB_KEY_rightanglebracket: return Input::Key::RightBracket;
-    case XKB_KEY_grave: return Input::Key::GraveAccent;
+    case XKB_KEY_BackSpace: return Input::Key::Backspace;
+    case XKB_KEY_Tab: case XKB_KEY_ISO_Left_Tab: return Input::Key::Tab;
+    case XKB_KEY_space: return Input::Key::Space;
+    case XKB_KEY_minus: case XKB_KEY_underscore: return Input::Key::Minus;
+    case XKB_KEY_equal: case XKB_KEY_plus: return Input::Key::Equal;
+    case XKB_KEY_bracketleft: case XKB_KEY_braceleft: return Input::Key::LeftBracket;
+    case XKB_KEY_bracketright: case XKB_KEY_braceright: return Input::Key::RightBracket;
+    case XKB_KEY_backslash: case XKB_KEY_bar: return Input::Key::Backslash;
+    case XKB_KEY_semicolon: case XKB_KEY_colon: return Input::Key::Semicolon;
+    case XKB_KEY_apostrophe: case XKB_KEY_quotedbl: return Input::Key::Apostrophe;
+    case XKB_KEY_grave: case XKB_KEY_asciitilde: return Input::Key::GraveAccent;
+    case XKB_KEY_comma: case XKB_KEY_less: return Input::Key::Comma;
+    case XKB_KEY_period: case XKB_KEY_greater: return Input::Key::Period;
+    case XKB_KEY_slash: case XKB_KEY_question: return Input::Key::Slash;
     case XKB_KEY_Caps_Lock: return Input::Key::CapsLock;
-    case XKB_KEY_Scroll_Lock: return Input::Key::ScrollLock;
-    case XKB_KEY_Num_Lock: return Input::Key::NumLock;
-    case XKB_KEY_Print: return Input::Key::PrintScreen;
-    case XKB_KEY_Pause: return Input::Key::Pause;
-    case XKB_KEY_KP_0: return Input::Key::KP0;
-    case XKB_KEY_KP_1: return Input::Key::KP1;
-    case XKB_KEY_KP_2: return Input::Key::KP2;
-    case XKB_KEY_KP_3: return Input::Key::KP3;
-    case XKB_KEY_KP_4: return Input::Key::KP4;
-    case XKB_KEY_KP_5: return Input::Key::KP5;
-    case XKB_KEY_KP_6: return Input::Key::KP6;
-    case XKB_KEY_KP_7: return Input::Key::KP7;
-    case XKB_KEY_KP_8: return Input::Key::KP8;
-    case XKB_KEY_KP_9: return Input::Key::KP9;
-    case XKB_KEY_KP_Decimal: return Input::Key::KPDecimal;
-    case XKB_KEY_KP_Divide: return Input::Key::KPDivide;
-    case XKB_KEY_KP_Multiply: return Input::Key::KPMultiply;
-    case XKB_KEY_KP_Subtract: return Input::Key::KPSubtract;
-    case XKB_KEY_KP_Add: return Input::Key::KPAdd;
-    case XKB_KEY_KP_Enter: return Input::Key::KPEnter;
-    case XKB_KEY_KP_Equal: return Input::Key::KPEqual;
-    case XKB_KEY_Shift_L: return Input::Key::LeftShift;
-    case XKB_KEY_Control_L: return Input::Key::LeftControl;
-    case XKB_KEY_Alt_L: return Input::Key::LeftAlt;
-    case XKB_KEY_Super_L: return Input::Key::LeftSuper;
-    case XKB_KEY_Shift_R: return Input::Key::RightShift;
-    case XKB_KEY_Control_R: return Input::Key::RightControl;
-    case XKB_KEY_Alt_R: return Input::Key::RightAlt;
-    case XKB_KEY_Super_R: return Input::Key::RightSuper;
-    case XKB_KEY_Menu: return Input::Key::Menu;
-    case XKB_KEY_0: return Input::Key::D0;
-    case XKB_KEY_1: return Input::Key::D1;
-    case XKB_KEY_2: return Input::Key::D2;
-    case XKB_KEY_3: return Input::Key::D3;
-    case XKB_KEY_4: return Input::Key::D4;
-    case XKB_KEY_5: return Input::Key::D5;
-    case XKB_KEY_6: return Input::Key::D6;
-    case XKB_KEY_7: return Input::Key::D7;
-    case XKB_KEY_8: return Input::Key::D8;
-    case XKB_KEY_9: return Input::Key::D9;
-    case XKB_KEY_A: return Input::Key::A;
-    case XKB_KEY_B: return Input::Key::B;
-    case XKB_KEY_C: return Input::Key::C;
-    case XKB_KEY_D: return Input::Key::D;
-    case XKB_KEY_E: return Input::Key::E;
-    case XKB_KEY_F: return Input::Key::F;
-    case XKB_KEY_G: return Input::Key::G;
-    case XKB_KEY_H: return Input::Key::H;
-    case XKB_KEY_I: return Input::Key::I;
-    case XKB_KEY_J: return Input::Key::J;
-    case XKB_KEY_K: return Input::Key::K;
-    case XKB_KEY_L: return Input::Key::L;
-    case XKB_KEY_M: return Input::Key::M;
-    case XKB_KEY_N: return Input::Key::N;
-    case XKB_KEY_O: return Input::Key::O;
-    case XKB_KEY_P: return Input::Key::P;
-    case XKB_KEY_Q: return Input::Key::Q;
-    case XKB_KEY_R: return Input::Key::R;
-    case XKB_KEY_S: return Input::Key::S;
-    case XKB_KEY_T: return Input::Key::T;
-    case XKB_KEY_U: return Input::Key::U;
-    case XKB_KEY_V: return Input::Key::V;
-    case XKB_KEY_W: return Input::Key::W;
-    case XKB_KEY_X: return Input::Key::X;
-    case XKB_KEY_Y: return Input::Key::Y;
-    case XKB_KEY_Z: return Input::Key::Z;
+        
+    // Function keys
     case XKB_KEY_F1: return Input::Key::F1;
     case XKB_KEY_F2: return Input::Key::F2;
     case XKB_KEY_F3: return Input::Key::F3;
@@ -502,6 +469,57 @@ constexpr Input::Key LinuxPlatformImpl::getKeyFromSym(xkb_keysym_t sym) {
     case XKB_KEY_F22: return Input::Key::F22;
     case XKB_KEY_F23: return Input::Key::F23;
     case XKB_KEY_F24: return Input::Key::F24;
+        
+    // System keys
+    case XKB_KEY_Print: case XKB_KEY_Sys_Req: return Input::Key::PrintScreen;
+    case XKB_KEY_Scroll_Lock: return Input::Key::ScrollLock;
+    case XKB_KEY_Pause: case XKB_KEY_Break: return Input::Key::Pause;
+    case XKB_KEY_Insert: return Input::Key::Insert;
+    case XKB_KEY_Home: return Input::Key::Home;
+    case XKB_KEY_Page_Up: return Input::Key::PageUp;
+    case XKB_KEY_Delete: return Input::Key::Delete;
+    case XKB_KEY_End: return Input::Key::End;
+    case XKB_KEY_Page_Down: return Input::Key::PageDown;
+        
+    // Arrow keys
+    case XKB_KEY_Right: return Input::Key::Right;
+    case XKB_KEY_Left: return Input::Key::Left;
+    case XKB_KEY_Down: return Input::Key::Down;
+    case XKB_KEY_Up: return Input::Key::Up;
+        
+    // Numpad
+    case XKB_KEY_Num_Lock: return Input::Key::NumLock;
+    case XKB_KEY_KP_Divide: return Input::Key::KPDivided;
+    case XKB_KEY_KP_Multiply: return Input::Key::KPMultiply;
+    case XKB_KEY_KP_Subtract: return Input::Key::KPMinus;
+    case XKB_KEY_KP_Add: return Input::Key::KPPlus;
+    case XKB_KEY_KP_Enter: return Input::Key::KPEnter;
+    case XKB_KEY_KP_1: case XKB_KEY_KP_End: return Input::Key::KP1;
+    case XKB_KEY_KP_2: case XKB_KEY_KP_Down: return Input::Key::KP2;
+    case XKB_KEY_KP_3: case XKB_KEY_KP_Page_Down: return Input::Key::KP3;
+    case XKB_KEY_KP_4: case XKB_KEY_KP_Left: return Input::Key::KP4;
+    case XKB_KEY_KP_5: case XKB_KEY_KP_Begin: return Input::Key::KP5;
+    case XKB_KEY_KP_6: case XKB_KEY_KP_Right: return Input::Key::KP6;
+    case XKB_KEY_KP_7: case XKB_KEY_KP_Home: return Input::Key::KP7;
+    case XKB_KEY_KP_8: case XKB_KEY_KP_Up: return Input::Key::KP8;
+    case XKB_KEY_KP_9: case XKB_KEY_KP_Page_Up: return Input::Key::KP9;
+    case XKB_KEY_KP_0: case XKB_KEY_KP_Insert: return Input::Key::KP0;
+    case XKB_KEY_KP_Decimal: case XKB_KEY_KP_Delete: return Input::Key::KPPeriod;
+        
+    // Modifiers
+    case XKB_KEY_Control_L: return Input::Key::LeftCtrl;
+    case XKB_KEY_Shift_L: return Input::Key::LeftShift;
+    case XKB_KEY_Alt_L: return Input::Key::LeftAlt;
+    case XKB_KEY_Super_L: case XKB_KEY_Meta_L: return Input::Key::LeftSuper;
+    case XKB_KEY_Control_R: return Input::Key::RightCtrl;
+    case XKB_KEY_Shift_R: return Input::Key::RightShift;
+    case XKB_KEY_Alt_R: case XKB_KEY_ISO_Level3_Shift: return Input::Key::RightAlt;
+    case XKB_KEY_Super_R: case XKB_KEY_Meta_R: return Input::Key::RightSuper;
+        
+    // Media keys
+    case XKB_KEY_XF86AudioMute: return Input::Key::Mute;
+    case XKB_KEY_XF86AudioRaiseVolume: return Input::Key::VolumeUp;
+    case XKB_KEY_XF86AudioLowerVolume: return Input::Key::VolumeDown;
     default:
         DIRK_LOG(LogWayland, ERROR, "keycode {} is unknown", sym)
         return Input::Key::Unknown;

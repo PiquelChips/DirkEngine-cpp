@@ -5,141 +5,96 @@
 namespace dirk::Input {
 
 enum Key : std::uint16_t {
+    // clang-format off
     Unknown = 0,
 
-    Space = 32,
-    Apostrophe = 39, /* ' */
-    Comma = 44,      /* , */
-    Minus = 45,      /* - */
-    Period = 46,     /* . */
-    Slash = 47,      /* / */
+    // Letters (USB HID: 0x04-0x1D)
+    A = 0x04,
+    B, C, D, E, F, G, H, I, J, K, L, M, N,
+    O, P, Q, R, S, T, U, V, W, X, Y, Z,
 
-    D0 = 48, /* 0 */
-    D1 = 49, /* 1 */
-    D2 = 50, /* 2 */
-    D3 = 51, /* 3 */
-    D4 = 52, /* 4 */
-    D5 = 53, /* 5 */
-    D6 = 54, /* 6 */
-    D7 = 55, /* 7 */
-    D8 = 56, /* 8 */
-    D9 = 57, /* 9 */
+    // Numbers (USB HID: 0x1E-0x27)
+    D1 = 0x1E,
+    D2, D3, D4, D5, D6, D7, D8, D9, D0,
 
-    Semicolon = 59, /* ; */
-    Equal = 61,     /* = */
+    // Special keys
+    Enter = 0x28,
+    Escape = 0x29,
+    Backspace = 0x2A,
+    Tab = 0x2B,
+    Space = 0x2C,
+    Minus = 0x2D,
+    Equal = 0x2E,
+    LeftBracket = 0x2F,
+    RightBracket = 0x30,
+    Backslash = 0x31,
+    Semicolon = 0x33,
+    Apostrophe = 0x34,
+    GraveAccent = 0x35, // `
+    Comma = 0x36,
+    Period = 0x37,
+    Slash = 0x38,
+    CapsLock = 0x39,
 
-    A = 65,
-    B = 66,
-    C = 67,
-    D = 68,
-    E = 69,
-    F = 70,
-    G = 71,
-    H = 72,
-    I = 73,
-    J = 74,
-    K = 75,
-    L = 76,
-    M = 77,
-    N = 78,
-    O = 79,
-    P = 80,
-    Q = 81,
-    R = 82,
-    S = 83,
-    T = 84,
-    U = 85,
-    V = 86,
-    W = 87,
-    X = 88,
-    Y = 89,
-    Z = 90,
+    // Function keys (USB HID: 0x3A-0x45)
+    F1 = 0x3A, F2, F3, F4, F5, F6,
+    F7, F8, F9, F10, F11, F12,
 
-    LeftBracket = 91,  /* [ */
-    Backslash = 92,    /* \ */
-    RightBracket = 93, /* ] */
-    GraveAccent = 96,  /* ` */
+    F13 = 0x68, F14, F15, F16, F17, F18,
+    F19, F20, F21, F22, F23, F24,
 
-    World1 = 161, /* non-US #1 */
-    World2 = 162, /* non-US #2 */
+    // System keys
+    PrintScreen = 0x46,
+    ScrollLock = 0x47,
+    Pause = 0x48,
+    Insert = 0x49,
+    Home = 0x4A,
+    PageUp = 0x4B,
+    Delete = 0x4C,
+    End = 0x4D,
+    PageDown = 0x4E,
+    Right = 0x4F,
+    Left = 0x50,
+    Down = 0x51,
+    Up = 0x52,
 
-    /* Function keys */
-    Escape = 256,
-    Enter = 257,
-    Tab = 258,
-    Backspace = 259,
-    Insert = 260,
-    Delete = 261,
-    Right = 262,
-    Left = 263,
-    Down = 264,
-    Up = 265,
-    PageUp = 266,
-    PageDown = 267,
-    Home = 268,
-    End = 269,
-    CapsLock = 280,
-    ScrollLock = 281,
-    NumLock = 282,
-    PrintScreen = 283,
-    Pause = 284,
-    F1 = 290,
-    F2 = 291,
-    F3 = 292,
-    F4 = 293,
-    F5 = 294,
-    F6 = 295,
-    F7 = 296,
-    F8 = 297,
-    F9 = 298,
-    F10 = 299,
-    F11 = 300,
-    F12 = 301,
-    F13 = 302,
-    F14 = 303,
-    F15 = 304,
-    F16 = 305,
-    F17 = 306,
-    F18 = 307,
-    F19 = 308,
-    F20 = 309,
-    F21 = 310,
-    F22 = 311,
-    F23 = 312,
-    F24 = 313,
-    F25 = 314,
+    // Numpad
+    NumLock = 0x53,
+    KPDivide = 0x54,
+    KPMultiply = 0x55,
+    KPMinus = 0x56,
+    KPPlus = 0x57,
+    KPEnter = 0x58,
+    KP1 = 0x59,
+    KP2 = 0x5A,
+    KP3 = 0x5B,
+    KP4 = 0x5C,
+    KP5 = 0x5D,
+    KP6 = 0x5E,
+    KP7 = 0x5F,
+    KP8 = 0x60,
+    KP9 = 0x61,
+    KP0 = 0x62,
+    KPPeriod = 0x63,
 
-    /* Keypad */
-    KP0 = 320,
-    KP1 = 321,
-    KP2 = 322,
-    KP3 = 323,
-    KP4 = 324,
-    KP5 = 325,
-    KP6 = 326,
-    KP7 = 327,
-    KP8 = 328,
-    KP9 = 329,
-    KPDecimal = 330,
-    KPDivide = 331,
-    KPMultiply = 332,
-    KPSubtract = 333,
-    KPAdd = 334,
-    KPEnter = 335,
-    KPEqual = 336,
+    // Modifiers (USB HID: 0xE0-0xE7)
+    LeftCtrl = 0xE0,
+    LeftShift = 0xE1,
+    LeftAlt = 0xE2,
+    LeftSuper = 0xE3, // Super/Windows/Command
+    RightCtrl = 0xE4,
+    RightShift = 0xE5,
+    RightAlt = 0xE6,
+    RightSuper = 0xE7,
 
-    LeftShift = 340,
-    LeftControl = 341,
-    LeftAlt = 342,
-    LeftSuper = 343,
-    RightShift = 344,
-    RightControl = 345,
-    RightAlt = 346,
-    RightSuper = 347,
-    Menu = 348
+    // Media keys
+    Mute = 0x7F,
+    VolumeUp = 0x80,
+    VolumeDown = 0x81,
+
+    KeyCount,
+    // clang-format on
 };
-
-const int KeyLast = Key::Menu;
 
 enum KeyState {
     None = -1,

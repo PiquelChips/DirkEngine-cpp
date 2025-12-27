@@ -375,6 +375,7 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
 {
     switch (key)
     {
+    // System keys
     case Input::Key::Tab: return ImGuiKey_Tab;
     case Input::Key::Left: return ImGuiKey_LeftArrow;
     case Input::Key::Right: return ImGuiKey_RightArrow;
@@ -386,8 +387,11 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     case Input::Key::End: return ImGuiKey_End;
     case Input::Key::Insert: return ImGuiKey_Insert;
     case Input::Key::Delete: return ImGuiKey_Delete;
+
     case Input::Key::Backspace: return ImGuiKey_Backspace;
     case Input::Key::Space: return ImGuiKey_Space;
+
+    // Special keys
     case Input::Key::Enter: return ImGuiKey_Enter;
     case Input::Key::Escape: return ImGuiKey_Escape;
     case Input::Key::Apostrophe: return ImGuiKey_Apostrophe;
@@ -399,12 +403,12 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     case Input::Key::Equal: return ImGuiKey_Equal;
     case Input::Key::LeftBracket: return ImGuiKey_LeftBracket;
     case Input::Key::Backslash: return ImGuiKey_Backslash;
-    case Input::Key::World1: return ImGuiKey_Oem102;
-    case Input::Key::World2: return ImGuiKey_Oem102;
     case Input::Key::RightBracket: return ImGuiKey_RightBracket;
     case Input::Key::GraveAccent: return ImGuiKey_GraveAccent;
     case Input::Key::CapsLock: return ImGuiKey_CapsLock;
     case Input::Key::ScrollLock: return ImGuiKey_ScrollLock;
+    
+    // Numpad
     case Input::Key::NumLock: return ImGuiKey_NumLock;
     case Input::Key::PrintScreen: return ImGuiKey_PrintScreen;
     case Input::Key::Pause: return ImGuiKey_Pause;
@@ -418,22 +422,24 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     case Input::Key::KP7: return ImGuiKey_Keypad7;
     case Input::Key::KP8: return ImGuiKey_Keypad8;
     case Input::Key::KP9: return ImGuiKey_Keypad9;
-    case Input::Key::KPDecimal: return ImGuiKey_KeypadDecimal;
+    case Input::Key::KPPeriod: return ImGuiKey_KeypadDecimal;
     case Input::Key::KPDivide: return ImGuiKey_KeypadDivide;
     case Input::Key::KPMultiply: return ImGuiKey_KeypadMultiply;
-    case Input::Key::KPSubtract: return ImGuiKey_KeypadSubtract;
-    case Input::Key::KPAdd: return ImGuiKey_KeypadAdd;
+    case Input::Key::KPMinus: return ImGuiKey_KeypadSubtract;
+    case Input::Key::KPPlus: return ImGuiKey_KeypadAdd;
     case Input::Key::KPEnter: return ImGuiKey_KeypadEnter;
-    case Input::Key::KPEqual: return ImGuiKey_KeypadEqual;
+    
+    // Modifiers
     case Input::Key::LeftShift: return ImGuiKey_LeftShift;
-    case Input::Key::LeftControl: return ImGuiKey_LeftCtrl;
+    case Input::Key::LeftCtrl: return ImGuiKey_LeftCtrl;
     case Input::Key::LeftAlt: return ImGuiKey_LeftAlt;
     case Input::Key::LeftSuper: return ImGuiKey_LeftSuper;
     case Input::Key::RightShift: return ImGuiKey_RightShift;
-    case Input::Key::RightControl: return ImGuiKey_RightCtrl;
+    case Input::Key::RightCtrl: return ImGuiKey_RightCtrl;
     case Input::Key::RightAlt: return ImGuiKey_RightAlt;
     case Input::Key::RightSuper: return ImGuiKey_RightSuper;
-    case Input::Key::Menu: return ImGuiKey_Menu;
+    
+    // Numbers
     case Input::Key::D0: return ImGuiKey_0;
     case Input::Key::D1: return ImGuiKey_1;
     case Input::Key::D2: return ImGuiKey_2;
@@ -444,6 +450,8 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     case Input::Key::D7: return ImGuiKey_7;
     case Input::Key::D8: return ImGuiKey_8;
     case Input::Key::D9: return ImGuiKey_9;
+    
+    // Letters
     case Input::Key::A: return ImGuiKey_A;
     case Input::Key::B: return ImGuiKey_B;
     case Input::Key::C: return ImGuiKey_C;
@@ -470,6 +478,8 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     case Input::Key::X: return ImGuiKey_X;
     case Input::Key::Y: return ImGuiKey_Y;
     case Input::Key::Z: return ImGuiKey_Z;
+    
+    // Function keys
     case Input::Key::F1: return ImGuiKey_F1;
     case Input::Key::F2: return ImGuiKey_F2;
     case Input::Key::F3: return ImGuiKey_F3;
@@ -494,6 +504,12 @@ ImGuiKey Platform::keyToImGuiKey(Input::Key key)
     case Input::Key::F22: return ImGuiKey_F22;
     case Input::Key::F23: return ImGuiKey_F23;
     case Input::Key::F24: return ImGuiKey_F24;
+    
+    // Keys that don't have direct ImGui equivalents
+    case Input::Key::Mute:
+    case Input::Key::VolumeUp:
+    case Input::Key::VolumeDown:
+    case Input::Key::Unknown:
     default:
         DIRK_LOG(LogPlatform, ERROR, "no imgui equivalent for key {}", (uint16_t) key)
         return ImGuiKey_None;
