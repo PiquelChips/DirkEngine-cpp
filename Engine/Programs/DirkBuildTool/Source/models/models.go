@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 type Defines map[string]string
 
 type Dependency interface {
@@ -35,13 +33,6 @@ type BuildConfig struct {
 	Type           *BuildType `json:"build_type"`
 	SearchDirs     []string   `json:"search_dirs"`
 	ErrOnBuildFail bool       `json:"err_on_build_fail"`
-}
-
-type SetupConfig struct {
-	Thirdparty  map[string]*ThirdpartyDependency `json:"thirdparty"`
-	LastSetup   time.Time                        `json:"last_setup"`
-	BuildConfig *BuildConfig                     `json:"build_config"`
-	Platform    string                           `json:"platform"`
 }
 
 type BuildType struct {

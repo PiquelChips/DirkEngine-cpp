@@ -8,7 +8,6 @@ import (
 	"DirkBuildTool/build"
 	"DirkBuildTool/config"
 	"DirkBuildTool/models"
-	"DirkBuildTool/setup"
 )
 
 func usage() {
@@ -57,13 +56,9 @@ func main() {
 	buildConfig := &models.BuildConfig{
 		Target:         target,
 		Type:           buildConf,
-		SearchDirs:     nil,
 		ErrOnBuildFail: false,
 	}
 
-	if err := setup.Setup(buildConfig); err != nil {
-		panic(err)
-	}
 	if err := build.Build(buildConfig); err != nil {
 		panic(err)
 	}
