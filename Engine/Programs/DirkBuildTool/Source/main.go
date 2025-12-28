@@ -67,6 +67,8 @@ func main() {
 	if err := build.Build(buildConfig); err != nil {
 		panic(err)
 	}
+
+	// TODO: make sure to symlink compile command properly
 }
 
 func clean() {

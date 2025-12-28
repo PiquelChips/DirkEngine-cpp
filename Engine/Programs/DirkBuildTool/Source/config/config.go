@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -37,6 +39,7 @@ var Settings BuildToolSettings
 var Thirdparty ThirdpartyConfig // TODO: actually load this
 
 const settingsFile = "settings.json"
+const thirdpartyFile = "thirdparty.json"
 
 func LoadConfig() error {
 	log.Printf("Loading configuration\n")
@@ -85,6 +88,11 @@ func LoadConfig() error {
 		return err
 	}
 
+	Thirdparty, err = loadThirdparty()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -119,6 +127,88 @@ func loadSettings() (BuildToolSettings, error) {
 		return BuildToolSettings{}, err
 	}
 	return config, nil
+}
+
+func loadThirdparty() (ThirdpartyConfig, error) {
+	thirdparty := ThirdpartyConfig{}
+	if err := LoadConfigFile(thirdpartyFile, &thirdparty); err != nil {
+		return ThirdpartyConfig{}, err
+	}
+
+	getDir := func(name string) (string, error) {
+		return filepath.Abs(fmt.Sprintf("%s/%s", Dirs.Thirdparty, name))
+	}
+
+	getLibraryPaths := func(envVars []string) []string {
+		paths := []string{}
+
+		for _, envVar := range envVars {
+			env := os.Getenv(envVar)
+			for path := range strings.SplitSeq(env, ":") {
+				if path == "" {
+					continue
+				}
+				if slices.Contains(paths, path) {
+					continue
+				}
+
+				paths = append(paths, path)
+			}
+		}
+
+		return paths
+	}
+
+	// fixup some stuff
+	externalLibs := []string{}
+	for name, dep := range thirdparty {
+		if dep.IncludeDir == "" {
+			dep.IncludeDir = "include"
+		}
+
+		if len(dep.Libs) == 0 && (dep.External || !dep.IsHeaderOnly) {
+			dep.Libs = []string{name}
+		}
+
+		if !filepath.IsAbs(dep.IncludeDir) {
+			dir, err := getDir(name)
+			if err != nil {
+				return ThirdpartyConfig{}, err
+			}
+
+			incDir, err := filepath.Abs(fmt.Sprintf("%s/%s", dir, dep.IncludeDir))
+			if err != nil {
+				return ThirdpartyConfig{}, err
+			}
+			dep.IncludeDir = incDir
+		}
+
+		// for linking external libs
+		if dep.External {
+			externalLibs = append(externalLibs, dep.GetLibs()...)
+		}
+	}
+
+	paths := getLibraryPaths(Settings.LibSearchEnvs)
+	for _, lib := range externalLibs {
+		for _, path := range paths {
+			entries, err := os.ReadDir(path)
+			if err != nil {
+				continue
+			}
+			for _, entry := range entries {
+				if entry.IsDir() {
+					continue
+				}
+
+				if strings.HasPrefix(entry.Name(), fmt.Sprintf("lib%s.so", lib)) {
+					os.Symlink(fmt.Sprintf("%s/%s", path, entry.Name()), fmt.Sprintf("%s/%s", Dirs.Binaries, entry.Name()))
+				}
+			}
+		}
+	}
+
+	return thirdparty, nil
 }
 
 func LoadConfigFile(file string, out any) error {
