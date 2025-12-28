@@ -116,9 +116,8 @@ func (c *ModuleConfig) ToModule(buildConfig *models.BuildConfig) Module {
 			c.Defines = map[string]string{}
 		}
 
-		switch config.Setup.Platform {
-		case "Linux":
-			c.Defines["PLATFORM_LINUX"] = ""
+		if config.Platform.Defines != nil {
+			maps.Copy(c.Defines, config.Platform.Defines)
 		}
 
 		if buildConfig.Type.Defines != nil {

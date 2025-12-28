@@ -23,8 +23,13 @@ type BuildToolSettings struct {
 	LibSearchEnvs []string `json:"lib_search_envs"`
 }
 
+type PlatformConfig struct {
+	Name    string
+	Defines map[string]string
+}
+
 var BuildTypes map[string]*models.BuildType
-var Platform string
+var Platform PlatformConfig
 var Dirs DirsConfig
 var Settings BuildToolSettings
 
@@ -33,7 +38,7 @@ const settingsFile = "settings.json"
 func LoadConfig() error {
 	log.Printf("Loading configuration\n")
 
-	Platform = "Linux"
+	Platform = detectPlatform()
 
 	wd, err := os.Getwd()
 	if err != nil {
@@ -76,6 +81,13 @@ func LoadConfig() error {
 	}
 
 	return nil
+}
+
+func detectPlatform() PlatformConfig {
+	return PlatformConfig{
+		Name:    "Linux",
+		Defines: map[string]string{"PLATFORM_LINUX": ""},
+	}
 }
 
 func setupDirsConfig(wd string) DirsConfig {
