@@ -147,7 +147,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		Name:      m.Name,
 		Target:    m.Target,
 		BuildType: m.build.Type.Name,
-		RootDir:   config.Dirs.Root,
+		RootDir:   config.Dirs.Work,
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,
@@ -202,7 +202,7 @@ func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []
 			continue
 		}
 
-		if mod, ok := config.Setup.Thirdparty[dep]; ok {
+		if mod, ok := config.Thirdparty[dep]; ok {
 			m.Dependencies = append(m.Dependencies, mod)
 			continue
 		}

@@ -28,10 +28,13 @@ type PlatformConfig struct {
 	Defines map[string]string
 }
 
+type ThirdpartyConfig map[string]*models.ThirdpartyDependency
+
 var BuildTypes map[string]*models.BuildType
 var Platform PlatformConfig
 var Dirs DirsConfig
 var Settings BuildToolSettings
+var Thirdparty ThirdpartyConfig
 
 const settingsFile = "settings.json"
 
