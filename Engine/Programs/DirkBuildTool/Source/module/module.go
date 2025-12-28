@@ -4,7 +4,6 @@ import (
 	"DirkBuildTool/config"
 	"DirkBuildTool/make"
 	"DirkBuildTool/models"
-	"DirkBuildTool/output"
 	"fmt"
 	"log"
 	"maps"
@@ -69,10 +68,10 @@ func writeIntFile(m Module, name string, data []byte, overwrite bool) error {
 	name = fmt.Sprintf("%s/%s", intDir, name)
 
 	if overwrite {
-		return os.WriteFile(name, data, output.FilePerm)
+		return os.WriteFile(name, data, config.FilePerm)
 	}
 
-	f, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE, output.FilePerm)
+	f, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE, config.FilePerm)
 	if err != nil {
 		return err
 	}
@@ -84,7 +83,7 @@ func writeIntFile(m Module, name string, data []byte, overwrite bool) error {
 
 func intDir(m Module) (string, error) {
 	modDir := fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.GetName())
-	return modDir, os.MkdirAll(modDir, output.DirPerm)
+	return modDir, os.MkdirAll(modDir, config.DirPerm)
 }
 
 // read from .dirkmod files

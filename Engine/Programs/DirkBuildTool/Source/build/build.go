@@ -3,7 +3,6 @@ package build
 import (
 	"DirkBuildTool/models"
 	"DirkBuildTool/module"
-	"DirkBuildTool/output"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,7 +11,6 @@ import (
 )
 
 func Build(buildConfig *models.BuildConfig) error {
-	log.Printf("Building %s %s\n", buildConfig.Type.Name, buildConfig.Target)
 	modules := map[string]module.Module{}
 	for _, dir := range buildConfig.SearchDirs {
 		modConfigs, err := searchDir(dir)

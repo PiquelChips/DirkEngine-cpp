@@ -55,10 +55,12 @@ func main() {
 		return
 	}
 
+	log.Printf("Building %s for %s\n", target, buildType)
+
 	buildConfig := &models.BuildConfig{
 		Target:         target,
 		Type:           buildConf,
-		SearchDirs:     config.Dirs.Modules,
+		SearchDirs:     nil,
 		ErrOnBuildFail: false,
 	}
 
