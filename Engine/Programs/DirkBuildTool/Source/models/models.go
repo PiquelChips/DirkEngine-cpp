@@ -45,6 +45,7 @@ type SetupConfig struct {
 }
 
 type BuildType struct {
+	Name     string
 	Optimize bool
 	Compact  bool // compact the output (essentially statically linking)
 	Defines  map[string]string

@@ -59,6 +59,7 @@ func LoadConfig() error {
 
 	BuildTypes = map[string]*models.BuildType{
 		"Development": {
+			Name:     "Development",
 			Optimize: false,
 			Compact:  false,
 			Defines: map[string]string{
@@ -67,6 +68,7 @@ func LoadConfig() error {
 			},
 		},
 		"Shipping": {
+			Name:     "Shipping",
 			Optimize: true,
 			Compact:  true,
 			Defines: map[string]string{
