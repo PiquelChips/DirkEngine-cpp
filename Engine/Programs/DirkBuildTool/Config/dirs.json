@@ -1,9 +1,0 @@
-{
-    "intermediate": "Intermediate",
-    "binaries": "Binaries",
-    "thirdparty": "Engine/Thirdparty",
-    "modules": [
-        "Engine",
-        "Engine/Source"
-    ]
-}

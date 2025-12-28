@@ -6,96 +6,106 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
+	"strings"
 )
 
+const DirPerm = 0755
+const FilePerm = 0644
+
 type DirsConfig struct {
-	Root         string   `json:"-"`
-	Intermediate string   `json:"intermediate"`
-	Binaries     string   `json:"binaries"`
-	Thirdparty   string   `json:"thirdparty"`
-	Modules      []string `json:"modules"` // dirs that will be searched for modules
+	Work, Engine, Config,
+	Source, Thirdparty,
+	Intermediate, Binaries, Saved,
+	DBTSaved, DBTConfig string
 }
 
-type GeneralConfig struct {
+type BuildToolSettings struct {
 	LibSearchEnvs []string `json:"lib_search_envs"`
 }
 
 var BuildTypes map[string]*models.BuildType
+var Platform string
 var Dirs DirsConfig
-var General GeneralConfig
-var Setup *models.SetupConfig
+var Settings BuildToolSettings
 
-const configDir = "Engine/Programs/DirkBuildTool/Config"
+const settingsFile = "settings.json"
 
-func LoadConfig() {
+func LoadConfig() error {
 	log.Printf("Loading configuration\n")
-	Dirs = loadDirsConfig()
-	BuildTypes = loadBuildTypes()
-	General = loadGeneralConfig()
+
+	Platform = "Linux"
+
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	Dirs = setupDirsConfig(wd)
+
+	if err := os.MkdirAll(Dirs.Intermediate, DirPerm); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(Dirs.Binaries, DirPerm); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(Dirs.DBTSaved, DirPerm); err != nil {
+		return err
+	}
+
+	BuildTypes = map[string]*models.BuildType{
+		"Development": {
+			Optimize: false,
+			Compact:  false,
+			Defines: map[string]string{
+				"DIRK_DEVELOPMENT_BUILD": "",
+				"DIRK_DEBUG_BUILD":       "",
+			},
+		},
+		"Shipping": {
+			Optimize: true,
+			Compact:  true,
+			Defines: map[string]string{
+				"DIRK_SHIPPING_BUILD": "",
+			},
+		},
+	}
+
+	Settings, err = loadSettings()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func loadBuildTypes() map[string]*models.BuildType {
-	buildTypes := map[string]*models.BuildType{}
-	if err := loadConfig("build_configs.json", &buildTypes); err != nil {
-		fmt.Printf("%s\n", err.Error())
-		os.Exit(1)
-		return nil
+func setupDirsConfig(wd string) DirsConfig {
+	engineDir := fmt.Sprintf("%s/Engine", wd)
+	savedDir := fmt.Sprintf("%s/Saved", engineDir)
+	configDir := fmt.Sprintf("%s/Config", engineDir)
+	return DirsConfig{
+		Work:         wd,
+		Engine:       engineDir,
+		Config:       configDir,
+		Source:       fmt.Sprintf("%s/Source", engineDir),
+		Thirdparty:   fmt.Sprintf("%s/Thirdparty", engineDir),
+		Intermediate: fmt.Sprintf("%s/Intermediate", engineDir),
+		Binaries:     fmt.Sprintf("%s/Binaries", engineDir),
+		Saved:        savedDir,
+		DBTSaved:     fmt.Sprintf("%s/DirkBuildTool", savedDir),
+		DBTConfig:    fmt.Sprintf("%s/DirkBuildTool", configDir),
 	}
-
-	if len(buildTypes) < 1 {
-		fmt.Printf("Config must have at least one build type\n")
-		os.Exit(1)
-		return nil
-	}
-
-	for name, conf := range buildTypes {
-		conf.Name = name
-	}
-
-	return buildTypes
 }
 
-func loadDirsConfig() DirsConfig {
-	dirs := DirsConfig{}
-	if err := loadConfig("dirs.json", &dirs); err != nil {
-		fmt.Printf("%s\n", err.Error())
-		os.Exit(1)
-		return DirsConfig{}
+func loadSettings() (BuildToolSettings, error) {
+	config := BuildToolSettings{}
+	if err := LoadConfigFile(settingsFile, &config); err != nil {
+		return BuildToolSettings{}, err
 	}
-
-	dirs.Root, _ = filepath.Abs(".")
-	dirs.Intermediate, _ = filepath.Abs(dirs.Intermediate)
-	dirs.Binaries, _ = filepath.Abs(dirs.Binaries)
-	dirs.Thirdparty, _ = filepath.Abs(dirs.Thirdparty)
-	for i, module := range dirs.Modules {
-		dirs.Modules[i], _ = filepath.Abs(module)
-	}
-
-	const DirPerm = 0755
-
-	if err := os.MkdirAll(dirs.Intermediate, DirPerm); err != nil {
-		panic(err)
-	}
-	if err := os.MkdirAll(dirs.Binaries, DirPerm); err != nil {
-		panic(err)
-	}
-
-	return dirs
+	return config, nil
 }
 
-func loadGeneralConfig() GeneralConfig {
-	config := GeneralConfig{}
-	if err := loadConfig("general.json", &config); err != nil {
-		fmt.Printf("%s\n", err.Error())
-		os.Exit(1)
-		return GeneralConfig{}
-	}
-	return config
-}
-
-func loadConfig(file string, out any) error {
-	data, err := os.ReadFile(fmt.Sprintf("%s/%s", configDir, file))
+func LoadConfigFile(file string, out any) error {
+	data, err := os.ReadFile(fmt.Sprintf("%s/%s", Dirs.DBTConfig, file))
 	if err != nil {
 		return fmt.Errorf("Error loading config file: %w", err)
 	}
@@ -105,4 +115,35 @@ func loadConfig(file string, out any) error {
 	}
 
 	return nil
+}
+
+func SaveFile(name string, data []byte, overwrite bool) error {
+	name = strings.Trim(name, "/")
+	name = fmt.Sprintf("%s/%s", Dirs.DBTSaved, name)
+
+	if overwrite {
+		return os.WriteFile(name, data, FilePerm)
+	}
+
+	f, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE, FilePerm)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	f.Write(data)
+	return nil
+}
+
+func ReadSavedFile(name string) ([]byte, error) {
+	name = strings.Trim(name, "/")
+	name = fmt.Sprintf("%s/%s", Dirs.DBTSaved, name)
+	return os.ReadFile(name)
+}
+
+func GetSavedFile(name string) (os.FileInfo, error) {
+	name = strings.Trim(name, "/")
+	name = fmt.Sprintf("%s/%s", Dirs.DBTSaved, name)
+
+	return os.Stat(name)
 }
