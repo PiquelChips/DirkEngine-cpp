@@ -54,9 +54,8 @@ func main() {
 	log.Printf("Building %s for %s\n", target, buildType)
 
 	buildConfig := &models.BuildConfig{
-		Target:         target,
-		Type:           buildConf,
-		ErrOnBuildFail: false,
+		Target: target,
+		Type:   buildConf,
 	}
 
 	if err := build.Build(buildConfig); err != nil {

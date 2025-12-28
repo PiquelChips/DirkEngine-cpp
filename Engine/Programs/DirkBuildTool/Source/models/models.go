@@ -29,10 +29,8 @@ type CompileCommand struct {
 }
 
 type BuildConfig struct {
-	Target         string     `json:"target"`
-	Type           *BuildType `json:"build_type"`
-	SearchDirs     []string   `json:"search_dirs"`
-	ErrOnBuildFail bool       `json:"err_on_build_fail"`
+	Target string     `json:"target"`
+	Type   *BuildType `json:"build_type"`
 }
 
 type BuildType struct {

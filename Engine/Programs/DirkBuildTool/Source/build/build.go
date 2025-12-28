@@ -13,18 +13,17 @@ import (
 
 func Build(buildConfig *models.BuildConfig) error {
 	modules := map[string]module.Module{}
-	for _, dir := range buildConfig.SearchDirs {
-		modConfigs, err := searchDir(dir)
-		if err != nil {
-			return err
-		}
+	// TODO: search recursively 5 levels Deep (once a mod is found, subdirs can be skipped)
+	modConfigs, err := searchDir(config.Dirs.Source)
+	if err != nil {
+		return err
+	}
 
-		for name, conf := range modConfigs {
-			if _, ok := modules[name]; ok {
-				log.Printf("Module %s is declared twice\n", name)
-			} else {
-				modules[name] = conf.ToModule(buildConfig)
-			}
+	for name, conf := range modConfigs {
+		if _, ok := modules[name]; ok {
+			log.Printf("Module %s is declared twice\n", name)
+		} else {
+			modules[name] = conf.ToModule(buildConfig)
 		}
 	}
 
@@ -59,9 +58,6 @@ func Build(buildConfig *models.BuildConfig) error {
 		return nil
 	} else if _, ok := err.(*exec.ExitError); ok {
 		fmt.Printf("An error occured in the build process\n")
-		if buildConfig.ErrOnBuildFail {
-			return err
-		}
 		return nil
 	} else {
 		return err
