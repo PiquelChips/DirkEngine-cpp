@@ -93,6 +93,8 @@ func LoadConfig() error {
 		return err
 	}
 
+	// TODO: load targets
+
 	return nil
 }
 
