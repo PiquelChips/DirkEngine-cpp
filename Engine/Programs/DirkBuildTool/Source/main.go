@@ -23,9 +23,6 @@ func main() {
 		case "clean":
 			clean()
 			return
-		case "clean-setup":
-			cleanSetup()
-			return
 		}
 	}
 
@@ -76,9 +73,5 @@ func clean() {
 	log.Printf("Cleaning...")
 	os.RemoveAll(config.Dirs.Binaries)
 	os.RemoveAll(config.Dirs.Intermediate)
-}
-
-func cleanSetup() {
-	log.Printf("Cleaning setup...")
-	os.RemoveAll(fmt.Sprintf("%s/%s", config.Dirs.Intermediate, setup.SetupFile))
+	os.RemoveAll(config.Dirs.Saved)
 }
