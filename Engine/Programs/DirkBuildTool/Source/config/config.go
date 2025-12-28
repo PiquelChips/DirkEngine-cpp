@@ -34,7 +34,7 @@ var BuildTypes map[string]*models.BuildType
 var Platform PlatformConfig
 var Dirs DirsConfig
 var Settings BuildToolSettings
-var Thirdparty ThirdpartyConfig
+var Thirdparty ThirdpartyConfig // TODO: actually load this
 
 const settingsFile = "settings.json"
 

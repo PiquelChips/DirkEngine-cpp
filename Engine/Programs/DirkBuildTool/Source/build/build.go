@@ -1,6 +1,7 @@
 package build
 
 import (
+	"DirkBuildTool/config"
 	"DirkBuildTool/models"
 	"DirkBuildTool/module"
 	"encoding/json"
@@ -49,7 +50,7 @@ func Build(buildConfig *models.BuildConfig) error {
 			return err
 		}
 
-		if err := output.WriteIntFile("compile_commands.json", data, true); err != nil {
+		if err := config.SaveFile("compile_commands.json", data, true); err != nil {
 			return err
 		}
 	}
