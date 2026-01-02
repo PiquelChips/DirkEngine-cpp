@@ -53,7 +53,7 @@ func Build(buildConfig *models.BuildConfig) error {
 		os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Saved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
 	}
 
-	if err := module.Build(target); err == nil {
+	if err := target.Build(); err == nil {
 		return nil
 	} else if _, ok := err.(*exec.ExitError); ok {
 		fmt.Printf("An error occured in the build process\n")
