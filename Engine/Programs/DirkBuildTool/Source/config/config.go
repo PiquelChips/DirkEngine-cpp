@@ -38,7 +38,7 @@ var (
 
 const (
 	settingsFile    = "settings.json"
-	externalLibFile = "externalLibs.json"
+	externalLibFile = "external.json"
 )
 
 func LoadConfig() error {
