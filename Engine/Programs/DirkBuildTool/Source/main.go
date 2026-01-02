@@ -61,8 +61,6 @@ func main() {
 	if err := build.Build(buildConfig); err != nil {
 		panic(err)
 	}
-
-	os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Intermediate), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
 }
 
 func clean() {

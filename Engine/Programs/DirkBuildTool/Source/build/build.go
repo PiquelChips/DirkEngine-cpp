@@ -43,6 +43,8 @@ func Build(buildConfig *models.BuildConfig) error {
 		if err := config.SaveFile("compile_commands.json", data, true); err != nil {
 			return err
 		}
+
+		os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Saved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
 	}
 
 	if err := module.Build(target); err == nil {
