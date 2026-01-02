@@ -1,7 +1,6 @@
 package module
 
 import (
-	"DirkBuildTool/make"
 	"DirkBuildTool/models"
 	"fmt"
 )
@@ -16,7 +15,7 @@ func (m *HeaderModule) GetIncludeDir() string      { return fmt.Sprintf("%s/incl
 func (m *HeaderModule) GetDefines() models.Defines { return nil }
 func (m *HeaderModule) GetLibs() []string          { return m.External }
 
-func (m *HeaderModule) ToMakefile() make.Makefile { return nil } // TODO: replace with build function
+func (m *HeaderModule) Build() error { return nil }
 
 func (m *HeaderModule) getDeps() []Module { return nil }
 func (m *HeaderModule) getPath() string   { return m.Path }

@@ -1,13 +1,44 @@
 package make
 
 import (
+	"DirkBuildTool/config"
 	"bytes"
 	"embed"
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
 )
 
 type Makefile interface {
-	ToBytes() ([]byte, error)
+	ToBytes() []byte
+	getModuleName() string
+	getModulePath() string
+}
+
+func RunMakefile(makefile Makefile) error {
+	intDir := fmt.Sprintf("%s/%s", config.Dirs.Intermediate, makefile.getModuleName())
+	if err := os.MkdirAll(intDir, config.DirPerm); err != nil {
+		return err
+	}
+
+	path := fmt.Sprintf("%s/Makefile", intDir)
+	if err := os.WriteFile(path, makefile.ToBytes(), config.FilePerm); err != nil {
+		return err
+	}
+
+	cmd := exec.Command("make", "-f", path, "-j", "8")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = makefile.getModulePath()
+
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("There was an error building %s, see logs for details\n", makefile.getModuleName())
+		return err
+	}
+
+	log.Printf("Successfully built %s", makefile.getModuleName())
+	return nil
 }
 
 //go:embed makefiles
@@ -39,7 +70,7 @@ func writeBase(buffer *bytes.Buffer, name string) {
 }
 
 type CppMakefile struct {
-	Name, Target       string
+	Name, Target, Path string
 	BuildType, RootDir string
 	IncDirs            []string
 	Libs               []string
@@ -49,7 +80,7 @@ type CppMakefile struct {
 	Optimize           bool
 }
 
-func (m *CppMakefile) ToBytes() ([]byte, error) {
+func (m *CppMakefile) ToBytes() []byte {
 	buffer := bytes.NewBuffer(nil)
 
 	writeVar(buffer, "NAME", m.Name)
@@ -122,8 +153,11 @@ func (m *CppMakefile) ToBytes() ([]byte, error) {
 		writeBase(buffer, "ar_lnk")
 	}
 
-	return buffer.Bytes(), nil
+	return buffer.Bytes()
 }
+
+func (m *CppMakefile) getModuleName() string { return m.Name }
+func (m *CppMakefile) getModulePath() string { return m.Path }
 
 type ShaderMakefile struct {
 	Name    string
@@ -131,11 +165,14 @@ type ShaderMakefile struct {
 	RootDir string
 }
 
-func (m *ShaderMakefile) ToBytes() ([]byte, error) {
+func (m *ShaderMakefile) ToBytes() []byte {
 	buffer := bytes.NewBuffer(nil)
 	writeVar(buffer, "NAME", m.Name)
 	writeVar(buffer, "ROOT_DIR", m.RootDir)
 	writeVar(buffer, "SHADER_DIR", m.Path)
 	writeBase(buffer, "shaders")
-	return buffer.Bytes(), nil
+	return buffer.Bytes()
 }
+
+func (m *ShaderMakefile) getModuleName() string { return m.Name }
+func (m *ShaderMakefile) getModulePath() string { return m.Path }

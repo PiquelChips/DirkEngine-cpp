@@ -15,12 +15,12 @@ func (m *ShaderModule) GetIncludeDir() string      { return "" }
 func (m *ShaderModule) GetDefines() models.Defines { return nil }
 func (m *ShaderModule) GetLibs() []string          { return nil }
 
-func (m *ShaderModule) ToMakefile() make.Makefile {
-	return &make.ShaderMakefile{
+func (m *ShaderModule) Build() error {
+	return make.RunMakefile(&make.ShaderMakefile{
 		Name:    m.Name,
 		Path:    m.Path,
 		RootDir: config.Dirs.Work,
-	}
+	})
 }
 
 // shader modules dont have dependencies

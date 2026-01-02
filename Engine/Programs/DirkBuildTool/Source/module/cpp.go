@@ -46,7 +46,7 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		in := strings.Replace(path, m.Path, "", 1)
 		in = strings.Trim(in, "/")
 
-		intDir, _ := intDir(m)
+		intDir := fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.Name)
 		out := fmt.Sprintf("%s/%s/%s", intDir, m.build.Mode.Name, in)
 		out = strings.Replace(out, "/src/", "/obj/", 1)
 		out = strings.Replace(out, ".cpp", ".o", 1)
@@ -111,7 +111,7 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 	return compileCommands, nil
 }
 
-func (m *CppModule) ToMakefile() make.Makefile {
+func (m *CppModule) Build() error {
 	log.Printf("Generating Makefile for %s\n", m.Name)
 
 	incDirs := []string{}
@@ -138,8 +138,9 @@ func (m *CppModule) ToMakefile() make.Makefile {
 
 	warningFlags := "" // "-Wall -Wextra"
 
-	return &make.CppMakefile{
+	return make.RunMakefile(&make.CppMakefile{
 		Name:      m.Name,
+		Path:      m.Path,
 		BuildType: m.build.Mode.Name,
 		RootDir:   config.Dirs.Work,
 		IncDirs:   incDirs,
@@ -149,7 +150,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		IsStatic:  m.build.Mode.Compact,
 		Optimize:  m.build.Mode.Optimize,
 		CFlags:    fmt.Sprintf("-fPIC %s -std=%s", warningFlags, m.Std),
-	}
+	})
 }
 
 func (m *CppModule) getPath() string {
