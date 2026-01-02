@@ -22,5 +22,6 @@ func (m *ShaderModule) Build() error {
 }
 
 // shader modules dont have dependencies
-func (m *ShaderModule) GetDeps() []Module { return nil }
-func (m *ShaderModule) getPath() string   { return m.Path }
+func (m *ShaderModule) GetDeps() []Module    { return nil }
+func (m *ShaderModule) getAllDeps() []Module { return nil }
+func (m *ShaderModule) getPath() string      { return m.Path }

@@ -154,16 +154,15 @@ func (m *CppModule) Build() error {
 	})
 }
 
-func (m *CppModule) getPath() string {
-	return m.Path
-}
+func (m *CppModule) getPath() string   { return m.Path }
+func (m *CppModule) GetDeps() []Module { return m.Dependencies }
 
-func (m *CppModule) GetDeps() []Module {
+func (m *CppModule) getAllDeps() []Module {
 	deps := m.Dependencies
 	for _, mod := range m.Dependencies {
 		deps = append(deps, mod)
 
-		modDeps := mod.GetDeps()
+		modDeps := mod.getAllDeps()
 		// cleaning duplicates
 		for _, modDep := range modDeps {
 			if !slices.Contains(deps, modDep) {

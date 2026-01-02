@@ -18,8 +18,9 @@ type Module interface {
 	GetLibs() []string
 
 	Build() error
-	GetDeps() []Module
+	GetDeps() []Module // returns the direct dependencies
 
+	getAllDeps() []Module // returns all the dependencies in the dependency tree
 	getPath() string
 }
 
