@@ -4,7 +4,6 @@
     "dependencies": [
         "glm",
         "tinygltf",
-        "vulkan",
-        "ImGui"
+        "vulkan"
     ]
 }
