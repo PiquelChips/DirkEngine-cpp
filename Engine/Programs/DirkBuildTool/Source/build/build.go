@@ -50,7 +50,7 @@ func Build(buildConfig *models.BuildConfig) error {
 			return err
 		}
 
-		os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Saved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
+		os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.DBTSaved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
 	}
 
 	if err := module.Build(target); err == nil {
