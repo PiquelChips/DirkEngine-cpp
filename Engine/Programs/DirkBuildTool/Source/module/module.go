@@ -119,8 +119,8 @@ func (c *ModuleConfig) ToModule(buildConfig *models.BuildConfig) Module {
 			maps.Copy(c.Defines, config.Platform.Defines)
 		}
 
-		if buildConfig.Type.Defines != nil {
-			maps.Copy(c.Defines, buildConfig.Type.Defines)
+		if buildConfig.Mode.Defines != nil {
+			maps.Copy(c.Defines, buildConfig.Mode.Defines)
 		}
 
 		return &CppModule{

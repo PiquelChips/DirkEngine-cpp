@@ -44,7 +44,7 @@ func main() {
 		return
 	}
 
-	buildConf, ok := config.BuildTypes[buildType]
+	buildMode, ok := config.BuildModes[buildType]
 	if !ok {
 		fmt.Printf("Build type %s does not exist\n", buildType)
 		os.Exit(1)
@@ -55,7 +55,7 @@ func main() {
 
 	buildConfig := &models.BuildConfig{
 		Target: target,
-		Type:   buildConf,
+		Mode:   buildMode,
 	}
 
 	if err := build.Build(buildConfig); err != nil {

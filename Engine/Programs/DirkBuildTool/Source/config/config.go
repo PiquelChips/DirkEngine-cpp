@@ -32,7 +32,7 @@ type PlatformConfig struct {
 
 type ThirdpartyConfig map[string]*models.ThirdpartyDependency
 
-var BuildTypes map[string]*models.BuildType
+var BuildModes map[string]*models.BuildMode
 var Platform PlatformConfig
 var Dirs DirsConfig
 var Settings BuildToolSettings
@@ -63,7 +63,7 @@ func LoadConfig() error {
 		return err
 	}
 
-	BuildTypes = map[string]*models.BuildType{
+	BuildModes = map[string]*models.BuildMode{
 		"Development": {
 			Name:     "Development",
 			Optimize: false,

@@ -29,11 +29,11 @@ type CompileCommand struct {
 }
 
 type BuildConfig struct {
-	Target string     `json:"target"`
-	Type   *BuildType `json:"build_type"`
+	Target string
+	Mode   *BuildMode
 }
 
-type BuildType struct {
+type BuildMode struct {
 	Name     string
 	Optimize bool
 	Compact  bool // compact the output (essentially statically linking)

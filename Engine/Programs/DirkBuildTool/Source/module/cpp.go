@@ -52,7 +52,7 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		in = strings.Trim(in, "/")
 
 		intDir, _ := intDir(m)
-		out := fmt.Sprintf("%s/%s/%s", intDir, m.build.Type.Name, in)
+		out := fmt.Sprintf("%s/%s/%s", intDir, m.build.Mode.Name, in)
 		out = strings.Replace(out, "/src/", "/obj/", 1)
 		out = strings.Replace(out, ".cpp", ".o", 1)
 
@@ -146,14 +146,14 @@ func (m *CppModule) ToMakefile() make.Makefile {
 	return &make.CppMakefile{
 		Name:      m.Name,
 		Target:    m.Target,
-		BuildType: m.build.Type.Name,
+		BuildType: m.build.Mode.Name,
 		RootDir:   config.Dirs.Work,
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,
 		IsLib:     m.Config.IsLib,
-		IsStatic:  m.build.Type.Compact,
-		Optimize:  m.build.Type.Optimize,
+		IsStatic:  m.build.Mode.Compact,
+		Optimize:  m.build.Mode.Optimize,
 		CFlags:    fmt.Sprintf("-fPIC %s -std=%s", warningFlags, m.Std),
 	}
 }
