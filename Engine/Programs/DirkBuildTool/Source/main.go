@@ -15,7 +15,9 @@ func usage() {
 }
 
 func main() {
-	config.LoadConfig()
+	if err := config.LoadConfig(); err != nil {
+		panic(err)
+	}
 
 	if len(os.Args) == 2 {
 		switch os.Args[1] {
