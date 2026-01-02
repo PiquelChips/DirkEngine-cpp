@@ -18,6 +18,11 @@ func Build(buildConfig *models.BuildConfig) error {
 		return err
 	}
 
+	modules["Shaders"], err = module.LoadModule(config.Dirs.Engine, "Shaders", buildConfig)
+	if err != nil {
+		return err
+	}
+
 	target, ok := modules[buildConfig.Target]
 	if !ok {
 		log.Printf("Target %s does not exist, skipping\n", buildConfig.Target)
