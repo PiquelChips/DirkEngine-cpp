@@ -1,0 +1,7 @@
+{
+    "name": "vulkan",
+    "header_only": true,
+    "external": [
+        "vulkan"
+    ]
+}

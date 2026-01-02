@@ -1,0 +1,7 @@
+{
+    "name": "xkbcommon",
+    "header_only": true,
+    "external": [
+        "xkbcommon"
+    ]
+}
