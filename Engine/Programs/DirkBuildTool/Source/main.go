@@ -62,7 +62,7 @@ func main() {
 		panic(err)
 	}
 
-	// TODO: make sure to symlink compile command properly
+	os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Intermediate), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
 }
 
 func clean() {
