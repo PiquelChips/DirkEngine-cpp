@@ -1,0 +1,7 @@
+{
+    "name": "wayland",
+    "c_standard": "c23",
+    "external": [
+        "wayland-client"
+    ]
+}
