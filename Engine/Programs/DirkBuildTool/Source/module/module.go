@@ -4,6 +4,7 @@ import (
 	"DirkBuildTool/config"
 	"DirkBuildTool/make"
 	"DirkBuildTool/models"
+	"encoding/json"
 	"fmt"
 	"log"
 	"maps"
@@ -56,6 +57,30 @@ func Build(m Module) error {
 
 	log.Printf("Successfully built %s", m.GetName())
 	return nil
+}
+
+func LoadModule(path, name string, buildConfig *models.BuildConfig) (Module, error) {
+	path = fmt.Sprintf("%s/%s", path, name)
+	modFile := fmt.Sprintf("%s/%s.dirkmod", path, name)
+	data, err := os.ReadFile(modFile)
+	if err != nil {
+		return nil, nil
+	}
+
+	config := &ModuleConfig{}
+	err = json.Unmarshal(data, config)
+	if err != nil {
+		log.Printf("Error loading module %s: %s\n", name, err.Error())
+		return nil, nil
+	}
+
+	if config.Target == "" {
+		config.Target = config.Name
+	}
+
+	config.Path = path
+
+	return config.ToModule(buildConfig), nil
 }
 
 func writeIntFile(m Module, name string, data []byte, overwrite bool) error {
