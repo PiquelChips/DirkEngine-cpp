@@ -16,13 +16,12 @@ import (
 // constructed for building
 type CppModule struct {
 	Name         string
-	Target       string
 	Path         string
 	Std          string
 	BuildDeps    []Module
 	Dependencies []Module
 	Dependants   []Module
-	Config       *ModuleConfig
+	Config       *moduleConfig
 	build        *models.BuildConfig
 }
 
@@ -30,10 +29,7 @@ func (m *CppModule) GetIncludeDir() string      { return fmt.Sprintf("%s/include
 func (m *CppModule) GetDefines() models.Defines { return m.Config.Defines }
 func (m *CppModule) GetName() string            { return m.Name }
 func (m *CppModule) GetLibs() []string {
-	if m.Config.IsLib {
-		return []string{m.Name}
-	}
-	return nil
+	return []string{m.Name}
 }
 
 func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
@@ -144,21 +140,16 @@ func (m *CppModule) ToMakefile() make.Makefile {
 
 	return &make.CppMakefile{
 		Name:      m.Name,
-		Target:    m.Target,
 		BuildType: m.build.Mode.Name,
 		RootDir:   config.Dirs.Work,
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,
-		IsLib:     m.Config.IsLib,
+		IsLib:     !m.Config.HasEntrypoint,
 		IsStatic:  m.build.Mode.Compact,
 		Optimize:  m.build.Mode.Optimize,
 		CFlags:    fmt.Sprintf("-fPIC %s -std=%s", warningFlags, m.Std),
 	}
-}
-
-func (m *CppModule) getBuildDeps() []Module {
-	return m.BuildDeps
 }
 
 func (m *CppModule) getPath() string {

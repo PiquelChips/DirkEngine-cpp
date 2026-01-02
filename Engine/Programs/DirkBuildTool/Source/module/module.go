@@ -67,20 +67,16 @@ func LoadModule(path, name string, buildConfig *models.BuildConfig) (Module, err
 		return nil, nil
 	}
 
-	config := &ModuleConfig{}
+	config := &moduleConfig{}
 	err = json.Unmarshal(data, config)
 	if err != nil {
 		log.Printf("Error loading module %s: %s\n", name, err.Error())
 		return nil, nil
 	}
 
-	if config.Target == "" {
-		config.Target = config.Name
-	}
-
 	config.Path = path
 
-	return config.ToModule(buildConfig), nil
+	return config.toModule(buildConfig), nil
 }
 
 func writeIntFile(m Module, name string, data []byte, overwrite bool) error {
@@ -112,18 +108,17 @@ func intDir(m Module) (string, error) {
 }
 
 // read from .dirkmod files
-type ModuleConfig struct {
-	Name    string            `json:"name"`
-	Target  string            `json:"target"`
-	Type    string            `json:"type"`
-	Path    string            `json:"-"`
-	Std     string            `json:"c_standard"`
-	IsLib   bool              `json:"is_lib"`
-	Deps    []string          `json:"dependencies"`
-	Defines map[string]string `json:"defines"`
+type moduleConfig struct {
+	Name          string            `json:"name"`
+	Type          string            `json:"type"`
+	Path          string            `json:"-"`
+	Std           string            `json:"standard"`
+	HasEntrypoint bool              `json:"has_entrypoint"`
+	Deps          []string          `json:"dependencies"`
+	Defines       map[string]string `json:"defines"`
 }
 
-func (c *ModuleConfig) ToModule(buildConfig *models.BuildConfig) Module {
+func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
 	if c.Type == "" {
 		c.Type = "cpp"
 	}
@@ -150,7 +145,6 @@ func (c *ModuleConfig) ToModule(buildConfig *models.BuildConfig) Module {
 
 		return &CppModule{
 			Name:         c.Name,
-			Target:       c.Target,
 			Path:         c.Path,
 			Std:          c.Std,
 			BuildDeps:    nil,
