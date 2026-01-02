@@ -116,6 +116,7 @@ type moduleConfig struct {
 	HasEntrypoint bool              `json:"has_entrypoint"`
 	Deps          []string          `json:"dependencies"`
 	Defines       map[string]string `json:"defines"`
+	// External []string
 }
 
 func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
@@ -151,6 +152,12 @@ func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
 			Dependencies: nil,
 			Config:       c,
 			build:        buildConfig,
+		}
+	case "header-only":
+		return &HeaderModule{
+			Name: c.Name,
+			Path: c.Path,
+			// TODO:  External : c.External,
 		}
 	default:
 		log.Printf("Module type %s used by module %s does not exist. Please use \"shaders\" or \"cpp\"\n", c.Type, c.Name)

@@ -1,6 +1,6 @@
 {
     "name": "vulkan",
-    "header_only": true,
+    "type": "header-only",
     "external": [
         "vulkan"
     ]
