@@ -55,7 +55,7 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		incDirs := m.GetIncludeDirs()
 		defines := m.Config.Defines
 
-		for _, dep := range m.getDeps() {
+		for _, dep := range m.GetDeps() {
 			if dep.GetIncludeDirs() != nil {
 				incDirs = append(incDirs, dep.GetIncludeDirs()...)
 			}
@@ -119,7 +119,7 @@ func (m *CppModule) Build() error {
 	libs := m.External
 	defines := m.Config.Defines
 
-	for _, dep := range m.getDeps() {
+	for _, dep := range m.GetDeps() {
 		if dep.GetIncludeDirs() != nil {
 			incDirs = append(incDirs, dep.GetIncludeDirs()...)
 		}
@@ -158,13 +158,12 @@ func (m *CppModule) getPath() string {
 	return m.Path
 }
 
-func (m *CppModule) getDeps() []Module {
+func (m *CppModule) GetDeps() []Module {
 	deps := m.Dependencies
-
 	for _, mod := range m.Dependencies {
 		deps = append(deps, mod)
 
-		modDeps := mod.getDeps()
+		modDeps := mod.GetDeps()
 		// cleaning duplicates
 		for _, modDep := range modDeps {
 			if !slices.Contains(deps, modDep) {

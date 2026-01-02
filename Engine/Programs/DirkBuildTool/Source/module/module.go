@@ -18,8 +18,8 @@ type Module interface {
 	GetLibs() []string
 
 	Build() error
+	GetDeps() []Module
 
-	getDeps() []Module
 	getPath() string
 }
 
