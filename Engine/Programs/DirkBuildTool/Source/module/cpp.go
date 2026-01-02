@@ -22,10 +22,11 @@ type CppModule struct {
 	Dependants   []Module
 	Config       *moduleConfig
 	External     []string
+	IncludeDirs  []string
 	build        *models.BuildConfig
 }
 
-func (m *CppModule) GetIncludeDir() string      { return fmt.Sprintf("%s/include", m.Path) }
+func (m *CppModule) GetIncludeDirs() []string   { return m.IncludeDirs }
 func (m *CppModule) GetDefines() models.Defines { return m.Config.Defines }
 func (m *CppModule) GetName() string            { return m.Name }
 func (m *CppModule) GetLibs() []string {
@@ -51,12 +52,12 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		out = strings.Replace(out, "/src/", "/obj/", 1)
 		out = strings.Replace(out, ".cpp", ".o", 1)
 
-		incDirs := []string{"include"}
+		incDirs := m.GetIncludeDirs()
 		defines := m.Config.Defines
 
 		for _, dep := range m.getDeps() {
-			if dep.GetIncludeDir() != "" {
-				incDirs = append(incDirs, dep.GetIncludeDir())
+			if dep.GetIncludeDirs() != nil {
+				incDirs = append(incDirs, dep.GetIncludeDirs()...)
 			}
 
 			if dep.GetDefines() != nil {
@@ -114,13 +115,13 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 func (m *CppModule) Build() error {
 	log.Printf("Generating Makefile for %s\n", m.Name)
 
-	incDirs := []string{}
+	incDirs := m.GetIncludeDirs()
 	libs := m.External
 	defines := m.Config.Defines
 
 	for _, dep := range m.getDeps() {
-		if dep.GetIncludeDir() != "" {
-			incDirs = append(incDirs, dep.GetIncludeDir())
+		if dep.GetIncludeDirs() != nil {
+			incDirs = append(incDirs, dep.GetIncludeDirs()...)
 		}
 
 		if dep.GetDefines() != nil {

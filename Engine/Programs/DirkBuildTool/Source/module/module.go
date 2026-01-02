@@ -8,11 +8,12 @@ import (
 	"log"
 	"maps"
 	"os"
+	"path/filepath"
 )
 
 type Module interface {
 	GetName() string
-	GetIncludeDir() string
+	GetIncludeDirs() []string
 	GetDefines() models.Defines
 	GetLibs() []string
 
@@ -52,11 +53,25 @@ type moduleConfig struct {
 	Deps          []string          `json:"dependencies"`
 	Defines       map[string]string `json:"defines"`
 	External      []string          `json:"external"`
+	IncludeDirs   []string          `json:"include_dirs"`
 }
 
 func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
 	if c.Type == "" {
 		c.Type = "cpp"
+	}
+
+	if c.Type != "shaders" {
+		if len(c.IncludeDirs) == 0 {
+			c.IncludeDirs = []string{"include"}
+		}
+
+		newDirs := []string{}
+		for _, dir := range c.IncludeDirs {
+			newDirs = append(newDirs, filepath.Join(c.Path, dir))
+		}
+
+		c.IncludeDirs = newDirs
 	}
 
 	switch c.Type {
@@ -66,7 +81,6 @@ func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
 			Path: c.Path,
 		}
 	case "cpp":
-
 		if c.Defines == nil {
 			c.Defines = map[string]string{}
 		}
@@ -86,13 +100,15 @@ func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
 			Dependencies: nil,
 			Config:       c,
 			External:     c.External,
+			IncludeDirs:  c.IncludeDirs,
 			build:        buildConfig,
 		}
 	case "header-only":
 		return &HeaderModule{
-			Name:     c.Name,
-			Path:     c.Path,
-			External: c.External,
+			Name:        c.Name,
+			Path:        c.Path,
+			External:    c.External,
+			IncludeDirs: c.IncludeDirs,
 		}
 	default:
 		log.Printf("Module type %s used by module %s does not exist. Please use \"shaders\" or \"cpp\"\n", c.Type, c.Name)

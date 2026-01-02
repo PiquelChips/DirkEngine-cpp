@@ -10,7 +10,7 @@ type ShaderModule struct {
 }
 
 func (m *ShaderModule) GetName() string            { return m.Name }
-func (m *ShaderModule) GetIncludeDir() string      { return "" }
+func (m *ShaderModule) GetIncludeDirs() []string   { return nil }
 func (m *ShaderModule) GetDefines() models.Defines { return nil }
 func (m *ShaderModule) GetLibs() []string          { return nil }
 
