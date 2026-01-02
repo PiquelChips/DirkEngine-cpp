@@ -190,7 +190,9 @@ func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []
 
 		m.Dependencies = append(m.Dependencies, mod)
 		if engineMod, ok := mod.(*CppModule); ok {
-			engineMod.ResolveDependencies(modules, append(dependants, m))
+			if err := engineMod.ResolveDependencies(modules, append(dependants, m)); err != nil {
+				return err
+			}
 		}
 	}
 

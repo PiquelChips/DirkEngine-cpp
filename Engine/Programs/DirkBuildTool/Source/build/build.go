@@ -35,6 +35,7 @@ func Build(buildConfig *models.BuildConfig) error {
 			return err
 		}
 
+		log.Printf("Generating compile commands\n")
 		compileCommands, err := cppTarget.GenerateCompileCommands()
 		if err != nil {
 			return err
