@@ -99,7 +99,8 @@ func (m *CppMakefile) toBytes() []byte {
 	}
 	newLine(buffer)
 
-	writeVar(buffer, "ROOT_DIR", m.RootDir)
+	writeVar(buffer, "INT_DIR", fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.getModuleName()))
+	writeVar(buffer, "BIN_DIR", config.Dirs.Binaries)
 	writeVar(buffer, "BUILD_TYPE", m.BuildType)
 	writeVar(buffer, "CFLAGS", m.CFlags)
 
@@ -168,7 +169,7 @@ type ShaderMakefile struct {
 func (m *ShaderMakefile) toBytes() []byte {
 	buffer := bytes.NewBuffer(nil)
 	writeVar(buffer, "NAME", m.Name)
-	writeVar(buffer, "ROOT_DIR", m.RootDir)
+	writeVar(buffer, "INT_DIR", fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.getModuleName()))
 	writeVar(buffer, "SHADER_DIR", m.Path)
 	writeBase(buffer, "shaders")
 	return buffer.Bytes()

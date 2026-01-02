@@ -2,7 +2,8 @@
 
 ## NAME -- the name of the module
 ## TARGET -- the name of the output binary file
-## ROOT_DIR -- engine root dir
+## INT_DIR -- intermediate folder to use
+## BIN_DIR -- where to output the binaries
 ## BUILD_TYPE -- the type of build (Development, Shipping) used for Intermediate folder
 ## 
 ## CFLAGS -- flags for compilation like warnings and the standard
@@ -11,9 +12,6 @@
 ## 
 ## LDFLAGS -- linker flags like lib dirs
 ## LDLIBS -- libs for linking
-
-BIN_DIR=$(ROOT_DIR)/Binaries
-INT_DIR=$(ROOT_DIR)/Intermediate/$(NAME)/$(BUILD_TYPE)
 
 OUT=$(BIN_DIR)/$(TARGET)
 

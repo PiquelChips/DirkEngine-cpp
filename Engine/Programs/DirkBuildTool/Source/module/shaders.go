@@ -1,7 +1,6 @@
 package module
 
 import (
-	"DirkBuildTool/config"
 	"DirkBuildTool/make"
 	"DirkBuildTool/models"
 )
@@ -17,9 +16,8 @@ func (m *ShaderModule) GetLibs() []string          { return nil }
 
 func (m *ShaderModule) Build() error {
 	return make.RunMakefile(&make.ShaderMakefile{
-		Name:    m.Name,
-		Path:    m.Path,
-		RootDir: config.Dirs.Work,
+		Name: m.Name,
+		Path: m.Path,
 	})
 }
 

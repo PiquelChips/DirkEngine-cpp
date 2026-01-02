@@ -1,10 +1,8 @@
 # COMPILES SHADERS
 
 ## NAME -- the name of the module
-## ROOT_DIR -- engine root dir
+## INT_DIR -- the intermediate folder to use
 ## SHADER_DIR -- the shader's source code
-
-INT_DIR=$(ROOT_DIR)/Intermediate/$(NAME)
 
 SHADER_SRC=$(SHADER_DIR)/Source
 SHADERS=$(shell find $(SHADER_SRC) -type f)
