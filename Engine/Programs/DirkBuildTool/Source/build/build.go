@@ -13,7 +13,7 @@ import (
 
 func Build(buildConfig *models.BuildConfig) error {
 	modules := map[string]module.Module{}
-	// TODO: search recursively 5 levels Deep (once a mod is found, subdirs can be skipped)
+	// TODO: search recursively (if more than 10 levels, log a warning)
 	modConfigs, err := searchDir(config.Dirs.Source)
 	if err != nil {
 		return err

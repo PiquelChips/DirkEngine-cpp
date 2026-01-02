@@ -1,0 +1,5 @@
+[
+    "vulkan",
+    "wayland-client",
+    "xkbcommon"
+]
