@@ -18,7 +18,6 @@ type CppModule struct {
 	Name         string
 	Path         string
 	Std          string
-	BuildDeps    []Module
 	Dependencies []Module
 	Dependants   []Module
 	Config       *moduleConfig
@@ -99,7 +98,7 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		return nil, err
 	}
 
-	for _, dep := range m.BuildDeps {
+	for _, dep := range m.Dependencies {
 		if cppModule, ok := dep.(*CppModule); ok {
 			modCommands, err := cppModule.GenerateCompileCommands()
 			if err != nil {
@@ -160,7 +159,7 @@ func (m *CppModule) getPath() string {
 func (m *CppModule) getDeps() []Module {
 	deps := m.Dependencies
 
-	for _, mod := range m.BuildDeps {
+	for _, mod := range m.Dependencies {
 		deps = append(deps, mod)
 
 		modDeps := mod.getDeps()
@@ -178,7 +177,7 @@ func (m *CppModule) getDeps() []Module {
 func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []Module) error {
 	for _, dep := range dependants {
 		if m == dep {
-			return fmt.Errorf("Circular dependency detected. Module %s has already been included in build\n", m.Name)
+			return fmt.Errorf("Circular dependency detected. Module %s has already been included in build\n", dep.GetName())
 		}
 	}
 
@@ -190,7 +189,6 @@ func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []
 		}
 
 		m.Dependencies = append(m.Dependencies, mod)
-		m.BuildDeps = append(m.BuildDeps, mod)
 		if engineMod, ok := mod.(*CppModule); ok {
 			engineMod.ResolveDependencies(modules, append(dependants, m))
 		}
