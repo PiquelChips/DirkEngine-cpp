@@ -22,6 +22,7 @@ type CppModule struct {
 	Dependencies []Module
 	Dependants   []Module
 	Config       *moduleConfig
+	External     []string
 	build        *models.BuildConfig
 }
 
@@ -115,7 +116,7 @@ func (m *CppModule) ToMakefile() make.Makefile {
 	log.Printf("Generating Makefile for %s\n", m.Name)
 
 	incDirs := []string{}
-	libs := []string{}
+	libs := m.External
 	defines := m.Config.Defines
 
 	for _, dep := range m.getDeps() {
