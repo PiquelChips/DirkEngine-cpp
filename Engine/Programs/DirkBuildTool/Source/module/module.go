@@ -13,19 +13,19 @@ import (
 )
 
 type Module interface {
-	models.Dependency
+	GetName() string
+	GetIncludeDir() string
+	GetDefines() models.Defines
+	GetLibs() []string
 
 	ToMakefile() make.Makefile
-	GetName() string
 
-	getBuildDeps() []Module
+	getDeps() []Module
 	getPath() string
-
-	getDeps() []models.Dependency
 }
 
 func Build(m Module) error {
-	for _, mod := range m.getBuildDeps() {
+	for _, mod := range m.getDeps() {
 		if err := Build(mod); err != nil {
 			return err
 		}

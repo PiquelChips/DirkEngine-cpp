@@ -20,10 +20,9 @@ type CppModule struct {
 	Path         string
 	Std          string
 	BuildDeps    []Module
-	Dependencies []models.Dependency
-	Dependants   []models.Dependency
+	Dependencies []Module
+	Dependants   []Module
 	Config       *ModuleConfig
-	selfDep      *models.Dependency // itself represented as a dependency
 	build        *models.BuildConfig
 }
 
@@ -166,7 +165,7 @@ func (m *CppModule) getPath() string {
 	return m.Path
 }
 
-func (m *CppModule) getDeps() []models.Dependency {
+func (m *CppModule) getDeps() []Module {
 	deps := m.Dependencies
 
 	for _, mod := range m.BuildDeps {
@@ -184,30 +183,25 @@ func (m *CppModule) getDeps() []models.Dependency {
 	return deps
 }
 
-func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []models.Dependency) error {
+func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []Module) error {
 	for _, dep := range dependants {
 		if m == dep {
-			return fmt.Errorf("Circular dependency detected. Module %s has already been included\n", m.Name)
+			return fmt.Errorf("Circular dependency detected. Module %s has already been included in build\n", m.Name)
 		}
 	}
 
 	m.Dependants = dependants
 	for _, dep := range m.Config.Deps {
-		if mod, ok := modules[dep]; ok {
-			m.Dependencies = append(m.Dependencies, mod)
-			m.BuildDeps = append(m.BuildDeps, mod)
-			if engineMod, ok := mod.(*CppModule); ok {
-				engineMod.ResolveDependencies(modules, append(dependants, m))
-			}
-			continue
+		mod, ok := modules[dep]
+		if !ok {
+			log.Printf("Module %s required by module %s does not exist\n", dep, m.Name)
 		}
 
-		if mod, ok := config.Thirdparty[dep]; ok {
-			m.Dependencies = append(m.Dependencies, mod)
-			continue
+		m.Dependencies = append(m.Dependencies, mod)
+		m.BuildDeps = append(m.BuildDeps, mod)
+		if engineMod, ok := mod.(*CppModule); ok {
+			engineMod.ResolveDependencies(modules, append(dependants, m))
 		}
-
-		log.Printf("Module %s required by module %s does not exist\n", dep, m.Name)
 	}
 
 	return nil
