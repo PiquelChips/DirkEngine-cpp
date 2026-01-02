@@ -70,7 +70,7 @@ func writeBase(buffer *bytes.Buffer, name string) {
 }
 
 type CppMakefile struct {
-	Name, Target, Path string
+	Name, Path         string
 	BuildType, RootDir string
 	IncDirs            []string
 	Libs               []string
@@ -83,13 +83,11 @@ type CppMakefile struct {
 func (m *CppMakefile) toBytes() []byte {
 	buffer := bytes.NewBuffer(nil)
 
-	writeVar(buffer, "NAME", m.Name)
-
 	buffer.WriteString("TARGET=")
 	if m.IsLib {
 		buffer.WriteString("lib")
 	}
-	buffer.WriteString(m.Target)
+	buffer.WriteString(m.Name)
 	if m.IsLib {
 		if m.IsStatic {
 			buffer.WriteString(".a")
@@ -168,7 +166,6 @@ type ShaderMakefile struct {
 
 func (m *ShaderMakefile) toBytes() []byte {
 	buffer := bytes.NewBuffer(nil)
-	writeVar(buffer, "NAME", m.Name)
 	writeVar(buffer, "INT_DIR", fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.getModuleName()))
 	writeVar(buffer, "SHADER_DIR", m.Path)
 	writeBase(buffer, "shaders")

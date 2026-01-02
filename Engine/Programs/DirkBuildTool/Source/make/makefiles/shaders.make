@@ -1,6 +1,5 @@
 # COMPILES SHADERS
 
-## NAME -- the name of the module
 ## INT_DIR -- the intermediate folder to use
 ## SHADER_DIR -- the shader's source code
 

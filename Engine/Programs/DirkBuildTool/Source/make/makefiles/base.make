@@ -1,6 +1,5 @@
 # BASE MAKEFILE VARIABLE SETUP
 
-## NAME -- the name of the module
 ## TARGET -- the name of the output binary file
 ## INT_DIR -- intermediate folder to use
 ## BIN_DIR -- where to output the binaries
