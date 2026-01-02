@@ -11,7 +11,7 @@ import (
 )
 
 type Makefile interface {
-	ToBytes() []byte
+	toBytes() []byte
 	getModuleName() string
 	getModulePath() string
 }
@@ -23,7 +23,7 @@ func RunMakefile(makefile Makefile) error {
 	}
 
 	path := fmt.Sprintf("%s/Makefile", intDir)
-	if err := os.WriteFile(path, makefile.ToBytes(), config.FilePerm); err != nil {
+	if err := os.WriteFile(path, makefile.toBytes(), config.FilePerm); err != nil {
 		return err
 	}
 
@@ -80,7 +80,7 @@ type CppMakefile struct {
 	Optimize           bool
 }
 
-func (m *CppMakefile) ToBytes() []byte {
+func (m *CppMakefile) toBytes() []byte {
 	buffer := bytes.NewBuffer(nil)
 
 	writeVar(buffer, "NAME", m.Name)
@@ -165,7 +165,7 @@ type ShaderMakefile struct {
 	RootDir string
 }
 
-func (m *ShaderMakefile) ToBytes() []byte {
+func (m *ShaderMakefile) toBytes() []byte {
 	buffer := bytes.NewBuffer(nil)
 	writeVar(buffer, "NAME", m.Name)
 	writeVar(buffer, "ROOT_DIR", m.RootDir)
