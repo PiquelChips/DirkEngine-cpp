@@ -18,13 +18,12 @@ type Module interface {
 	GetLibs() []string
 
 	Build() error
-	GetDeps() []Module // returns the direct dependencies
 
-	getAllDeps() []Module // returns all the dependencies in the dependency tree
+	getDeps() []Module // returns all the dependencies in the dependency tree
 	getPath() string
 }
 
-func LoadModule(path, name string, buildConfig *models.BuildConfig) (Module, error) {
+func Load(path, name string, buildConfig *models.BuildConfig) (Module, error) {
 	path = fmt.Sprintf("%s/%s", path, name)
 	modFile := fmt.Sprintf("%s/%s.dirkmod", path, name)
 	data, err := os.ReadFile(modFile)
@@ -42,6 +41,18 @@ func LoadModule(path, name string, buildConfig *models.BuildConfig) (Module, err
 	config.Path = path
 
 	return config.toModule(buildConfig), nil
+}
+
+func Build(m Module) error {
+	if cppMod, ok := m.(*CppModule); ok {
+		for _, mod := range cppMod.Dependencies {
+			if err := Build(mod); err != nil {
+				return err
+			}
+		}
+	}
+
+	return m.Build()
 }
 
 // read from .dirkmod files

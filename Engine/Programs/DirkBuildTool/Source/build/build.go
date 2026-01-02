@@ -18,7 +18,7 @@ func Build(buildConfig *models.BuildConfig) error {
 		return err
 	}
 
-	modules["Shaders"], err = module.LoadModule(config.Dirs.Engine, "Shaders", buildConfig)
+	modules["Shaders"], err = module.Load(config.Dirs.Engine, "Shaders", buildConfig)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func Build(buildConfig *models.BuildConfig) error {
 		os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Saved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
 	}
 
-	if err := build(target); err == nil {
+	if err := module.Build(target); err == nil {
 		return nil
 	} else if _, ok := err.(*exec.ExitError); ok {
 		fmt.Printf("An error occured in the build process\n")
@@ -61,16 +61,6 @@ func Build(buildConfig *models.BuildConfig) error {
 	} else {
 		return err
 	}
-}
-
-func build(m module.Module) error {
-	for _, mod := range m.GetDeps() {
-		if err := build(mod); err != nil {
-			return err
-		}
-	}
-
-	return m.Build()
 }
 
 func searchDir(path string, buildConfig *models.BuildConfig, count int) (map[string]module.Module, error) {
@@ -94,7 +84,7 @@ func searchDir(path string, buildConfig *models.BuildConfig, count int) (map[str
 			return nil, err
 		}
 
-		config, err := module.LoadModule(path, info.Name(), buildConfig)
+		config, err := module.Load(path, info.Name(), buildConfig)
 		if err != nil {
 			return nil, err
 		}

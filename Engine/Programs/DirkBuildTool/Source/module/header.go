@@ -16,7 +16,6 @@ func (m *HeaderModule) GetDefines() models.Defines { return nil }
 func (m *HeaderModule) GetLibs() []string          { return m.External }
 
 func (m *HeaderModule) Build() error      { return nil }
-func (m *HeaderModule) GetDeps() []Module { return nil }
 
-func (m *HeaderModule) getAllDeps() []Module { return nil }
+func (m *HeaderModule) getDeps() []Module { return nil }
 func (m *HeaderModule) getPath() string      { return m.Path }
