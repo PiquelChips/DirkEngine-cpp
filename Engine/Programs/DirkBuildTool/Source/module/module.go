@@ -41,6 +41,10 @@ func Load(path, name string, buildConfig *models.BuildConfig) (Module, error) {
 
 	config.Path = path
 
+	if name != config.Name {
+		return nil, fmt.Errorf("module name does not match folder name. module at %s has name %s but should be %s", path, config.Name, name)
+	}
+
 	return config.toModule(buildConfig), nil
 }
 
