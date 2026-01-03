@@ -9,8 +9,17 @@ import (
 	"strings"
 )
 
-const DirPerm = 0755
-const FilePerm = 0644
+const (
+	DirPerm  = 0755
+	FilePerm = 0644
+)
+
+const (
+	WarningLevelNone   = 0
+	WarningLevelLow    = 1
+	WarningLevelMedium = 2
+	WarningLevelMax    = 3
+)
 
 type DirsConfig struct {
 	Work, Engine, Config,
@@ -36,8 +45,7 @@ var (
 )
 
 const (
-	settingsFile    = "settings.json"
-	externalLibFile = "external.json"
+	settingsFile = "settings.json"
 )
 
 func LoadConfig() error {
@@ -73,6 +81,7 @@ func LoadConfig() error {
 			},
 			LinkerFlags:  []string{"-g"},
 			CompileFlags: []string{"-g"},
+			WarningLevel: WarningLevelMedium,
 		},
 		"Shipping": {
 			Name:     "Shipping",
@@ -83,6 +92,7 @@ func LoadConfig() error {
 			},
 			LinkerFlags:  []string{},
 			CompileFlags: []string{},
+			WarningLevel: WarningLevelMax,
 		},
 	}
 

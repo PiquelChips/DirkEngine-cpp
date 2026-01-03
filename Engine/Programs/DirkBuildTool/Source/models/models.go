@@ -23,4 +23,5 @@ type BuildMode struct {
 	Defines      map[string]string
 	LinkerFlags  []string
 	CompileFlags []string
+	WarningLevel int
 }

@@ -138,7 +138,30 @@ func (m *CppModule) Build() error {
 		}
 	}
 
-	warningFlags := "" // "-Wall -Wextra"
+	var warningFlags []string
+	switch m.build.Mode.WarningLevel {
+	case config.WarningLevelNone:
+		warningFlags = []string{"-w"}
+	case config.WarningLevelLow:
+		warningFlags = []string{"-Wall"}
+	case config.WarningLevelMedium:
+		warningFlags = []string{"-Wall", "-Wextra"}
+	case config.WarningLevelMax:
+		warningFlags = []string{
+			"-Wall",
+			"-Wextra",
+			"-Wpedantic",
+			"-Wshadow",
+			"-Wnon-virtual-dtor",
+			"-Wold-style-cast",
+			"-Woverloaded-virtual",
+			"-Wunused-parameter",
+			"-Wnull-dereference",
+		}
+	}
+
+	cFlags := append(m.build.Mode.CompileFlags, warningFlags...)
+	cFlags = append(cFlags, "-fPIC", fmt.Sprintf("-std=%s", m.Std))
 
 	err := make.RunMakefile(&make.CppMakefile{
 		Name:      m.Name,
@@ -151,7 +174,7 @@ func (m *CppModule) Build() error {
 		IsLib:     !m.Config.HasEntrypoint,
 		IsStatic:  m.build.Mode.Compact,
 		Optimize:  m.build.Mode.Optimize,
-		CFlags:    append(m.build.Mode.CompileFlags, "-fPIC", warningFlags, fmt.Sprintf("-std=%s", m.Std)),
+		CFlags:    cFlags,
 		LdFlags:   m.build.Mode.LinkerFlags,
 	})
 
