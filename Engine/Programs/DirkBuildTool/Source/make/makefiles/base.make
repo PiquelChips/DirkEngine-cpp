@@ -3,7 +3,6 @@
 ## TARGET -- the name of the output binary file
 ## INT_DIR -- intermediate folder to use
 ## BIN_DIR -- where to output the binaries
-## BUILD_TYPE -- the type of build (Development, Shipping) used for Intermediate folder
 ## 
 ## CFLAGS -- flags for compilation like warnings and the standard
 ## CXXFLAGS -- more flags for the compilation (this one is mainly used for includes)

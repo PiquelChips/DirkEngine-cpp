@@ -2,6 +2,7 @@ package make
 
 import (
 	"DirkBuildTool/config"
+	"DirkBuildTool/models"
 	"bytes"
 	"embed"
 	"fmt"
@@ -70,14 +71,13 @@ func writeBase(buffer *bytes.Buffer, name string) {
 }
 
 type CppMakefile struct {
-	Name, Path         string
-	BuildType, RootDir string
-	IncDirs            []string
-	Libs               []string
-	Defines            map[string]string
-	LdFlags, CFlags    []string
-	IsLib, IsStatic    bool
-	Optimize           bool
+	Name, Path, RootDir string
+	BuildMode           *models.BuildMode
+	IncDirs, Libs       []string
+	Defines             map[string]string
+	LdFlags, CFlags     []string
+	IsLib, IsStatic     bool
+	Optimize            bool
 }
 
 func (m *CppMakefile) toBytes() []byte {
@@ -97,9 +97,8 @@ func (m *CppMakefile) toBytes() []byte {
 	}
 	newLine(buffer)
 
-	writeVar(buffer, "INT_DIR", fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.getModuleName()))
+	writeVar(buffer, "INT_DIR", fmt.Sprintf("%s/%s/%s", config.Dirs.Intermediate, m.getModuleName(), m.BuildMode.Name))
 	writeVar(buffer, "BIN_DIR", config.Dirs.Binaries)
-	writeVar(buffer, "BUILD_TYPE", m.BuildType)
 	writeVar(buffer, "CFLAGS", m.CFlags...)
 
 	if m.Optimize {

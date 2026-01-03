@@ -166,7 +166,7 @@ func (m *CppModule) Build() error {
 	err := make.RunMakefile(&make.CppMakefile{
 		Name:      m.Name,
 		Path:      m.Path,
-		BuildType: m.build.Mode.Name,
+		BuildMode: m.build.Mode,
 		RootDir:   config.Dirs.Work,
 		IncDirs:   incDirs,
 		Libs:      libs,
