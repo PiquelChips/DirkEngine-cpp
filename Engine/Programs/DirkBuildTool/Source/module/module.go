@@ -18,6 +18,7 @@ type Module interface {
 	GetLibs() []string
 
 	Build() error
+	IsBuilt() bool
 
 	getDeps() []Module // returns all the dependencies in the dependency tree
 	getPath() string
@@ -44,6 +45,10 @@ func Load(path, name string, buildConfig *models.BuildConfig) (Module, error) {
 }
 
 func Build(m Module) error {
+	if m.IsBuilt() {
+		return nil
+	}
+
 	if cppMod, ok := m.(*CppModule); ok {
 		for _, mod := range cppMod.Dependencies {
 			if err := Build(mod); err != nil {

@@ -24,6 +24,7 @@ type CppModule struct {
 	External     []string
 	IncludeDirs  []string
 	build        *models.BuildConfig
+	isBuilt      bool
 }
 
 func (m *CppModule) GetIncludeDirs() []string   { return m.IncludeDirs }
@@ -139,7 +140,7 @@ func (m *CppModule) Build() error {
 
 	warningFlags := "" // "-Wall -Wextra"
 
-	return make.RunMakefile(&make.CppMakefile{
+	err := make.RunMakefile(&make.CppMakefile{
 		Name:      m.Name,
 		Path:      m.Path,
 		BuildType: m.build.Mode.Name,
@@ -152,8 +153,12 @@ func (m *CppModule) Build() error {
 		Optimize:  m.build.Mode.Optimize,
 		CFlags:    fmt.Sprintf("-fPIC %s -std=%s", warningFlags, m.Std),
 	})
+
+	m.isBuilt = true
+	return err
 }
 
+func (m *CppModule) IsBuilt() bool   { return m.isBuilt }
 func (m *CppModule) getPath() string { return m.Path }
 
 func (m *CppModule) getDeps() []Module {

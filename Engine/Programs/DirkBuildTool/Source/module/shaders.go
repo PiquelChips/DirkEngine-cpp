@@ -7,6 +7,7 @@ import (
 
 type ShaderModule struct {
 	Path, Name string
+	isBuilt    bool
 }
 
 func (m *ShaderModule) GetName() string            { return m.Name }
@@ -15,12 +16,16 @@ func (m *ShaderModule) GetDefines() models.Defines { return nil }
 func (m *ShaderModule) GetLibs() []string          { return nil }
 
 func (m *ShaderModule) Build() error {
-	return make.RunMakefile(&make.ShaderMakefile{
+	err := make.RunMakefile(&make.ShaderMakefile{
 		Name: m.Name,
 		Path: m.Path,
 	})
+
+	m.isBuilt = true
+	return err
 }
+func (m *ShaderModule) IsBuilt() bool { return m.isBuilt }
 
 // shader modules dont have dependencies
-func (m *ShaderModule) getDeps() []Module    { return nil }
-func (m *ShaderModule) getPath() string      { return m.Path }
+func (m *ShaderModule) getDeps() []Module { return nil }
+func (m *ShaderModule) getPath() string   { return m.Path }
