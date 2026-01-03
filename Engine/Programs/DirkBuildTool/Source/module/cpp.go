@@ -187,9 +187,13 @@ func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []
 			log.Printf("Module %s required by module %s does not exist\n", dep, m.Name)
 		}
 
+		if slices.Contains(m.Dependencies, mod) {
+			continue
+		}
+
 		m.Dependencies = append(m.Dependencies, mod)
-		if engineMod, ok := mod.(*CppModule); ok {
-			if err := engineMod.ResolveDependencies(modules, append(dependants, m)); err != nil {
+		if cppMod, ok := mod.(*CppModule); ok {
+			if err := cppMod.ResolveDependencies(modules, append(dependants, m)); err != nil {
 				return err
 			}
 		}
