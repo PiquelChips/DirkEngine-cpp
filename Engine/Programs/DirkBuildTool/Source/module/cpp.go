@@ -151,7 +151,8 @@ func (m *CppModule) Build() error {
 		IsLib:     !m.Config.HasEntrypoint,
 		IsStatic:  m.build.Mode.Compact,
 		Optimize:  m.build.Mode.Optimize,
-		CFlags:    fmt.Sprintf("-fPIC %s -std=%s", warningFlags, m.Std),
+		CFlags:    append(m.build.Mode.CompileFlags, "-fPIC", warningFlags, fmt.Sprintf("-std=%s", m.Std)),
+		LdFlags:   m.build.Mode.LinkerFlags,
 	})
 
 	m.isBuilt = true

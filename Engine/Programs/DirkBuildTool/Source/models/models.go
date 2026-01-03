@@ -17,8 +17,10 @@ type BuildConfig struct {
 }
 
 type BuildMode struct {
-	Name     string
-	Optimize bool
-	Compact  bool // compact the output (essentially statically linking)
-	Defines  map[string]string
+	Name         string
+	Optimize     bool
+	Compact      bool // compact the output (essentially statically linking)
+	Defines      map[string]string
+	LinkerFlags  []string
+	CompileFlags []string
 }

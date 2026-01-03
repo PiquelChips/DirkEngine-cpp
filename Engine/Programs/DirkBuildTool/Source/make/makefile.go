@@ -75,7 +75,7 @@ type CppMakefile struct {
 	IncDirs            []string
 	Libs               []string
 	Defines            map[string]string
-	LdFlags, CFlags    string
+	LdFlags, CFlags    []string
 	IsLib, IsStatic    bool
 	Optimize           bool
 }
@@ -100,7 +100,7 @@ func (m *CppMakefile) toBytes() []byte {
 	writeVar(buffer, "INT_DIR", fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.getModuleName()))
 	writeVar(buffer, "BIN_DIR", config.Dirs.Binaries)
 	writeVar(buffer, "BUILD_TYPE", m.BuildType)
-	writeVar(buffer, "CFLAGS", m.CFlags)
+	writeVar(buffer, "CFLAGS", m.CFlags...)
 
 	if m.Optimize {
 		buffer.WriteString("CFLAGS+= -O3\n")
@@ -122,18 +122,13 @@ func (m *CppMakefile) toBytes() []byte {
 	}
 	writeVar(buffer, "DEFINES", defines...)
 
-	writeVar(buffer, "LDFLAGS", m.LdFlags)
+	writeVar(buffer, "LDFLAGS", m.LdFlags...)
 
 	ldLibs := []string{}
 	for _, lib := range m.Libs {
 		ldLibs = append(ldLibs, fmt.Sprintf("-l%s", lib))
 	}
 	writeVar(buffer, "LDLIBS", ldLibs...)
-
-	// TODO: only set these flags in debug build
-	buffer.WriteString("LDFLAGS+= -g\n")
-	buffer.WriteString("CXXFLAGS+= -g\n")
-
 	writeBase(buffer, "base")
 	writeBase(buffer, "compilation")
 

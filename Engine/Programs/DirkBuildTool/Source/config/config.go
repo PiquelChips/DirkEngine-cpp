@@ -71,6 +71,8 @@ func LoadConfig() error {
 				"DIRK_DEVELOPMENT_BUILD": "",
 				"DIRK_DEBUG_BUILD":       "",
 			},
+			LinkerFlags:  []string{"-g"},
+			CompileFlags: []string{"-g"},
 		},
 		"Shipping": {
 			Name:     "Shipping",
@@ -79,6 +81,8 @@ func LoadConfig() error {
 			Defines: map[string]string{
 				"DIRK_SHIPPING_BUILD": "",
 			},
+			LinkerFlags:  []string{},
+			CompileFlags: []string{},
 		},
 	}
 
