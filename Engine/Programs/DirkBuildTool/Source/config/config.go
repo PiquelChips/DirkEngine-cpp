@@ -29,11 +29,10 @@ type PlatformConfig struct {
 }
 
 var (
-	BuildModes   map[string]*models.BuildMode
-	Platform     PlatformConfig
-	Dirs         DirsConfig
-	Settings     BuildToolSettings
-	ExternalLibs []string
+	BuildModes map[string]*models.BuildMode
+	Platform   PlatformConfig
+	Dirs       DirsConfig
+	Settings   BuildToolSettings
 )
 
 const (
@@ -84,11 +83,6 @@ func LoadConfig() error {
 	}
 
 	Settings, err = loadSettings()
-	if err != nil {
-		return err
-	}
-
-	ExternalLibs, err = setupExternal()
 	if err != nil {
 		return err
 	}

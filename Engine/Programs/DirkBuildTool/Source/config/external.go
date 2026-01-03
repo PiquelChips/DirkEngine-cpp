@@ -7,14 +7,9 @@ import (
 	"strings"
 )
 
-func setupExternal() ([]string, error) {
-	externalLibs := []string{}
-	if err := LoadConfigFile(externalLibFile, &externalLibs); err != nil {
-		return nil, err
-	}
-
+func SetupExternals(externals ...string) error {
 	paths := getLibraryPaths(Settings.LibSearchEnvs)
-	for _, lib := range externalLibs {
+	for _, lib := range externals {
 		for _, path := range paths {
 			entries, err := os.ReadDir(path)
 			if err != nil {
@@ -32,7 +27,7 @@ func setupExternal() ([]string, error) {
 		}
 	}
 
-	return externalLibs, nil
+	return nil
 }
 
 func getLibraryPaths(envVars []string) []string {

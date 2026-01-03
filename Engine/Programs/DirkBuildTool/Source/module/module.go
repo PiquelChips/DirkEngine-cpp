@@ -95,6 +95,10 @@ func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
 		c.IncludeDirs = newDirs
 	}
 
+	if len(c.External) > 0 {
+		config.SetupExternals(c.External...)
+	}
+
 	switch c.Type {
 	case "shaders":
 		return &ShaderModule{
