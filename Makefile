@@ -1,8 +1,9 @@
-BUILD_TOOL=Binaries/DirkBuildTool
+BIN_DIR=Engine/Binaries
+BUILD_TOOL=$(BIN_DIR)/DirkBuildTool
 BUILD_TOOL_DIR=Engine/Programs/DirkBuildTool
 BUILD_TOOL_SRC=$(shell find $(BUILD_TOOL_DIR)/Source -type f -name '*')
 
-EDITOR=Binaries/DirkEditor
+EDITOR=$(BIN_DIR)/DirkEditor
 
 .PHONY: clean run build
 run: build
@@ -13,9 +14,6 @@ build: $(BUILD_TOOL)
 
 clean: $(BUILD_TOOL)
 	@$(BUILD_TOOL) clean
-
-clean-setup: $(BUILD_TOOL)
-	@$(BUILD_TOOL) clean-setup
 
 $(BUILD_TOOL): $(BUILD_TOOL_SRC)
 	@echo Building build tool...
