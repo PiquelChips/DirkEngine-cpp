@@ -193,7 +193,7 @@ void Platform::ImGui_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos) {
 ImVec2 Platform::ImGui_GetWindowPos(ImGuiViewport* viewport) {
     ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
     auto pos = vd->window->getPosition();
-    return ImVec2(pos.x, pos.y);
+    return pos;
 }
 
 void Platform::ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size) {
@@ -206,7 +206,7 @@ ImVec2 Platform::ImGui_GetWindowSize(ImGuiViewport* viewport) {
     ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
     auto size = vd->window->getSize();
 
-    return ImVec2(size.width, size.height);
+    return size;
 }
 
 void Platform::ImGui_SetWindowFocus(ImGuiViewport* viewport) {
@@ -301,8 +301,7 @@ void Platform::cursorPosCallback(ImGuiViewport* viewport, glm::vec2 pos) {
     bd->platform->mouseLocalPos = pos;
 
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        pos.x += viewport->Pos.x;
-        pos.y += viewport->Pos.y;
+        pos += static_cast<glm::vec2>(viewport->Pos);
     }
 
     io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);

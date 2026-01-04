@@ -101,7 +101,6 @@ private:
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 
-    // TODO: custom ImGui rendering backend
     void createImGuiWindow(ImGuiViewport* viewport);
     void renderImGuiWindow(ImGuiViewport* viewport);
     void destroyImGuiWindow(ImGuiViewport* viewport);
