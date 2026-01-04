@@ -1,0 +1,10 @@
+{
+    "name": "xkbcommon",
+    "type": "header-only",
+    "include_dirs": [
+        "."
+    ],
+    "external": [
+        "xkbcommon"
+    ]
+}

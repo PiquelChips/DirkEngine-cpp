@@ -7,8 +7,6 @@
 ## CXXFLAGS -- compilation flags
 ## DEFINES -- preprocessor defines
 
-CXXFLAGS+= -Iinclude
-
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%$(SRC_EXT)
 	@echo Compiling $*$(SRC_EXT)...
 	@mkdir -p $(dir $@)

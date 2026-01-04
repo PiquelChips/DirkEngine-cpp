@@ -1,32 +1,26 @@
 package build
 
 import (
+	"DirkBuildTool/config"
 	"DirkBuildTool/models"
 	"DirkBuildTool/module"
-	"DirkBuildTool/output"
 	"encoding/json"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"os/exec"
 )
 
 func Build(buildConfig *models.BuildConfig) error {
-	log.Printf("Building %s %s\n", buildConfig.Type.Name, buildConfig.Target)
-	modules := map[string]module.Module{}
-	for _, dir := range buildConfig.SearchDirs {
-		modConfigs, err := searchDir(dir)
-		if err != nil {
-			return err
-		}
+	modules, err := searchDir(config.Dirs.Source, buildConfig, 0)
+	if err != nil {
+		return err
+	}
 
-		for name, conf := range modConfigs {
-			if _, ok := modules[name]; ok {
-				log.Printf("Module %s is declared twice\n", name)
-			} else {
-				modules[name] = conf.ToModule(buildConfig)
-			}
-		}
+	modules["Shaders"], err = module.Load(config.Dirs.Engine, "Shaders", buildConfig)
+	if err != nil {
+		return err
 	}
 
 	target, ok := modules[buildConfig.Target]
@@ -41,6 +35,7 @@ func Build(buildConfig *models.BuildConfig) error {
 			return err
 		}
 
+		log.Printf("Generating compile commands\n")
 		compileCommands, err := cppTarget.GenerateCompileCommands()
 		if err != nil {
 			return err
@@ -51,31 +46,34 @@ func Build(buildConfig *models.BuildConfig) error {
 			return err
 		}
 
-		if err := output.WriteIntFile("compile_commands.json", data, true); err != nil {
+		if err := config.SaveFile("compile_commands.json", data, true); err != nil {
 			return err
 		}
+
+		os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.DBTSaved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
 	}
 
 	if err := module.Build(target); err == nil {
 		return nil
 	} else if _, ok := err.(*exec.ExitError); ok {
 		fmt.Printf("An error occured in the build process\n")
-		if buildConfig.ErrOnBuildFail {
-			return err
-		}
 		return nil
 	} else {
 		return err
 	}
 }
 
-func searchDir(path string) (map[string]*module.ModuleConfig, error) {
+func searchDir(path string, buildConfig *models.BuildConfig, count int) (map[string]module.Module, error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 
-	configs := map[string]*module.ModuleConfig{}
+	if count >= 10 {
+		log.Printf("Module search has reached %d recursions. Current dir: %s.\n", count, path)
+	}
+
+	modules := map[string]module.Module{}
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
@@ -86,38 +84,23 @@ func searchDir(path string) (map[string]*module.ModuleConfig, error) {
 			return nil, err
 		}
 
-		config, err := getMod(path, info.Name())
+		config, err := module.Load(path, info.Name(), buildConfig)
 		if err != nil {
 			return nil, err
 		}
-		if config != nil {
-			configs[info.Name()] = config
+
+		if config == nil {
+			newMods, err := searchDir(fmt.Sprintf("%s/%s", path, entry.Name()), buildConfig, count+1)
+			if err != nil {
+				return nil, err
+			}
+			if newMods != nil {
+				maps.Copy(modules, newMods)
+			}
+		} else {
+			modules[info.Name()] = config
 		}
 	}
 
-	return configs, nil
-}
-
-func getMod(path, name string) (*module.ModuleConfig, error) {
-	path = fmt.Sprintf("%s/%s", path, name)
-	modFile := fmt.Sprintf("%s/%s.dirkmod", path, name)
-	data, err := os.ReadFile(modFile)
-	if err != nil {
-		return nil, nil
-	}
-
-	config := &module.ModuleConfig{}
-	err = json.Unmarshal(data, config)
-	if err != nil {
-		log.Printf("Error loading module %s: %s\n", name, err.Error())
-		return nil, nil
-	}
-
-	if config.Target == "" {
-		config.Target = config.Name
-	}
-
-	config.Path = path
-
-	return config, nil
+	return modules, nil
 }

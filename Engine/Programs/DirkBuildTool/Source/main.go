@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"DirkBuildTool/build"
 	"DirkBuildTool/config"
 	"DirkBuildTool/models"
-	"DirkBuildTool/setup"
 )
 
 func usage() {
@@ -15,7 +15,17 @@ func usage() {
 }
 
 func main() {
-	config.LoadConfig()
+	if err := config.LoadConfig(); err != nil {
+		panic(err)
+	}
+
+	if len(os.Args) == 2 {
+		switch os.Args[1] {
+		case "clean":
+			clean()
+			return
+		}
+	}
 
 	target := ""
 	buildType := ""
@@ -36,24 +46,29 @@ func main() {
 		return
 	}
 
-	buildConf, ok := config.BuildTypes[buildType]
+	buildMode, ok := config.BuildModes[buildType]
 	if !ok {
 		fmt.Printf("Build type %s does not exist\n", buildType)
 		os.Exit(1)
 		return
 	}
 
+	log.Printf("Building %s for %s\n", target, buildType)
+
 	buildConfig := &models.BuildConfig{
-		Target:         target,
-		Type:           buildConf,
-		SearchDirs:     config.Dirs.Modules,
-		ErrOnBuildFail: false,
+		Target: target,
+		Mode:   buildMode,
 	}
 
-	if err := setup.Setup(buildConfig); err != nil {
-		panic(err)
-	}
 	if err := build.Build(buildConfig); err != nil {
 		panic(err)
 	}
+}
+
+func clean() {
+	log.Printf("Cleaning...")
+	os.RemoveAll(config.Dirs.Binaries)
+	os.RemoveAll(config.Dirs.Intermediate)
+	os.RemoveAll(config.Dirs.Saved)
+	os.Remove(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
 }

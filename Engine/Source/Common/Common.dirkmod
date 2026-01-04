@@ -1,11 +1,9 @@
 {
     "name": "Common",
-    "c_standard": "c++23",
-    "is_lib": true,
+    "standard": "c++23",
     "dependencies": [
         "glm",
         "tinygltf",
-        "vulkan",
-        "ImGui"
+        "vulkan"
     ]
 }

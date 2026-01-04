@@ -1,0 +1,10 @@
+{
+    "name": "wayland",
+    "standard": "c23",
+    "platforms": [
+        "Linux"
+    ],
+    "external": [
+        "wayland-client"
+    ]
+}

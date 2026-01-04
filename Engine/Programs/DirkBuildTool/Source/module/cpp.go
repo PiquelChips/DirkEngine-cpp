@@ -16,25 +16,22 @@ import (
 // constructed for building
 type CppModule struct {
 	Name         string
-	Target       string
 	Path         string
 	Std          string
-	BuildDeps    []Module
-	Dependencies []models.Dependency
-	Dependants   []models.Dependency
-	Config       *ModuleConfig
-	selfDep      *models.Dependency // itself represented as a dependency
+	Dependencies []Module
+	Dependants   []Module
+	Config       *moduleConfig
+	External     []string
+	IncludeDirs  []string
 	build        *models.BuildConfig
+	isBuilt      bool
 }
 
-func (m *CppModule) GetIncludeDir() string      { return fmt.Sprintf("%s/include", m.Path) }
+func (m *CppModule) GetIncludeDirs() []string   { return m.IncludeDirs }
 func (m *CppModule) GetDefines() models.Defines { return m.Config.Defines }
 func (m *CppModule) GetName() string            { return m.Name }
 func (m *CppModule) GetLibs() []string {
-	if m.Config.IsLib {
-		return []string{m.Name}
-	}
-	return nil
+	return []string{m.Name}
 }
 
 func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
@@ -51,17 +48,17 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		in := strings.Replace(path, m.Path, "", 1)
 		in = strings.Trim(in, "/")
 
-		intDir, _ := intDir(m)
-		out := fmt.Sprintf("%s/%s/%s", intDir, m.build.Type.Name, in)
+		intDir := fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.Name)
+		out := fmt.Sprintf("%s/%s/%s", intDir, m.build.Mode.Name, in)
 		out = strings.Replace(out, "/src/", "/obj/", 1)
 		out = strings.Replace(out, ".cpp", ".o", 1)
 
-		incDirs := []string{"include"}
+		incDirs := m.GetIncludeDirs()
 		defines := m.Config.Defines
 
 		for _, dep := range m.getDeps() {
-			if dep.GetIncludeDir() != "" {
-				incDirs = append(incDirs, dep.GetIncludeDir())
+			if dep.GetIncludeDirs() != nil {
+				incDirs = append(incDirs, dep.GetIncludeDirs()...)
 			}
 
 			if dep.GetDefines() != nil {
@@ -103,7 +100,7 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		return nil, err
 	}
 
-	for _, dep := range m.BuildDeps {
+	for _, dep := range m.Dependencies {
 		if cppModule, ok := dep.(*CppModule); ok {
 			modCommands, err := cppModule.GenerateCompileCommands()
 			if err != nil {
@@ -116,16 +113,16 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 	return compileCommands, nil
 }
 
-func (m *CppModule) ToMakefile() make.Makefile {
+func (m *CppModule) Build() error {
 	log.Printf("Generating Makefile for %s\n", m.Name)
 
-	incDirs := []string{}
-	libs := []string{}
+	incDirs := m.GetIncludeDirs()
+	libs := m.External
 	defines := m.Config.Defines
 
 	for _, dep := range m.getDeps() {
-		if dep.GetIncludeDir() != "" {
-			incDirs = append(incDirs, dep.GetIncludeDir())
+		if dep.GetIncludeDirs() != nil {
+			incDirs = append(incDirs, dep.GetIncludeDirs()...)
 		}
 
 		if dep.GetDefines() != nil {
@@ -141,35 +138,56 @@ func (m *CppModule) ToMakefile() make.Makefile {
 		}
 	}
 
-	warningFlags := "" // "-Wall -Wextra"
+	var warningFlags []string
+	switch m.build.Mode.WarningLevel {
+	case config.WarningLevelNone:
+		warningFlags = []string{"-w"}
+	case config.WarningLevelLow:
+		warningFlags = []string{"-Wall"}
+	case config.WarningLevelMedium:
+		warningFlags = []string{"-Wall", "-Wextra"}
+	case config.WarningLevelMax:
+		warningFlags = []string{
+			"-Wall",
+			"-Wextra",
+			"-Wpedantic",
+			"-Wshadow",
+			"-Wnon-virtual-dtor",
+			"-Wold-style-cast",
+			"-Woverloaded-virtual",
+			"-Wunused-parameter",
+			"-Wnull-dereference",
+		}
+	}
 
-	return &make.CppMakefile{
+	cFlags := append(m.build.Mode.CompileFlags, warningFlags...)
+	cFlags = append(cFlags, "-fPIC", fmt.Sprintf("-std=%s", m.Std))
+
+	err := make.RunMakefile(&make.CppMakefile{
 		Name:      m.Name,
-		Target:    m.Target,
-		BuildType: m.build.Type.Name,
-		RootDir:   config.Dirs.Root,
+		Path:      m.Path,
+		BuildMode: m.build.Mode,
+		RootDir:   config.Dirs.Work,
 		IncDirs:   incDirs,
 		Libs:      libs,
 		Defines:   defines,
-		IsLib:     m.Config.IsLib,
-		IsStatic:  m.build.Type.Compact,
-		Optimize:  m.build.Type.Optimize,
-		CFlags:    fmt.Sprintf("-fPIC %s -std=%s", warningFlags, m.Std),
-	}
+		IsLib:     !m.Config.HasEntrypoint,
+		IsStatic:  m.build.Mode.Compact,
+		Optimize:  m.build.Mode.Optimize,
+		CFlags:    cFlags,
+		LdFlags:   m.build.Mode.LinkerFlags,
+	})
+
+	m.isBuilt = true
+	return err
 }
 
-func (m *CppModule) getBuildDeps() []Module {
-	return m.BuildDeps
-}
+func (m *CppModule) IsBuilt() bool   { return m.isBuilt }
+func (m *CppModule) getPath() string { return m.Path }
 
-func (m *CppModule) getPath() string {
-	return m.Path
-}
-
-func (m *CppModule) getDeps() []models.Dependency {
+func (m *CppModule) getDeps() []Module {
 	deps := m.Dependencies
-
-	for _, mod := range m.BuildDeps {
+	for _, mod := range m.Dependencies {
 		deps = append(deps, mod)
 
 		modDeps := mod.getDeps()
@@ -184,30 +202,30 @@ func (m *CppModule) getDeps() []models.Dependency {
 	return deps
 }
 
-func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []models.Dependency) error {
+func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []Module) error {
 	for _, dep := range dependants {
 		if m == dep {
-			return fmt.Errorf("Circular dependency detected. Module %s has already been included\n", m.Name)
+			return fmt.Errorf("Circular dependency detected. Module %s has already been included in build\n", dep.GetName())
 		}
 	}
 
 	m.Dependants = dependants
 	for _, dep := range m.Config.Deps {
-		if mod, ok := modules[dep]; ok {
-			m.Dependencies = append(m.Dependencies, mod)
-			m.BuildDeps = append(m.BuildDeps, mod)
-			if engineMod, ok := mod.(*CppModule); ok {
-				engineMod.ResolveDependencies(modules, append(dependants, m))
+		mod, ok := modules[dep]
+		if !ok {
+			log.Printf("Module %s required by module %s does not exist\n", dep, m.Name)
+		}
+
+		if slices.Contains(m.Dependencies, mod) {
+			continue
+		}
+
+		m.Dependencies = append(m.Dependencies, mod)
+		if cppMod, ok := mod.(*CppModule); ok {
+			if err := cppMod.ResolveDependencies(modules, append(dependants, m)); err != nil {
+				return err
 			}
-			continue
 		}
-
-		if mod, ok := config.Setup.Thirdparty[dep]; ok {
-			m.Dependencies = append(m.Dependencies, mod)
-			continue
-		}
-
-		log.Printf("Module %s required by module %s does not exist\n", dep, m.Name)
 	}
 
 	return nil

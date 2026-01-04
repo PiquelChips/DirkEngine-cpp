@@ -1,7 +1,6 @@
 {
     "name": "Runtime",
-    "c_standard": "c++23",
-    "is_lib": true,
+    "standard": "c++23",
     "dependencies": [
         "Common",
         "Shaders",
@@ -10,12 +9,5 @@
         "tinygltf",
         "vulkan",
         "ImGui"
-    ],
-    "defines": {
-        "GLFW_INCLUDE_NONE": "",
-        "GLFW_INCLUDE_VLUKAN": "",
-        "LOG_PATH": "Saved",
-        "RESOURCE_PATH": "Engine/Assets",
-        "SHADER_PATH": "Intermediate/Shaders"
-    }
+    ]
 }
