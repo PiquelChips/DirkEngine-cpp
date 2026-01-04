@@ -63,9 +63,7 @@ void Platform::initImGui() {
     }
 #endif
 
-    // TODO: this shouldn't be necessary
-    auto displaySize = bd->mainWindow->getSize();
-    io.DisplaySize = { static_cast<float>(displaySize.width), static_cast<float>(displaySize.height) };
+    io.DisplaySize = bd->mainWindow->getSize();
 
     bd->context = ImGui::GetCurrentContext();
     bd->platform = this;
@@ -105,6 +103,7 @@ void Platform::tick(float deltaTime) {
     check(bd);
 
     io.DeltaTime = deltaTime;
+    io.DisplaySize = bd->mainWindow->getSize();
 
     // TODO: framebuffer scale
     /*
