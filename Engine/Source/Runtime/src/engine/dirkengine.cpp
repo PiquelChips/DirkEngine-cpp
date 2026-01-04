@@ -42,7 +42,7 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         io.ConfigDpiScaleFonts = true;
         io.ConfigDpiScaleViewports = true;
 
-        static constexpr std::string_view iniFilename = SAVED_PATH "/imgui.ini";
+        static constexpr std::string_view iniFilename = SAVED_DIR "/imgui.ini";
         io.IniFilename = iniFilename.data();
 
         ImGui::StyleColorsDark();
