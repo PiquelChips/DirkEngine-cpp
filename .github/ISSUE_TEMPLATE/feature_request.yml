@@ -22,8 +22,3 @@ body:
       description: What system is this feature a part of? what exactly do you want to change? If possible, please provide a code snippet/image that could illustrate what this feature might look like.
     validations:
       required: true
-  - type: checkboxes
-    attributes:
-      label: A few questions
-      options:
-        - label: Would you be willing/able to implement this feature yourself?
