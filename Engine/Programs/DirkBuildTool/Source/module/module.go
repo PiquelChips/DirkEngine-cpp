@@ -9,6 +9,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 )
 
 type Module interface {
@@ -32,20 +33,24 @@ func Load(path, name string, buildConfig *models.BuildConfig) (Module, error) {
 		return nil, nil
 	}
 
-	config := &moduleConfig{}
-	err = json.Unmarshal(data, config)
+	mod := &moduleConfig{}
+	err = json.Unmarshal(data, mod)
 	if err != nil {
 		log.Printf("Error loading module %s: %s\n", name, err.Error())
 		return nil, nil
 	}
 
-	config.Path = path
+	mod.Path = path
 
-	if name != config.Name {
-		return nil, fmt.Errorf("module name does not match folder name. module at %s has name %s but should be %s", path, config.Name, name)
+	if len(mod.Platforms) > 0 && !slices.Contains(mod.Platforms, config.Platform.Name) {
+		return &NullModule{Name: mod.Name}, nil
 	}
 
-	return config.toModule(buildConfig), nil
+	if name != mod.Name {
+		return nil, fmt.Errorf("module name does not match folder name. module at %s has name %s but should be %s", path, mod.Name, name)
+	}
+
+	return mod.toModule(buildConfig), nil
 }
 
 func Build(m Module) error {
@@ -64,10 +69,24 @@ func Build(m Module) error {
 	return m.Build()
 }
 
+type NullModule struct {
+	Name string
+}
+
+func (m *NullModule) GetName() string            { return m.Name }
+func (m *NullModule) GetIncludeDirs() []string   { return nil }
+func (m *NullModule) GetDefines() models.Defines { return nil }
+func (m *NullModule) GetLibs() []string          { return nil }
+func (m *NullModule) Build() error               { return nil }
+func (m *NullModule) IsBuilt() bool              { return true }
+func (m *NullModule) getDeps() []Module          { return nil }
+func (m *NullModule) getPath() string            { return "" }
+
 // read from .dirkmod files
 type moduleConfig struct {
 	Name          string            `json:"name"`
 	Type          string            `json:"type"`
+	Platforms     []string          `json:"platforms"`
 	Path          string            `json:"-"`
 	Std           string            `json:"standard"`
 	HasEntrypoint bool              `json:"has_entrypoint"`
