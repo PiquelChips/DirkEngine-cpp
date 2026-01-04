@@ -41,8 +41,8 @@ private:
     inline static std::unordered_map<std::string_view, std::weak_ptr<const Model>> models;
     inline static std::unordered_map<std::string_view, std::weak_ptr<const Shader>> shaders;
 
-    static constexpr std::string_view resourcePath = RESOURCE_PATH;
-    static constexpr std::string_view shaderPath = SHADER_PATH;
+    static constexpr std::string_view resourcePath = ASSETS_DIR;
+    static constexpr std::string_view shaderPath = SHADERS_DIR;
 };
 
 } // namespace dirk

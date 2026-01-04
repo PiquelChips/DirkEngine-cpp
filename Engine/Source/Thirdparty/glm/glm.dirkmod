@@ -1,0 +1,7 @@
+{
+    "name": "glm",
+    "type": "header-only",
+    "include_dirs": [
+        "glm"
+    ]
+}

@@ -1,10 +1,9 @@
 {
-    "name": "Common",
+    "name": "ImGui",
     "standard": "c++23",
     "dependencies": [
-        "glm",
-        "tinygltf",
         "vulkan",
-        "ImGui"
+        "Common",
+        "glm"
     ]
 }

@@ -22,9 +22,6 @@
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
-#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-#include "imgui.h"
-
 namespace dirk {
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDirk);
