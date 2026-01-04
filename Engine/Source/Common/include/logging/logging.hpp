@@ -55,7 +55,7 @@ private:
     std::ofstream latestLogfile;
     std::ofstream archiveLogfile;
 
-    static constexpr std::string_view logPath{ LOG_PATH };
+    static constexpr std::string_view logPath{ SAVED_DIR "/log" };
 };
 
 static std::unique_ptr<Logger> logger = nullptr;

@@ -23,7 +23,7 @@ const (
 
 type DirsConfig struct {
 	Work, Engine, Config,
-	Source,
+	Source, Assets,
 	Intermediate, Binaries, Saved,
 	DBTSaved, DBTConfig string
 }
@@ -122,6 +122,7 @@ func setupDirsConfig(wd string) DirsConfig {
 		Engine:       engineDir,
 		Config:       configDir,
 		Source:       fmt.Sprintf("%s/Source", engineDir),
+		Assets:       fmt.Sprintf("%s/Assets", engineDir),
 		Intermediate: fmt.Sprintf("%s/Intermediate", engineDir),
 		Binaries:     fmt.Sprintf("%s/Binaries", engineDir),
 		Saved:        savedDir,
