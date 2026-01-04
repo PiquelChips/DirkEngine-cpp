@@ -3,6 +3,7 @@
     "standard": "c++23",
     "dependencies": [
         "vulkan",
-        "Common"
+        "Common",
+        "glm"
     ]
 }
