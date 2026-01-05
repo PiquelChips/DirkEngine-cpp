@@ -102,7 +102,6 @@ void Platform::tick(float deltaTime) {
     ImGuiPlatformData* bd = getBackendData();
     check(bd);
 
-    io.DeltaTime = deltaTime;
     io.DisplaySize = bd->mainWindow->getSize();
 
     // TODO: framebuffer scale

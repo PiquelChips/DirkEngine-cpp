@@ -116,6 +116,8 @@ bool DirkEngine::tick(float deltaTime) {
 
     // ImGui
     {
+        ImGuiIO& io = ImGui::GetIO();
+        io.DeltaTime = deltaTime;
         renderer->ImGui_beginFrame();
         ImGui::NewFrame();
         renderImGui();
