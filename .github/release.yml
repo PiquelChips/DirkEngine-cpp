@@ -1,23 +1,23 @@
 changelog:
-  exclude:
-    labels:
-      - documentation
   categories:
-    - title: Build Tool
-      labels:
-        - build-tool
     - title: Rendering
       labels:
         - renderer
     - title: Platform
       labels:
         - platform
+    - title: Build Tool
+      labels:
+        - build-tool
     - title: Other Features
       labels:
         - enhancement
     - title: Bugs and Optimizations
       labels:
         - bug
+    - title: Documentation
+      labels:
+        - documentation
     - title: Other
       labels:
         - "*"
