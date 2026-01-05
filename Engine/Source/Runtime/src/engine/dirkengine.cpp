@@ -163,7 +163,7 @@ void DirkEngine::renderImGui(float deltaTime) {
     ImGui::Begin("Editor Panel");
     {
         ImGui::Text("FPS: %f", 1.0 / deltaTime);
-        ImGui::Text("Frame Time: %f", deltaTime);
+        ImGui::Text("Frame Time: %fms", deltaTime * 1000);
 
         ImGui::Checkbox("Show Demo Window", &showDemoWindow);
         ImGui::Checkbox("Show Style Editor", &showStyleEditor);
