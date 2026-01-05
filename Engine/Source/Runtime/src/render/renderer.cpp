@@ -3,11 +3,9 @@
 #include "backends/imgui_impl_vulkan.h"
 #include "common.hpp"
 #include "engine/dirkengine.hpp"
-#include "engine/world.hpp"
 #include "imgui.h"
 #include "logging/logging.hpp"
-#include "platform/platform.hpp"
-#include "render/camera.hpp"
+#include "render/render_types.hpp"
 #include "render/viewport.hpp"
 
 #include "glm/glm.hpp"
@@ -21,6 +19,7 @@
 #include "vulkan/vulkan_structs.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -98,9 +97,7 @@ Renderer::Renderer() {
 #endif
 }
 
-void Renderer::init() {
-    vk::SurfaceKHR surface = gEngine->getPlatform()->createTempSurface(instance);
-
+void Renderer::init(vk::SurfaceKHR surface) {
     // PHYSICAL DEVICE
     {
         auto physicalDevices = instance.enumeratePhysicalDevices();
@@ -237,65 +234,45 @@ void Renderer::init() {
     }
 
     DIRK_LOG(LogVulkan, INFO, "vulkan initialized successfully");
+}
 
-    // ImGui
-    {
-        DIRK_LOG(LogVulkan, DEBUG, "initlializing imgui");
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        // TODO: reenable when adding viewport support
-        // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+void Renderer::initImGui(vk::SurfaceKHR surface) {
+    auto formats = physicalDevice.getSurfaceFormatsKHR(surface);
+    auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+    auto swapChainImageFormat = chooseSwapSurfaceFormat(formats);
 
-        io.ConfigDpiScaleFonts = true;
-        io.ConfigDpiScaleViewports = true;
+    uint32_t imageCount = capabilities.minImageCount + 1;
+    if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount)
+        imageCount = capabilities.maxImageCount;
 
-        ImGui::StyleColorsDark();
+    vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{};
+    pipelineRenderingCreateInfo.colorAttachmentCount = 1;
+    pipelineRenderingCreateInfo.pColorAttachmentFormats = &swapChainImageFormat.format;
+    pipelineRenderingCreateInfo.depthAttachmentFormat = properties.depthFormat;
 
-        // Setup scaling
-        ImGuiStyle& style = ImGui::GetStyle();
-        style.ScaleAllSizes(1.f);
-        style.FontScaleDpi = 1.f;
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    createImGuiWindow(nullptr);
 
-        // TODO: change the path for imgui.ini
+    ImGui_ImplVulkan_InitInfo initInfo = {};
+    initInfo.Instance = instance;
+    initInfo.PhysicalDevice = physicalDevice;
+    initInfo.Device = device;
+    initInfo.QueueFamily = properties.queueFamilyIndices.graphicsFamily.value();
+    initInfo.Queue = queues.graphicsQueue;
+    initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
+    initInfo.MinImageCount = capabilities.minImageCount;
+    initInfo.ImageCount = imageCount;
+    initInfo.Allocator = nullptr;
+    initInfo.PipelineInfoMain.Subpass = 0;
+    initInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT; // (VkSampleCountFlagBits) properties.msaaSamples;
+    initInfo.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingCreateInfo;
+    initInfo.CheckVkResultFn = checkVkResult;
+    initInfo.UseDynamicRendering = true;
+    ImGui_ImplVulkan_Init(&initInfo);
+}
 
-        // TODO: have these be engine functions. renderer should not interact with platform
-        gEngine->getPlatform()->initImGui();
-        auto mainWindow = &gEngine->getPlatform()->getMainWindow();
-        check(mainWindow);
-        mainWindow->show();
-
-        auto formats = physicalDevice.getSurfaceFormatsKHR(surface);
-        auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
-        auto swapChainImageFormat = chooseSwapSurfaceFormat(formats);
-
-        vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{};
-        pipelineRenderingCreateInfo.colorAttachmentCount = 1;
-        pipelineRenderingCreateInfo.pColorAttachmentFormats = &swapChainImageFormat.format;
-        pipelineRenderingCreateInfo.depthAttachmentFormat = properties.depthFormat;
-
-        ImGui_ImplVulkan_InitInfo initInfo = {};
-        initInfo.Instance = instance;
-        initInfo.PhysicalDevice = physicalDevice;
-        initInfo.Device = device;
-        initInfo.QueueFamily = properties.queueFamilyIndices.graphicsFamily.value();
-        initInfo.Queue = queues.graphicsQueue;
-        initInfo.DescriptorPoolSize = MAX_DESCRIPTOR_SET_COUNT;
-        initInfo.MinImageCount = capabilities.minImageCount;
-        initInfo.ImageCount = mainWindow->getImageCount();
-        initInfo.Allocator = nullptr;
-        initInfo.PipelineInfoMain.Subpass = 0;
-        initInfo.PipelineInfoMain.MSAASamples = (VkSampleCountFlagBits) vk::SampleCountFlagBits::e1;
-        initInfo.PipelineInfoMain.PipelineRenderingCreateInfo = pipelineRenderingCreateInfo;
-        initInfo.CheckVkResultFn = checkVkResult;
-        initInfo.UseDynamicRendering = true;
-        ImGui_ImplVulkan_Init(&initInfo);
-        DIRK_LOG(LogRenderer, INFO, "initlialized ImGui")
-    }
+void Renderer::shutdownImGui() {
+    destroyImGuiWindow(nullptr);
+    ImGui_ImplVulkan_Shutdown();
 }
 
 Renderer::~Renderer() {
@@ -304,46 +281,43 @@ Renderer::~Renderer() {
     DIRK_LOG(LogVulkan, INFO, "cleaning up renderer");
 
     viewports.clear();
-
-    ImGui_ImplVulkan_Shutdown();
-    gEngine->getPlatform()->shutdownImGui();
-    ImGui::DestroyContext();
 }
 
 void Renderer::render() {
     checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
     checkVulkan(device.resetFences(1, &inFlightFence));
 
-    // render engine viewports
-    std::vector<vk::SubmitInfo> submitInfos(viewports.size());
-    for (auto& viewport : viewports) {
-        submitInfos.emplace_back(viewport->render());
+    // viewports
+    {
+        std::vector<vk::SubmitInfo> submitInfos(viewports.size());
+        for (auto& viewport : viewports) {
+            submitInfos.emplace_back(viewport->render());
+        }
+        checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
     }
 
-    checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
+    // ImGui
+    {
+        ImGui_ImplVulkan_NewFrame();
+        ImGui::NewFrame();
 
-    ImGui_ImplVulkan_NewFrame();
-    ImGui::NewFrame();
+        // TODO: process all ImGui rendering
+        ImGui::ShowDemoWindow();
 
-    // TODO: process all ImGui rendering
-    ImGui::ShowDemoWindow();
+        for (auto& viewport : viewports) {
+            viewport->renderImGui();
+        }
 
-    for (auto& viewport : viewports) {
-        viewport->renderImGui();
+        ImGui::Render();
+
+        checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
+        checkVulkan(device.resetFences(1, &inFlightFence));
+
+        renderImGuiWindow(nullptr);
+
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
     }
-
-    ImGui::Render();
-
-    checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
-    checkVulkan(device.resetFences(1, &inFlightFence));
-
-    auto window = &gEngine->getPlatform()->getMainWindow();
-    queues.graphicsQueue.submit(window->render(ImGui::GetDrawData()), inFlightFence);
-
-    ImGui::UpdatePlatformWindows();
-    ImGui::RenderPlatformWindowsDefault();
-
-    checkVulkan(queues.presentQueue.presentKHR(window->present()));
 }
 
 std::shared_ptr<Viewport> Renderer::createViewport(const ViewportCreateInfo& createInfo) {
@@ -862,13 +836,13 @@ void Renderer::transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::
     commandBuffer.pipelineBarrier(sourceStage, destinationStage, {}, {}, nullptr, barrier);
 }
 
-void Renderer::copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height) {
+void Renderer::copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height, uint32_t offsetX, uint32_t offsetY) {
     vk::BufferImageCopy region{};
     region.bufferOffset = 0;
     region.bufferRowLength = 0;
     region.bufferImageHeight = 0;
     region.imageSubresource = { vk::ImageAspectFlagBits::eColor, 0, 0, 1 };
-    region.imageOffset = 0;
+    region.imageOffset = vk::Offset3D(offsetX, offsetY, 0);
     region.imageExtent = vk::Extent3D(width, height, 1);
 
     commandBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, { region });
@@ -989,6 +963,165 @@ QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device, vk::Su
     }
 
     return indices;
+}
+
+void Renderer::createImGuiWindow(ImGuiViewport* viewport) {
+    ImGuiViewportRendererData* vd = IM_NEW(ImGuiViewportRendererData)();
+    if (viewport) {
+        viewport->RendererUserData = vd;
+    } else {
+        viewport = ImGui::GetMainViewport();
+        mainViewportData = vd;
+    }
+
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+    checkVulkan((vk::Result) platformIO.Platform_CreateVkSurface(viewport, (ImU64) (VkInstance) instance, nullptr, (ImU64*) &vd->surface));
+
+    auto formats = physicalDevice.getSurfaceFormatsKHR(vd->surface);
+    vd->surfaceFormat = chooseSwapSurfaceFormat(formats);
+    auto presentModes = physicalDevice.getSurfacePresentModesKHR(vd->surface);
+    vd->presentMode = chooseSwapPresentMode(presentModes);
+
+    vd->commandBuffer = gEngine->getRenderer()->createCommandBuffer();
+}
+
+void Renderer::renderImGuiWindow(ImGuiViewport* viewport) {
+    ImGuiViewportRendererData* vd = nullptr;
+    if (viewport) {
+        vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+    } else {
+        check(mainViewportData);
+        vd = mainViewportData;
+        viewport = ImGui::GetMainViewport();
+    }
+
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+    if (viewport->PlatformRequestResize || vd->swapChainExtent != static_cast<vk::Extent2D>(platformIO.Platform_GetWindowSize(viewport)))
+        vd->swapchainNeedsRecreation = true;
+
+    if (vd->swapchainNeedsRecreation) {
+        SwapChainCreateInfo swapChainInfo{
+            .swapChain = vd->swapchain,
+            .swapChainExtent = vd->swapChainExtent,
+            .surface = vd->surface,
+            .windowSize = platformIO.Platform_GetWindowSize(viewport),
+            .surfaceFormat = vd->surfaceFormat,
+            .presentMode = vd->presentMode
+        };
+        vd->swapChainImages = createSwapChain(swapChainInfo);
+
+        vd->semaphores.resize(vd->swapChainImages.size());
+        for (int i = 0; i < vd->semaphores.size(); i++) {
+            vd->semaphores[i] = std::tuple(createSemaphore(), createSemaphore());
+        }
+
+        vd->swapchainNeedsRecreation = false;
+    }
+
+    vd->semaphoreIndex = (vd->semaphoreIndex + 1) % vd->semaphores.size();
+    auto& [imageAvailableSemaphore, renderFinishedSemaphore] = vd->semaphores[vd->semaphoreIndex];
+    check(imageAvailableSemaphore);
+    check(renderFinishedSemaphore);
+
+    auto [err, index] = device.acquireNextImageKHR(vd->swapchain, UINT64_MAX, imageAvailableSemaphore, nullptr);
+    if (err == vk::Result::eErrorOutOfDateKHR) {
+        vd->swapchainNeedsRecreation = true;
+        return;
+    }
+    if (err == vk::Result::eSuboptimalKHR) {
+        vd->swapchainNeedsRecreation = true;
+    } else
+        checkVulkan(err);
+
+    vd->imageIndex = index;
+    auto image = vd->swapChainImages[vd->imageIndex];
+
+    vd->commandBuffer.reset();
+
+    vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    checkVulkan(vd->commandBuffer.begin(&beginInfo));
+
+    transitionImageLayout(vd->commandBuffer, image.image, vd->surfaceFormat.format, vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::eColorAttachmentOptimal);
+
+    vk::RenderingAttachmentInfo colorAttachment{};
+    colorAttachment.imageView = image.view;
+    colorAttachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    colorAttachment.resolveMode = vk::ResolveModeFlagBits::eNone;
+    colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+    colorAttachment.clearValue = vk::ClearColorValue(0.f, 0.f, 0.f, 1.f);
+
+    vk::RenderingInfo renderInfo{};
+    renderInfo.renderArea.offset = vk::Offset2D(0, 0);
+    renderInfo.renderArea.extent = vd->swapChainExtent;
+    renderInfo.layerCount = 1;
+    renderInfo.viewMask = 0;
+    renderInfo.colorAttachmentCount = 1;
+    renderInfo.pColorAttachments = &colorAttachment;
+
+    vd->commandBuffer.beginRendering(renderInfo);
+
+    ImGui_ImplVulkan_RenderDrawData(viewport->DrawData, vd->commandBuffer);
+
+    vd->commandBuffer.endRendering();
+
+    transitionImageLayout(vd->commandBuffer, image.image, vd->surfaceFormat.format, vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
+
+    vd->commandBuffer.end();
+
+    vk::SubmitInfo submitInfo{};
+    submitInfo.pWaitDstStageMask = &vd->waitStage;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
+    // signal semaphores
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
+
+    // command buffers
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &vd->commandBuffer;
+
+    checkVulkan(queues.graphicsQueue.submit(1, &submitInfo, inFlightFence));
+
+    vk::PresentInfoKHR presentInfo{};
+    presentInfo.sType = vk::StructureType::ePresentInfoKHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
+
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &vd->swapchain;
+    presentInfo.pImageIndices = &vd->imageIndex;
+    presentInfo.pResults = nullptr; // only have one swap chain
+
+    auto result = queues.presentQueue.presentKHR(presentInfo);
+    if (result == vk::Result::eErrorOutOfDateKHR)
+        vd->swapchainNeedsRecreation = true;
+    if (result == vk::Result::eSuboptimalKHR) {
+        vd->swapchainNeedsRecreation = true;
+    } else
+        checkVulkan(result);
+}
+
+void Renderer::destroyImGuiWindow(ImGuiViewport* viewport) {
+    ImGuiViewportRendererData* vd = nullptr;
+    if (viewport) {
+        vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
+    } else {
+        check(mainViewportData);
+        vd = mainViewportData;
+        viewport = ImGui::GetMainViewport();
+    }
+
+    IM_DELETE(vd);
+
+    if (viewport) {
+        viewport->RendererUserData = nullptr;
+    } else {
+        mainViewportData = nullptr;
+    }
 }
 
 } // namespace dirk

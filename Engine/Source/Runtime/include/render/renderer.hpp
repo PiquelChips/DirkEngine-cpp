@@ -4,6 +4,7 @@
 #include "engine/dirkengine.hpp"
 #include "render/viewport.hpp"
 
+#include "imgui.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
@@ -29,6 +30,27 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 #define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
 
+struct ImGuiViewportRendererData {
+    vk::SwapchainKHR swapchain;
+    vk::SurfaceKHR surface;
+    vk::CommandBuffer commandBuffer;
+
+    // renderer settings
+    vk::Extent2D swapChainExtent;
+    vk::SurfaceFormatKHR surfaceFormat;
+    vk::PresentModeKHR presentMode;
+
+    std::vector<SwapchainImage> swapChainImages;
+    std::vector<std::tuple<vk::Semaphore, vk::Semaphore>> semaphores;
+
+    // state
+    std::uint32_t imageIndex = 0;
+    std::uint32_t semaphoreIndex = 0;
+    bool swapchainNeedsRecreation = true; // swap chain will thus be created on first render call
+
+    static constexpr vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+};
+
 /**
  * The vulkan implementation of the renderer
  */
@@ -37,8 +59,10 @@ public:
     Renderer();
     ~Renderer();
 
-    void init();
+    void init(vk::SurfaceKHR surface);
+    void initImGui(vk::SurfaceKHR surface);
     void render();
+    void shutdownImGui();
 
     std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);
     void destroyViewport(std::shared_ptr<Viewport> viewport);
@@ -68,6 +92,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<Viewport>> viewports;
+    ImGuiViewportRendererData* mainViewportData = nullptr; // TODO: remove for custom backend
 
 private:
     bool checkRequiredInstanceExtensions(std::vector<const char*>& extensions);
@@ -75,6 +100,10 @@ private:
     int getDeviceSuitability(vk::PhysicalDevice device, vk::SurfaceKHR surface);
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
+
+    void createImGuiWindow(ImGuiViewport* viewport);
+    void renderImGuiWindow(ImGuiViewport* viewport);
+    void destroyImGuiWindow(ImGuiViewport* viewport);
 
 #ifdef ENABLE_VALIDATION_LAYERS
 private:
@@ -126,7 +155,7 @@ public:
     void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue);
 
     void transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels = 1);
-    void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height);
+    void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height, uint32_t offsetX = 0, uint32_t offsetY = 0);
     void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels);
 
 public:

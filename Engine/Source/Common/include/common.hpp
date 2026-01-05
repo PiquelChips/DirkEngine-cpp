@@ -5,6 +5,7 @@
 
 // GLM
 #include <memory>
+#include <vector>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES // properly aligns types in memory; this doesn't affect nested structs!!!
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE        // vulkan uses the 0.0 to 1.0 ranges; opengl uses the -1.0 to 1.0 range
@@ -159,31 +160,8 @@ public:
     virtual void endSingleTimeCommands(vk::CommandBuffer& commandBuffer, vk::Queue queue) = 0;
 
     virtual void transitionImageLayout(vk::CommandBuffer commandBuffer, const vk::Image& image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels = 1) = 0;
-    virtual void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height) = 0;
+    virtual void copyBufferToImage(vk::CommandBuffer commandBuffer, vk::Buffer& buffer, vk::Image& image, uint32_t width, uint32_t height, uint32_t offsetX = 0, uint32_t offsetY = 0) = 0;
     virtual void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) = 0;
-};
-
-namespace Platform {
-class Window;
-class Monitor;
-} // namespace Platform
-
-class IPlatform {
-public:
-    virtual ~IPlatform() = default;
-
-    virtual void initImGui() = 0;
-    virtual void tick(float deltaTime) = 0;
-    virtual void shutdownImGui() = 0;
-
-    virtual Platform::Window& getMainWindow() = 0;
-    virtual Platform::Window& getFocusedWindow() = 0;
-    virtual Platform::Monitor& createMonitor(void* platformHandle) = 0;
-    // TODO: remove
-    virtual vk::SurfaceKHR createTempSurface(vk::Instance instance) = 0;
-
-    virtual std::string_view getClipboardText() = 0;
-    virtual void setClipboardText(const std::string& text) = 0;
 };
 
 class IEngine {
@@ -194,7 +172,6 @@ public:
     virtual void exit(const std::string& reason) = 0;
 
     virtual IRenderer* getRenderer() const = 0;
-    virtual IPlatform* getPlatform() const = 0;
 };
 
 } // namespace dirk

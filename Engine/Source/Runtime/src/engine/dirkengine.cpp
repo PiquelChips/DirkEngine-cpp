@@ -2,7 +2,6 @@
 
 #include "common.hpp"
 #include "engine/world.hpp"
-#include "platform/window.hpp"
 #include "render/renderer.hpp"
 #include "render/viewport.hpp"
 #include "vulkan/vulkan_structs.hpp"
@@ -22,18 +21,57 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
     gEngine = this;
     Logging::init();
 
-    renderer = std::make_unique<Renderer>();
-    // platform needs renderer init
-    platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
-    // we need renderer var to be initialized for this function to run
-    renderer->init();
-    world = std::make_shared<World>(createInfo.actorCreateInfos);
+    // main engine objects
+    {
+        renderer = std::make_unique<Renderer>();
+        platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
+        renderer->init(platform->createTempSurface(renderer->getResources().instance));
+        world = std::make_shared<World>(createInfo.actorCreateInfos);
+    }
 
-    auto viewport = renderer->createViewport(ViewportCreateInfo{
-        .name = "Hello World!",
-        .size = vk::Extent2D(500, 500),
-        .world = world,
-    });
+    // ImGui
+    {
+        DIRK_LOG(LogVulkan, DEBUG, "initlializing imgui");
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+        io.ConfigDpiScaleFonts = true;
+        io.ConfigDpiScaleViewports = true;
+
+        static constexpr std::string_view iniFilename = SAVED_DIR "/imgui.ini";
+        io.IniFilename = iniFilename.data();
+
+        ImGui::StyleColorsDark();
+
+        // Setup scaling
+        ImGuiStyle& style = ImGui::GetStyle();
+
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            style.WindowRounding = 0.0f;
+            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        }
+
+        style.ScaleAllSizes(1.f);
+        style.FontScaleDpi = 1.f;
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+
+        platform->initImGui();
+        renderer->initImGui(platform->createTempSurface(renderer->getResources().instance));
+    }
+
+    // initial engine state
+    {
+        auto viewport = renderer->createViewport(ViewportCreateInfo{
+            .name = "Hello World!",
+            .size = vk::Extent2D(500, 500),
+            .world = world,
+        });
+    }
 
     lastTick = std::chrono::high_resolution_clock::now();
 
@@ -45,6 +83,9 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
 
         tick(deltaTime);
     }
+
+    renderer->shutdownImGui();
+    platform->shutdownImGui();
 }
 
 DirkEngine::~DirkEngine() {
@@ -79,6 +120,7 @@ float DirkEngine::captureDeltaTime() {
 
     lastTick = currentTime;
 
+    // TODO: have main editor engine ImGui window that displays these things
     // DIRK_LOG(LogDirkEngine, INFO) << "delta time: " << deltaTime;
     // DIRK_LOG(LogDirkEngine, INFO) << "fps: " << 1.0 / deltaTime;
 

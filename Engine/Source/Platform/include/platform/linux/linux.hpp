@@ -3,12 +3,13 @@
 #pragma once
 
 #include "platform/platform.hpp"
-#include "platform/window.hpp"
 
 #include "vulkan/vulkan_handles.hpp"
 #include "wayland-client-core.h"
 #include "wayland-client-protocol.h"
+#include "wayland-util.h"
 #include "xdg-shell-client-protocol.h"
+#include "xdg-toplevel-drag-v1-client-protocol.h"
 #include "xkbcommon/xkbcommon.h"
 
 #include <cstdint>
@@ -20,6 +21,8 @@ namespace dirk::Platform::Linux {
 DECLARE_LOG_CATEGORY_EXTERN(LogLinux)
 DECLARE_LOG_CATEGORY_EXTERN(LogWayland)
 
+class LinuxWindowImpl;
+
 class LinuxPlatformImpl : public PlatformImpl {
 
 public:
@@ -30,10 +33,6 @@ public:
     std::unique_ptr<PlatformWindowImpl> createPlatformWindow(const WindowCreateInfo& createInfo) override;
     vk::SurfaceKHR createTempSurface(vk::Instance instance) override;
 
-    wl_display* getDisplay() { return display; }
-    wl_compositor* getCompositor() { return compositor; }
-    xdg_wm_base* getXdgWmBase() { return xdgWmBase; }
-
     Platform& getPlatform() { return platform; }
 
     std::string_view getClipboardText() override;
@@ -43,44 +42,87 @@ public:
     static constexpr Input::MouseButton getMouseFromCode(uint32_t code);
     static constexpr Input::KeyState getKeyStateFromCode(uint32_t state);
 
-private:
-    Window& getWindowWithSurface(wl_surface* surface);
+    bool supportsDragging() { return toplevelDragManager; }
 
-    static void wl_GlobalRegistryHandler(void* data, struct wl_registry* registry, uint32_t name, const char* interface, uint32_t version);
+protected:
+    void beginDrag(LinuxWindowImpl& window, glm::vec2 offset);
+    void updateDraggedWindowPos(glm::vec2 globalMousePos);
+    void cleanupDrag();
+
+private:
+    static void wl_GlobalRegistryHandler(void* data, wl_registry* registry, uint32_t name, const char* interface, uint32_t version);
     static void wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t caps);
 
-    static void wl_OutputHandleGeometry(void* data, struct wl_output* output, int32_t x, int32_t y, int32_t physicalWidth, int32_t physicalHeight, int32_t subpixel, const char* make, const char* model, int32_t transform);
-    static void wl_OutputHandleMode(void* data, struct wl_output* output, uint32_t flags, int32_t width, int32_t height, int32_t refresh);
-    static void wl_OutputHandleDone(void* data, struct wl_output* output);
-    static void wl_OutputHandleName(void* data, struct wl_output* output, const char* name);
-    static void wl_OutputHandleDescription(void* data, struct wl_output* output, const char* description);
+    static void wl_OutputHandleGeometry(void* data, wl_output* output, int32_t x, int32_t y, int32_t physicalWidth, int32_t physicalHeight, int32_t subpixel, const char* make, const char* model, int32_t transform);
+    static void wl_OutputHandleMode(void* data, wl_output* output, uint32_t flags, int32_t width, int32_t height, int32_t refresh);
+    static void wl_OutputHandleDone(void* data, wl_output* output);
+    static void wl_OutputHandleName(void* data, wl_output* output, const char* name);
+    static void wl_OutputHandleDescription(void* data, wl_output* output, const char* description);
 
     static void wl_PointerEnter(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y);
+    static void wl_PointerLeave(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface);
     static void wl_PointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y);
     static void wl_PointerButton(void* data, wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state);
     static void wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value);
 
     static void wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size);
     static void wl_KeyboardEnter(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface, wl_array* keys);
+    static void wl_KeyboardLeave(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface);
     static void wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state);
     static void wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group);
 
+    static void wl_DataDeviceOffer(void* data, wl_data_device* dataDevice, wl_data_offer* offer);
+    static void wl_DataDeviceEnter(void* data, wl_data_device* dataDevice, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y, wl_data_offer* offer);
+    static void wl_DataDeviceLeave(void* data, wl_data_device* dataDevice);
+    static void wl_DataDeviceMotion(void* data, wl_data_device* dataDevice, uint32_t time, wl_fixed_t x, wl_fixed_t y);
+    static void wl_DataDeviceDrop(void* data, wl_data_device* dataDevice);
+    static void wl_DataDeviceSelection(void* data, wl_data_device* dataDevice, wl_data_offer* offer);
+
+    static void wl_DataSourceCancelled(void* data, wl_data_source* dataSource);
+    static void wl_DataSourceDndDropPerformed(void* data, wl_data_source* dataSource);
+    static void wl_DataSourceDndFinished(void* data, wl_data_source* datSource);
+
 private:
-    wl_display* display;
-    wl_registry* registry;
-    wl_compositor* compositor;
-    xdg_wm_base* xdgWmBase;
+    wl_display* display = nullptr;
+    wl_registry* registry = nullptr;
+    wl_compositor* compositor = nullptr;
+    xdg_wm_base* xdgWmBase = nullptr;
+
+    xdg_toplevel_drag_manager_v1* toplevelDragManager = nullptr;
+    wl_data_device_manager* dataDeviceManager = nullptr;
+    wl_data_device* dataDevice = nullptr;
 
     // input
-    wl_seat* seat;
-    wl_pointer* pointer;
-    wl_keyboard* keyboard;
+    wl_seat* seat = nullptr;
+    wl_pointer* pointer = nullptr;
+    wl_keyboard* keyboard = nullptr;
 
-    xkb_context* xkbContext;
-    xkb_keymap* xkbKeymap;
-    xkb_state* xkbState;
+    xkb_context* xkbContext = nullptr;
+    xkb_keymap* xkbKeymap = nullptr;
+    xkb_state* xkbState = nullptr;
 
     Platform& platform;
+
+    // state
+    wl_surface* pointerSurface = nullptr; // current surface the pointer is on
+    std::uint32_t pointerSerial = 0;      // the last pointer click serial
+
+    wl_surface* keyboardSurface = nullptr;
+    std::uint32_t keyboardSerial = 0;
+
+    // dragging
+    bool dragInProgress;
+    bool dragFinished;
+    wl_data_source* activeDataSource = nullptr;
+    xdg_toplevel_drag_v1* activeToplevelDrag = nullptr;
+    LinuxWindowImpl* draggedWindow = nullptr;
+    glm::vec2 dragOffset = { 0, 0 };
+    glm::vec2 dragCursorPos = { 0, 0 };
+    wl_data_offer* currentDataOffer;
+    wl_surface* dragEnterSurface;
+    wl_surface* dragOriginSurface;
+
+    friend LinuxWindowImpl;
 };
 
 }; // namespace dirk::Platform::Linux
