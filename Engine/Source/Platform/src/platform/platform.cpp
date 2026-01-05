@@ -186,26 +186,23 @@ void Platform::ImGui_ShowWindow(ImGuiViewport* viewport) {
 void Platform::ImGui_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos) {
     ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
     vd->ignoreWindowPosEventFrame = ImGui::GetFrameCount();
-    vd->window->setPosition({ pos.x, pos.y });
+    vd->window->setPosition(pos);
 }
 
 ImVec2 Platform::ImGui_GetWindowPos(ImGuiViewport* viewport) {
     ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
-    auto pos = vd->window->getPosition();
-    return pos;
+    return vd->window->getPosition();
 }
 
 void Platform::ImGui_SetWindowSize(ImGuiViewport* viewport, ImVec2 size) {
     ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
     vd->ignoreWindowSizeEventFrame = ImGui::GetFrameCount();
-    vd->window->setSize({ (uint32_t) size.x, (uint32_t) size.y });
+    vd->window->setSize(size);
 }
 
 ImVec2 Platform::ImGui_GetWindowSize(ImGuiViewport* viewport) {
     ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
-    auto size = vd->window->getSize();
-
-    return size;
+    return vd->window->getSize();
 }
 
 void Platform::ImGui_SetWindowFocus(ImGuiViewport* viewport) {
