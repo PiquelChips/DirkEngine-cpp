@@ -61,12 +61,12 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 
         platform->initImGui();
-        renderer->initImGui(platform->createTempSurface(renderer->getResources().instance));
+        renderer->ImGui_init(platform->createTempSurface(renderer->getResources().instance));
     }
 
     // initial engine state
     {
-        auto viewport = renderer->createViewport(ViewportCreateInfo{
+        auto& viewport = renderer->createViewport(ViewportCreateInfo{
             .name = "Hello World!",
             .size = vk::Extent2D(500, 500),
             .world = world,
@@ -81,10 +81,11 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         if (isRequestingExit())
             break;
 
-        tick(deltaTime);
+        if (!tick(deltaTime))
+            break;
     }
 
-    renderer->shutdownImGui();
+    renderer->ImGui_shutdown();
     platform->shutdownImGui();
 }
 
@@ -102,15 +103,26 @@ void DirkEngine::exit(const std::string& reason) {
     this->exit();
 }
 
-void DirkEngine::tick(float deltaTime) {
+bool DirkEngine::tick(float deltaTime) {
     platform->tick(deltaTime);
     // in case we fail platform event polling
     if (isRequestingExit())
-        return;
+        return false;
 
     world->tick(deltaTime);
 
     renderer->render();
+
+    // ImGui
+    {
+        renderer->ImGui_beginFrame();
+        ImGui::NewFrame();
+        renderImGui();
+        ImGui::Render();
+        renderer->ImGui_render();
+    }
+
+    return !isRequestingExit();
 }
 
 float DirkEngine::captureDeltaTime() {
@@ -125,6 +137,15 @@ float DirkEngine::captureDeltaTime() {
     // DIRK_LOG(LogDirkEngine, INFO) << "fps: " << 1.0 / deltaTime;
 
     return deltaTime;
+}
+
+void DirkEngine::renderImGui() {
+    // TODO: process all ImGui rendering
+    ImGui::ShowDemoWindow();
+
+    for (auto& viewport : renderer->getViewports()) {
+        viewport->renderImGui();
+    }
 }
 
 } // namespace dirk

@@ -236,7 +236,15 @@ void Renderer::init(vk::SurfaceKHR surface) {
     DIRK_LOG(LogVulkan, INFO, "vulkan initialized successfully");
 }
 
-void Renderer::initImGui(vk::SurfaceKHR surface) {
+Renderer::~Renderer() {
+    // make sure all device ops are finished
+    device.waitIdle();
+    DIRK_LOG(LogVulkan, INFO, "cleaning up renderer");
+
+    viewports.clear();
+}
+
+void Renderer::ImGui_init(vk::SurfaceKHR surface) {
     auto formats = physicalDevice.getSurfaceFormatsKHR(surface);
     auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
     auto swapChainImageFormat = chooseSwapSurfaceFormat(formats);
@@ -250,7 +258,7 @@ void Renderer::initImGui(vk::SurfaceKHR surface) {
     pipelineRenderingCreateInfo.pColorAttachmentFormats = &swapChainImageFormat.format;
     pipelineRenderingCreateInfo.depthAttachmentFormat = properties.depthFormat;
 
-    createImGuiWindow(nullptr);
+    ImGui_createWindow(nullptr);
 
     ImGui_ImplVulkan_InitInfo initInfo = {};
     initInfo.Instance = instance;
@@ -270,61 +278,41 @@ void Renderer::initImGui(vk::SurfaceKHR surface) {
     ImGui_ImplVulkan_Init(&initInfo);
 }
 
-void Renderer::shutdownImGui() {
-    destroyImGuiWindow(nullptr);
+void Renderer::ImGui_shutdown() {
+    ImGui_destroyWindow(nullptr);
     ImGui_ImplVulkan_Shutdown();
-}
-
-Renderer::~Renderer() {
-    // make sure all device ops are finished
-    device.waitIdle();
-    DIRK_LOG(LogVulkan, INFO, "cleaning up renderer");
-
-    viewports.clear();
 }
 
 void Renderer::render() {
     checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
     checkVulkan(device.resetFences(1, &inFlightFence));
 
-    // viewports
-    {
-        std::vector<vk::SubmitInfo> submitInfos(viewports.size());
-        for (auto& viewport : viewports) {
-            submitInfos.emplace_back(viewport->render());
-        }
-        checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
+    std::vector<vk::SubmitInfo> submitInfos(viewports.size());
+    for (auto& viewport : viewports) {
+        submitInfos.emplace_back(viewport->render());
     }
-
-    // ImGui
-    {
-        ImGui_ImplVulkan_NewFrame();
-        ImGui::NewFrame();
-
-        // TODO: process all ImGui rendering
-        ImGui::ShowDemoWindow();
-
-        for (auto& viewport : viewports) {
-            viewport->renderImGui();
-        }
-
-        ImGui::Render();
-
-        checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
-        checkVulkan(device.resetFences(1, &inFlightFence));
-
-        renderImGuiWindow(nullptr);
-
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-    }
+    checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
 }
 
-std::shared_ptr<Viewport> Renderer::createViewport(const ViewportCreateInfo& createInfo) {
-    return viewports.emplace_back(std::make_shared<Viewport>(createInfo));
+void Renderer::ImGui_beginFrame() {
+    ImGui_ImplVulkan_NewFrame();
 }
 
-void Renderer::destroyViewport(std::shared_ptr<Viewport> viewport) {
+void Renderer::ImGui_render() {
+    checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
+    checkVulkan(device.resetFences(1, &inFlightFence));
+
+    ImGui_renderWindow(nullptr);
+
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
+}
+
+std::unique_ptr<Viewport>& Renderer::createViewport(const ViewportCreateInfo& createInfo) {
+    return viewports.emplace_back(std::make_unique<Viewport>(createInfo));
+}
+
+void Renderer::destroyViewport(std::unique_ptr<Viewport>& viewport) {
     viewports.erase(std::find(viewports.begin(), viewports.end(), viewport));
 }
 
@@ -965,7 +953,7 @@ QueueFamilyIndices Renderer::findQueueFamilies(vk::PhysicalDevice device, vk::Su
     return indices;
 }
 
-void Renderer::createImGuiWindow(ImGuiViewport* viewport) {
+void Renderer::ImGui_createWindow(ImGuiViewport* viewport) {
     ImGuiViewportRendererData* vd = IM_NEW(ImGuiViewportRendererData)();
     if (viewport) {
         viewport->RendererUserData = vd;
@@ -985,7 +973,7 @@ void Renderer::createImGuiWindow(ImGuiViewport* viewport) {
     vd->commandBuffer = gEngine->getRenderer()->createCommandBuffer();
 }
 
-void Renderer::renderImGuiWindow(ImGuiViewport* viewport) {
+void Renderer::ImGui_renderWindow(ImGuiViewport* viewport) {
     ImGuiViewportRendererData* vd = nullptr;
     if (viewport) {
         vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
@@ -1105,7 +1093,7 @@ void Renderer::renderImGuiWindow(ImGuiViewport* viewport) {
         checkVulkan(result);
 }
 
-void Renderer::destroyImGuiWindow(ImGuiViewport* viewport) {
+void Renderer::ImGui_destroyWindow(ImGuiViewport* viewport) {
     ImGuiViewportRendererData* vd = nullptr;
     if (viewport) {
         vd = (ImGuiViewportRendererData*) viewport->RendererUserData;
