@@ -46,7 +46,7 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
 }
 
 Viewport::~Viewport() {
-    ImGui_ImplVulkan_RemoveTexture(descriptorSet);
+    cleanupRenderResources();
 }
 
 void Viewport::createRenderResources() {
@@ -235,6 +235,10 @@ void Viewport::createRenderResources() {
     descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, outImageMemoryView.view, (VkImageLayout) vk::ImageLayout::eShaderReadOnlyOptimal);
 }
 
+void Viewport::cleanupRenderResources() {
+    ImGui_ImplVulkan_RemoveTexture(descriptorSet);
+}
+
 vk::SubmitInfo Viewport::render() {
     auto properties = gEngine->getRenderer()->getProperties();
     commandBuffer.reset();
@@ -329,7 +333,7 @@ void Viewport::resize(vk::Extent2D inSize) {
     auto device = gEngine->getRenderer()->getResources().device;
     device.waitIdle();
 
-    ImGui_ImplVulkan_RemoveTexture(descriptorSet);
+    cleanupRenderResources();
     createRenderResources();
 }
 
