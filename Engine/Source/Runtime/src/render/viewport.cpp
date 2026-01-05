@@ -307,9 +307,15 @@ vk::SubmitInfo Viewport::render() {
 }
 
 void Viewport::renderImGui() {
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin(name.data());
-    ImGui::Image((ImTextureID) (VkDescriptorSet) descriptorSet, ImVec2(size.width, size.height));
+
+    resize(ImGui::GetContentRegionAvail());
+
+    ImGui::Image((ImTextureID) (VkDescriptorSet) descriptorSet, size);
+
     ImGui::End();
+    ImGui::PopStyleVar();
 }
 
 void Viewport::setWorld(std::shared_ptr<World> inWorld) { world = inWorld; }
