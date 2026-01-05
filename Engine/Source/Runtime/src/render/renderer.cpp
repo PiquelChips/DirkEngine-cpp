@@ -995,14 +995,16 @@ void Renderer::renderImGuiWindow(ImGuiViewport* viewport) {
         viewport = ImGui::GetMainViewport();
     }
 
+    ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
+    if (viewport->PlatformRequestResize || vd->swapChainExtent != static_cast<vk::Extent2D>(platformIO.Platform_GetWindowSize(viewport)))
+        vd->swapchainNeedsRecreation = true;
+
     if (vd->swapchainNeedsRecreation) {
-        ImGuiPlatformIO& platformIO = ImGui::GetPlatformIO();
-        auto size = platformIO.Platform_GetWindowSize(viewport);
         SwapChainCreateInfo swapChainInfo{
             .swapChain = vd->swapchain,
             .swapChainExtent = vd->swapChainExtent,
             .surface = vd->surface,
-            .windowSize = { static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y) },
+            .windowSize = platformIO.Platform_GetWindowSize(viewport),
             .surfaceFormat = vd->surfaceFormat,
             .presentMode = vd->presentMode
         };
