@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "engine/world.hpp"
+#include "imgui.h"
 #include "render/renderer.hpp"
 #include "render/viewport.hpp"
 #include "vulkan/vulkan_structs.hpp"
@@ -140,12 +141,27 @@ float DirkEngine::captureDeltaTime() {
 }
 
 void DirkEngine::renderImGui() {
-    // TODO: process all ImGui rendering
-    ImGui::ShowDemoWindow();
+    // Make main parent window
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking;
+
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->Pos);
+    ImGui::SetNextWindowSize(viewport->Size);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    windowFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+    ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4{ .0f, .0f, .0f, .0f });
+    ImGui::Begin("DockSpace", nullptr, windowFlags);
+    ImGui::PopStyleColor(); // MenuBarBg
+
+    ImGui::DockSpace(ImGui::GetID("DirkDockspace"));
 
     for (auto& viewport : renderer->getViewports()) {
         viewport->renderImGui();
     }
+
+    ImGui::End();
 }
 
 } // namespace dirk
