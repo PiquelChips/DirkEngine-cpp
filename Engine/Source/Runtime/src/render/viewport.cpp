@@ -318,6 +318,21 @@ void Viewport::renderImGui() {
     ImGui::PopStyleVar();
 }
 
+void Viewport::resize(vk::Extent2D inSize) {
+    if ((inSize.width == size.width && inSize.height == size.height) || inSize.width == 0 || inSize.height == 0) {
+        return;
+    }
+
+    size = inSize;
+    camera->resize(size);
+
+    auto device = gEngine->getRenderer()->getResources().device;
+    device.waitIdle();
+
+    ImGui_ImplVulkan_RemoveTexture(descriptorSet);
+    createRenderResources();
+}
+
 void Viewport::setWorld(std::shared_ptr<World> inWorld) { world = inWorld; }
 
 } // namespace dirk

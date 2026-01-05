@@ -37,7 +37,7 @@ public:
 
     vk::SubmitInfo render();
     void renderImGui();
-    void resize(vk::Extent2D inSize) { size = inSize; }
+    void resize(vk::Extent2D inSize);
 
 private:
     // this will create render pass, pipeline and all associated stuff. this should only be called
