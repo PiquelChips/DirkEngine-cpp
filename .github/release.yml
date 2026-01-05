@@ -2,7 +2,6 @@ changelog:
   exclude:
     labels:
       - documentation
-      - ci-cd
   categories:
     - title: Build Tool
       labels:
