@@ -1,9 +1,9 @@
+#include "core.hpp"
+
 #include "glm/glm.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
-
-#include "common.hpp"
 
 #include <memory>
 #include <string_view>

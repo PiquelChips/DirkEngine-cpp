@@ -1,17 +1,19 @@
 #include "render/viewport.hpp"
 #include "asserts.hpp"
-#include "backends/imgui_impl_vulkan.h"
-#include "common.hpp"
+#include "core.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
-#include "glm/trigonometric.hpp"
-#include "imgui.h"
 #include "render/camera.hpp"
 #include "render/renderer.hpp"
+
+#include "backends/imgui_impl_vulkan.h"
+#include "glm/trigonometric.hpp"
+#include "imgui.h"
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_handles.hpp"
 #include "vulkan/vulkan_structs.hpp"
+
 #include <memory>
 
 namespace dirk {

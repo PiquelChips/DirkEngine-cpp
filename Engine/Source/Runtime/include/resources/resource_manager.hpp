@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "core.hpp"
 #include "render/render_types.hpp"
 
 #include <memory>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "core.hpp"
 
 #include "glm/glm.hpp"
 #include "glm/gtx/hash.hpp"

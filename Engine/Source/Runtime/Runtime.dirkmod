@@ -2,7 +2,7 @@
     "name": "Runtime",
     "standard": "c++23",
     "dependencies": [
-        "Common",
+        "Core",
         "Shaders",
         "Platform",
         "glm",

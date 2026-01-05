@@ -1,4 +1,4 @@
-#include "common.hpp"
+#include "core.hpp"
 
 namespace dirk {
 DEFINE_LOG_CATEGORY(LogDirk);

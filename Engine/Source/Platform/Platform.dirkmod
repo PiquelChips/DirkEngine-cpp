@@ -2,7 +2,7 @@
     "name": "Platform",
     "standard": "c++23",
     "dependencies": [
-        "Common",
+        "Core",
         "vulkan",
         "glm",
         "ImGui",

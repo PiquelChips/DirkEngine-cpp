@@ -1,7 +1,7 @@
 #ifdef PLATFORM_LINUX
 
 #include "platform/linux/window.hpp"
-#include "common.hpp"
+#include "core.hpp"
 #include "logging/logging.hpp"
 #include "platform/linux/linux.hpp"
 #include "platform/platform.hpp"

@@ -1,12 +1,12 @@
 #pragma once
 
+#include "actor.hpp"
+#include "core.hpp"
+#include "platform/platform.hpp"
+
 #include <chrono>
 #include <memory>
 #include <vector>
-
-#include "actor.hpp"
-#include "common.hpp"
-#include "platform/platform.hpp"
 
 namespace dirk {
 

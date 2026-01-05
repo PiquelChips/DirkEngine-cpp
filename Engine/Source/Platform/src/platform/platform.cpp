@@ -1,5 +1,5 @@
 #include "platform/platform.hpp"
-#include "common.hpp"
+#include "core.hpp"
 #include "platform/monitor.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_handles.hpp"

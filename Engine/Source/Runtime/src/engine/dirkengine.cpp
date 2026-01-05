@@ -1,6 +1,6 @@
 #include "engine/dirkengine.hpp"
 
-#include "common.hpp"
+#include "core.hpp"
 #include "engine/world.hpp"
 #include "imgui.h"
 #include "render/renderer.hpp"

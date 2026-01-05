@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "core.hpp"
 #include "input/keys.hpp"
 #include "monitor.hpp"
 
