@@ -5,7 +5,7 @@ the fascinating technologies that go into game development. This project is just
 or any kind of production ready system (this could change in the future if this repository gets enough traction).
 Any contribution/feedback is greatly appreciated!
 
-## <!-- line separator -->
+##
 
 > [!IMPORTANT]
 > Don't forget to check out the [contribution guidelines](/.github/CONTRIBUTING.md) and the
@@ -17,22 +17,27 @@ Any contribution/feedback is greatly appreciated!
 > The **DirkEngine** uses a custom build system. This build system is only available on Linux.
 > Feel free to add compatibility with another platform.
 
+> [!IMPORTANT]
+> On Linux, the **DirkEngine** only supports wayland compositors. Adding X11 compatibility is not planned.
+
 ### Prerequisits
 
-1. The [**gcc**](https://gcc.gnu.org/) compiler toolchain.
+1. The [**gcc**](https://gcc.gnu.org/) compiler toolchain (we use **g++**).
 2. The [**Go**](https://go.dev/) compiler.
-3. GUN [**Make**](https://www.gnu.org/software/make/).
+3. [**GUN Make**](https://www.gnu.org/software/make/).
 4. The [**Vulkan SDK**](https://vulkan.lunarg.com/) that we use for the renderer backend. You can follow [this](https://vulkan.lunarg.com/doc/view/latest/windows/getting_started.html) tutorial for SDK instalation.
-   The SDK should be in the `VULKAN_SDK` environmment variable.
+   The `lib` dir of the SDK should be in `LD_LIBRARY_PATH` or any other environment variable specified in build tool config.
+5. If on Linux, [**xkbcommon**](https://xkbcommon.org/) in `LD_LIBRARY_PATH` or any other environment variable specified in build tool config.
+6. If on Linux, `wayland-client` needs to be available in `LD_LIBRARY_PATH` or any other environment variable specified in build tool config.
 
 ### Building the project
 
 Run `make build` to build or `make` to build and run.
-Binaries will be located in the `Binaries` directory.
+Binaries will be located in the `Engine/Binaries` directory.
 
 ## Roadmap
 
-You can checkout the dedicated [**Github Project**](https://github.com/users/PiquelChips/projects/3) to understand the
+You can check out the dedicated [**Github Project**](https://github.com/users/PiquelChips/projects/3) to understand the
 current direction of development.
 
 ## Contact
