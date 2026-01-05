@@ -41,11 +41,15 @@ private:
     std::shared_ptr<World> world;
 
 private:
-    void tick(float deltaTime);
+    bool tick(float deltaTime);
     float captureDeltaTime();
+    void renderImGui(float deltaTime);
 
     std::chrono::high_resolution_clock::time_point lastTick;
     bool requestingExit = false;
+
+    // ImGui UI state
+    bool showDemoWindow, showStyleEditor;
 };
 
 } // namespace dirk

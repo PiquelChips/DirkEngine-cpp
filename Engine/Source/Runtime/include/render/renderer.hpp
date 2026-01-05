@@ -60,12 +60,16 @@ public:
     ~Renderer();
 
     void init(vk::SurfaceKHR surface);
-    void initImGui(vk::SurfaceKHR surface);
+    void ImGui_init(vk::SurfaceKHR surface);
     void render();
-    void shutdownImGui();
+    void ImGui_shutdown();
 
-    std::shared_ptr<Viewport> createViewport(const ViewportCreateInfo& createInfo);
-    void destroyViewport(std::shared_ptr<Viewport> viewport);
+    void ImGui_beginFrame();
+    void ImGui_render();
+
+    std::unique_ptr<Viewport>& createViewport(const ViewportCreateInfo& createInfo);
+    void destroyViewport(std::unique_ptr<Viewport>& viewport);
+    std::vector<std::unique_ptr<Viewport>>& getViewports() { return viewports; }
 
     std::vector<SwapchainImage> createSwapChain(const SwapChainCreateInfo& createInfo);
 
@@ -91,7 +95,7 @@ public:
     vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities);
 
 private:
-    std::vector<std::shared_ptr<Viewport>> viewports;
+    std::vector<std::unique_ptr<Viewport>> viewports;
     ImGuiViewportRendererData* mainViewportData = nullptr; // TODO: remove for custom backend
 
 private:
@@ -101,9 +105,9 @@ private:
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 
-    void createImGuiWindow(ImGuiViewport* viewport);
-    void renderImGuiWindow(ImGuiViewport* viewport);
-    void destroyImGuiWindow(ImGuiViewport* viewport);
+    void ImGui_createWindow(ImGuiViewport* viewport);
+    void ImGui_renderWindow(ImGuiViewport* viewport);
+    void ImGui_destroyWindow(ImGuiViewport* viewport);
 
 #ifdef ENABLE_VALIDATION_LAYERS
 private:

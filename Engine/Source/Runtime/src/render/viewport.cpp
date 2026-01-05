@@ -46,7 +46,7 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
 }
 
 Viewport::~Viewport() {
-    ImGui_ImplVulkan_RemoveTexture(descriptorSet);
+    cleanupRenderResources();
 }
 
 void Viewport::createRenderResources() {
@@ -235,6 +235,10 @@ void Viewport::createRenderResources() {
     descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, outImageMemoryView.view, (VkImageLayout) vk::ImageLayout::eShaderReadOnlyOptimal);
 }
 
+void Viewport::cleanupRenderResources() {
+    ImGui_ImplVulkan_RemoveTexture(descriptorSet);
+}
+
 vk::SubmitInfo Viewport::render() {
     auto properties = gEngine->getRenderer()->getProperties();
     commandBuffer.reset();
@@ -307,9 +311,30 @@ vk::SubmitInfo Viewport::render() {
 }
 
 void Viewport::renderImGui() {
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin(name.data());
-    ImGui::Image((ImTextureID) (VkDescriptorSet) descriptorSet, ImVec2(size.width, size.height));
+
+    resize(ImGui::GetContentRegionAvail());
+
+    ImGui::Image((ImTextureID) (VkDescriptorSet) descriptorSet, size);
+
     ImGui::End();
+    ImGui::PopStyleVar();
+}
+
+void Viewport::resize(vk::Extent2D inSize) {
+    if ((inSize.width == size.width && inSize.height == size.height) || inSize.width == 0 || inSize.height == 0) {
+        return;
+    }
+
+    size = inSize;
+    camera->resize(size);
+
+    auto device = gEngine->getRenderer()->getResources().device;
+    device.waitIdle();
+
+    cleanupRenderResources();
+    createRenderResources();
 }
 
 void Viewport::setWorld(std::shared_ptr<World> inWorld) { world = inWorld; }
