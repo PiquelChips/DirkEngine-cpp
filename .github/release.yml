@@ -7,6 +7,9 @@ changelog:
     - title: Build Tool
       labels:
         - build-tool
+    - title: Rendering
+      labels:
+        - renderer
     - title: Platform
       labels:
         - platform
