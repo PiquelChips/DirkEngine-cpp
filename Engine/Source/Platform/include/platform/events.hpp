@@ -52,18 +52,33 @@ class KeyboardKeyPlatformEvent : public Event {
 public:
     DEFINE_EVENT_TYPE(KeyboardKeyPlatformEvent);
 
-    KeyboardKeyPlatformEvent(Input::Key key, Input::KeyState state) : key(key), state(state) {}
+    KeyboardKeyPlatformEvent(ImGuiViewport* viewport, Input::Key key, Input::KeyState state)
+        : viewport(viewport), key(key), state(state) {}
 
+    ImGuiViewport* viewport;
     Input::Key key;
     Input::KeyState state;
+};
+
+class KeyboardCharPlatformEvent : public Event {
+public:
+    DEFINE_EVENT_TYPE(KeyboardCharPlatformEvent);
+
+    KeyboardCharPlatformEvent(ImGuiViewport* viewport, unsigned int c)
+        : viewport(viewport), c(c) {}
+
+    ImGuiViewport* viewport;
+    unsigned int c;
 };
 
 class MouseButtonPlatformEvent : public Event {
 public:
     DEFINE_EVENT_TYPE(MouseButtonPlatformEvent);
 
-    MouseButtonPlatformEvent(Input::MouseButton key, Input::KeyState state) : key(key), state(state) {}
+    MouseButtonPlatformEvent(ImGuiViewport* viewport, Input::MouseButton key, Input::KeyState state)
+        : viewport(viewport), key(key), state(state) {}
 
+    ImGuiViewport* viewport;
     Input::MouseButton key;
     Input::KeyState state;
 };
@@ -72,8 +87,10 @@ class MouseMovePlatformEvent : public Event {
 public:
     DEFINE_EVENT_TYPE(MouseMovePlatformEvent);
 
-    MouseMovePlatformEvent(glm::vec2 position) : position(position) {}
+    MouseMovePlatformEvent(ImGuiViewport* viewport, glm::vec2 position)
+        : viewport(viewport), position(position) {}
 
+    ImGuiViewport* viewport;
     glm::vec2 position{ .0f, .0f };
 };
 
@@ -81,8 +98,10 @@ class MouseScrollPlatformEvent : public Event {
 public:
     DEFINE_EVENT_TYPE(MouseScrollPlatformEvent);
 
-    MouseScrollPlatformEvent(glm::vec2 offset) : offset(offset) {}
+    MouseScrollPlatformEvent(ImGuiViewport* viewport, glm::vec2 offset)
+        : viewport(viewport), offset(offset) {}
 
+    ImGuiViewport* viewport;
     glm::vec2 offset{ .0f, .0f };
 };
 
