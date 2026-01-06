@@ -9,8 +9,6 @@
 
 namespace dirk {
 
-struct EventHandle {};
-
 #define DIRK_DISPATCH_EVENT(event, ...) dirk::gEngine->getEventManager()->submitEvent(std::make_unique<event>(__VA_ARGS__));
 
 DECLARE_LOG_CATEGORY_EXTERN(LogEvents)
