@@ -113,8 +113,8 @@ bool DirkEngine::tick(float deltaTime) {
         return false;
 
     eventManager->dispatchEvents();
-
     world->tick(deltaTime);
+    mainViewport->tick(deltaTime);
 
     return !isRequestingExit();
 }

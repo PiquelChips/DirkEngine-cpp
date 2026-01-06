@@ -36,6 +36,7 @@ public:
     vk::Extent2D getSize() const { return size; }
     vk::Semaphore getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
 
+    void tick(float deltaTime);
     vk::SubmitInfo render();
     void renderImGui();
     void resize(vk::Extent2D inSize);

@@ -56,6 +56,10 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
     createRenderResources();
 }
 
+void Viewport::tick(float deltaTime) {
+    camera->tick(deltaTime);
+}
+
 Viewport::~Viewport() {
     cleanupRenderResources();
 }
