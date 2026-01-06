@@ -136,7 +136,7 @@ func (c *moduleConfig) toModule(buildConfig *config.BuildConfig) Module {
 			maps.Copy(c.Defines, buildConfig.Mode.Defines)
 		}
 
-		c.Defines["SAVED_DIR"] = fmt.Sprintf("%s/%s/%s", config.Dirs.Saved, buildConfig.Target, buildConfig.Mode.Name)
+		c.Defines["SAVED_DIR"] = fmt.Sprintf("%s/%s/%s", config.Dirs.Saved, buildConfig.Target.Name, buildConfig.Mode.Name)
 		c.Defines["SHADERS_DIR"] = fmt.Sprintf("%s/Shaders", config.Dirs.Intermediate)
 		c.Defines["ASSETS_DIR"] = config.Dirs.Assets
 
