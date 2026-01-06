@@ -1,10 +1,10 @@
 #include "engine/actor.hpp"
 
+#include "core.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
 #include "render/camera.hpp"
 #include "render/render_types.hpp"
-#include "render/renderer.hpp"
 
 #include "resources/resource_manager.hpp"
 #include "vulkan/vulkan_enums.hpp"
@@ -16,10 +16,10 @@
 namespace dirk {
 
 Actor::Actor(const ActorCreateInfo& spawnInfo, World& world)
-    : world(world),
-      name(spawnInfo.name),
-      transform(spawnInfo.transform),
-      transformMatrix(transform.getMatrix()) {
+    : transform(spawnInfo.transform),
+      transformMatrix(transform.getMatrix()),
+      world(world),
+      name(spawnInfo.name) {
     setModel(spawnInfo.modelName);
 }
 
@@ -28,7 +28,9 @@ void Actor::setModel(const std::string_view name) {
     updateData();
 }
 
-void Actor::tick(float deltaTime) {}
+void Actor::tick(float deltaTime) {
+    DIRK_UNUSED(deltaTime);
+}
 
 void Actor::destroy() {
     getWorld().destroyActor(this);

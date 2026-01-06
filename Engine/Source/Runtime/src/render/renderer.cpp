@@ -153,7 +153,7 @@ void Renderer::init(vk::SurfaceKHR surface) {
         std::set<uint32_t> uniqueQueueFamilies = { properties.queueFamilyIndices.graphicsFamily.value(), properties.queueFamilyIndices.presentFamily.value() };
         std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos(uniqueQueueFamilies.size());
         float queuePriority = 1.f;
-        for (int i = 0; i < uniqueQueueFamilies.size(); i++) {
+        for (size_t i = 0; i < uniqueQueueFamilies.size(); i++) {
             std::set<uint32_t>::iterator iter = uniqueQueueFamilies.find(i);
             if (iter == uniqueQueueFamilies.end()) {
                 DIRK_LOG(LogVulkan, FATAL, "error creating logical device");
@@ -354,7 +354,7 @@ std::vector<SwapchainImage> Renderer::createSwapChain(const SwapChainCreateInfo&
 
     std::vector<SwapchainImage> swapImages(images.size());
 
-    for (int i = 0; i < images.size(); i++) {
+    for (size_t i = 0; i < images.size(); i++) {
         auto commandBuffer = beginSingleTimeCommands();
         transitionImageLayout(commandBuffer, images[i], createInfo.surfaceFormat.format, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
         endSingleTimeCommands(commandBuffer, queues.graphicsQueue);
@@ -533,6 +533,8 @@ vk::Bool32 Renderer::debugCallback(
     vk::DebugUtilsMessageTypeFlagsEXT messageType,
     const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
+    DIRK_UNUSED(messageType);
+    DIRK_UNUSED(pUserData);
 
     switch (messageSeverity) {
     case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
@@ -986,7 +988,7 @@ void Renderer::ImGui_renderWindow(ImGuiViewport* viewport) {
         vd->swapChainImages = createSwapChain(swapChainInfo);
 
         vd->semaphores.resize(vd->swapChainImages.size());
-        for (int i = 0; i < vd->semaphores.size(); i++) {
+        for (size_t i = 0; i < vd->semaphores.size(); i++) {
             vd->semaphores[i] = std::tuple(createSemaphore(), createSemaphore());
         }
 

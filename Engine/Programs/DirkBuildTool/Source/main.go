@@ -14,6 +14,11 @@ func usage() {
 	fmt.Printf("usage: DirkBuildTool [target] [build type]\n")
 }
 
+const (
+	defaultTarget    = "Editor"
+	defaultBuildType = "Development"
+)
+
 func main() {
 	if err := config.LoadConfig(); err != nil {
 		panic(err)
@@ -31,11 +36,11 @@ func main() {
 	buildType := ""
 	switch len(os.Args) {
 	case 1:
-		target = "Editor"
-		buildType = "Development"
+		target = defaultTarget
+		buildType = defaultBuildType
 	case 2:
 		target = os.Args[1]
-		buildType = "Development"
+		buildType = defaultBuildType
 	case 3:
 		target = os.Args[1]
 		buildType = os.Args[2]

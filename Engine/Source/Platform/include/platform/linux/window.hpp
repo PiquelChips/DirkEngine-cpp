@@ -43,12 +43,12 @@ private:
     static void xdg_ToplevelClose(void* data, xdg_toplevel* toplevel);
 
 private:
+    LinuxPlatformImpl& linuxPlatform;
+
     // window properties
     vk::Extent2D size;
     std::string_view title;
     bool decorated;
-
-    LinuxPlatformImpl& linuxPlatform;
 
     wl_surface* wlSurface = nullptr;
     xdg_surface* xdgSurface = nullptr;
@@ -61,7 +61,7 @@ private:
     bool fullscreen = false;
 
     glm::vec2 pos;
-    glm::vec2 savedPos; // saved on fullscreen to restore previous position
+    glm::vec2 savedPos = { 0.f, 0.f }; // saved on fullscreen to restore previous position
 
     friend LinuxPlatformImpl;
 };

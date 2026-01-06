@@ -243,6 +243,7 @@ void LinuxWindowImpl::xdg_ToplevelConfigure(void* data, xdg_toplevel* toplevel, 
 }
 
 void LinuxWindowImpl::xdg_ToplevelClose(void* data, xdg_toplevel* toplevel) {
+    DIRK_UNUSED(toplevel);
     auto* window = static_cast<LinuxWindowImpl*>(data);
     auto* viewport = ImGui::FindViewportByPlatformHandle(window->wlSurface);
     check(viewport);
