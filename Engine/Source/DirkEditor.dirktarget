@@ -1,7 +1,8 @@
 {
     "name": "DirkEditor",
     "modules": [
-        "Editor"
+        "Editor",
+        "Entrypoint"
     ],
     "defines": {
         "WITH_EDITOR": ""

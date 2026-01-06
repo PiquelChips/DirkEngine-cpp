@@ -1,0 +1,7 @@
+{
+    "name": "DirkEditor",
+    "modules": [
+        "Runtime",
+        "Entrypoint"
+    ]
+}
