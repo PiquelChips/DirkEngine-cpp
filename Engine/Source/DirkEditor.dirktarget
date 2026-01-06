@@ -1,0 +1,9 @@
+{
+    "name": "DirkEditor",
+    "defines": {
+        "WITH_EDITOR": ""
+    },
+    "modules": [
+        "Editor"
+    ]
+}
