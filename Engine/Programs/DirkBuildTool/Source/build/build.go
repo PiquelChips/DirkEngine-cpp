@@ -28,6 +28,10 @@ func Build(buildConfig *config.BuildConfig) error {
 	}
 
 	defines := buildConfig.Target.Defines
+	if defines == nil {
+		defines = config.Defines{}
+	}
+
 	for _, mod := range buildModules {
 		if mod.GetDefines() != nil {
 			maps.Copy(defines, mod.GetDefines())
