@@ -180,8 +180,10 @@ void Platform::ImGui_DestroyWindow(ImGuiViewport* viewport) {
     // because we will not receive any release events after window is destroyed.
     if (vd->windowOwned) {
         for (int i = 0; i < bd->keyOwnerWindows.size(); i++)
-            if (bd->keyOwnerWindows[i] == vd->window.get())
-                bd->platform->keyCallback(viewport, (Input::Key) i, Input::KeyState::Released);
+            if (bd->keyOwnerWindows[i] == vd->window.get()) {
+                auto* eventManager = gEngine->getEventManager();
+                eventManager->submitEvent(std::make_unique<KeyboardKeyPlatformEvent>(viewport, (Input::Key) i, Input::KeyState::Released));
+            }
         vd->window = nullptr;
     }
 
@@ -254,107 +256,117 @@ void Platform::ImGui_SetClipboardText(ImGuiContext* ctx, const char* text) {
     data->platform->setClipboardText(text);
 }
 
-void Platform::windowSizeCallback(ImGuiViewport* viewport, vk::Extent2D inSize) {
-    check(viewport);
-    ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
+bool Platform::Event_WindowResize(WindowResizeEvent& event) {
+    check(event.viewport);
+    ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) event.viewport->PlatformUserData;
     check(vd);
 
     if (ImGui::GetFrameCount() <= vd->ignoreWindowSizeEventFrame + 1)
-        return;
+        return true;
 
-    viewport->PlatformRequestResize = true;
+    event.viewport->PlatformRequestResize = true;
+    return true;
 }
 
-void Platform::windowMoveCallback(ImGuiViewport* viewport) {
-    check(viewport);
-    ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
+bool Platform::Event_WindowMove(WindowMoveEvent& event) {
+    check(event.viewport);
+    ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) event.viewport->PlatformUserData;
     check(vd);
 
     if (ImGui::GetFrameCount() <= vd->ignoreWindowPosEventFrame + 1)
-        return;
+        return true;
 
-    viewport->PlatformRequestMove = true;
+    event.viewport->PlatformRequestMove = true;
+    return true;
 }
 
-void Platform::windowCloseCallback(ImGuiViewport* viewport) {
+bool Platform::Event_WindowClose(WindowCloseEvent& event) {
     auto* bd = getBackendData();
-    check(viewport);
-    viewport->PlatformRequestClose = true;
+    check(event.viewport);
+    event.viewport->PlatformRequestClose = true;
 
-    auto* vd = static_cast<ImGuiViewportPlatformData*>(viewport->PlatformUserData);
+    auto* vd = static_cast<ImGuiViewportPlatformData*>(event.viewport->PlatformUserData);
     check(vd);
 
     if (vd->window.get() == bd->mainWindow)
         gEngine->exit("main window closed");
+
+    return true;
 }
 
-void Platform::focusWindowCallback(ImGuiViewport* viewport, bool focused) {
+bool Platform::Event_WindowFocus(WindowFocusEvent& event) {
     auto* bd = getBackendData();
 
     ImGuiIO& io = ImGui::GetIO(bd->context);
-    io.AddFocusEvent(focused);
+    io.AddFocusEvent(event.focused);
 
-    check(viewport);
-    io.AddMouseViewportEvent(viewport->ID);
+    check(event.viewport);
+    io.AddMouseViewportEvent(event.viewport->ID);
+    return true;
 }
 
-void Platform::cursorPosCallback(ImGuiViewport* viewport, glm::vec2 pos) {
+bool Platform::Event_MouseMove(MouseMovePlatformEvent& event) {
     ImGuiPlatformData* bd = getBackendData();
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
-    check(viewport);
-    io.AddMouseViewportEvent(viewport->ID);
+    check(event.viewport);
+    io.AddMouseViewportEvent(event.viewport->ID);
 
-    bd->platform->mouseLocalPos = pos;
+    bd->platform->mouseLocalPos = event.position;
 
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        pos += static_cast<glm::vec2>(viewport->Pos);
+        event.position += static_cast<glm::vec2>(event.viewport->Pos);
     }
 
     io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
-    io.AddMousePosEvent(pos.x, pos.y);
+    io.AddMousePosEvent(event.position.x, event.position.y);
+    return true;
 }
 
-void Platform::mouseButtonCallback(ImGuiViewport* viewport, Input::MouseButton button, Input::KeyState action) {
+bool Platform::Event_MouseButton(MouseButtonPlatformEvent& event) {
     ImGuiPlatformData* bd = getBackendData();
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
-    check(viewport);
-    io.AddMouseViewportEvent(viewport->ID);
+    check(event.viewport);
+    io.AddMouseViewportEvent(event.viewport->ID);
 
     io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
-    io.AddMouseButtonEvent((int) button, action == Input::KeyState::Pressed);
+    io.AddMouseButtonEvent((int) event.button, event.state == Input::KeyState::Pressed);
+    return true;
 }
 
-void Platform::mouseScrollCallback(ImGuiViewport* viewport, glm::vec2 offset) {
+bool Platform::Event_MouseScroll(MouseScrollPlatformEvent& event) {
     ImGuiPlatformData* bd = getBackendData();
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
-    check(viewport);
-    io.AddMouseViewportEvent(viewport->ID);
+    check(event.viewport);
+    io.AddMouseViewportEvent(event.viewport->ID);
 
     io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
-    io.AddMouseWheelEvent(offset.x, offset.y);
+    io.AddMouseWheelEvent(event.offset.x, event.offset.y);
+    return true;
 }
 
-void Platform::keyCallback(ImGuiViewport* viewport, Input::Key key, Input::KeyState action) {
+bool Platform::Event_KeyboardKey(KeyboardKeyPlatformEvent& event) {
     ImGuiPlatformData* bd = getBackendData();
     ImGuiIO& io = ImGui::GetIO(bd->context);
 
-    if (action != Input::KeyState::Pressed && action != Input::KeyState::Released)
-        return;
+    if (event.state != Input::KeyState::Pressed && event.state != Input::KeyState::Released)
+        return true;
 
-    auto* vd = static_cast<ImGuiViewportPlatformData*>(viewport->PlatformUserData);
+    auto* vd = static_cast<ImGuiViewportPlatformData*>(event.viewport->PlatformUserData);
     check(vd);
-    bd->keyOwnerWindows[key] = (action == Input::KeyState::Pressed) ? vd->window.get() : nullptr;
+    bd->keyOwnerWindows[event.key] = (event.state == Input::KeyState::Pressed) ? vd->window.get() : nullptr;
 
-    io.AddKeyEvent(keyToImGuiKey(key), (action == Input::KeyState::Pressed));
+    io.AddKeyEvent(keyToImGuiKey(event.key), (event.state == Input::KeyState::Pressed));
+    return true;
 }
 
-void Platform::charCallback(ImGuiViewport* viewport, unsigned int c) {
+bool Platform::Event_KeyboardChar(KeyboardCharPlatformEvent& event) {
     ImGuiPlatformData* bd = getBackendData();
     ImGuiIO& io = ImGui::GetIO(bd->context);
-    io.AddInputCharacter(c);
+    io.AddInputCharacter(event.c);
+    return true;
 }
 
 ImGuiPlatformData* Platform::getBackendData() {
