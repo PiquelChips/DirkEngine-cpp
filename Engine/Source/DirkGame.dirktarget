@@ -1,5 +1,5 @@
 {
-    "name": "DirkEditor",
+    "name": "DirkGame",
     "modules": [
         "Runtime",
         "Entrypoint"
