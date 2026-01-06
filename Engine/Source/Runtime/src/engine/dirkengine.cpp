@@ -171,7 +171,7 @@ void DirkEngine::renderImGui(float deltaTime) {
     ImGui::End();
 
     if (showDemoWindow)
-        ImGui::ShowDemoWindow();
+        ImGui::ShowDemoWindow(&showDemoWindow);
 
     if (showStyleEditor) {
         ImGui::Begin("ImGui style editor", &showStyleEditor);
