@@ -143,15 +143,15 @@ private:
     static void ImGui_SetClipboardText(ImGuiContext* ctx, const char* text);
 
     // callbacks for platform events
-    static bool Event_WindowSizeCallback(WindowResizeEvent& event);
-    static bool Event_WindowMoveCallback(WindowMoveEvent& event);
-    static bool Event_WindowCloseCallback(WindowCloseEvent& event);
-    static bool Event_WindowFocusCallback(WindowFocusEvent& event);
-    static bool Event_MouseMoveCallback(MouseMovePlatformEvent& event);
-    static bool Event_MouseButtonCallback(MouseButtonPlatformEvent& event);
-    static bool Event_MouseScrollCallback(MouseScrollPlatformEvent& event);
-    static bool Event_KeyCallback(KeyboardKeyPlatformEvent& event);
-    static bool Event_CharCallback(KeyboardCharPlatformEvent& event);
+    static bool Event_WindowResize(WindowResizeEvent& event);
+    static bool Event_WindowMove(WindowMoveEvent& event);
+    static bool Event_WindowClose(WindowCloseEvent& event);
+    static bool Event_WindowFocus(WindowFocusEvent& event);
+    static bool Event_MouseMove(MouseMovePlatformEvent& event);
+    static bool Event_MouseButton(MouseButtonPlatformEvent& event);
+    static bool Event_MouseScroll(MouseScrollPlatformEvent& event);
+    static bool Event_KeyboardKey(KeyboardKeyPlatformEvent& event);
+    static bool Event_KeyboardChar(KeyboardCharPlatformEvent& event);
 
     static ImGuiPlatformData* getBackendData();
 
