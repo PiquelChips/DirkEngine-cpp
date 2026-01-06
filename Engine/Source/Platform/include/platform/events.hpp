@@ -75,11 +75,11 @@ class MouseButtonPlatformEvent : public Event {
 public:
     DEFINE_EVENT_TYPE(MouseButtonPlatformEvent);
 
-    MouseButtonPlatformEvent(ImGuiViewport* viewport, Input::MouseButton key, Input::KeyState state)
-        : viewport(viewport), key(key), state(state) {}
+    MouseButtonPlatformEvent(ImGuiViewport* viewport, Input::MouseButton button, Input::KeyState state)
+        : viewport(viewport), button(button), state(state) {}
 
     ImGuiViewport* viewport;
-    Input::MouseButton key;
+    Input::MouseButton button;
     Input::KeyState state;
 };
 
