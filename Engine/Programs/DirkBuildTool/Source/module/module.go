@@ -52,23 +52,14 @@ func Load(path, name string, buildConfig *config.BuildConfig) (Module, error) {
 	return mod.toModule(buildConfig), nil
 }
 
-func Build(mods []Module) error {
-	for _, mod := range mods {
-		if err := build(mod); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func build(m Module) error {
+func Build(m Module) error {
 	if m.IsBuilt() {
 		return nil
 	}
 
 	if cppMod, ok := m.(*CppModule); ok {
 		for _, mod := range cppMod.Dependencies {
-			if err := build(mod); err != nil {
+			if err := Build(mod); err != nil {
 				return err
 			}
 		}
