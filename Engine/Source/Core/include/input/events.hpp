@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Events/Event.hpp"
-#include "Events/EventManager.hpp"
 #include "keys.hpp"
 
 #include "glm/glm.hpp"
+#include <format>
 
 namespace dirk::Input {
 
@@ -22,12 +22,14 @@ class MouseButtonEvent : public Event {
 public:
     DEFINE_EVENT_TYPE(MouseButtonEvent);
 
-    MouseButtonEvent(Input::MouseButton key, Input::KeyState state) : key(key), state(state) {}
+    MouseButtonEvent(Input::MouseButton button, Input::KeyState state) : button(button), state(state) {}
 
-    Input::MouseButton key;
+    Input::MouseButton button;
     Input::KeyState state;
 };
 
+// TODO: overhaul input routing to viewports
+/*
 class MouseMoveEvent : public Event {
 public:
     DEFINE_EVENT_TYPE(MouseMoveEvent);
@@ -39,6 +41,7 @@ public:
     // offset is the difference between previous position & current position
     glm::vec2 offset{ .0f, .0f };
 };
+*/
 
 class MouseScrollEvent : public Event {
 public:

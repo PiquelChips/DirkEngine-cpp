@@ -1,6 +1,7 @@
 #include "platform/platform.hpp"
 #include "Events/EventManager.hpp"
 #include "core.hpp"
+#include "input/events.hpp"
 #include "platform/events.hpp"
 #include "platform/monitor.hpp"
 #include "vulkan/vulkan.hpp"
@@ -333,6 +334,8 @@ bool Platform::Event_MouseButton(MouseButtonPlatformEvent& event) {
 
     io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
     io.AddMouseButtonEvent((int) event.button, event.state == Input::KeyState::Pressed);
+
+    DIRK_DISPATCH_EVENT(Input::MouseButtonEvent, event.button, event.state);
     return true;
 }
 
@@ -345,6 +348,8 @@ bool Platform::Event_MouseScroll(MouseScrollPlatformEvent& event) {
 
     io.AddMouseSourceEvent(ImGuiMouseSource_Mouse);
     io.AddMouseWheelEvent(event.offset.x, event.offset.y);
+
+    DIRK_DISPATCH_EVENT(Input::MouseScrollEvent, event.offset);
     return true;
 }
 
@@ -360,6 +365,8 @@ bool Platform::Event_KeyboardKey(KeyboardKeyPlatformEvent& event) {
     bd->keyOwnerWindows[event.key] = (event.state == Input::KeyState::Pressed) ? vd->window.get() : nullptr;
 
     io.AddKeyEvent(keyToImGuiKey(event.key), (event.state == Input::KeyState::Pressed));
+
+    DIRK_DISPATCH_EVENT(Input::KeyboardKeyEvent, event.key, event.state);
     return true;
 }
 
