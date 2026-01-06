@@ -1,18 +1,18 @@
 #pragma once
 
-#include "events/Event.hpp"
-#include "events/EventManager.hpp"
+#include "Events/Event.hpp"
+#include "Events/EventManager.hpp"
 #include "keys.hpp"
 
 #include "glm/glm.hpp"
 
-namespace dirk {
+namespace dirk::Input {
 
-class KeyboardEvent : public Event {
+class KeyboardKeyEvent : public Event {
 public:
-    DEFINE_EVENT_TYPE(KeyboardEvent);
+    DEFINE_EVENT_TYPE(KeyboardKeyEvent);
 
-    KeyboardEvent(Input::Key key, Input::KeyState state) : key(key), state(state) {}
+    KeyboardKeyEvent(Input::Key key, Input::KeyState state) : key(key), state(state) {}
 
     Input::Key key;
     Input::KeyState state;
@@ -40,4 +40,13 @@ public:
     glm::vec2 offset{ .0f, .0f };
 };
 
-} // namespace dirk
+class MouseScrollEvent : public Event {
+public:
+    DEFINE_EVENT_TYPE(MouseScrollEvent);
+
+    MouseScrollEvent(glm::vec2 offset) : offset(offset) {}
+
+    glm::vec2 offset{ .0f, .0f };
+};
+
+} // namespace dirk::Input
