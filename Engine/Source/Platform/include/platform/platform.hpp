@@ -143,15 +143,15 @@ private:
 
 public:
     // callbacks for platform events
-    void windowSizeCallback(ImGuiViewport* window, vk::Extent2D inSize);
-    void windowMoveCallback(ImGuiViewport* window);
-    void windowCloseCallback(ImGuiViewport* window);
-    void focusWindowCallback(ImGuiViewport* window, bool focused);
-    void cursorPosCallback(ImGuiViewport* window, glm::vec2 pos);
-    void mouseButtonCallback(ImGuiViewport* window, Input::MouseButton button, Input::KeyState action);
-    void mouseScrollCallback(ImGuiViewport* window, glm::vec2 offset);
-    void keyCallback(ImGuiViewport* window, Input::Key key, Input::KeyState action);
-    void charCallback(ImGuiViewport* window, unsigned int c);
+    void windowSizeCallback(ImGuiViewport* viewport, vk::Extent2D inSize);
+    void windowMoveCallback(ImGuiViewport* viewport);
+    void windowCloseCallback(ImGuiViewport* viewport);
+    void focusWindowCallback(ImGuiViewport* viewport, bool focused);
+    void cursorPosCallback(ImGuiViewport* viewport, glm::vec2 pos);
+    void mouseButtonCallback(ImGuiViewport* viewport, Input::MouseButton button, Input::KeyState action);
+    void mouseScrollCallback(ImGuiViewport* viewport, glm::vec2 offset);
+    void keyCallback(ImGuiViewport* viewport, Input::Key key, Input::KeyState action);
+    void charCallback(ImGuiViewport* viewport, unsigned int c);
 
     static ImGuiPlatformData* getBackendData();
 
