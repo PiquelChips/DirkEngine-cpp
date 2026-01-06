@@ -1,4 +1,5 @@
 #include "platform/platform.hpp"
+#include "Events/EventManager.hpp"
 #include "core.hpp"
 #include "platform/events.hpp"
 #include "platform/monitor.hpp"
@@ -32,15 +33,15 @@ Platform::Platform(const PlatformCreateInfo& createInfo)
 #endif
 
     auto* eventManager = gEngine->getEventManager();
-    eventManager->bindEvent<WindowResizeEvent>(Platform::Event_WindowResize);
-    eventManager->bindEvent<WindowMoveEvent>(Platform::Event_WindowMove);
-    eventManager->bindEvent<WindowCloseEvent>(Platform::Event_WindowClose);
-    eventManager->bindEvent<WindowFocusEvent>(Platform::Event_WindowFocus);
-    eventManager->bindEvent<MouseMovePlatformEvent>(Platform::Event_MouseMove);
-    eventManager->bindEvent<MouseButtonPlatformEvent>(Platform::Event_MouseButton);
-    eventManager->bindEvent<MouseScrollPlatformEvent>(Platform::Event_MouseScroll);
-    eventManager->bindEvent<KeyboardKeyPlatformEvent>(Platform::Event_KeyboardKey);
-    eventManager->bindEvent<KeyboardCharPlatformEvent>(Platform::Event_KeyboardChar);
+    eventManager->bindMember(this, &Platform::Event_WindowResize);
+    eventManager->bindMember(this, &Platform::Event_WindowMove);
+    eventManager->bindMember(this, &Platform::Event_WindowClose);
+    eventManager->bindMember(this, &Platform::Event_WindowFocus);
+    eventManager->bindMember(this, &Platform::Event_MouseMove);
+    eventManager->bindMember(this, &Platform::Event_MouseButton);
+    eventManager->bindMember(this, &Platform::Event_MouseScroll);
+    eventManager->bindMember(this, &Platform::Event_KeyboardKey);
+    eventManager->bindMember(this, &Platform::Event_KeyboardChar);
 }
 
 void Platform::initImGui() {

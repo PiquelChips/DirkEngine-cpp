@@ -18,11 +18,18 @@ public:
     void submitEvent(std::unique_ptr<Event> event);
 
     template <typename T>
-    void bindEvent(std::function<bool(T&)> callback) {
+    void bindLambda(std::function<bool(T&)> callback) {
         subscribers[typeid(T)].push_back(([callback](Event& event) {
             return callback(static_cast<T&>(event));
         }));
     };
+
+    template <typename T, typename EventType>
+    void bindMember(T* instance, bool (T::*method)(EventType&)) {
+        return bindLambda<EventType>([instance, method](EventType& event) {
+            return (instance->*method)(event);
+        });
+    }
 
     // TODO: setup EventHandle to be returned with bindEvent that will unbind the event when the EventHandle is destroyed (to avoid dangling pointers)
 

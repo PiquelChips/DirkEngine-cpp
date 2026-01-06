@@ -145,15 +145,15 @@ private:
     static void ImGui_SetClipboardText(ImGuiContext* ctx, const char* text);
 
     // callbacks for platform events
-    static bool Event_WindowResize(WindowResizeEvent& event);
-    static bool Event_WindowMove(WindowMoveEvent& event);
-    static bool Event_WindowClose(WindowCloseEvent& event);
-    static bool Event_WindowFocus(WindowFocusEvent& event);
-    static bool Event_MouseMove(MouseMovePlatformEvent& event);
-    static bool Event_MouseButton(MouseButtonPlatformEvent& event);
-    static bool Event_MouseScroll(MouseScrollPlatformEvent& event);
-    static bool Event_KeyboardKey(KeyboardKeyPlatformEvent& event);
-    static bool Event_KeyboardChar(KeyboardCharPlatformEvent& event);
+    bool Event_WindowResize(WindowResizeEvent& event);
+    bool Event_WindowMove(WindowMoveEvent& event);
+    bool Event_WindowClose(WindowCloseEvent& event);
+    bool Event_WindowFocus(WindowFocusEvent& event);
+    bool Event_MouseMove(MouseMovePlatformEvent& event);
+    bool Event_MouseButton(MouseButtonPlatformEvent& event);
+    bool Event_MouseScroll(MouseScrollPlatformEvent& event);
+    bool Event_KeyboardKey(KeyboardKeyPlatformEvent& event);
+    bool Event_KeyboardChar(KeyboardCharPlatformEvent& event);
 
 private:
     std::vector<std::unique_ptr<Monitor>> monitors;
