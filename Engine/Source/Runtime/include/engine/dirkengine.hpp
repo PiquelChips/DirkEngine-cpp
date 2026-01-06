@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Events/EventManager.hpp"
 #include "actor.hpp"
 #include "core.hpp"
 #include "platform/platform.hpp"
@@ -34,8 +35,10 @@ public:
     bool isRequestingExit() const noexcept { return requestingExit; }
 
     IRenderer* getRenderer() const { return (IRenderer*) renderer.get(); }
+    EventManager* getEventManager() const { return eventManager.get(); }
 
 private:
+    std::unique_ptr<EventManager> eventManager;
     std::unique_ptr<Platform::Platform> platform;
     std::unique_ptr<Renderer> renderer;
     std::shared_ptr<World> world;

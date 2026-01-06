@@ -24,6 +24,7 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
 
     // main engine objects
     {
+        eventManager = std::make_unique<EventManager>();
         renderer = std::make_unique<Renderer>();
         platform = std::make_unique<Platform::Platform>(createInfo.platformCreateInfo);
         renderer->init(platform->createTempSurface(renderer->getResources().instance));
