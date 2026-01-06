@@ -36,10 +36,6 @@ public:
     inline void setVisibity(bool inVisible) { visible = inVisible; }
     inline bool isVisible() { return visible; }
 
-private:
-    std::string_view name;
-    bool visible = false;
-
 public:
     inline const Transform& getTransform() const { return transform; }
     inline void setTransform(const Transform& inTransform);
@@ -73,6 +69,9 @@ private:
     std::shared_ptr<const Model> model;
     // owned by world
     World& world;
+
+    std::string_view name;
+    bool visible = false;
 
     vk::DescriptorSet descriptorSet;
 

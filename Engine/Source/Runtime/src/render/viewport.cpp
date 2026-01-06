@@ -24,7 +24,7 @@ namespace dirk {
 DEFINE_LOG_CATEGORY(LogViewport);
 
 Viewport::Viewport(const ViewportCreateInfo& createInfo)
-    : world(createInfo.world), size(createInfo.size), name(createInfo.name) {
+    : name(createInfo.name), size(createInfo.size), world(createInfo.world) {
     camera = std::make_unique<Camera>(
         CameraCreateInfo{
             .positon = { 0.f, 1000.f, 1000.f },
@@ -40,7 +40,6 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
 
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
-    auto properties = renderer->getProperties();
     renderFinishedSemaphore = renderer->createSemaphore();
 
     // COMMAND BUFFER
@@ -257,7 +256,6 @@ void Viewport::cleanupRenderResources() {
 }
 
 vk::SubmitInfo Viewport::render() {
-    auto properties = gEngine->getRenderer()->getProperties();
     commandBuffer.reset();
 
     vk::CommandBufferBeginInfo beginInfo{};

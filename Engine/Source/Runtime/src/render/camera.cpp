@@ -1,13 +1,8 @@
 #include "render/camera.hpp"
 
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/quaternion.hpp"
-#include "glm/gtx/hash.hpp"
 #include "glm/gtx/quaternion.hpp"
 #include "render/renderer.hpp"
 #include "vulkan/vulkan_structs.hpp"
-
-#include <cstdint>
 
 namespace dirk {
 

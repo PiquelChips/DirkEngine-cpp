@@ -44,21 +44,20 @@ private:
     glm::mat4 view{ 1.f };
     glm::mat4 inverseView{ 1.f };
 
+    // camera is owned by the viewport
+    Viewport& viewport;
+
     // camera settings
+    vk::Extent2D size;
+    glm::vec3 position{ 0.f };
+    glm::vec3 forwardDirection{ 0.f };
+
     float fov = glm::radians(45.f);
     float nearClip = .1f;
     float farClip = 100.f;
 
-    glm::vec3 position{ 0.f };
-    glm::vec3 forwardDirection{ 0.f };
-
-    glm::vec2 lastMousePosition{ 0.f };
-    vk::Extent2D size;
-
-    // camera is owned by the viewport
-    Viewport& viewport;
-
     // state
+    glm::vec2 lastMousePosition{ 0.f };
     glm::vec3 cachedMoveInput = { 0.f, 0.f, 0.f };
     glm::vec2 cachedLookInput = { 0.f, 0.f };
 

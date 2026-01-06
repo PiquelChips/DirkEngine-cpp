@@ -31,8 +31,8 @@ struct WindowCreateInfo {
 
     PlatformWindowImpl* parent = nullptr;
 
-    bool focused;
-    bool decorated;
+    bool focused = false;
+    bool decorated = false;
     // TODO: create floating window
     // bool floating;
 };

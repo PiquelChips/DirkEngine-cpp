@@ -106,7 +106,7 @@ void Platform::initImGui() {
     platformIO.Platform_GetWindowSize = ImGui_GetWindowSize;
     platformIO.Platform_SetWindowFocus = ImGui_SetWindowFocus;
     platformIO.Platform_GetWindowFocus = ImGui_GetWindowFocus;
-    platformIO.Platform_GetWindowMinimized = [](ImGuiViewport* vp) { return false; };
+    platformIO.Platform_GetWindowMinimized = [](ImGuiViewport*) { return false; };
     platformIO.Platform_SetWindowTitle = ImGui_SetWindowTitle;
     platformIO.Platform_SetWindowAlpha = [](ImGuiViewport*, float) {};
     platformIO.Platform_CreateVkSurface = ImGui_CreateVkSurface;
@@ -125,6 +125,8 @@ void Platform::initImGui() {
 }
 
 void Platform::tick(float deltaTime) {
+    DIRK_UNUSED(deltaTime);
+
     ImGuiIO& io = ImGui::GetIO();
     ImGuiPlatformData* bd = getBackendData();
     check(bd);
@@ -194,7 +196,7 @@ void Platform::ImGui_DestroyWindow(ImGuiViewport* viewport) {
     // Release any keys that were pressed in the window being destroyed and are still held down,
     // because we will not receive any release events after window is destroyed.
     if (vd->windowOwned) {
-        for (int i = 0; i < bd->keyOwnerWindows.size(); i++)
+        for (size_t i = 0; i < bd->keyOwnerWindows.size(); i++)
             if (bd->keyOwnerWindows[i] == vd->window.get()) {
                 auto* eventManager = gEngine->getEventManager();
                 eventManager->submitEvent(std::make_unique<KeyboardKeyPlatformEvent>(viewport, (Input::Key) i, Input::KeyState::Released));
@@ -234,7 +236,6 @@ ImVec2 Platform::ImGui_GetWindowSize(ImGuiViewport* viewport) {
 }
 
 void Platform::ImGui_SetWindowFocus(ImGuiViewport* viewport) {
-    ImGuiPlatformData* bd = getBackendData();
     ImGuiViewportPlatformData* vd = (ImGuiViewportPlatformData*) viewport->PlatformUserData;
     vd->window->focus();
 }

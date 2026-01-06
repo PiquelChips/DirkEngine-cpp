@@ -11,7 +11,7 @@ namespace dirk::Platform {
 
 struct VideoMode {
     vk::Extent2D size = { 0, 0 };
-    std::uint32_t red, green, blue = 8;
+    std::uint32_t red = 0, green = 0, blue = 8;
     std::uint32_t refreshRate = 60;
 };
 

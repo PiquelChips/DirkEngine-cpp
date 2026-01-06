@@ -34,6 +34,8 @@ DEFINE_LOG_CATEGORY(LogWayland)
 
 LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo, Platform& platform)
     : platform(platform) {
+    DIRK_UNUSED(createInfo);
+
     display = wl_display_connect(nullptr);
     if (!display) {
         DIRK_LOG(LogWayland, FATAL, "failed to create wayland display")
@@ -50,7 +52,7 @@ LinuxPlatformImpl::LinuxPlatformImpl(const PlatformCreateInfo& createInfo, Platf
 
     static const struct wl_registry_listener registryListener = {
         .global = wl_GlobalRegistryHandler,
-        .global_remove = [](void* data, struct wl_registry* registry, uint32_t name) {},
+        .global_remove = [](void*, struct wl_registry*, uint32_t) {},
     };
     wl_registry_add_listener(registry, &registryListener, this);
 
@@ -119,13 +121,12 @@ std::string_view LinuxPlatformImpl::getClipboardText() {
 }
 
 void LinuxPlatformImpl::setClipboardText(const std::string& text) {
+    DIRK_UNUSED(text);
     // TODO: clipboard
     DIRK_LOG(LogWayland, ERROR, "clipboard not implemented");
 }
 
 void LinuxPlatformImpl::beginDrag(LinuxWindowImpl& window, glm::vec2 offset) {
-    auto* bd = platform.getBackendData();
-
     check(toplevelDragManager && dataDeviceManager && seat);
 
     // Don't start a new drag if one is already in progress
@@ -235,7 +236,7 @@ void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry*
         // xdg_wm_base
         platform->xdgWmBase = static_cast<xdg_wm_base*>(wl_registry_bind(registry, name, &xdg_wm_base_interface, version));
         static const struct xdg_wm_base_listener xdgWmBaseListener = {
-            .ping = [](void* data, struct xdg_wm_base* xdg_wm_base, uint32_t serial) { xdg_wm_base_pong(xdg_wm_base, serial); },
+            .ping = [](void*, struct xdg_wm_base* xdgWmBase, uint32_t serial) { xdg_wm_base_pong(xdgWmBase, serial); },
         };
         xdg_wm_base_add_listener(platform->xdgWmBase, &xdgWmBaseListener, platform);
     } else if (strcmp(interface, wl_seat_interface.name) == 0) {
@@ -243,7 +244,7 @@ void LinuxPlatformImpl::wl_GlobalRegistryHandler(void* data, struct wl_registry*
         platform->seat = static_cast<wl_seat*>(wl_registry_bind(registry, name, &wl_seat_interface, version));
         static const wl_seat_listener seatListener = {
             .capabilities = wl_SeatCapabilities,
-            .name = [](void*, struct wl_seat*, const char* name) {},
+            .name = [](void*, struct wl_seat*, const char*) {},
         };
         wl_seat_add_listener(platform->seat, &seatListener, platform);
     } else if (strcmp(interface, wl_output_interface.name) == 0) {
@@ -296,7 +297,7 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
             .leave = wl_KeyboardLeave,
             .key = wl_KeyboardKey,
             .modifiers = wl_KeyboardModifiers,
-            .repeat_info = [](void* data, struct wl_keyboard* keyboard, int32_t rate, int32_t delay) {},
+            .repeat_info = [](void*, struct wl_keyboard*, int32_t, int32_t) {},
         };
         wl_keyboard_add_listener(platform->keyboard, &keyboardListener, platform);
     }
@@ -306,6 +307,11 @@ void LinuxPlatformImpl::wl_SeatCapabilities(void* data, wl_seat* seat, uint32_t 
 }
 
 void LinuxPlatformImpl::wl_OutputHandleGeometry(void* data, struct wl_output* output, int32_t x, int32_t y, int32_t physicalWidth, int32_t physicalHeight, int32_t subpixel, const char* make, const char* model, int32_t transform) {
+    DIRK_UNUSED(physicalWidth);
+    DIRK_UNUSED(physicalHeight);
+    DIRK_UNUSED(subpixel);
+    DIRK_UNUSED(transform);
+
     auto* monitor = static_cast<Monitor*>(data);
     check(monitor);
     check(monitor->getPlatformHandle() == output);
@@ -315,6 +321,8 @@ void LinuxPlatformImpl::wl_OutputHandleGeometry(void* data, struct wl_output* ou
 }
 
 void LinuxPlatformImpl::wl_OutputHandleMode(void* data, struct wl_output* output, uint32_t flags, int32_t width, int32_t height, int32_t refresh) {
+    DIRK_UNUSED(flags);
+
     auto* monitor = static_cast<Monitor*>(data);
     check(monitor);
     check(monitor->getPlatformHandle() == output);
@@ -351,6 +359,8 @@ void LinuxPlatformImpl::wl_OutputHandleDescription(void* data, struct wl_output*
 }
 
 void LinuxPlatformImpl::wl_PointerEnter(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y) {
+    DIRK_UNUSED(serial);
+
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->pointer == pointer);
     auto* viewport = ImGui::FindViewportByPlatformHandle(surface);
@@ -365,6 +375,8 @@ void LinuxPlatformImpl::wl_PointerEnter(void* data, wl_pointer* pointer, uint32_
 }
 
 void LinuxPlatformImpl::wl_PointerLeave(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface) {
+    DIRK_UNUSED(serial);
+
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->pointer == pointer);
     auto viewport = ImGui::FindViewportByPlatformHandle(surface);
@@ -375,6 +387,8 @@ void LinuxPlatformImpl::wl_PointerLeave(void* data, wl_pointer* pointer, uint32_
 }
 
 void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
+    DIRK_UNUSED(time);
+
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->pointer == pointer);
     auto viewport = ImGui::FindViewportByPlatformHandle(platform->pointerSurface);
@@ -398,6 +412,8 @@ void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32
 }
 
 void LinuxPlatformImpl::wl_PointerButton(void* data, wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t inButton, uint32_t inState) {
+    DIRK_UNUSED(time);
+
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->pointer == pointer);
     auto viewport = ImGui::FindViewportByPlatformHandle(platform->pointerSurface);
@@ -415,6 +431,8 @@ void LinuxPlatformImpl::wl_PointerButton(void* data, wl_pointer* pointer, uint32
 }
 
 void LinuxPlatformImpl::wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value) {
+    DIRK_UNUSED(time);
+
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->pointer == pointer);
     auto viewport = ImGui::FindViewportByPlatformHandle(platform->pointerSurface);
@@ -430,6 +448,7 @@ void LinuxPlatformImpl::wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t
 
 void LinuxPlatformImpl::wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->keyboard == keyboard);
 
     check(format == WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1);
     char* keymapStr = static_cast<char*>(mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0));
@@ -451,6 +470,8 @@ void LinuxPlatformImpl::wl_KeyboardKeymap(void* data, wl_keyboard* keyboard, uin
 }
 
 void LinuxPlatformImpl::wl_KeyboardEnter(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface, wl_array* keys) {
+    DIRK_UNUSED(keys);
+
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->keyboard == keyboard);
     auto viewport = ImGui::FindViewportByPlatformHandle(surface);
@@ -463,6 +484,8 @@ void LinuxPlatformImpl::wl_KeyboardEnter(void* data, wl_keyboard* keyboard, uint
 }
 
 void LinuxPlatformImpl::wl_KeyboardLeave(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface) {
+    DIRK_UNUSED(serial);
+
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->keyboard == keyboard);
     auto viewport = ImGui::FindViewportByPlatformHandle(surface);
@@ -474,6 +497,9 @@ void LinuxPlatformImpl::wl_KeyboardLeave(void* data, wl_keyboard* keyboard, uint
 }
 
 void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t inKey, uint32_t inState) {
+    DIRK_UNUSED(serial);
+    DIRK_UNUSED(time);
+
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->keyboard == keyboard);
     check(platform->xkbState);
@@ -498,6 +524,8 @@ void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32
 }
 
 void LinuxPlatformImpl::wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t depressed, uint32_t latched, uint32_t locked, uint32_t group) {
+    DIRK_UNUSED(serial);
+
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->keyboard == keyboard);
     check(platform->xkbState);
@@ -506,6 +534,7 @@ void LinuxPlatformImpl::wl_KeyboardModifiers(void* data, wl_keyboard* keyboard, 
 
 void LinuxPlatformImpl::wl_DataDeviceOffer(void* data, wl_data_device* dataDevice, wl_data_offer* offer) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->dataDevice == dataDevice);
 
     check(offer);
 
@@ -526,6 +555,7 @@ void LinuxPlatformImpl::wl_DataDeviceOffer(void* data, wl_data_device* dataDevic
 
 void LinuxPlatformImpl::wl_DataDeviceEnter(void* data, wl_data_device* dataDevice, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y, wl_data_offer* offer) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->dataDevice == dataDevice);
 
     // Find viewport for this surface
     ImGuiViewport* enteringViewport = ImGui::FindViewportByPlatformHandle(surface);
@@ -565,11 +595,15 @@ void LinuxPlatformImpl::wl_DataDeviceEnter(void* data, wl_data_device* dataDevic
 
 void LinuxPlatformImpl::wl_DataDeviceLeave(void* data, wl_data_device* dataDevice) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->dataDevice == dataDevice);
     platform->dragEnterSurface = nullptr;
 }
 
 void LinuxPlatformImpl::wl_DataDeviceMotion(void* data, wl_data_device* dataDevice, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
+    DIRK_UNUSED(time);
+
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->dataDevice == dataDevice);
 
     platform->dragCursorPos = { wl_fixed_to_double(x), wl_fixed_to_double(y) };
 
@@ -625,6 +659,7 @@ void LinuxPlatformImpl::wl_DataDeviceMotion(void* data, wl_data_device* dataDevi
 
 void LinuxPlatformImpl::wl_DataDeviceDrop(void* data, wl_data_device* dataDevice) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->dataDevice == dataDevice);
 
     // When we receive a drop event, we need to acknowledge it by calling finish()
     // on the current data offer. This signals to the source that the drop was
@@ -637,6 +672,9 @@ void LinuxPlatformImpl::wl_DataDeviceDrop(void* data, wl_data_device* dataDevice
 
 void LinuxPlatformImpl::wl_DataDeviceSelection(void* data, wl_data_device* dataDevice, wl_data_offer* offer) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->dataDevice == dataDevice);
+
+    DIRK_UNUSED(offer);
 
     // TODO: clipboard support
     // Selection/clipboard offer - we don't handle clipboard, so ignore this.
@@ -664,6 +702,7 @@ void LinuxPlatformImpl::wl_DataSourceCancelled(void* data, struct wl_data_source
 
 void LinuxPlatformImpl::wl_DataSourceDndDropPerformed(void* data, struct wl_data_source* dataSource) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
+    check(platform->activeDataSource == dataSource);
 
     // During DnD, the pointer is grabbed and button release events don't come through
     // wl_pointer - we must notify ImGui of the button release here so it can process
