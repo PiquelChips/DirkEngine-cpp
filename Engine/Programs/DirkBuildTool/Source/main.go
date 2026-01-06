@@ -14,7 +14,7 @@ func usage() {
 }
 
 const (
-	defaultTarget    = "Editor"
+	defaultTarget    = "DirkEditor"
 	defaultBuildType = "Development"
 )
 
