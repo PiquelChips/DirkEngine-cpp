@@ -21,7 +21,7 @@ public:
     template <typename T>
     void bindEvent(std::function<bool(T&)> callback) {
         subscribers[typeid(T)].push_back(([callback](Event& event) {
-            return callback(static_cast<T>(event));
+            return callback(static_cast<T&>(event));
         }));
     };
 
