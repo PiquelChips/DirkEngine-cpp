@@ -43,7 +43,6 @@ public:
 
 private:
     bool Event_MouseButton(Input::MouseButtonEvent& event);
-    bool Event_KeyboardKey(Input::KeyboardKeyEvent& event);
 
 private:
     // this will create render pass, pipeline and all associated stuff. this should only be called

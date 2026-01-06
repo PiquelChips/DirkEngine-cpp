@@ -59,8 +59,8 @@ private:
     Viewport& viewport;
 
     // state
-    glm::vec3 cachedMove = { 0.f, 0.f, 0.f };
-    glm::vec2 cachedLook = { 0.f, 0.f };
+    glm::vec3 cachedMoveInput = { 0.f, 0.f, 0.f };
+    glm::vec2 cachedLookInput = { 0.f, 0.f };
 
     static constexpr float SENSITIVITY = .002f;
     static constexpr float ROTATION_SPEED = .3f;

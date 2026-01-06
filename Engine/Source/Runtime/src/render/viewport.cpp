@@ -37,7 +37,6 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
 
     auto* eventManager = gEngine->getEventManager();
     eventManager->bindMember(this, &Viewport::Event_MouseButton);
-    eventManager->bindMember(this, &Viewport::Event_KeyboardKey);
 
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
@@ -326,6 +325,8 @@ vk::SubmitInfo Viewport::render() {
 }
 
 void Viewport::renderImGui() {
+    ImGuiIO& io = ImGui::GetIO();
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin(name.data());
 
@@ -333,14 +334,32 @@ void Viewport::renderImGui() {
     {
         focused = ImGui::IsWindowFocused();
         hovered = ImGui::IsWindowHovered();
-        if (hovered) {
-            glm::vec2 mousePos = ImGui::GetMousePos();
-            glm::vec2 windowPos = ImGui::GetWindowPos();
-            glm::vec2 contentOffset = ImGui::GetCursorStartPos();
+        if (hovered && acceptsInput) {
+            camera->addLookInput(io.MouseDelta);
+        }
 
-            glm::vec2 pos = mousePos - (windowPos + contentOffset);
-            camera->addLookInput(pos - lastMousePos);
-            lastMousePos = pos;
+        if (focused && acceptsInput) {
+            glm::vec3 move{ 0.f };
+            if (ImGui::IsKeyPressed(ImGuiKey_Z)) {
+                move += FORWARD_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_S)) {
+                move -= FORWARD_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_A)) {
+                move += LEFT_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_D)) {
+                move -= LEFT_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
+                move += UP_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_C)) {
+                move -= UP_DIRECTION;
+            }
+
+            camera->addMoveInput(move);
         }
     }
 
@@ -368,39 +387,11 @@ void Viewport::resize(vk::Extent2D inSize) {
 }
 
 bool Viewport::Event_MouseButton(Input::MouseButtonEvent& event) {
-    DIRK_LOG(LogViewport, TRACE, "received mouse input")
-
     if (event.button == Input::MouseButton::Right) {
         acceptsInput = event.state == Input::KeyState::Pressed;
         return true;
     }
     return false;
-}
-
-bool Viewport::Event_KeyboardKey(Input::KeyboardKeyEvent& event) {
-    DIRK_LOG(LogViewport, TRACE, "received keyboard input")
-
-    if (!acceptsInput || !focused)
-        return false;
-
-    glm::vec3 move{ 0.f };
-    switch (event.key) {
-    case Input::Key::Z:
-        move += FORWARD_DIRECTION;
-    case Input::Key::S:
-        move += BACKWARD_DIRECTION;
-    case Input::Key::A:
-        move += LEFT_DIRECTION;
-    case Input::Key::D:
-        move += RIGH_DIRECTION;
-    case Input::Key::Space:
-        move += UP_DIRECTION;
-    case Input::Key::C:
-        move += BACKWARD_DIRECTION;
-    }
-
-    camera->addMoveInput(move);
-    return true;
 }
 
 void Viewport::setWorld(std::shared_ptr<World> inWorld) { world = inWorld; }

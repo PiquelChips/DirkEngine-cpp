@@ -2,6 +2,7 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/quaternion.hpp"
+#include "glm/gtx/hash.hpp"
 #include "glm/gtx/quaternion.hpp"
 #include "render/renderer.hpp"
 #include "vulkan/vulkan_structs.hpp"
@@ -28,32 +29,34 @@ Camera::Camera(const CameraCreateInfo& createInfo, Viewport& viewport)
 void Camera::tick(float deltaTime) {
     bool moved = false;
     glm::vec3 rightDirection = glm::normalize(glm::cross(forwardDirection, UP_DIRECTION));
-    if (glm::length(cachedMove) > 0.0f) {
-        cachedMove = glm::normalize(cachedMove);
-        position += cachedMove * forwardDirection * MOVEMENT_SPEED * deltaTime;
+    if (glm::length(cachedMoveInput) > 0.0f) {
+        glm::vec3 move = (rightDirection * cachedMoveInput.x) + (UP_DIRECTION * cachedMoveInput.y) + (forwardDirection * cachedMoveInput.z);
+        position += move * MOVEMENT_SPEED * deltaTime;
         moved = true;
+        cachedMoveInput = glm::vec3(0.f);
     }
 
     // rotation
-    if (cachedLook != glm::vec2{ 0.f, 0.f }) {
-        cachedLook *= SENSITIVITY * ROTATION_SPEED;
+    if (cachedLookInput != glm::vec2{ 0.f, 0.f }) {
+        cachedLookInput *= SENSITIVITY * ROTATION_SPEED;
 
-        float yawDelta = cachedLook.x;
-        float pitchDelta = cachedLook.y;
+        float yawDelta = cachedLookInput.x;
+        float pitchDelta = cachedLookInput.y;
 
         glm::quat q = glm::normalize(glm::cross(
             glm::angleAxis(-pitchDelta, rightDirection),
             glm::angleAxis(-yawDelta, UP_DIRECTION)));
-        forwardDirection = glm::rotate(q, forwardDirection);
+        forwardDirection = glm::normalize(glm::rotate(q, forwardDirection));
 
         moved = true;
+        cachedLookInput = glm::vec3(0.f);
     }
 
     if (moved) {
-        DIRK_LOG(LogCamera, TRACE, "updated view")
         updateView();
     }
 
+    // TODO: setup mouse capture
     /**
     if (!Input::isMouseButtonDown(Input::MouseButton::Right)) {
         Input::setCursorMode(CursorMode::Normal);
@@ -64,11 +67,11 @@ void Camera::tick(float deltaTime) {
 }
 
 void Camera::addMoveInput(glm::vec3 move) {
-    cachedMove = move;
+    cachedMoveInput = glm::normalize(move);
 }
 
 void Camera::addLookInput(glm::vec2 look) {
-    cachedLook = look;
+    cachedLookInput = look;
 }
 
 void Camera::resize(vk::Extent2D inSize) {
