@@ -30,9 +30,9 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 #define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
 
+constexpr glm::vec3 RIGHT_DIRECTION{ 1.f, 0.f, 0.f };
 constexpr glm::vec3 UP_DIRECTION{ 0.f, 1.f, 0.f }; // Y-up
 constexpr glm::vec3 FORWARD_DIRECTION{ 0.f, 0.f, 1.f };
-constexpr glm::vec3 LEFT_DIRECTION{ 1.f, 0.f, 0.f };
 
 struct ImGuiViewportRendererData {
     vk::SwapchainKHR swapchain;

@@ -346,11 +346,11 @@ void Viewport::renderImGui() {
             if (ImGui::IsKeyPressed(ImGuiKey_S)) {
                 move -= FORWARD_DIRECTION;
             }
-            if (ImGui::IsKeyPressed(ImGuiKey_A)) {
-                move += LEFT_DIRECTION;
-            }
             if (ImGui::IsKeyPressed(ImGuiKey_D)) {
-                move -= LEFT_DIRECTION;
+                move += RIGHT_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_A)) {
+                move -= RIGHT_DIRECTION;
             }
             if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
                 move += UP_DIRECTION;
@@ -389,6 +389,7 @@ void Viewport::resize(vk::Extent2D inSize) {
 bool Viewport::Event_MouseButton(Input::MouseButtonEvent& event) {
     if (event.button == Input::MouseButton::Right) {
         acceptsInput = event.state == Input::KeyState::Pressed;
+        // TODO: capture or unlock the cursor
         return true;
     }
     return false;
