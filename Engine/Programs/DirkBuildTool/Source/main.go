@@ -31,17 +31,17 @@ func main() {
 		}
 	}
 
-	target := ""
+	targetName := ""
 	buildType := ""
 	switch len(os.Args) {
 	case 1:
-		target = defaultTarget
+		targetName = defaultTarget
 		buildType = defaultBuildType
 	case 2:
-		target = os.Args[1]
+		targetName = os.Args[1]
 		buildType = defaultBuildType
 	case 3:
-		target = os.Args[1]
+		targetName = os.Args[1]
 		buildType = os.Args[2]
 	default:
 		fmt.Printf("Invalid number of arguments.\n")
@@ -57,7 +57,14 @@ func main() {
 		return
 	}
 
-	log.Printf("Building %s for %s\n", target, buildType)
+	target, ok := config.Targets[targetName]
+	if !ok {
+		fmt.Printf("Target %s does not exist\n", targetName)
+		os.Exit(1)
+		return
+	}
+
+	log.Printf("Building targetName %s with %s configuration\n", targetName, buildType)
 
 	buildConfig := &config.BuildConfig{
 		Target: target,

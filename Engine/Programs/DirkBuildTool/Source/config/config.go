@@ -21,7 +21,7 @@ const (
 )
 
 type BuildConfig struct {
-	Target string
+	Target Target
 	Mode   *BuildMode
 }
 
