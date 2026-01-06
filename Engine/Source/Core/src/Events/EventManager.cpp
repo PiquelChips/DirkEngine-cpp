@@ -1,4 +1,4 @@
-#include "events/EventManager.hpp"
+#include "Events/EventManager.hpp"
 
 #include <algorithm>
 #include <memory>
