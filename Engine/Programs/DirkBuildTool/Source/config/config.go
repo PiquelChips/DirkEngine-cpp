@@ -37,11 +37,16 @@ type PlatformConfig struct {
 	Defines map[string]string
 }
 
+type Target struct {
+	Name    string         `json:"name"`
+}
+
 var (
 	BuildModes map[string]*models.BuildMode
 	Platform   PlatformConfig
 	Dirs       DirsConfig
 	Settings   BuildToolSettings
+	Targets    map[string]Target
 )
 
 const (
@@ -101,7 +106,10 @@ func LoadConfig() error {
 		return err
 	}
 
-	// TODO: load targets
+	Targets, err = loadTargets()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -137,4 +145,38 @@ func loadSettings() (BuildToolSettings, error) {
 		return BuildToolSettings{}, err
 	}
 	return config, nil
+}
+
+func loadTargets() (map[string]Target, error) {
+	entries, err := os.ReadDir(Dirs.Source)
+	if err != nil {
+		return nil, err
+	}
+
+	targets := map[string]Target{}
+	for _, entry := range entries {
+		if !strings.HasSuffix(entry.Name(), ".dirktarget") {
+			continue
+		}
+		targetName := strings.TrimRight(entry.Name(), ".dirktarget")
+		target := Target{}
+
+		data, err := os.ReadFile(fmt.Sprintf("%s/%s", Dirs.Source, entry.Name()))
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(data, &target); err != nil {
+			return nil, err
+		}
+
+		if targetName != target.Name {
+			log.Printf("target %s should have name field set to %s not %s", targetName, targetName, target.Name)
+			continue
+		}
+
+		targets[target.Name] = target
+
+	}
+	return targets, nil
 }
