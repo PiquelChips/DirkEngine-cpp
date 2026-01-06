@@ -185,7 +185,7 @@ func loadTargets() (map[string]Target, error) {
 		if !strings.HasSuffix(entry.Name(), ".dirktarget") {
 			continue
 		}
-		targetName := strings.TrimSuffix("DirkEditor.dirktarget", ".dirktarget")
+		targetName := strings.TrimSuffix(entry.Name(), ".dirktarget")
 
 		target := Target{}
 		data, err := os.ReadFile(fmt.Sprintf("%s/%s", Dirs.Source, entry.Name()))
