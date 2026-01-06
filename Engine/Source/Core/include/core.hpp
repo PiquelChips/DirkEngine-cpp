@@ -1,5 +1,7 @@
 #pragma once
 
+#define DIRK_UNUSED(var) ((void) (var))
+
 #include "Events/EventManager.hpp"
 #include "asserts.hpp"
 #include "logging/logging.hpp"
