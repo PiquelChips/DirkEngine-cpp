@@ -64,7 +64,7 @@ private:
 
     static constexpr float SENSITIVITY = .002f;
     static constexpr float ROTATION_SPEED = .3f;
-    static constexpr float MOVEMENT_SPEED = 1000.f;
+    static constexpr float MOVEMENT_SPEED = 50000.f;
 };
 
 } // namespace dirk
