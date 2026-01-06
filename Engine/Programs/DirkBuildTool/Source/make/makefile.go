@@ -2,7 +2,6 @@ package make
 
 import (
 	"DirkBuildTool/config"
-	"DirkBuildTool/models"
 	"bytes"
 	"embed"
 	"fmt"
@@ -72,7 +71,7 @@ func writeBase(buffer *bytes.Buffer, name string) {
 
 type CppMakefile struct {
 	Name, Path, RootDir string
-	BuildMode           *models.BuildMode
+	BuildMode           *config.BuildMode
 	IncDirs, Libs       []string
 	Defines             map[string]string
 	LdFlags, CFlags     []string

@@ -2,7 +2,6 @@ package build
 
 import (
 	"DirkBuildTool/config"
-	"DirkBuildTool/models"
 	"DirkBuildTool/module"
 	"encoding/json"
 	"fmt"
@@ -12,7 +11,7 @@ import (
 	"os/exec"
 )
 
-func Build(buildConfig *models.BuildConfig) error {
+func Build(buildConfig *config.BuildConfig) error {
 	modules, err := searchDir(config.Dirs.Source, buildConfig, 0)
 	if err != nil {
 		return err
@@ -63,7 +62,7 @@ func Build(buildConfig *models.BuildConfig) error {
 	}
 }
 
-func searchDir(path string, buildConfig *models.BuildConfig, count int) (map[string]module.Module, error) {
+func searchDir(path string, buildConfig *config.BuildConfig, count int) (map[string]module.Module, error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err

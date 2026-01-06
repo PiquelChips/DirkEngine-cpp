@@ -1,8 +1,8 @@
 package module
 
 import (
+	"DirkBuildTool/config"
 	"DirkBuildTool/make"
-	"DirkBuildTool/models"
 )
 
 type ShaderModule struct {
@@ -12,7 +12,7 @@ type ShaderModule struct {
 
 func (m *ShaderModule) GetName() string            { return m.Name }
 func (m *ShaderModule) GetIncludeDirs() []string   { return nil }
-func (m *ShaderModule) GetDefines() models.Defines { return nil }
+func (m *ShaderModule) GetDefines() config.Defines { return nil }
 func (m *ShaderModule) GetLibs() []string          { return nil }
 
 func (m *ShaderModule) Build() error {

@@ -7,7 +7,6 @@ import (
 
 	"DirkBuildTool/build"
 	"DirkBuildTool/config"
-	"DirkBuildTool/models"
 )
 
 func usage() {
@@ -60,7 +59,7 @@ func main() {
 
 	log.Printf("Building %s for %s\n", target, buildType)
 
-	buildConfig := &models.BuildConfig{
+	buildConfig := &config.BuildConfig{
 		Target: target,
 		Mode:   buildMode,
 	}

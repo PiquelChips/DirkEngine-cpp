@@ -2,7 +2,6 @@ package module
 
 import (
 	"DirkBuildTool/config"
-	"DirkBuildTool/models"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -15,7 +14,7 @@ import (
 type Module interface {
 	GetName() string
 	GetIncludeDirs() []string
-	GetDefines() models.Defines
+	GetDefines() config.Defines
 	GetLibs() []string
 
 	Build() error
@@ -25,7 +24,7 @@ type Module interface {
 	getPath() string
 }
 
-func Load(path, name string, buildConfig *models.BuildConfig) (Module, error) {
+func Load(path, name string, buildConfig *config.BuildConfig) (Module, error) {
 	path = fmt.Sprintf("%s/%s", path, name)
 	modFile := fmt.Sprintf("%s/%s.dirkmod", path, name)
 	data, err := os.ReadFile(modFile)
@@ -75,7 +74,7 @@ type NullModule struct {
 
 func (m *NullModule) GetName() string            { return m.Name }
 func (m *NullModule) GetIncludeDirs() []string   { return nil }
-func (m *NullModule) GetDefines() models.Defines { return nil }
+func (m *NullModule) GetDefines() config.Defines { return nil }
 func (m *NullModule) GetLibs() []string          { return nil }
 func (m *NullModule) Build() error               { return nil }
 func (m *NullModule) IsBuilt() bool              { return true }
@@ -96,7 +95,7 @@ type moduleConfig struct {
 	IncludeDirs   []string          `json:"include_dirs"`
 }
 
-func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
+func (c *moduleConfig) toModule(buildConfig *config.BuildConfig) Module {
 	if c.Type == "" {
 		c.Type = "cpp"
 	}

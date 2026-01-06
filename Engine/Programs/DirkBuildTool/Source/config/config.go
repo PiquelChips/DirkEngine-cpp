@@ -1,7 +1,6 @@
 package config
 
 import (
-	"DirkBuildTool/models"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -20,6 +19,32 @@ const (
 	WarningLevelMedium = 2
 	WarningLevelMax    = 3
 )
+
+type BuildConfig struct {
+	Target string
+	Mode   *BuildMode
+}
+
+type Defines map[string]string
+
+type CompileCommands []*CompileCommand
+
+type CompileCommand struct {
+	Directory string   `json:"directory"`
+	Arguments []string `json:"arguments"`
+	File      string   `json:"file"`
+	Output    string   `json:"output"`
+}
+
+type BuildMode struct {
+	Name         string
+	Optimize     bool
+	Compact      bool // compact the output (essentially statically linking)
+	Defines      map[string]string
+	LinkerFlags  []string
+	CompileFlags []string
+	WarningLevel int
+}
 
 type DirsConfig struct {
 	Work, Engine, Config,
@@ -42,7 +67,7 @@ type Target struct {
 }
 
 var (
-	BuildModes map[string]*models.BuildMode
+	BuildModes map[string]*BuildMode
 	Platform   PlatformConfig
 	Dirs       DirsConfig
 	Settings   BuildToolSettings
@@ -75,7 +100,7 @@ func LoadConfig() error {
 		return err
 	}
 
-	BuildModes = map[string]*models.BuildMode{
+	BuildModes = map[string]*BuildMode{
 		"Development": {
 			Name:     "Development",
 			Optimize: false,

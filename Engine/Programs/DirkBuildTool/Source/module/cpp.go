@@ -3,7 +3,6 @@ package module
 import (
 	"DirkBuildTool/config"
 	"DirkBuildTool/make"
-	"DirkBuildTool/models"
 	"fmt"
 	"io/fs"
 	"log"
@@ -23,19 +22,19 @@ type CppModule struct {
 	Config       *moduleConfig
 	External     []string
 	IncludeDirs  []string
-	build        *models.BuildConfig
+	build        *config.BuildConfig
 	isBuilt      bool
 }
 
 func (m *CppModule) GetIncludeDirs() []string   { return m.IncludeDirs }
-func (m *CppModule) GetDefines() models.Defines { return m.Config.Defines }
+func (m *CppModule) GetDefines() config.Defines { return m.Config.Defines }
 func (m *CppModule) GetName() string            { return m.Name }
 func (m *CppModule) GetLibs() []string {
 	return []string{m.Name}
 }
 
-func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
-	compileCommands := models.CompileCommands{}
+func (m *CppModule) GenerateCompileCommands() (config.CompileCommands, error) {
+	compileCommands := config.CompileCommands{}
 
 	if err := filepath.WalkDir(fmt.Sprintf("%s/src", m.Path), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -114,7 +113,7 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 
 		command = append(command, "-c", in, "-o", out)
 
-		compileCommands = append(compileCommands, &models.CompileCommand{
+		compileCommands = append(compileCommands, &config.CompileCommand{
 			Directory: m.Path,
 			Arguments: command,
 			File:      in,
