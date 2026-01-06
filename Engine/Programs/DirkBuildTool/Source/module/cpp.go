@@ -55,6 +55,10 @@ func (m *CppModule) GenerateCompileCommands() (config.CompileCommands, error) {
 		incDirs := m.GetIncludeDirs()
 		defines := m.Config.Defines
 
+		if m.build.Target.Defines != nil {
+			maps.Copy(defines, m.build.Target.Defines)
+		}
+
 		for _, dep := range m.getDeps() {
 			if dep.GetIncludeDirs() != nil {
 				incDirs = append(incDirs, dep.GetIncludeDirs()...)
@@ -144,6 +148,10 @@ func (m *CppModule) Build() error {
 	incDirs := m.GetIncludeDirs()
 	libs := m.External
 	defines := m.Config.Defines
+
+	if m.build.Target.Defines != nil {
+		maps.Copy(defines, m.build.Target.Defines)
+	}
 
 	for _, dep := range m.getDeps() {
 		if dep.GetIncludeDirs() != nil {
