@@ -66,14 +66,12 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
         renderer->ImGui_init(platform->createTempSurface(renderer->getResources().instance));
     }
 
-    // initial engine state
-    {
-        auto& viewport = renderer->createViewport(ViewportCreateInfo{
-            .name = "Hello World!",
-            .size = vk::Extent2D(500, 500),
-            .world = world,
-        });
-    }
+    // viewport
+    mainViewport = std::make_unique<Viewport>(ViewportCreateInfo{
+        .name = "Hello World!",
+        .size = vk::Extent2D(500, 500),
+        .world = world,
+    });
 
     lastTick = std::chrono::high_resolution_clock::now();
 

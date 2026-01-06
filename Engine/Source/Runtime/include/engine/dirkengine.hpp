@@ -16,6 +16,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 class Renderer;
 class World;
 class Camera;
+class Viewport;
 
 struct DirkEngineCreateInfo {
     std::string_view appName;
@@ -36,12 +37,15 @@ public:
 
     IRenderer* getRenderer() const { return (IRenderer*) renderer.get(); }
     EventManager* getEventManager() const { return eventManager.get(); }
+    Viewport* getMainViewport() const { return mainViewport.get(); }
 
 private:
     std::unique_ptr<EventManager> eventManager;
     std::unique_ptr<Platform::Platform> platform;
     std::unique_ptr<Renderer> renderer;
     std::shared_ptr<World> world;
+
+    std::unique_ptr<Viewport> mainViewport;
 
 private:
     bool tick(float deltaTime);

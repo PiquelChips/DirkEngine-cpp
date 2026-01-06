@@ -76,10 +76,6 @@ public:
     void ImGui_beginFrame();
     void ImGui_render();
 
-    std::unique_ptr<Viewport>& createViewport(const ViewportCreateInfo& createInfo);
-    void destroyViewport(std::unique_ptr<Viewport>& viewport);
-    std::vector<std::unique_ptr<Viewport>>& getViewports() { return viewports; }
-
     std::vector<SwapchainImage> createSwapChain(const SwapChainCreateInfo& createInfo);
 
     vk::ShaderModule loadShaderModule(const std::string& shaderName);
@@ -104,7 +100,6 @@ public:
     vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities);
 
 private:
-    std::vector<std::unique_ptr<Viewport>> viewports;
     ImGuiViewportRendererData* mainViewportData = nullptr; // TODO: remove for custom backend
 
 private:
