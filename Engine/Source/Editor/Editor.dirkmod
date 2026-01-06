@@ -1,7 +1,6 @@
 {
     "name": "Editor",
     "standard": "c++23",
-    "has_entrypoint": true,
     "dependencies": [
         "Runtime"
     ]
