@@ -125,6 +125,8 @@ public:
     std::string_view getClipboardText() { return platformImpl->getClipboardText(); }
     void setClipboardText(const std::string& text) { platformImpl->setClipboardText(text); }
 
+    static ImGuiPlatformData* getBackendData();
+
 private:
     // platform funcs used by ImGui
     static void ImGui_CreateWindow(ImGuiViewport* viewport);
@@ -152,8 +154,6 @@ private:
     static bool Event_MouseScroll(MouseScrollPlatformEvent& event);
     static bool Event_KeyboardKey(KeyboardKeyPlatformEvent& event);
     static bool Event_KeyboardChar(KeyboardCharPlatformEvent& event);
-
-    static ImGuiPlatformData* getBackendData();
 
 private:
     std::vector<std::unique_ptr<Monitor>> monitors;
