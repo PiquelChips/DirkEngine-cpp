@@ -16,8 +16,8 @@ void EventManager::dispatchEvents() {
     for (auto& event : processingQueue) {
         auto type = event->getType();
         if (subscribers.count(type)) {
-            for (auto& callback : subscribers[type]) {
-                callback(*event);
+            for (auto& binding : subscribers[type]) {
+                binding.callback(*event);
             }
         }
     }
