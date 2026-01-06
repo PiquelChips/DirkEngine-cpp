@@ -1,4 +1,5 @@
 #include "core.hpp"
+#include "input/events.hpp"
 
 #include "glm/glm.hpp"
 #include "vulkan/vulkan.hpp"
@@ -40,10 +41,20 @@ public:
     void resize(vk::Extent2D inSize);
 
 private:
+    bool Event_MouseButton(Input::MouseButtonEvent& event);
+    bool Event_KeyboardKey(Input::KeyboardKeyEvent& event);
+
+private:
     // this will create render pass, pipeline and all associated stuff. this should only be called
     // on resize
     void createRenderResources();
     void cleanupRenderResources();
+
+    // state
+    glm::vec2 lastMousePos = { 0.f, 0.f };
+    bool acceptsInput = false;
+    bool focused = false;
+    bool hovered = false;
 
     std::unique_ptr<Camera> camera;
 

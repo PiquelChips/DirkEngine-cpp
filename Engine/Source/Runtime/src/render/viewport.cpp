@@ -3,6 +3,9 @@
 #include "core.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
+#include "input/events.hpp"
+#include "input/keys.hpp"
+#include "logging/logging.hpp"
 #include "render/camera.hpp"
 #include "render/renderer.hpp"
 
@@ -18,6 +21,8 @@
 
 namespace dirk {
 
+DEFINE_LOG_CATEGORY(LogViewport);
+
 Viewport::Viewport(const ViewportCreateInfo& createInfo)
     : world(createInfo.world), size(createInfo.size), name(createInfo.name) {
     camera = std::make_unique<Camera>(
@@ -29,6 +34,10 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
             .farClip = 100000.f,
         },
         *this);
+
+    auto* eventManager = gEngine->getEventManager();
+    eventManager->bindMember(this, &Viewport::Event_MouseButton);
+    eventManager->bindMember(this, &Viewport::Event_KeyboardKey);
 
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
@@ -316,6 +325,21 @@ void Viewport::renderImGui() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin(name.data());
 
+    // handle input
+    {
+        focused = ImGui::IsWindowFocused();
+        hovered = ImGui::IsWindowHovered();
+        if (hovered) {
+            glm::vec2 mousePos = ImGui::GetMousePos();
+            glm::vec2 windowPos = ImGui::GetWindowPos();
+            glm::vec2 contentOffset = ImGui::GetCursorStartPos();
+
+            glm::vec2 pos = mousePos - (windowPos + contentOffset);
+            camera->addLookInput(pos - lastMousePos);
+            lastMousePos = pos;
+        }
+    }
+
     resize(ImGui::GetContentRegionAvail());
 
     ImGui::Image((ImTextureID) (VkDescriptorSet) descriptorSet, size);
@@ -337,6 +361,42 @@ void Viewport::resize(vk::Extent2D inSize) {
 
     cleanupRenderResources();
     createRenderResources();
+}
+
+bool Viewport::Event_MouseButton(Input::MouseButtonEvent& event) {
+    DIRK_LOG(LogViewport, TRACE, "received mouse input")
+
+    if (event.button == Input::MouseButton::Right) {
+        acceptsInput = event.state == Input::KeyState::Pressed;
+        return true;
+    }
+    return false;
+}
+
+bool Viewport::Event_KeyboardKey(Input::KeyboardKeyEvent& event) {
+    DIRK_LOG(LogViewport, TRACE, "received keyboard input")
+
+    if (!acceptsInput || !focused)
+        return false;
+
+    glm::vec3 move{ 0.f };
+    switch (event.key) {
+    case Input::Key::Z:
+        move += FORWARD_DIRECTION;
+    case Input::Key::S:
+        move += BACKWARD_DIRECTION;
+    case Input::Key::A:
+        move += LEFT_DIRECTION;
+    case Input::Key::D:
+        move += RIGH_DIRECTION;
+    case Input::Key::Space:
+        move += UP_DIRECTION;
+    case Input::Key::C:
+        move += BACKWARD_DIRECTION;
+    }
+
+    camera->addMoveInput(move);
+    return true;
 }
 
 void Viewport::setWorld(std::shared_ptr<World> inWorld) { world = inWorld; }
