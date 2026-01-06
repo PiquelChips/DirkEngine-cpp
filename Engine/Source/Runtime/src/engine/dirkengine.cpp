@@ -85,6 +85,9 @@ DirkEngine::DirkEngine(const DirkEngineCreateInfo& createInfo) {
 
         if (!tick(deltaTime))
             break;
+
+        if (!render(deltaTime))
+            break;
     }
 
     renderer->ImGui_shutdown();
@@ -111,8 +114,14 @@ bool DirkEngine::tick(float deltaTime) {
     if (isRequestingExit())
         return false;
 
+    eventManager->dispatchEvents();
+
     world->tick(deltaTime);
 
+    return !isRequestingExit();
+}
+
+bool DirkEngine::render(float deltaTime) {
     renderer->render();
 
     // ImGui

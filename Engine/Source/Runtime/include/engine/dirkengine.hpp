@@ -45,6 +45,7 @@ private:
 
 private:
     bool tick(float deltaTime);
+    bool render(float deltaTime);
     float captureDeltaTime();
     void renderImGui(float deltaTime);
 
