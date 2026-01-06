@@ -14,11 +14,7 @@ struct EventHandle {};
 
 class EventManager {
 public:
-    EventManager();
-    ~EventManager();
-
     void dispatchEvents();
-
     void submitEvent(std::unique_ptr<Event> event);
 
     template <typename T>
