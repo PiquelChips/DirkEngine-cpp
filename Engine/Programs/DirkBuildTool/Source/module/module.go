@@ -126,6 +126,7 @@ func (c *moduleConfig) toModule(buildConfig *config.BuildConfig) Module {
 			Path:        c.Path,
 			External:    c.External,
 			IncludeDirs: c.IncludeDirs,
+			Defines:     c.Defines,
 		}
 	default:
 		log.Printf("Module type %s used by module %s does not exist. Please use \"shaders\" or \"cpp\"\n", c.Type, c.Name)
