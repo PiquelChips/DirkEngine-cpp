@@ -85,12 +85,9 @@ func (c *moduleConfig) toModule(buildConfig *config.BuildConfig) Module {
 			c.IncludeDirs = []string{"include"}
 		}
 
-		newDirs := []string{}
 		for _, dir := range c.IncludeDirs {
-			newDirs = append(newDirs, filepath.Join(c.Path, dir))
+			c.IncludeDirs = append(c.IncludeDirs, filepath.Join(c.Path, dir))
 		}
-
-		c.IncludeDirs = newDirs
 	}
 
 	if len(c.External) > 0 {
@@ -113,6 +110,7 @@ func (c *moduleConfig) toModule(buildConfig *config.BuildConfig) Module {
 			External:     c.External,
 			IncludeDirs:  c.IncludeDirs,
 			build:        buildConfig,
+			allDeps:      nil,
 		}
 	case "header-only":
 		return &HeaderModule{
@@ -123,7 +121,7 @@ func (c *moduleConfig) toModule(buildConfig *config.BuildConfig) Module {
 			Defines:     c.Defines,
 		}
 	default:
-		log.Printf("Module type %s used by module %s does not exist. Please use \"shaders\" or \"cpp\"\n", c.Type, c.Name)
+		log.Printf("Module type %s used by module %s does not exist.", c.Type, c.Name)
 		return nil
 	}
 }

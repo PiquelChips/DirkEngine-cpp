@@ -32,6 +32,32 @@ func (m *CppModule) GetLibs() []string          { return append(m.External, m.Na
 func (m *CppModule) GetDependencies() []string   { return m.Config.Deps }
 func (m *CppModule) AddDependency(module Module) { m.Dependencies = append(m.Dependencies, module) }
 
+func (m *CppModule) Build(defines config.Defines) error {
+	log.Printf("Generating Makefile for %s\n", m.Name)
+
+	libs := m.External
+	for _, dep := range m.getDeps() {
+		libs = append(libs, dep.GetLibs()...)
+	}
+
+	err := make.RunMakefile(&make.CppMakefile{
+		Name:      m.Name,
+		Path:      m.Path,
+		BuildMode: m.build.Mode,
+		RootDir:   config.Dirs.Work,
+		IncDirs:   m.getAllIncludeDirs(),
+		Libs:      libs,
+		Defines:   defines,
+		IsLib:     !m.Config.HasEntrypoint,
+		IsStatic:  m.build.Mode.Compact,
+		Optimize:  m.build.Mode.Optimize,
+		CFlags:    m.getCFlags(),
+		LdFlags:   m.build.Mode.LinkerFlags,
+	})
+
+	return err
+}
+
 func (m *CppModule) GenerateCompileCommands(defines config.Defines) (config.CompileCommands, error) {
 	compileCommands := config.CompileCommands{}
 
@@ -80,43 +106,7 @@ func (m *CppModule) GenerateCompileCommands(defines config.Defines) (config.Comp
 		return nil, err
 	}
 
-	for _, dep := range m.Dependencies {
-		if cppModule, ok := dep.(*CppModule); ok {
-			modCommands, err := cppModule.GenerateCompileCommands(defines)
-			if err != nil {
-				return nil, err
-			}
-			compileCommands = append(compileCommands, modCommands...)
-		}
-	}
-
 	return compileCommands, nil
-}
-
-func (m *CppModule) Build(defines config.Defines) error {
-	log.Printf("Generating Makefile for %s\n", m.Name)
-
-	libs := m.External
-	for _, dep := range m.getDeps() {
-		libs = append(libs, dep.GetLibs()...)
-	}
-
-	err := make.RunMakefile(&make.CppMakefile{
-		Name:      m.Name,
-		Path:      m.Path,
-		BuildMode: m.build.Mode,
-		RootDir:   config.Dirs.Work,
-		IncDirs:   m.getAllIncludeDirs(),
-		Libs:      libs,
-		Defines:   defines,
-		IsLib:     !m.Config.HasEntrypoint,
-		IsStatic:  m.build.Mode.Compact,
-		Optimize:  m.build.Mode.Optimize,
-		CFlags:    m.getCFlags(),
-		LdFlags:   m.build.Mode.LinkerFlags,
-	})
-
-	return err
 }
 
 func (m *CppModule) getCFlags() []string {

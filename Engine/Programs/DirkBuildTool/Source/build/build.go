@@ -3,6 +3,7 @@ package build
 import (
 	"DirkBuildTool/config"
 	"DirkBuildTool/module"
+	"encoding/json"
 	"fmt"
 	"log"
 	"maps"
@@ -45,32 +46,32 @@ func Build(buildConfig *config.BuildConfig) error {
 	defines["SHADERS_DIR"] = fmt.Sprintf("%s/Shaders", config.Dirs.Intermediate)
 	defines["ASSETS_DIR"] = config.Dirs.Assets
 
-	/*
-		if cppTarget, ok := target.(*module.CppModule); ok {
-			log.Printf("Resolving dependencies\n")
-			if err := cppTarget.ResolveDependencies(modules, nil); err != nil {
-				return err
-			}
-
-			log.Printf("Generating compile commands\n")
-			compileCommands, err := cppTarget.GenerateCompileCommands()
-			if err != nil {
-				return err
-			}
-
-			data, err := json.Marshal(compileCommands)
-			if err != nil {
-				return err
-			}
-
-			if err := config.SaveFile("compile_commands.json", data, true); err != nil {
-				return err
-			}
-
-			os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.DBTSaved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
+	log.Printf("Generating compile commands\n")
+	compileCommands := config.CompileCommands{}
+	for _, buildMod := range buildModules {
+		mod, ok := buildMod.(*module.CppModule)
+		if !ok {
+			continue
 		}
-	*/
 
+		commands, err := mod.GenerateCompileCommands(defines)
+		if err != nil {
+			return err
+		}
+
+		compileCommands = append(compileCommands, commands...)
+	}
+
+	data, err := json.Marshal(compileCommands)
+	if err != nil {
+		return err
+	}
+	if err := config.SaveFile("compile_commands.json", data, true); err != nil {
+		return err
+	}
+	os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.DBTSaved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
+
+	log.Printf("Building target %s with %s configuration\n", buildConfig.Target.Name, buildConfig.Mode.Name)
 	for _, mod := range buildModules {
 		if err := mod.Build(defines); err != nil {
 			if _, ok := err.(*exec.ExitError); ok {
