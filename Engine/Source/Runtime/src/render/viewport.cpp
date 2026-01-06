@@ -36,7 +36,7 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
         *this);
 
     auto* eventManager = gEngine->getEventManager();
-    eventManager->bindMember(this, &Viewport::Event_MouseButton);
+    mouseButtonEventHandle = eventManager->bindMember(this, &Viewport::Event_MouseButton);
 
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
@@ -61,6 +61,9 @@ void Viewport::tick(float deltaTime) {
 
 Viewport::~Viewport() {
     cleanupRenderResources();
+
+    auto* eventManager = gEngine->getEventManager();
+    eventManager->unbind<Input::MouseButtonEvent>(mouseButtonEventHandle);
 }
 
 void Viewport::createRenderResources() {

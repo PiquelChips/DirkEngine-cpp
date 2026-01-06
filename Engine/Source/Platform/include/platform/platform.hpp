@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Events/EventManager.hpp"
 #include "core.hpp"
 #include "events.hpp"
 #include "input/keys.hpp"
@@ -108,6 +109,7 @@ public:
 class Platform {
 public:
     Platform(const PlatformCreateInfo& createInfo);
+    ~Platform();
 
     void initImGui();
     void tick(float deltaTime);
@@ -154,6 +156,17 @@ private:
     bool Event_MouseScroll(MouseScrollPlatformEvent& event);
     bool Event_KeyboardKey(KeyboardKeyPlatformEvent& event);
     bool Event_KeyboardChar(KeyboardCharPlatformEvent& event);
+
+    // handles
+    EventHandle windowResizeHandle;
+    EventHandle windowMoveHandle;
+    EventHandle windowCloseHandle;
+    EventHandle windowFocusHandle;
+    EventHandle mouseButtonHandle;
+    EventHandle mouseMoveHandle;
+    EventHandle mouseScrollHandle;
+    EventHandle keyboardKeyHandle;
+    EventHandle keyboardCharHandle;
 
 private:
     std::vector<std::unique_ptr<Monitor>> monitors;

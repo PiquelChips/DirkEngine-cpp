@@ -1,3 +1,4 @@
+#include "Events/EventManager.hpp"
 #include "core.hpp"
 #include "input/events.hpp"
 
@@ -55,6 +56,8 @@ private:
     bool acceptsInput = false;
     bool focused = false;
     bool hovered = false;
+
+    EventHandle mouseButtonEventHandle;
 
     std::unique_ptr<Camera> camera;
 

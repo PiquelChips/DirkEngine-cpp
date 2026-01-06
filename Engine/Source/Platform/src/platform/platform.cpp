@@ -34,15 +34,28 @@ Platform::Platform(const PlatformCreateInfo& createInfo)
 #endif
 
     auto* eventManager = gEngine->getEventManager();
-    eventManager->bindMember(this, &Platform::Event_WindowResize);
-    eventManager->bindMember(this, &Platform::Event_WindowMove);
-    eventManager->bindMember(this, &Platform::Event_WindowClose);
-    eventManager->bindMember(this, &Platform::Event_WindowFocus);
-    eventManager->bindMember(this, &Platform::Event_MouseMove);
-    eventManager->bindMember(this, &Platform::Event_MouseButton);
-    eventManager->bindMember(this, &Platform::Event_MouseScroll);
-    eventManager->bindMember(this, &Platform::Event_KeyboardKey);
-    eventManager->bindMember(this, &Platform::Event_KeyboardChar);
+    windowResizeHandle = eventManager->bindMember(this, &Platform::Event_WindowResize);
+    windowMoveHandle = eventManager->bindMember(this, &Platform::Event_WindowMove);
+    windowCloseHandle = eventManager->bindMember(this, &Platform::Event_WindowClose);
+    windowFocusHandle = eventManager->bindMember(this, &Platform::Event_WindowFocus);
+    mouseButtonHandle = eventManager->bindMember(this, &Platform::Event_MouseMove);
+    mouseMoveHandle = eventManager->bindMember(this, &Platform::Event_MouseButton);
+    mouseScrollHandle = eventManager->bindMember(this, &Platform::Event_MouseScroll);
+    keyboardKeyHandle = eventManager->bindMember(this, &Platform::Event_KeyboardKey);
+    keyboardCharHandle = eventManager->bindMember(this, &Platform::Event_KeyboardChar);
+}
+
+Platform::~Platform() {
+    auto* eventManager = gEngine->getEventManager();
+    eventManager->unbind<WindowResizeEvent>(windowResizeHandle);
+    eventManager->unbind<WindowMoveEvent>(windowMoveHandle);
+    eventManager->unbind<WindowCloseEvent>(windowCloseHandle);
+    eventManager->unbind<WindowFocusEvent>(windowFocusHandle);
+    eventManager->unbind<MouseButtonPlatformEvent>(mouseButtonHandle);
+    eventManager->unbind<MouseMovePlatformEvent>(mouseMoveHandle);
+    eventManager->unbind<MouseScrollPlatformEvent>(mouseScrollHandle);
+    eventManager->unbind<KeyboardKeyPlatformEvent>(keyboardKeyHandle);
+    eventManager->unbind<KeyboardCharPlatformEvent>(keyboardCharHandle);
 }
 
 void Platform::initImGui() {
