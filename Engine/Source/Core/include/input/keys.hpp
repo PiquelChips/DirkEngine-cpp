@@ -103,12 +103,6 @@ enum KeyState {
     Released
 };
 
-enum CursorMode {
-    Normal = 0,
-    Hidden = 1,
-    Locked = 2,
-};
-
 enum class MouseButton : uint16_t {
     Button0 = 0,
     Button1 = 1,
