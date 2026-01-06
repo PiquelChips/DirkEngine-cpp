@@ -240,8 +240,6 @@ Renderer::~Renderer() {
     // make sure all device ops are finished
     device.waitIdle();
     DIRK_LOG(LogVulkan, INFO, "cleaning up renderer");
-
-    viewports.clear();
 }
 
 void Renderer::ImGui_init(vk::SurfaceKHR surface) {
@@ -287,10 +285,7 @@ void Renderer::render() {
     checkVulkan(device.waitForFences(1, &inFlightFence, vk::True, UINT64_MAX));
     checkVulkan(device.resetFences(1, &inFlightFence));
 
-    std::vector<vk::SubmitInfo> submitInfos(viewports.size());
-    for (auto& viewport : viewports) {
-        submitInfos.emplace_back(viewport->render());
-    }
+    std::vector<vk::SubmitInfo> submitInfos{ gEngine->getMainViewport()->render() };
     checkVulkan(queues.graphicsQueue.submit(submitInfos.size(), submitInfos.data(), inFlightFence));
 }
 
@@ -306,14 +301,6 @@ void Renderer::ImGui_render() {
 
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
-}
-
-std::unique_ptr<Viewport>& Renderer::createViewport(const ViewportCreateInfo& createInfo) {
-    return viewports.emplace_back(std::make_unique<Viewport>(createInfo));
-}
-
-void Renderer::destroyViewport(std::unique_ptr<Viewport>& viewport) {
-    viewports.erase(std::find(viewports.begin(), viewports.end(), viewport));
 }
 
 std::vector<SwapchainImage> Renderer::createSwapChain(const SwapChainCreateInfo& createInfo) {

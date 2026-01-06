@@ -3,6 +3,7 @@
 #include "core.hpp"
 
 #include "engine/world.hpp"
+#include "glm/fwd.hpp"
 #include "glm/glm.hpp"
 #include "render/viewport.hpp"
 #include "vulkan/vulkan_structs.hpp"
@@ -25,6 +26,9 @@ public:
 
     void tick(float deltaTime);
     void resize(vk::Extent2D inSize);
+
+    void addMoveInput(glm::vec3 move);
+    void addLookInput(glm::vec2 look);
 
     inline const glm::mat4& getProjection() const { return projection; }
     inline const glm::mat4& getInverseProjection() const { return inverseProjection; }
@@ -54,10 +58,13 @@ private:
     // camera is owned by the viewport
     Viewport& viewport;
 
-    static constexpr glm::vec3 upDirection{ 0.f, 1.f, 0.f };
+    // state
+    glm::vec3 cachedMoveInput = { 0.f, 0.f, 0.f };
+    glm::vec2 cachedLookInput = { 0.f, 0.f };
+
     static constexpr float SENSITIVITY = .002f;
     static constexpr float ROTATION_SPEED = .3f;
-    static constexpr float MOVEMENT_SPEED = 1000.f;
+    static constexpr float MOVEMENT_SPEED = 50000.f;
 };
 
 } // namespace dirk

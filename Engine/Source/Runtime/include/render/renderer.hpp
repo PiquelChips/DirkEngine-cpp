@@ -30,6 +30,10 @@ DECLARE_LOG_CATEGORY_EXTERN(LogVulkanValidation)
 
 #define MAX_DESCRIPTOR_SET_COUNT 20 // incrementally increase as scenes get bigger
 
+constexpr glm::vec3 RIGHT_DIRECTION{ 1.f, 0.f, 0.f };
+constexpr glm::vec3 UP_DIRECTION{ 0.f, 1.f, 0.f }; // Y-up
+constexpr glm::vec3 FORWARD_DIRECTION{ 0.f, 0.f, 1.f };
+
 struct ImGuiViewportRendererData {
     vk::SwapchainKHR swapchain;
     vk::SurfaceKHR surface;
@@ -67,10 +71,6 @@ public:
     void ImGui_beginFrame();
     void ImGui_render();
 
-    std::unique_ptr<Viewport>& createViewport(const ViewportCreateInfo& createInfo);
-    void destroyViewport(std::unique_ptr<Viewport>& viewport);
-    std::vector<std::unique_ptr<Viewport>>& getViewports() { return viewports; }
-
     std::vector<SwapchainImage> createSwapChain(const SwapChainCreateInfo& createInfo);
 
     vk::ShaderModule loadShaderModule(const std::string& shaderName);
@@ -95,7 +95,6 @@ public:
     vk::Extent2D chooseSwapExtent(vk::Extent2D windowSize, const vk::SurfaceCapabilitiesKHR& capabilities);
 
 private:
-    std::vector<std::unique_ptr<Viewport>> viewports;
     ImGuiViewportRendererData* mainViewportData = nullptr; // TODO: remove for custom backend
 
 private:

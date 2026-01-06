@@ -1,9 +1,12 @@
+#include "core.hpp"
+
 #ifdef PLATFORM_LINUX
 
-#include "platform/linux/window.hpp"
-#include "core.hpp"
+#include "Events/EventManager.hpp"
 #include "logging/logging.hpp"
+#include "platform/events.hpp"
 #include "platform/linux/linux.hpp"
+#include "platform/linux/window.hpp"
 #include "platform/platform.hpp"
 
 #include "imgui.h"
@@ -236,14 +239,14 @@ void LinuxWindowImpl::xdg_ToplevelConfigure(void* data, xdg_toplevel* toplevel, 
     // the platform handle is not yet set in the viewport variable. it thus cannot find it
     auto* viewport = ImGui::FindViewportByPlatformHandle(window->wlSurface);
     if (viewport)
-        window->linuxPlatform.getPlatform().windowSizeCallback(viewport, window->size);
+        DIRK_DISPATCH_EVENT(WindowResizeEvent, viewport, window->size);
 }
 
 void LinuxWindowImpl::xdg_ToplevelClose(void* data, xdg_toplevel* toplevel) {
     auto* window = static_cast<LinuxWindowImpl*>(data);
     auto* viewport = ImGui::FindViewportByPlatformHandle(window->wlSurface);
     check(viewport);
-    window->linuxPlatform.getPlatform().windowCloseCallback(viewport);
+    DIRK_DISPATCH_EVENT(WindowCloseEvent, viewport);
 }
 
 } // namespace dirk::Platform::Linux

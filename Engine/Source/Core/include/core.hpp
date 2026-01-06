@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Events/EventManager.hpp"
 #include "asserts.hpp"
 #include "logging/logging.hpp"
 
@@ -164,6 +165,8 @@ public:
     virtual void generateMipmaps(vk::CommandBuffer commandBuffer, vk::Image& image, vk::Format imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t mipLevels) = 0;
 };
 
+class Viewport;
+
 class IEngine {
 public:
     virtual ~IEngine() = default;
@@ -172,6 +175,8 @@ public:
     virtual void exit(const std::string& reason) = 0;
 
     virtual IRenderer* getRenderer() const = 0;
+    virtual EventManager* getEventManager() const = 0;
+    virtual Viewport* getMainViewport() const = 0;
 };
 
 } // namespace dirk

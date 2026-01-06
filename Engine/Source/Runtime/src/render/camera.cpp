@@ -2,7 +2,9 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/quaternion.hpp"
+#include "glm/gtx/hash.hpp"
 #include "glm/gtx/quaternion.hpp"
+#include "render/renderer.hpp"
 #include "vulkan/vulkan_structs.hpp"
 
 #include <cstdint>
@@ -25,66 +27,51 @@ Camera::Camera(const CameraCreateInfo& createInfo, Viewport& viewport)
 }
 
 void Camera::tick(float deltaTime) {
-    // TODO: move to event based system for input
-    /**
-    glm::vec2 mousePos = viewport->getMousePosition();
-    glm::vec2 delta = (mousePos - lastMousePosition) * SENSITIVITY;
-    lastMousePosition = mousePos;
-
-    if (!Input::isMouseButtonDown(Input::MouseButton::Right)) {
-        Input::setCursorMode(CursorMode::Normal);
-        return;
-    }
-    Input::setCursorMode(CursorMode::Locked);
-
-    glm::vec3 rightDirection = glm::normalize(glm::cross(forwardDirection, upDirection));
-
     bool moved = false;
-    // movement
-    glm::vec3 moveDirection(0.0f);
-
-    if (Input::isKeyDown(Key::W)) {
-        moveDirection += forwardDirection;
-    }
-    if (Input::isKeyDown(Key::S)) {
-        moveDirection -= forwardDirection;
-    }
-    if (Input::isKeyDown(Key::D)) {
-        moveDirection += rightDirection;
-    }
-    if (Input::isKeyDown(Key::Q)) {
-        moveDirection -= rightDirection;
-    }
-    if (Input::isKeyDown(Key::Space)) {
-        moveDirection += upDirection;
-    }
-    if (Input::isKeyDown(Key::C)) {
-        moveDirection -= upDirection;
-    }
-
-    if (glm::length(moveDirection) > 0.0f) {
-        moveDirection = glm::normalize(moveDirection);
-        position += moveDirection * MOVEMENT_SPEED * deltaTime;
+    glm::vec3 rightDirection = glm::normalize(glm::cross(forwardDirection, UP_DIRECTION));
+    if (glm::length(cachedMoveInput) > 0.0f) {
+        glm::vec3 move = (rightDirection * cachedMoveInput.x) + (UP_DIRECTION * cachedMoveInput.y) + (forwardDirection * cachedMoveInput.z);
+        position += move * MOVEMENT_SPEED * deltaTime;
         moved = true;
+        cachedMoveInput = glm::vec3(0.f);
     }
 
     // rotation
-    if (delta.x != 0.f || delta.y != 0.f) {
-        float yawDelta = delta.x * ROTATION_SPEED;
-        float pitchDelta = delta.y * ROTATION_SPEED;
+    if (cachedLookInput != glm::vec2{ 0.f, 0.f }) {
+        cachedLookInput *= SENSITIVITY * ROTATION_SPEED;
+
+        float yawDelta = cachedLookInput.x;
+        float pitchDelta = cachedLookInput.y;
 
         glm::quat q = glm::normalize(glm::cross(
             glm::angleAxis(-pitchDelta, rightDirection),
-            glm::angleAxis(-yawDelta, upDirection)));
-        forwardDirection = glm::rotate(q, forwardDirection);
+            glm::angleAxis(-yawDelta, UP_DIRECTION)));
+        forwardDirection = glm::normalize(glm::rotate(q, forwardDirection));
 
         moved = true;
+        cachedLookInput = glm::vec3(0.f);
     }
 
     if (moved) {
         updateView();
     }
+
+    // TODO: setup mouse capture
+    /**
+    if (!Input::isMouseButtonDown(Input::MouseButton::Right)) {
+        Input::setCursorMode(CursorMode::Normal);
+        return;
+    }
+    Input::setCursorMode(CursorMode::Locked);
     */
+}
+
+void Camera::addMoveInput(glm::vec3 move) {
+    cachedMoveInput = glm::normalize(move);
+}
+
+void Camera::addLookInput(glm::vec2 look) {
+    cachedLookInput = look;
 }
 
 void Camera::resize(vk::Extent2D inSize) {
@@ -100,7 +87,7 @@ void Camera::updateProjection() {
 }
 
 void Camera::updateView() {
-    view = glm::lookAt(position, position + forwardDirection, upDirection);
+    view = glm::lookAt(position, position + forwardDirection, UP_DIRECTION);
     inverseView = glm::inverse(view);
 }
 

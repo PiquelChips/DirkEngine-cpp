@@ -3,6 +3,9 @@
 #include "core.hpp"
 #include "engine/dirkengine.hpp"
 #include "engine/world.hpp"
+#include "input/events.hpp"
+#include "input/keys.hpp"
+#include "logging/logging.hpp"
 #include "render/camera.hpp"
 #include "render/renderer.hpp"
 
@@ -18,6 +21,8 @@
 
 namespace dirk {
 
+DEFINE_LOG_CATEGORY(LogViewport);
+
 Viewport::Viewport(const ViewportCreateInfo& createInfo)
     : world(createInfo.world), size(createInfo.size), name(createInfo.name) {
     camera = std::make_unique<Camera>(
@@ -29,6 +34,9 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
             .farClip = 100000.f,
         },
         *this);
+
+    auto* eventManager = gEngine->getEventManager();
+    mouseButtonEventHandle = eventManager->bindMember(this, &Viewport::Event_MouseButton);
 
     auto renderer = gEngine->getRenderer();
     auto resources = renderer->getResources();
@@ -47,8 +55,15 @@ Viewport::Viewport(const ViewportCreateInfo& createInfo)
     createRenderResources();
 }
 
+void Viewport::tick(float deltaTime) {
+    camera->tick(deltaTime);
+}
+
 Viewport::~Viewport() {
     cleanupRenderResources();
+
+    auto* eventManager = gEngine->getEventManager();
+    eventManager->unbind<Input::MouseButtonEvent>(mouseButtonEventHandle);
 }
 
 void Viewport::createRenderResources() {
@@ -313,8 +328,43 @@ vk::SubmitInfo Viewport::render() {
 }
 
 void Viewport::renderImGui() {
+    ImGuiIO& io = ImGui::GetIO();
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin(name.data());
+
+    // handle input
+    {
+        focused = ImGui::IsWindowFocused();
+        hovered = ImGui::IsWindowHovered();
+        if (hovered && acceptsInput) {
+            camera->addLookInput(io.MouseDelta);
+        }
+
+        if (focused && acceptsInput) {
+            glm::vec3 move{ 0.f };
+            if (ImGui::IsKeyPressed(ImGuiKey_Z)) {
+                move += FORWARD_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_S)) {
+                move -= FORWARD_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_D)) {
+                move += RIGHT_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_A)) {
+                move -= RIGHT_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
+                move += UP_DIRECTION;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_C)) {
+                move -= UP_DIRECTION;
+            }
+
+            camera->addMoveInput(move);
+        }
+    }
 
     resize(ImGui::GetContentRegionAvail());
 
@@ -337,6 +387,15 @@ void Viewport::resize(vk::Extent2D inSize) {
 
     cleanupRenderResources();
     createRenderResources();
+}
+
+bool Viewport::Event_MouseButton(Input::MouseButtonEvent& event) {
+    if (event.button == Input::MouseButton::Right) {
+        acceptsInput = event.state == Input::KeyState::Pressed;
+        // TODO: capture or unlock the cursor
+        return true;
+    }
+    return false;
 }
 
 void Viewport::setWorld(std::shared_ptr<World> inWorld) { world = inWorld; }

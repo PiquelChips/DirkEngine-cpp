@@ -1,8 +1,11 @@
+#include "core.hpp"
+
 #ifdef PLATFORM_LINUX
 
-#include "platform/linux/linux.hpp"
-#include "core.hpp"
+#include "Events/EventManager.hpp"
 #include "input/keys.hpp"
+#include "platform/events.hpp"
+#include "platform/linux/linux.hpp"
 #include "platform/linux/window.hpp"
 #include "platform/monitor.hpp"
 #include "platform/platform.hpp"
@@ -350,14 +353,15 @@ void LinuxPlatformImpl::wl_OutputHandleDescription(void* data, struct wl_output*
 void LinuxPlatformImpl::wl_PointerEnter(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y) {
     auto* platform = static_cast<LinuxPlatformImpl*>(data);
     check(platform->pointer == pointer);
-    auto viewport = ImGui::FindViewportByPlatformHandle(surface);
+    auto* viewport = ImGui::FindViewportByPlatformHandle(surface);
     check(viewport);
 
     platform->pointerSurface = surface;
 
-    auto posX = static_cast<float>(wl_fixed_to_double(x));
-    auto posY = static_cast<float>(wl_fixed_to_double(y));
-    platform->platform.cursorPosCallback(viewport, { posX, posY });
+    glm::vec2 pos = { wl_fixed_to_double(x),
+                      wl_fixed_to_double(y) };
+
+    DIRK_DISPATCH_EVENT(MouseMovePlatformEvent, viewport, pos);
 }
 
 void LinuxPlatformImpl::wl_PointerLeave(void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface) {
@@ -367,7 +371,7 @@ void LinuxPlatformImpl::wl_PointerLeave(void* data, wl_pointer* pointer, uint32_
     check(viewport);
 
     platform->pointerSurface = nullptr;
-    platform->platform.cursorPosCallback(viewport, { -FLT_MAX, -FLT_MAX });
+    DIRK_DISPATCH_EVENT(MouseMovePlatformEvent, viewport, glm::vec2{ -FLT_MAX, -FLT_MAX });
 }
 
 void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y) {
@@ -381,7 +385,7 @@ void LinuxPlatformImpl::wl_PointerMotion(void* data, wl_pointer* pointer, uint32
         static_cast<float>(wl_fixed_to_double(y))
     };
 
-    platform->platform.cursorPosCallback(viewport, pos);
+    DIRK_DISPATCH_EVENT(MouseMovePlatformEvent, viewport, pos);
 
     auto* bd = platform->platform.getBackendData();
     ImGuiIO& io = ImGui::GetIO(bd->context);
@@ -407,7 +411,7 @@ void LinuxPlatformImpl::wl_PointerButton(void* data, wl_pointer* pointer, uint32
         platform->dragFinished = false; // Reset so we can try a new drag with this serial
     }
 
-    platform->platform.mouseButtonCallback(viewport, button, state);
+    DIRK_DISPATCH_EVENT(MouseButtonPlatformEvent, viewport, button, state);
 }
 
 void LinuxPlatformImpl::wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value) {
@@ -418,9 +422,9 @@ void LinuxPlatformImpl::wl_PointerAxis(void* data, wl_pointer* pointer, uint32_t
 
     double delta = wl_fixed_to_double(value);
     if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
-        platform->platform.mouseScrollCallback(viewport, { 0.f, -delta * POINTER_SCROLL_SCALE });
+        DIRK_DISPATCH_EVENT(MouseScrollPlatformEvent, viewport, glm::vec2{ 0.f, -delta * POINTER_SCROLL_SCALE });
     } else {
-        platform->platform.mouseScrollCallback(viewport, { delta * POINTER_SCROLL_SCALE, 0.f });
+        DIRK_DISPATCH_EVENT(MouseScrollPlatformEvent, viewport, glm::vec2{ delta * POINTER_SCROLL_SCALE, 0.f });
     }
 }
 
@@ -455,7 +459,7 @@ void LinuxPlatformImpl::wl_KeyboardEnter(void* data, wl_keyboard* keyboard, uint
     platform->keyboardSerial = serial;
     platform->keyboardSurface = surface;
 
-    platform->platform.focusWindowCallback(viewport, true);
+    DIRK_DISPATCH_EVENT(WindowFocusEvent, viewport, true);
 }
 
 void LinuxPlatformImpl::wl_KeyboardLeave(void* data, wl_keyboard* keyboard, uint32_t serial, wl_surface* surface) {
@@ -466,7 +470,7 @@ void LinuxPlatformImpl::wl_KeyboardLeave(void* data, wl_keyboard* keyboard, uint
 
     platform->keyboardSurface = nullptr;
 
-    platform->platform.focusWindowCallback(viewport, false);
+    DIRK_DISPATCH_EVENT(WindowFocusEvent, viewport, false);
 }
 
 void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t inKey, uint32_t inState) {
@@ -485,11 +489,11 @@ void LinuxPlatformImpl::wl_KeyboardKey(void* data, wl_keyboard* keyboard, uint32
     if (key == Input::Key::Unknown)
         return;
 
-    platform->platform.keyCallback(viewport, key, state);
+    DIRK_DISPATCH_EVENT(KeyboardKeyPlatformEvent, viewport, key, state);
 
     if (state == Input::KeyState::Pressed) {
         uint32_t unicode = xkb_state_key_get_utf32(platform->xkbState, keycode);
-        platform->platform.charCallback(viewport, unicode);
+        DIRK_DISPATCH_EVENT(KeyboardCharPlatformEvent, viewport, unicode);
     }
 }
 

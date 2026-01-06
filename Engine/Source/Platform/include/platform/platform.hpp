@@ -1,6 +1,8 @@
 #pragma once
 
+#include "Events/EventManager.hpp"
 #include "core.hpp"
+#include "events.hpp"
 #include "input/keys.hpp"
 #include "monitor.hpp"
 
@@ -107,6 +109,7 @@ public:
 class Platform {
 public:
     Platform(const PlatformCreateInfo& createInfo);
+    ~Platform();
 
     void initImGui();
     void tick(float deltaTime);
@@ -123,6 +126,8 @@ public:
 
     std::string_view getClipboardText() { return platformImpl->getClipboardText(); }
     void setClipboardText(const std::string& text) { platformImpl->setClipboardText(text); }
+
+    static ImGuiPlatformData* getBackendData();
 
 private:
     // platform funcs used by ImGui
@@ -141,19 +146,27 @@ private:
     static const char* ImGui_GetClipboardText(ImGuiContext* ctx);
     static void ImGui_SetClipboardText(ImGuiContext* ctx, const char* text);
 
-public:
     // callbacks for platform events
-    void windowSizeCallback(ImGuiViewport* window, vk::Extent2D inSize);
-    void windowMoveCallback(ImGuiViewport* window);
-    void windowCloseCallback(ImGuiViewport* window);
-    void focusWindowCallback(ImGuiViewport* window, bool focused);
-    void cursorPosCallback(ImGuiViewport* window, glm::vec2 pos);
-    void mouseButtonCallback(ImGuiViewport* window, Input::MouseButton button, Input::KeyState action);
-    void mouseScrollCallback(ImGuiViewport* window, glm::vec2 offset);
-    void keyCallback(ImGuiViewport* window, Input::Key key, Input::KeyState action);
-    void charCallback(ImGuiViewport* window, unsigned int c);
+    bool Event_WindowResize(WindowResizeEvent& event);
+    bool Event_WindowMove(WindowMoveEvent& event);
+    bool Event_WindowClose(WindowCloseEvent& event);
+    bool Event_WindowFocus(WindowFocusEvent& event);
+    bool Event_MouseMove(MouseMovePlatformEvent& event);
+    bool Event_MouseButton(MouseButtonPlatformEvent& event);
+    bool Event_MouseScroll(MouseScrollPlatformEvent& event);
+    bool Event_KeyboardKey(KeyboardKeyPlatformEvent& event);
+    bool Event_KeyboardChar(KeyboardCharPlatformEvent& event);
 
-    static ImGuiPlatformData* getBackendData();
+    // handles
+    EventHandle windowResizeHandle;
+    EventHandle windowMoveHandle;
+    EventHandle windowCloseHandle;
+    EventHandle windowFocusHandle;
+    EventHandle mouseButtonHandle;
+    EventHandle mouseMoveHandle;
+    EventHandle mouseScrollHandle;
+    EventHandle keyboardKeyHandle;
+    EventHandle keyboardCharHandle;
 
 private:
     std::vector<std::unique_ptr<Monitor>> monitors;

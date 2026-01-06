@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Events/EventManager.hpp"
 #include "actor.hpp"
 #include "core.hpp"
 #include "platform/platform.hpp"
@@ -15,6 +16,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogEngine)
 class Renderer;
 class World;
 class Camera;
+class Viewport;
 
 struct DirkEngineCreateInfo {
     std::string_view appName;
@@ -34,14 +36,20 @@ public:
     bool isRequestingExit() const noexcept { return requestingExit; }
 
     IRenderer* getRenderer() const { return (IRenderer*) renderer.get(); }
+    EventManager* getEventManager() const { return eventManager.get(); }
+    Viewport* getMainViewport() const { return mainViewport.get(); }
 
 private:
+    std::unique_ptr<EventManager> eventManager;
     std::unique_ptr<Platform::Platform> platform;
     std::unique_ptr<Renderer> renderer;
     std::shared_ptr<World> world;
 
+    std::unique_ptr<Viewport> mainViewport;
+
 private:
     bool tick(float deltaTime);
+    bool render(float deltaTime);
     float captureDeltaTime();
     void renderImGui(float deltaTime);
 
