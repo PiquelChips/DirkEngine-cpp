@@ -1,0 +1,8 @@
+{
+    "name": "Entrypoint",
+    "standard": "c++23",
+    "dependencies": [
+        "Runtime",
+        "Core"
+    ]
+}
