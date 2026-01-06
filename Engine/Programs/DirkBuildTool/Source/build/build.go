@@ -45,23 +45,7 @@ func Build(buildConfig *config.BuildConfig) error {
 	defines["SHADERS_DIR"] = fmt.Sprintf("%s/Shaders", config.Dirs.Intermediate)
 	defines["ASSETS_DIR"] = config.Dirs.Assets
 
-	for _, mod := range buildModules {
-		if err := mod.Build(defines); err != nil {
-			if _, ok := err.(*exec.ExitError); ok {
-				fmt.Printf("An error occured in the build process\n")
-				return nil
-			}
-			return err
-		}
-	}
-
 	/*
-		target, ok := modules[buildConfig.Target.Module]
-		if !ok {
-			log.Printf("Module %s specified by target %s does not exist, skipping\n", buildConfig.Target.Module, buildConfig.Target.Name)
-			return nil
-		}
-
 		if cppTarget, ok := target.(*module.CppModule); ok {
 			log.Printf("Resolving dependencies\n")
 			if err := cppTarget.ResolveDependencies(modules, nil); err != nil {
@@ -85,16 +69,18 @@ func Build(buildConfig *config.BuildConfig) error {
 
 			os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.DBTSaved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
 		}
+	*/
 
-		if err := module.Build(target); err == nil {
-			return nil
-		} else if _, ok := err.(*exec.ExitError); ok {
-			fmt.Printf("An error occured in the build process\n")
-			return nil
-		} else {
+	for _, mod := range buildModules {
+		if err := mod.Build(defines); err != nil {
+			if _, ok := err.(*exec.ExitError); ok {
+				fmt.Printf("An error occured in the build process\n")
+				return nil
+			}
 			return err
 		}
-	*/
+	}
+
 	return nil
 }
 
