@@ -22,17 +22,15 @@ type CppModule struct {
 	External     []string
 	IncludeDirs  []string
 	build        *config.BuildConfig
-	isBuilt      bool
 }
 
 func (m *CppModule) GetIncludeDirs() []string   { return m.IncludeDirs }
 func (m *CppModule) GetDefines() config.Defines { return m.Config.Defines }
 func (m *CppModule) GetName() string            { return m.Name }
-func (m *CppModule) GetLibs() []string {
-	return []string{m.Name}
-}
+func (m *CppModule) GetLibs() []string          { return append(m.External, m.Name) }
 
-func (m *CppModule) GetDependencies() []string { return m.Config.Deps }
+func (m *CppModule) GetDependencies() []string   { return m.Config.Deps }
+func (m *CppModule) AddDependency(module Module) { m.Dependencies = append(m.Dependencies, module) }
 
 func (m *CppModule) GenerateCompileCommands(defines config.Defines) (config.CompileCommands, error) {
 	compileCommands := config.CompileCommands{}
@@ -182,55 +180,24 @@ func (m *CppModule) Build(defines config.Defines) error {
 		LdFlags:   m.build.Mode.LinkerFlags,
 	})
 
-	m.isBuilt = true
 	return err
 }
-
-func (m *CppModule) IsBuilt() bool               { return m.isBuilt }
-func (m *CppModule) AddDependency(module Module) { m.Dependencies = append(m.Dependencies, module) }
 
 func (m *CppModule) getDeps() []Module {
 	deps := m.Dependencies
 	for _, mod := range m.Dependencies {
 		deps = append(deps, mod)
 
-		modDeps := mod.getDeps()
-		// cleaning duplicates
-		for _, modDep := range modDeps {
-			if !slices.Contains(deps, modDep) {
-				deps = append(deps, modDep)
+		if cppMod, ok := mod.(*CppModule); ok {
+			modDeps := cppMod.getDeps()
+			// cleaning duplicates
+			for _, modDep := range modDeps {
+				if !slices.Contains(deps, modDep) {
+					deps = append(deps, modDep)
+				}
 			}
 		}
 	}
 
 	return deps
-}
-
-func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []Module) error {
-	for _, dep := range dependants {
-		if m == dep {
-			return fmt.Errorf("Circular dependency detected. Module %s has already been included in build\n", dep.GetName())
-		}
-	}
-
-	m.Dependants = dependants
-	for _, dep := range m.Config.Deps {
-		mod, ok := modules[dep]
-		if !ok {
-			log.Printf("Module %s required by module %s does not exist\n", dep, m.Name)
-		}
-
-		if slices.Contains(m.Dependencies, mod) {
-			continue
-		}
-
-		m.Dependencies = append(m.Dependencies, mod)
-		if cppMod, ok := mod.(*CppModule); ok {
-			if err := cppMod.ResolveDependencies(modules, append(dependants, m)); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }

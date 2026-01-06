@@ -20,5 +20,3 @@ func (m *HeaderModule) Build(config.Defines) error { return nil }
 func (m *HeaderModule) IsBuilt() bool              { return true }
 func (m *HeaderModule) GetDependencies() []string  { return nil }
 func (m *HeaderModule) AddDependency(Module)       {}
-
-func (m *HeaderModule) getDeps() []Module { return nil }

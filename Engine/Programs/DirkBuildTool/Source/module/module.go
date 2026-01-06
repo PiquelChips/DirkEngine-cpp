@@ -17,11 +17,8 @@ type Module interface {
 	GetLibs() []string
 
 	Build(config.Defines) error
-	IsBuilt() bool
 	AddDependency(Module)
 	GetDependencies() []string
-
-	getDeps() []Module // returns all the dependencies in the dependency tree
 }
 
 func Load(path, name string, buildConfig *config.BuildConfig) (Module, error) {
@@ -61,11 +58,8 @@ func (m *NullModule) GetIncludeDirs() []string   { return nil }
 func (m *NullModule) GetDefines() config.Defines { return nil }
 func (m *NullModule) GetLibs() []string          { return nil }
 func (m *NullModule) Build(config.Defines) error { return nil }
-func (m *NullModule) IsBuilt() bool              { return true }
 func (m *NullModule) GetDependencies() []string  { return nil }
 func (m *NullModule) AddDependency(Module)       {}
-
-func (m *NullModule) getDeps() []Module { return nil }
 
 // read from .dirkmod files
 type moduleConfig struct {
