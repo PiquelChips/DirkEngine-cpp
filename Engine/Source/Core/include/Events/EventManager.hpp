@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Event.hpp"
+
 #include <functional>
 #include <memory>
 #include <typeindex>
@@ -8,6 +9,8 @@
 namespace dirk {
 
 struct EventHandle {};
+
+#define DIRK_DISPATCH_EVENT(event, ...) dirk::gEngine->getEventManager()->submitEvent(std::make_unique<event>(__VA_ARGS__));
 
 class EventManager {
 public:
