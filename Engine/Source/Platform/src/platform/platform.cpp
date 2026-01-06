@@ -1,5 +1,6 @@
 #include "platform/platform.hpp"
 #include "core.hpp"
+#include "platform/events.hpp"
 #include "platform/monitor.hpp"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_handles.hpp"
@@ -29,6 +30,17 @@ Platform::Platform(const PlatformCreateInfo& createInfo)
 #else
 #error "no platform specified"
 #endif
+
+    auto* eventManager = gEngine->getEventManager();
+    eventManager->bindEvent<WindowResizeEvent>(Platform::Event_WindowSizeCallback);
+    eventManager->bindEvent<WindowMoveEvent>(Platform::Event_WindowMoveCallback);
+    eventManager->bindEvent<WindowCloseEvent>(Platform::Event_WindowCloseCallback);
+    eventManager->bindEvent<WindowFocusEvent>(Platform::Event_WindowFocusCallback);
+    eventManager->bindEvent<MouseMovePlatformEvent>(Platform::Event_MouseMoveCallback);
+    eventManager->bindEvent<MouseButtonPlatformEvent>(Platform::Event_MouseButtonCallback);
+    eventManager->bindEvent<MouseScrollPlatformEvent>(Platform::Event_MouseScrollCallback);
+    eventManager->bindEvent<KeyboardKeyPlatformEvent>(Platform::Event_KeyCallback);
+    eventManager->bindEvent<KeyboardCharPlatformEvent>(Platform::Event_CharCallback);
 }
 
 void Platform::initImGui() {

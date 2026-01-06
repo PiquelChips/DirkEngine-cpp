@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core.hpp"
+#include "events.hpp"
 #include "input/keys.hpp"
 #include "monitor.hpp"
 
@@ -141,17 +142,16 @@ private:
     static const char* ImGui_GetClipboardText(ImGuiContext* ctx);
     static void ImGui_SetClipboardText(ImGuiContext* ctx, const char* text);
 
-public:
     // callbacks for platform events
-    void windowSizeCallback(ImGuiViewport* viewport, vk::Extent2D inSize);
-    void windowMoveCallback(ImGuiViewport* viewport);
-    void windowCloseCallback(ImGuiViewport* viewport);
-    void focusWindowCallback(ImGuiViewport* viewport, bool focused);
-    void cursorPosCallback(ImGuiViewport* viewport, glm::vec2 pos);
-    void mouseButtonCallback(ImGuiViewport* viewport, Input::MouseButton button, Input::KeyState action);
-    void mouseScrollCallback(ImGuiViewport* viewport, glm::vec2 offset);
-    void keyCallback(ImGuiViewport* viewport, Input::Key key, Input::KeyState action);
-    void charCallback(ImGuiViewport* viewport, unsigned int c);
+    static bool Event_WindowSizeCallback(WindowResizeEvent& event);
+    static bool Event_WindowMoveCallback(WindowMoveEvent& event);
+    static bool Event_WindowCloseCallback(WindowCloseEvent& event);
+    static bool Event_WindowFocusCallback(WindowFocusEvent& event);
+    static bool Event_MouseMoveCallback(MouseMovePlatformEvent& event);
+    static bool Event_MouseButtonCallback(MouseButtonPlatformEvent& event);
+    static bool Event_MouseScrollCallback(MouseScrollPlatformEvent& event);
+    static bool Event_KeyCallback(KeyboardKeyPlatformEvent& event);
+    static bool Event_CharCallback(KeyboardCharPlatformEvent& event);
 
     static ImGuiPlatformData* getBackendData();
 
