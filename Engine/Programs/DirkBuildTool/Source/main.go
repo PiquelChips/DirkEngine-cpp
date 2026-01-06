@@ -32,17 +32,17 @@ func main() {
 	}
 
 	targetName := ""
-	buildType := ""
+	buildModeName := ""
 	switch len(os.Args) {
 	case 1:
 		targetName = defaultTarget
-		buildType = defaultBuildType
+		buildModeName = defaultBuildType
 	case 2:
 		targetName = os.Args[1]
-		buildType = defaultBuildType
+		buildModeName = defaultBuildType
 	case 3:
 		targetName = os.Args[1]
-		buildType = os.Args[2]
+		buildModeName = os.Args[2]
 	default:
 		fmt.Printf("Invalid number of arguments.\n")
 		usage()
@@ -50,9 +50,9 @@ func main() {
 		return
 	}
 
-	buildMode, ok := config.BuildModes[buildType]
+	buildMode, ok := config.BuildModes[buildModeName]
 	if !ok {
-		fmt.Printf("Build type %s does not exist\n", buildType)
+		fmt.Printf("Build type %s does not exist\n", buildModeName)
 		os.Exit(1)
 		return
 	}
