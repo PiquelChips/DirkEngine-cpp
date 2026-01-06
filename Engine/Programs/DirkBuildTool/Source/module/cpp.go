@@ -72,7 +72,33 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 			}
 		}
 
-		command := []string{"g++", "-fPIC", fmt.Sprintf("-std=%s", m.Std)}
+		command := []string{"g++"}
+
+		var warningFlags []string
+		switch m.build.Mode.WarningLevel {
+		case config.WarningLevelNone:
+			warningFlags = []string{"-w"}
+		case config.WarningLevelLow:
+			warningFlags = []string{"-Wall"}
+		case config.WarningLevelMedium:
+			warningFlags = []string{"-Wall", "-Wextra"}
+		case config.WarningLevelMax:
+			warningFlags = []string{
+				"-Wall",
+				"-Wextra",
+				"-Wpedantic",
+				"-Wshadow",
+				"-Wnon-virtual-dtor",
+				"-Wold-style-cast",
+				"-Woverloaded-virtual",
+				"-Wunused-parameter",
+				"-Wnull-dereference",
+			}
+		}
+
+		cFlags := append(m.build.Mode.CompileFlags, warningFlags...)
+		cFlags = append(cFlags, "-fPIC", fmt.Sprintf("-std=%s", m.Std))
+		command = append(command, cFlags...)
 
 		for _, dir := range incDirs {
 			command = append(command, fmt.Sprintf("-I%s", dir))
