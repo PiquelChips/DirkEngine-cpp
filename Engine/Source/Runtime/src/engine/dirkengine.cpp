@@ -187,9 +187,7 @@ void DirkEngine::renderImGui(float deltaTime) {
         ImGui::End();
     }
 
-    for (auto& viewport : renderer->getViewports()) {
-        viewport->renderImGui();
-    }
+    mainViewport->renderImGui();
 
     ImGui::End();
 }

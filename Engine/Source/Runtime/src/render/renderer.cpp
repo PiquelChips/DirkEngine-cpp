@@ -240,8 +240,6 @@ Renderer::~Renderer() {
     // make sure all device ops are finished
     device.waitIdle();
     DIRK_LOG(LogVulkan, INFO, "cleaning up renderer");
-
-    viewports.clear();
 }
 
 void Renderer::ImGui_init(vk::SurfaceKHR surface) {
