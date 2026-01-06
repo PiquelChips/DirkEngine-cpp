@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -17,11 +16,12 @@ type Module interface {
 	GetDefines() config.Defines
 	GetLibs() []string
 
-	Build() error
+	Build(config.Defines) error
 	IsBuilt() bool
+	AddDependency(Module)
+	GetDependencies() []string
 
 	getDeps() []Module // returns all the dependencies in the dependency tree
-	getPath() string
 }
 
 func Load(path, name string, buildConfig *config.BuildConfig) (Module, error) {
@@ -52,22 +52,6 @@ func Load(path, name string, buildConfig *config.BuildConfig) (Module, error) {
 	return mod.toModule(buildConfig), nil
 }
 
-func Build(m Module) error {
-	if m.IsBuilt() {
-		return nil
-	}
-
-	if cppMod, ok := m.(*CppModule); ok {
-		for _, mod := range cppMod.Dependencies {
-			if err := Build(mod); err != nil {
-				return err
-			}
-		}
-	}
-
-	return m.Build()
-}
-
 type NullModule struct {
 	Name string
 }
@@ -76,10 +60,12 @@ func (m *NullModule) GetName() string            { return m.Name }
 func (m *NullModule) GetIncludeDirs() []string   { return nil }
 func (m *NullModule) GetDefines() config.Defines { return nil }
 func (m *NullModule) GetLibs() []string          { return nil }
-func (m *NullModule) Build() error               { return nil }
+func (m *NullModule) Build(config.Defines) error { return nil }
 func (m *NullModule) IsBuilt() bool              { return true }
-func (m *NullModule) getDeps() []Module          { return nil }
-func (m *NullModule) getPath() string            { return "" }
+func (m *NullModule) GetDependencies() []string  { return nil }
+func (m *NullModule) AddDependency(Module)       {}
+
+func (m *NullModule) getDeps() []Module { return nil }
 
 // read from .dirkmod files
 type moduleConfig struct {
@@ -124,22 +110,6 @@ func (c *moduleConfig) toModule(buildConfig *config.BuildConfig) Module {
 			Path: c.Path,
 		}
 	case "cpp":
-		if c.Defines == nil {
-			c.Defines = map[string]string{}
-		}
-
-		if config.Platform.Defines != nil {
-			maps.Copy(c.Defines, config.Platform.Defines)
-		}
-
-		if buildConfig.Mode.Defines != nil {
-			maps.Copy(c.Defines, buildConfig.Mode.Defines)
-		}
-
-		c.Defines["SAVED_DIR"] = fmt.Sprintf("%s/%s/%s", config.Dirs.Saved, buildConfig.Target.Name, buildConfig.Mode.Name)
-		c.Defines["SHADERS_DIR"] = fmt.Sprintf("%s/Shaders", config.Dirs.Intermediate)
-		c.Defines["ASSETS_DIR"] = config.Dirs.Assets
-
 		return &CppModule{
 			Name:         c.Name,
 			Path:         c.Path,

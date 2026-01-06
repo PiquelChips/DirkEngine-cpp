@@ -64,7 +64,7 @@ func main() {
 		return
 	}
 
-	log.Printf("Building targetName %s with %s configuration\n", targetName, buildType)
+	log.Printf("Building target %s with %s configuration\n", targetName, buildType)
 
 	buildConfig := &config.BuildConfig{
 		Target: target,

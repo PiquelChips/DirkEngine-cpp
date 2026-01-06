@@ -63,9 +63,9 @@ type PlatformConfig struct {
 }
 
 type Target struct {
-	Name    string  `json:"name"`
-	Module  string  `json:"module"`
-	Defines Defines `json:"defines"`
+	Name    string   `json:"name"`
+	Modules []string `json:"modules"`
+	Defines Defines  `json:"defines"`
 }
 
 var (

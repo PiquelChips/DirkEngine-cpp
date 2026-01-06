@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"maps"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -33,7 +32,9 @@ func (m *CppModule) GetLibs() []string {
 	return []string{m.Name}
 }
 
-func (m *CppModule) GenerateCompileCommands() (config.CompileCommands, error) {
+func (m *CppModule) GetDependencies() []string { return m.Config.Deps }
+
+func (m *CppModule) GenerateCompileCommands(defines config.Defines) (config.CompileCommands, error) {
 	compileCommands := config.CompileCommands{}
 
 	if err := filepath.WalkDir(fmt.Sprintf("%s/src", m.Path), func(path string, d fs.DirEntry, err error) error {
@@ -53,25 +54,10 @@ func (m *CppModule) GenerateCompileCommands() (config.CompileCommands, error) {
 		out = strings.Replace(out, ".cpp", ".o", 1)
 
 		incDirs := m.GetIncludeDirs()
-		defines := m.Config.Defines
-
-		if m.build.Target.Defines != nil {
-			maps.Copy(defines, m.build.Target.Defines)
-		}
 
 		for _, dep := range m.getDeps() {
 			if dep.GetIncludeDirs() != nil {
 				incDirs = append(incDirs, dep.GetIncludeDirs()...)
-			}
-
-			if dep.GetDefines() != nil {
-				maps.Copy(defines, dep.GetDefines())
-			}
-		}
-
-		for _, dep := range m.Dependants {
-			if dep.GetDefines() != nil {
-				maps.Copy(defines, dep.GetDefines())
 			}
 		}
 
@@ -131,7 +117,7 @@ func (m *CppModule) GenerateCompileCommands() (config.CompileCommands, error) {
 
 	for _, dep := range m.Dependencies {
 		if cppModule, ok := dep.(*CppModule); ok {
-			modCommands, err := cppModule.GenerateCompileCommands()
+			modCommands, err := cppModule.GenerateCompileCommands(defines)
 			if err != nil {
 				return nil, err
 			}
@@ -142,33 +128,18 @@ func (m *CppModule) GenerateCompileCommands() (config.CompileCommands, error) {
 	return compileCommands, nil
 }
 
-func (m *CppModule) Build() error {
+func (m *CppModule) Build(defines config.Defines) error {
 	log.Printf("Generating Makefile for %s\n", m.Name)
 
 	incDirs := m.GetIncludeDirs()
 	libs := m.External
-	defines := m.Config.Defines
-
-	if m.build.Target.Defines != nil {
-		maps.Copy(defines, m.build.Target.Defines)
-	}
 
 	for _, dep := range m.getDeps() {
 		if dep.GetIncludeDirs() != nil {
 			incDirs = append(incDirs, dep.GetIncludeDirs()...)
 		}
 
-		if dep.GetDefines() != nil {
-			maps.Copy(defines, dep.GetDefines())
-		}
-
 		libs = append(libs, dep.GetLibs()...)
-	}
-
-	for _, dep := range m.Dependants {
-		if dep.GetDefines() != nil {
-			maps.Copy(defines, dep.GetDefines())
-		}
 	}
 
 	var warningFlags []string
@@ -215,8 +186,8 @@ func (m *CppModule) Build() error {
 	return err
 }
 
-func (m *CppModule) IsBuilt() bool   { return m.isBuilt }
-func (m *CppModule) getPath() string { return m.Path }
+func (m *CppModule) IsBuilt() bool               { return m.isBuilt }
+func (m *CppModule) AddDependency(module Module) { m.Dependencies = append(m.Dependencies, module) }
 
 func (m *CppModule) getDeps() []Module {
 	deps := m.Dependencies
