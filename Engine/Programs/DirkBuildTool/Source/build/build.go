@@ -22,37 +22,44 @@ func Build(buildConfig *config.BuildConfig) error {
 		return err
 	}
 
-	target, ok := modules[buildConfig.Target]
-	if !ok {
-		log.Printf("Target %s does not exist, skipping\n", buildConfig.Target)
-		return nil
+	buildTargets := []module.Module{}
+	for _, modName := range buildConfig.Target.Modules {
+		target, ok := modules[modName]
+		if !ok {
+			log.Printf("Module %s specified by target %s does not exist, skipping\n", modName, buildConfig.Target.Name)
+			continue
+		}
+
+		buildTargets = append(buildTargets, target)
 	}
 
-	if cppTarget, ok := target.(*module.CppModule); ok {
-		log.Printf("Resolving dependencies\n")
-		if err := cppTarget.ResolveDependencies(modules, nil); err != nil {
-			return err
-		}
+	for _, target := range buildTargets {
+		if cppTarget, ok := target.(*module.CppModule); ok {
+			log.Printf("Resolving dependencies\n")
+			if err := cppTarget.ResolveDependencies(modules, nil); err != nil {
+				return err
+			}
 
-		log.Printf("Generating compile commands\n")
-		compileCommands, err := cppTarget.GenerateCompileCommands()
-		if err != nil {
-			return err
-		}
+			log.Printf("Generating compile commands\n")
+			compileCommands, err := cppTarget.GenerateCompileCommands()
+			if err != nil {
+				return err
+			}
 
-		data, err := json.Marshal(compileCommands)
-		if err != nil {
-			return err
-		}
+			data, err := json.Marshal(compileCommands)
+			if err != nil {
+				return err
+			}
 
-		if err := config.SaveFile("compile_commands.json", data, true); err != nil {
-			return err
-		}
+			if err := config.SaveFile("compile_commands.json", data, true); err != nil {
+				return err
+			}
 
-		os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.DBTSaved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
+			os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.DBTSaved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
+		}
 	}
 
-	if err := module.Build(target); err == nil {
+	if err := module.Build(buildTargets); err == nil {
 		return nil
 	} else if _, ok := err.(*exec.ExitError); ok {
 		fmt.Printf("An error occured in the build process\n")
