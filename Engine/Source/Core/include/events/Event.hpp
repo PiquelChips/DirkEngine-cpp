@@ -4,7 +4,8 @@
 
 namespace dirk {
 
-#define DEFINE_EVENT_TYPE(type)                                          \
+#define DEFINE_EVENT_TYPE(type)                                     \
+public:                                                             \
     static std::type_index getStaticType() { return typeid(type); } \
     std::type_index getType() const override { return getStaticType(); }
 
