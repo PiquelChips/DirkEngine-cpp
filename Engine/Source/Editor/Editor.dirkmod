@@ -4,8 +4,5 @@
     "has_entrypoint": true,
     "dependencies": [
         "Runtime"
-    ],
-    "defines": {
-        "WITH_EDITOR": ""
-    }
+    ]
 }
