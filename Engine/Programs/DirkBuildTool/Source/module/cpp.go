@@ -17,11 +17,11 @@ type CppModule struct {
 	Path         string
 	Std          string
 	Dependencies []Module
-	Dependants   []Module
 	Config       *moduleConfig
 	External     []string
 	IncludeDirs  []string
 	build        *config.BuildConfig
+	allDeps      []Module // all the dependencies, detected recursively (populated by getDeps)
 }
 
 func (m *CppModule) GetIncludeDirs() []string   { return m.IncludeDirs }
@@ -51,43 +51,10 @@ func (m *CppModule) GenerateCompileCommands(defines config.Defines) (config.Comp
 		out = strings.Replace(out, "/src/", "/obj/", 1)
 		out = strings.Replace(out, ".cpp", ".o", 1)
 
-		incDirs := m.GetIncludeDirs()
-
-		for _, dep := range m.getDeps() {
-			if dep.GetIncludeDirs() != nil {
-				incDirs = append(incDirs, dep.GetIncludeDirs()...)
-			}
-		}
-
 		command := []string{"g++"}
+		command = append(command, m.getCFlags()...)
 
-		var warningFlags []string
-		switch m.build.Mode.WarningLevel {
-		case config.WarningLevelNone:
-			warningFlags = []string{"-w"}
-		case config.WarningLevelLow:
-			warningFlags = []string{"-Wall"}
-		case config.WarningLevelMedium:
-			warningFlags = []string{"-Wall", "-Wextra"}
-		case config.WarningLevelMax:
-			warningFlags = []string{
-				"-Wall",
-				"-Wextra",
-				"-Wpedantic",
-				"-Wshadow",
-				"-Wnon-virtual-dtor",
-				"-Wold-style-cast",
-				"-Woverloaded-virtual",
-				"-Wunused-parameter",
-				"-Wnull-dereference",
-			}
-		}
-
-		cFlags := append(m.build.Mode.CompileFlags, warningFlags...)
-		cFlags = append(cFlags, "-fPIC", fmt.Sprintf("-std=%s", m.Std))
-		command = append(command, cFlags...)
-
-		for _, dir := range incDirs {
+		for _, dir := range m.getAllIncludeDirs() {
 			command = append(command, fmt.Sprintf("-I%s", dir))
 		}
 
@@ -129,17 +96,30 @@ func (m *CppModule) GenerateCompileCommands(defines config.Defines) (config.Comp
 func (m *CppModule) Build(defines config.Defines) error {
 	log.Printf("Generating Makefile for %s\n", m.Name)
 
-	incDirs := m.GetIncludeDirs()
 	libs := m.External
-
 	for _, dep := range m.getDeps() {
-		if dep.GetIncludeDirs() != nil {
-			incDirs = append(incDirs, dep.GetIncludeDirs()...)
-		}
-
 		libs = append(libs, dep.GetLibs()...)
 	}
 
+	err := make.RunMakefile(&make.CppMakefile{
+		Name:      m.Name,
+		Path:      m.Path,
+		BuildMode: m.build.Mode,
+		RootDir:   config.Dirs.Work,
+		IncDirs:   m.getAllIncludeDirs(),
+		Libs:      libs,
+		Defines:   defines,
+		IsLib:     !m.Config.HasEntrypoint,
+		IsStatic:  m.build.Mode.Compact,
+		Optimize:  m.build.Mode.Optimize,
+		CFlags:    m.getCFlags(),
+		LdFlags:   m.build.Mode.LinkerFlags,
+	})
+
+	return err
+}
+
+func (m *CppModule) getCFlags() []string {
 	var warningFlags []string
 	switch m.build.Mode.WarningLevel {
 	case config.WarningLevelNone:
@@ -164,40 +144,38 @@ func (m *CppModule) Build(defines config.Defines) error {
 
 	cFlags := append(m.build.Mode.CompileFlags, warningFlags...)
 	cFlags = append(cFlags, "-fPIC", fmt.Sprintf("-std=%s", m.Std))
+	return cFlags
+}
 
-	err := make.RunMakefile(&make.CppMakefile{
-		Name:      m.Name,
-		Path:      m.Path,
-		BuildMode: m.build.Mode,
-		RootDir:   config.Dirs.Work,
-		IncDirs:   incDirs,
-		Libs:      libs,
-		Defines:   defines,
-		IsLib:     !m.Config.HasEntrypoint,
-		IsStatic:  m.build.Mode.Compact,
-		Optimize:  m.build.Mode.Optimize,
-		CFlags:    cFlags,
-		LdFlags:   m.build.Mode.LinkerFlags,
-	})
+func (m *CppModule) getAllIncludeDirs() []string {
+	incDirs := m.GetIncludeDirs()
 
-	return err
+	for _, dep := range m.getDeps() {
+		incDirs = append(incDirs, dep.GetIncludeDirs()...)
+	}
+
+	return incDirs
 }
 
 func (m *CppModule) getDeps() []Module {
-	deps := m.Dependencies
+	if m.allDeps != nil {
+		return m.allDeps
+	}
+
+	m.allDeps = m.Dependencies
 	for _, mod := range m.Dependencies {
-		deps = append(deps, mod)
+		m.allDeps = append(m.allDeps, mod)
 
 		if cppMod, ok := mod.(*CppModule); ok {
 			modDeps := cppMod.getDeps()
 			// cleaning duplicates
 			for _, modDep := range modDeps {
-				if !slices.Contains(deps, modDep) {
-					deps = append(deps, modDep)
+				if !slices.Contains(m.allDeps, modDep) {
+					m.allDeps = append(m.allDeps, modDep)
 				}
 			}
 		}
 	}
 
-	return deps
+	return m.allDeps
 }
