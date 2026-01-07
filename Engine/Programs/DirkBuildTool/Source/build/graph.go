@@ -5,6 +5,7 @@ import (
 	"DirkBuildTool/module"
 	"errors"
 	"fmt"
+	"slices"
 )
 
 type Graph struct {
@@ -18,8 +19,11 @@ func (g *Graph) addDependency(task, dep module.Module) {
 	g.nodes[task] = true
 	g.nodes[dep] = true
 
-	g.dependents[dep] = append(g.dependents[dep], task)
+	if slices.Contains(g.dependents[dep], task) {
+		return
+	}
 
+	g.dependents[dep] = append(g.dependents[dep], task)
 	g.counts[task]++
 }
 
