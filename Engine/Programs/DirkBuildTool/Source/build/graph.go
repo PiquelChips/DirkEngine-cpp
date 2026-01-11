@@ -59,13 +59,13 @@ func (g *Graph) flatten() ([]module.Module, error) {
 	return result, nil
 }
 
-func (g *Graph) getRequired(mod module.Module) map[string]module.Module {
+func (g *Graph) getDependencies(mod module.Module) map[string]module.Module {
 	required := map[string]module.Module{mod.GetName(): mod}
 
 	for _, depName := range mod.GetDependencies() {
 		dep := g.nodes[depName]
 
-		newReq := g.getRequired(dep)
+		newReq := g.getDependencies(dep)
 		if newReq != nil {
 			maps.Copy(required, newReq)
 		}
