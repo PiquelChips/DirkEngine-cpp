@@ -106,6 +106,7 @@ func buildDependencyGraph(modules map[string]module.Module) (Graph, error) {
 			}
 
 			g.addDependency(module, dep)
+			module.AddDependency(dep)
 		}
 	}
 
