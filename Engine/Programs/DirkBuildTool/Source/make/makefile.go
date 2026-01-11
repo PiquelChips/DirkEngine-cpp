@@ -28,7 +28,7 @@ func RunMakefile(makefile Makefile) error {
 		return err
 	}
 
-	cmd := exec.Command("make", "-f", path, "-j", "8")
+	cmd := exec.Command("make", "-s", "-f", path, "-j", "8")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = makefile.getModulePath()
