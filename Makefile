@@ -20,5 +20,4 @@ clean: $(BUILD_TOOL)
 	@$(BUILD_TOOL) clean
 
 $(BUILD_TOOL): $(BUILD_TOOL_SRC)
-	@echo Building build tool...
-	@go build -C $(BUILD_TOOL_DIR)/Source -o ../../../../$@ main.go
+	@sh $(SCRIPTS_DIR)/DirkBuildTool.sh
