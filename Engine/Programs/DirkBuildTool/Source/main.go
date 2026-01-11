@@ -31,7 +31,9 @@ func main() {
 			clean()
 			return
 		case "setup":
-			setup.Setup()
+			if err := setup.Setup(); err != nil {
+				panic(err)
+			}
 			return
 		}
 	}
