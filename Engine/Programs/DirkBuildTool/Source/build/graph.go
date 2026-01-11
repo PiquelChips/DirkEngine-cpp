@@ -1,23 +1,22 @@
 package build
 
 import (
-	"DirkBuildTool/config"
 	"DirkBuildTool/module"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 )
 
 type Graph struct {
 	dependents map[module.Module][]module.Module
 	counts     map[module.Module]int
-	nodes      map[module.Module]bool
-	modules    map[string]module.Module
+	nodes      map[string]module.Module
 }
 
 func (g *Graph) addDependency(task, dep module.Module) {
-	g.nodes[task] = true
-	g.nodes[dep] = true
+	g.nodes[task.GetName()] = task
+	g.nodes[dep.GetName()] = dep
 
 	if slices.Contains(g.dependents[dep], task) {
 		return
@@ -31,7 +30,7 @@ func (g *Graph) flatten() ([]module.Module, error) {
 	var queue []module.Module
 	var result []module.Module
 
-	for node := range g.nodes {
+	for _, node := range g.nodes {
 		if g.counts[node] == 0 {
 			queue = append(queue, node)
 		}
@@ -60,39 +59,55 @@ func (g *Graph) flatten() ([]module.Module, error) {
 	return result, nil
 }
 
-func (g *Graph) addModuleDependencies(module module.Module) error {
-	for _, depName := range module.GetDependencies() {
-		dep, ok := g.modules[depName]
-		if !ok {
-			return fmt.Errorf("module %s depended on by %s does not exist", depName, module.GetName())
-		}
+func (g *Graph) getRequired(mod module.Module) map[string]module.Module {
+	required := map[string]module.Module{mod.GetName(): mod}
 
-		module.AddDependency(dep)
-		g.addDependency(module, dep)
-		if err := g.addModuleDependencies(dep); err != nil {
-			return err
+	for _, depName := range mod.GetDependencies() {
+		dep := g.nodes[depName]
+
+		newReq := g.getRequired(dep)
+		if newReq != nil {
+			maps.Copy(required, newReq)
 		}
 	}
 
-	return nil
+	return required
 }
 
-func buildDependencyGraph(modules map[string]module.Module, target config.Target) ([]module.Module, error) {
+func (g *Graph) strip(targets []module.Module) (Graph, error) {
+	if _, err := g.flatten(); err != nil {
+		return Graph{}, err
+	}
+
+	required := map[string]module.Module{}
+
+	for _, target := range targets {
+		newReq := g.getRequired(target)
+		if newReq != nil {
+			maps.Copy(required, newReq)
+		}
+	}
+
+	return buildDependencyGraph(required)
+}
+
+func buildDependencyGraph(modules map[string]module.Module) (Graph, error) {
 	g := Graph{
 		dependents: map[module.Module][]module.Module{},
 		counts:     map[module.Module]int{},
-		nodes:      map[module.Module]bool{},
-		modules:    modules,
+		nodes:      map[string]module.Module{},
 	}
 
-	for _, moduleName := range target.Modules {
-		module, ok := modules[moduleName]
-		if !ok {
-			return nil, fmt.Errorf("module %s specified by target %s does not exist", moduleName, target.Name)
+	for moduleName, module := range modules {
+		for _, depName := range module.GetDependencies() {
+			dep, ok := modules[depName]
+			if !ok {
+				return Graph{}, fmt.Errorf("module %s required by %s does not exist", depName, moduleName)
+			}
+
+			g.addDependency(module, dep)
 		}
-
-		g.addModuleDependencies(module)
 	}
 
-	return g.flatten()
+	return g, nil
 }

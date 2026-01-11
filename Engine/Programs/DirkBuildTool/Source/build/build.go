@@ -22,7 +22,27 @@ func Build(buildConfig *config.BuildConfig) error {
 		return err
 	}
 
-	buildModules, err := buildDependencyGraph(modules, buildConfig.Target)
+	graph, err := buildDependencyGraph(modules)
+	if err != nil {
+		return err
+	}
+
+	targets := []module.Module{}
+	for _, targetName := range buildConfig.Target.Modules {
+		target, ok := modules[targetName]
+		if !ok {
+			return fmt.Errorf("module %s required by target %s does not exist", targetName, buildConfig.Target.Name)
+		}
+
+		targets = append(targets, target)
+	}
+
+	graph, err = graph.strip(targets)
+	if err != nil {
+		return err
+	}
+
+	buildModules, err := graph.flatten()
 	if err != nil {
 		return err
 	}
