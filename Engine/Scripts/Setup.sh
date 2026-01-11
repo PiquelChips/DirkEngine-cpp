@@ -1,16 +1,8 @@
-check() {
-  local missing_count=0
+SCRIPTS_DIR=$(pwd)/Engine/Scripts
 
-  for cmd in "$@"; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
-      echo "Error: '$cmd' is not installed."
-      missing_count=$((missing_count + 1))
-    else
-      echo "$cmd is installed."
-    fi
-  done
+if ! command -v go >/dev/null 2>&1; then
+  echo "Error: Golang is not installed. Attempting to install it."
+fi
 
-  return $missing_count
-}
-
-check "make" "g++" "go"
+echo "Golang is installed. Running the rest of setup."
+"$SCRIPTS_DIR"/DirkBuildTool.sh setup

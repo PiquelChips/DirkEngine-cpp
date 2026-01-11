@@ -29,6 +29,9 @@ func main() {
 		case "clean":
 			clean()
 			return
+		case "setup":
+			setup()
+			return
 		}
 	}
 
@@ -76,4 +79,8 @@ func clean() {
 	os.RemoveAll(config.Dirs.Intermediate)
 	os.RemoveAll(config.Dirs.Saved)
 	os.Remove(fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
+}
+
+func setup() {
+	log.Printf("Running setup...")
 }
