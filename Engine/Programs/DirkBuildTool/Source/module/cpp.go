@@ -35,9 +35,9 @@ func (m *CppModule) AddDependency(module Module) { m.Dependencies = append(m.Dep
 func (m *CppModule) Build(defines config.Defines) error {
 	log.Printf("Generating Makefile for %s\n", m.Name)
 
-	name := m.Name
+	target := m.Name
 	if m.Config.HasEntrypoint {
-		name = m.build.Target.Name
+		target = m.build.Target.Name
 	}
 
 	libs := m.External
@@ -46,10 +46,10 @@ func (m *CppModule) Build(defines config.Defines) error {
 	}
 
 	err := make.RunMakefile(&make.CppMakefile{
-		Name:      name,
+		Name:      m.Name,
+		Target:    target,
 		Path:      m.Path,
 		BuildMode: m.build.Mode,
-		RootDir:   config.Dirs.Work,
 		IncDirs:   m.getAllIncludeDirs(),
 		Libs:      libs,
 		Defines:   defines,
