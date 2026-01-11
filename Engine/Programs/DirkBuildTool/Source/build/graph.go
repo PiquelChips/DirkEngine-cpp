@@ -53,7 +53,7 @@ func (g *Graph) flatten() ([]module.Module, error) {
 
 	// TODO: actually find out which dependencies are circular
 	if len(result) != len(g.nodes) {
-		return nil, errors.New("circular dependency detected: graph cannot be flattened")
+		return nil, g.findCycle()
 	}
 
 	return result, nil
@@ -111,4 +111,64 @@ func buildDependencyGraph(modules map[string]module.Module) (Graph, error) {
 	}
 
 	return g, nil
+}
+
+func (g *Graph) findCycle() error {
+	unproccessed := map[module.Module]bool{}
+	for node, count := range g.counts {
+		if count > 0 {
+			unproccessed[node] = true
+		}
+	}
+
+	var path []module.Module
+	visited := map[module.Module]bool{}
+
+	var search func(current module.Module) error
+	search = func(current module.Module) error {
+		visited[current] = true
+		path = append(path, current)
+
+		// Iterate over what depends on the 'current' module
+		for _, dependent := range g.dependents[current] {
+			// Only traverse nodes that are part of the unproccessed stuck set
+			if !unproccessed[dependent] {
+				continue
+			}
+
+			// check if 'dependent' is already in the current path (cycle detected)
+			if idx := slices.Index(path, dependent); idx != -1 {
+				cycle := path[idx:]
+				msg := "circular dependency detected: "
+				for i, mod := range cycle {
+					if i > 0 {
+						msg += " -> "
+					}
+					msg += mod.GetName()
+				}
+				msg += " -> " + dependent.GetName()
+				return errors.New(msg)
+			}
+
+			if !visited[dependent] {
+				if err := search(dependent); err != nil {
+					return err
+				}
+			}
+		}
+
+		// remove current node from path before returning (going back up a node)
+		path = path[:len(path)-1]
+		return nil
+	}
+
+	for node := range unproccessed {
+		if !visited[node] {
+			if err := search(node); err != nil {
+				return err
+			}
+		}
+	}
+
+	return errors.New("circular dependency detected (complex cycle)")
 }
