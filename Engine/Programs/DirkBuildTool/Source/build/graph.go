@@ -82,7 +82,7 @@ func (g *Graph) strip(targets []module.Module) (Graph, error) {
 	required := map[string]module.Module{}
 
 	for _, target := range targets {
-		newReq := g.getRequired(target)
+		newReq := g.getDependencies(target)
 		if newReq != nil {
 			maps.Copy(required, newReq)
 		}
