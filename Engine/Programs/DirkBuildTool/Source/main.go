@@ -31,47 +31,49 @@ func main() {
 		}
 	}
 
+	if err := buildTarget(os.Args); err != nil {
+		panic(err)
+	}
+}
+
+func buildTarget(args []string) error {
 	targetName := ""
 	buildModeName := ""
-	switch len(os.Args) {
+	switch len(args) {
 	case 1:
 		targetName = defaultTarget
 		buildModeName = defaultBuildType
 	case 2:
-		targetName = os.Args[1]
+		targetName = args[1]
 		buildModeName = defaultBuildType
 	case 3:
-		targetName = os.Args[1]
-		buildModeName = os.Args[2]
+		targetName = args[1]
+		buildModeName = args[2]
 	default:
-		fmt.Printf("Invalid number of arguments.\n")
 		usage()
-		os.Exit(1)
-		return
+		return fmt.Errorf("Invalid number of arguments.")
 	}
 
 	buildMode, ok := config.BuildModes[buildModeName]
 	if !ok {
-		fmt.Printf("Build type %s does not exist\n", buildModeName)
-		os.Exit(1)
-		return
+		return fmt.Errorf("Build type %s does not exist\n", buildModeName)
 	}
 
 	target, ok := config.Targets[targetName]
 	if !ok {
-		fmt.Printf("Target %s does not exist\n", targetName)
-		os.Exit(1)
-		return
+		return fmt.Errorf("Target %s does not exist\n", targetName)
 	}
 
-	buildConfig := &config.BuildConfig{
-		Target: target,
-		Mode:   buildMode,
+	buildConfig, err := build.SetupBuildConfig(target, buildMode)
+	if err != nil {
+		return err
 	}
 
-	if err := build.Build(buildConfig); err != nil {
-		panic(err)
+	if err := buildConfig.GenerateCompileCommands(); err != nil {
+		return err
 	}
+
+	return buildConfig.Build()
 }
 
 func clean() {

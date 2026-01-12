@@ -20,7 +20,7 @@ type CppModule struct {
 	Config       *moduleConfig
 	External     []string
 	IncludeDirs  []string
-	build        *config.BuildConfig
+	buildMode    *config.BuildMode
 	allDeps      []Module // all the dependencies, detected recursively (populated by getDeps)
 }
 
@@ -32,12 +32,12 @@ func (m *CppModule) GetLibs() []string          { return append(m.External, m.Na
 func (m *CppModule) GetDependencies() []string   { return m.Config.Deps }
 func (m *CppModule) AddDependency(module Module) { m.Dependencies = append(m.Dependencies, module) }
 
-func (m *CppModule) Build(defines config.Defines) error {
+func (m *CppModule) Build(target *config.Target, defines config.Defines) error {
 	log.Printf("Generating Makefile for %s\n", m.Name)
 
-	target := m.Name
+	targetName := m.Name
 	if m.Config.HasEntrypoint {
-		target = m.build.Target.Name
+		targetName = target.Name
 	}
 
 	libs := m.External
@@ -47,17 +47,17 @@ func (m *CppModule) Build(defines config.Defines) error {
 
 	err := make.RunMakefile(&make.CppMakefile{
 		Name:      m.Name,
-		Target:    target,
+		Target:    targetName,
 		Path:      m.Path,
-		BuildMode: m.build.Mode,
+		BuildMode: m.buildMode,
 		IncDirs:   m.getAllIncludeDirs(),
 		Libs:      libs,
 		Defines:   defines,
 		IsLib:     !m.Config.HasEntrypoint,
-		IsStatic:  m.build.Mode.Compact,
-		Optimize:  m.build.Mode.Optimize,
+		IsStatic:  m.buildMode.Compact,
+		Optimize:  m.buildMode.Optimize,
 		CFlags:    m.getCFlags(),
-		LdFlags:   m.build.Mode.LinkerFlags,
+		LdFlags:   m.buildMode.LinkerFlags,
 	})
 
 	return err
@@ -78,7 +78,7 @@ func (m *CppModule) GenerateCompileCommands(defines config.Defines) (config.Comp
 		in = strings.Trim(in, "/")
 
 		intDir := fmt.Sprintf("%s/%s", config.Dirs.Intermediate, m.Name)
-		out := fmt.Sprintf("%s/%s/%s", intDir, m.build.Mode.Name, in)
+		out := fmt.Sprintf("%s/%s/%s", intDir, m.buildMode.Name, in)
 		out = strings.Replace(out, "/src/", "/obj/", 1)
 		out = strings.Replace(out, ".cpp", ".o", 1)
 
@@ -116,7 +116,7 @@ func (m *CppModule) GenerateCompileCommands(defines config.Defines) (config.Comp
 
 func (m *CppModule) getCFlags() []string {
 	var warningFlags []string
-	switch m.build.Mode.WarningLevel {
+	switch m.buildMode.WarningLevel {
 	case config.WarningLevelNone:
 		warningFlags = []string{"-w"}
 	case config.WarningLevelLow:
@@ -137,7 +137,7 @@ func (m *CppModule) getCFlags() []string {
 		}
 	}
 
-	cFlags := append(m.build.Mode.CompileFlags, warningFlags...)
+	cFlags := append(m.buildMode.CompileFlags, warningFlags...)
 	cFlags = append(cFlags, "-fPIC", fmt.Sprintf("-std=%s", m.Std))
 	return cFlags
 }
