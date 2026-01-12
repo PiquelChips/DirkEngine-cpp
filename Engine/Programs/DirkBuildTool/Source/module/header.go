@@ -17,6 +17,5 @@ func (m *HeaderModule) GetDefines() config.Defines { return m.Defines }
 func (m *HeaderModule) GetLibs() []string          { return m.External }
 
 func (m *HeaderModule) Build(config.Defines) error { return nil }
-func (m *HeaderModule) IsBuilt() bool              { return true }
 func (m *HeaderModule) GetDependencies() []string  { return nil }
 func (m *HeaderModule) AddDependency(Module)       {}
