@@ -1,0 +1,7 @@
+{
+    "name": "DirkGame",
+    "modules": [
+        "Runtime",
+        "Entrypoint"
+    ]
+}

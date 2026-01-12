@@ -7,7 +7,6 @@ import (
 
 	"DirkBuildTool/build"
 	"DirkBuildTool/config"
-	"DirkBuildTool/models"
 )
 
 func usage() {
@@ -15,7 +14,7 @@ func usage() {
 }
 
 const (
-	defaultTarget    = "Editor"
+	defaultTarget    = "DirkEditor"
 	defaultBuildType = "Development"
 )
 
@@ -32,18 +31,18 @@ func main() {
 		}
 	}
 
-	target := ""
-	buildType := ""
+	targetName := ""
+	buildModeName := ""
 	switch len(os.Args) {
 	case 1:
-		target = defaultTarget
-		buildType = defaultBuildType
+		targetName = defaultTarget
+		buildModeName = defaultBuildType
 	case 2:
-		target = os.Args[1]
-		buildType = defaultBuildType
+		targetName = os.Args[1]
+		buildModeName = defaultBuildType
 	case 3:
-		target = os.Args[1]
-		buildType = os.Args[2]
+		targetName = os.Args[1]
+		buildModeName = os.Args[2]
 	default:
 		fmt.Printf("Invalid number of arguments.\n")
 		usage()
@@ -51,16 +50,21 @@ func main() {
 		return
 	}
 
-	buildMode, ok := config.BuildModes[buildType]
+	buildMode, ok := config.BuildModes[buildModeName]
 	if !ok {
-		fmt.Printf("Build type %s does not exist\n", buildType)
+		fmt.Printf("Build type %s does not exist\n", buildModeName)
 		os.Exit(1)
 		return
 	}
 
-	log.Printf("Building %s for %s\n", target, buildType)
+	target, ok := config.Targets[targetName]
+	if !ok {
+		fmt.Printf("Target %s does not exist\n", targetName)
+		os.Exit(1)
+		return
+	}
 
-	buildConfig := &models.BuildConfig{
+	buildConfig := &config.BuildConfig{
 		Target: target,
 		Mode:   buildMode,
 	}

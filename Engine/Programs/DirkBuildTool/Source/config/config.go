@@ -1,7 +1,6 @@
 package config
 
 import (
-	"DirkBuildTool/models"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -21,6 +20,32 @@ const (
 	WarningLevelMax    = 3
 )
 
+type BuildConfig struct {
+	Target Target
+	Mode   *BuildMode
+}
+
+type Defines map[string]string
+
+type CompileCommands []*CompileCommand
+
+type CompileCommand struct {
+	Directory string   `json:"directory"`
+	Arguments []string `json:"arguments"`
+	File      string   `json:"file"`
+	Output    string   `json:"output"`
+}
+
+type BuildMode struct {
+	Name         string
+	Optimize     bool
+	Compact      bool // compact the output (essentially statically linking)
+	Defines      map[string]string
+	LinkerFlags  []string
+	CompileFlags []string
+	WarningLevel int
+}
+
 type DirsConfig struct {
 	Work, Engine, Config,
 	Source, Assets,
@@ -37,11 +62,18 @@ type PlatformConfig struct {
 	Defines map[string]string
 }
 
+type Target struct {
+	Name    string   `json:"name"`
+	Modules []string `json:"modules"`
+	Defines Defines  `json:"defines"`
+}
+
 var (
-	BuildModes map[string]*models.BuildMode
+	BuildModes map[string]*BuildMode
 	Platform   PlatformConfig
 	Dirs       DirsConfig
 	Settings   BuildToolSettings
+	Targets    map[string]Target
 )
 
 const (
@@ -70,7 +102,7 @@ func LoadConfig() error {
 		return err
 	}
 
-	BuildModes = map[string]*models.BuildMode{
+	BuildModes = map[string]*BuildMode{
 		"Development": {
 			Name:     "Development",
 			Optimize: false,
@@ -101,7 +133,10 @@ func LoadConfig() error {
 		return err
 	}
 
-	// TODO: load targets
+	Targets, err = loadTargets()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -139,46 +174,36 @@ func loadSettings() (BuildToolSettings, error) {
 	return config, nil
 }
 
-func LoadConfigFile(file string, out any) error {
-	data, err := os.ReadFile(fmt.Sprintf("%s/%s", Dirs.DBTConfig, file))
+func loadTargets() (map[string]Target, error) {
+	entries, err := os.ReadDir(Dirs.Source)
 	if err != nil {
-		return fmt.Errorf("Error loading config file: %w", err)
+		return nil, err
 	}
 
-	if err := json.Unmarshal(data, out); err != nil {
-		return fmt.Errorf("Error parsing config file: %w", err)
+	targets := map[string]Target{}
+	for _, entry := range entries {
+		if !strings.HasSuffix(entry.Name(), ".dirktarget") {
+			continue
+		}
+		targetName := strings.TrimSuffix(entry.Name(), ".dirktarget")
+
+		target := Target{}
+		data, err := os.ReadFile(fmt.Sprintf("%s/%s", Dirs.Source, entry.Name()))
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(data, &target); err != nil {
+			return nil, err
+		}
+
+		if targetName != target.Name {
+			log.Printf("target %s should have name field set to %s not %s", targetName, targetName, target.Name)
+			continue
+		}
+
+		targets[target.Name] = target
+
 	}
-
-	return nil
-}
-
-func SaveFile(name string, data []byte, overwrite bool) error {
-	name = strings.Trim(name, "/")
-	name = fmt.Sprintf("%s/%s", Dirs.DBTSaved, name)
-
-	if overwrite {
-		return os.WriteFile(name, data, FilePerm)
-	}
-
-	f, err := os.OpenFile(name, os.O_APPEND|os.O_CREATE, FilePerm)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	f.Write(data)
-	return nil
-}
-
-func ReadSavedFile(name string) ([]byte, error) {
-	name = strings.Trim(name, "/")
-	name = fmt.Sprintf("%s/%s", Dirs.DBTSaved, name)
-	return os.ReadFile(name)
-}
-
-func GetSavedFile(name string) (os.FileInfo, error) {
-	name = strings.Trim(name, "/")
-	name = fmt.Sprintf("%s/%s", Dirs.DBTSaved, name)
-
-	return os.Stat(name)
+	return targets, nil
 }

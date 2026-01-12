@@ -168,6 +168,7 @@ void DirkEngine::renderImGui(float deltaTime) {
 
     ImGui::DockSpace(ImGui::GetID("DirkDockspace"));
 
+#if WITH_EDITOR
     ImGui::Begin("Editor Panel");
     {
         ImGui::Text("FPS: %f", 1.0 / deltaTime);
@@ -186,6 +187,7 @@ void DirkEngine::renderImGui(float deltaTime) {
         ImGui::ShowStyleEditor();
         ImGui::End();
     }
+#endif
 
     mainViewport->renderImGui();
 
