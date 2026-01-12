@@ -74,7 +74,7 @@ func (g *Graph) getDependencies(mod module.Module) map[string]module.Module {
 }
 
 func (g *Graph) strip(targets []module.Module) (Graph, error) {
-	if _, err := g.flatten(); err != nil {
+	if err := g.findCycle(); err != nil {
 		return Graph{}, err
 	}
 
@@ -88,28 +88,6 @@ func (g *Graph) strip(targets []module.Module) (Graph, error) {
 	}
 
 	return buildDependencyGraph(required)
-}
-
-func buildDependencyGraph(modules map[string]module.Module) (Graph, error) {
-	g := Graph{
-		dependents: map[module.Module][]module.Module{},
-		counts:     map[module.Module]int{},
-		nodes:      map[string]module.Module{},
-	}
-
-	for moduleName, module := range modules {
-		for _, depName := range module.GetDependencies() {
-			dep, ok := modules[depName]
-			if !ok {
-				return Graph{}, fmt.Errorf("module %s required by %s does not exist", depName, moduleName)
-			}
-
-			g.addDependency(module, dep)
-			module.AddDependency(dep)
-		}
-	}
-
-	return g, nil
 }
 
 func (g *Graph) findCycle() error {
@@ -169,5 +147,27 @@ func (g *Graph) findCycle() error {
 		}
 	}
 
-	return errors.New("circular dependency detected (complex cycle)")
+	return nil
+}
+
+func buildDependencyGraph(modules map[string]module.Module) (Graph, error) {
+	g := Graph{
+		dependents: map[module.Module][]module.Module{},
+		counts:     map[module.Module]int{},
+		nodes:      map[string]module.Module{},
+	}
+
+	for moduleName, module := range modules {
+		for _, depName := range module.GetDependencies() {
+			dep, ok := modules[depName]
+			if !ok {
+				return Graph{}, fmt.Errorf("module %s required by %s does not exist", depName, moduleName)
+			}
+
+			g.addDependency(module, dep)
+			module.AddDependency(dep)
+		}
+	}
+
+	return g, nil
 }
