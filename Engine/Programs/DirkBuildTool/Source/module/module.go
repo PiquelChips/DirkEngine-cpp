@@ -2,11 +2,9 @@ package module
 
 import (
 	"DirkBuildTool/config"
-	"DirkBuildTool/models"
 	"encoding/json"
 	"fmt"
 	"log"
-	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -15,17 +13,15 @@ import (
 type Module interface {
 	GetName() string
 	GetIncludeDirs() []string
-	GetDefines() models.Defines
+	GetDefines() config.Defines
 	GetLibs() []string
 
-	Build() error
-	IsBuilt() bool
-
-	getDeps() []Module // returns all the dependencies in the dependency tree
-	getPath() string
+	Build(config.Defines) error
+	AddDependency(Module)
+	GetDependencies() []string
 }
 
-func Load(path, name string, buildConfig *models.BuildConfig) (Module, error) {
+func Load(path, name string, buildConfig *config.BuildConfig) (Module, error) {
 	path = fmt.Sprintf("%s/%s", path, name)
 	modFile := fmt.Sprintf("%s/%s.dirkmod", path, name)
 	data, err := os.ReadFile(modFile)
@@ -53,34 +49,17 @@ func Load(path, name string, buildConfig *models.BuildConfig) (Module, error) {
 	return mod.toModule(buildConfig), nil
 }
 
-func Build(m Module) error {
-	if m.IsBuilt() {
-		return nil
-	}
-
-	if cppMod, ok := m.(*CppModule); ok {
-		for _, mod := range cppMod.Dependencies {
-			if err := Build(mod); err != nil {
-				return err
-			}
-		}
-	}
-
-	return m.Build()
-}
-
 type NullModule struct {
 	Name string
 }
 
 func (m *NullModule) GetName() string            { return m.Name }
 func (m *NullModule) GetIncludeDirs() []string   { return nil }
-func (m *NullModule) GetDefines() models.Defines { return nil }
+func (m *NullModule) GetDefines() config.Defines { return nil }
 func (m *NullModule) GetLibs() []string          { return nil }
-func (m *NullModule) Build() error               { return nil }
-func (m *NullModule) IsBuilt() bool              { return true }
-func (m *NullModule) getDeps() []Module          { return nil }
-func (m *NullModule) getPath() string            { return "" }
+func (m *NullModule) Build(config.Defines) error { return nil }
+func (m *NullModule) GetDependencies() []string  { return nil }
+func (m *NullModule) AddDependency(Module)       {}
 
 // read from .dirkmod files
 type moduleConfig struct {
@@ -96,7 +75,7 @@ type moduleConfig struct {
 	IncludeDirs   []string          `json:"include_dirs"`
 }
 
-func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
+func (c *moduleConfig) toModule(buildConfig *config.BuildConfig) Module {
 	if c.Type == "" {
 		c.Type = "cpp"
 	}
@@ -106,12 +85,9 @@ func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
 			c.IncludeDirs = []string{"include"}
 		}
 
-		newDirs := []string{}
 		for _, dir := range c.IncludeDirs {
-			newDirs = append(newDirs, filepath.Join(c.Path, dir))
+			c.IncludeDirs = append(c.IncludeDirs, filepath.Join(c.Path, dir))
 		}
-
-		c.IncludeDirs = newDirs
 	}
 
 	if len(c.External) > 0 {
@@ -125,22 +101,6 @@ func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
 			Path: c.Path,
 		}
 	case "cpp":
-		if c.Defines == nil {
-			c.Defines = map[string]string{}
-		}
-
-		if config.Platform.Defines != nil {
-			maps.Copy(c.Defines, config.Platform.Defines)
-		}
-
-		if buildConfig.Mode.Defines != nil {
-			maps.Copy(c.Defines, buildConfig.Mode.Defines)
-		}
-
-		c.Defines["SAVED_DIR"] = fmt.Sprintf("%s/%s/%s", config.Dirs.Saved, buildConfig.Target, buildConfig.Mode.Name)
-		c.Defines["SHADERS_DIR"] = fmt.Sprintf("%s/Shaders", config.Dirs.Intermediate)
-		c.Defines["ASSETS_DIR"] = config.Dirs.Assets
-
 		return &CppModule{
 			Name:         c.Name,
 			Path:         c.Path,
@@ -150,6 +110,7 @@ func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
 			External:     c.External,
 			IncludeDirs:  c.IncludeDirs,
 			build:        buildConfig,
+			allDeps:      nil,
 		}
 	case "header-only":
 		return &HeaderModule{
@@ -157,9 +118,10 @@ func (c *moduleConfig) toModule(buildConfig *models.BuildConfig) Module {
 			Path:        c.Path,
 			External:    c.External,
 			IncludeDirs: c.IncludeDirs,
+			Defines:     c.Defines,
 		}
 	default:
-		log.Printf("Module type %s used by module %s does not exist. Please use \"shaders\" or \"cpp\"\n", c.Type, c.Name)
+		log.Printf("Module type %s used by module %s does not exist.", c.Type, c.Name)
 		return nil
 	}
 }

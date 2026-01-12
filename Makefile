@@ -4,7 +4,7 @@ BUILD_TOOL=$(BIN_DIR)/DirkBuildTool
 BUILD_TOOL_DIR=Engine/Programs/DirkBuildTool
 BUILD_TOOL_SRC=$(shell find $(BUILD_TOOL_DIR)/Source -type f -name '*')
 
-EDITOR=$(BIN_DIR)/Editor
+EDITOR=$(BIN_DIR)/DirkEditor
 
 .PHONY: clean run build setup
 run: build

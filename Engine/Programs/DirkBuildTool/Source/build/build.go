@@ -2,7 +2,6 @@ package build
 
 import (
 	"DirkBuildTool/config"
-	"DirkBuildTool/models"
 	"DirkBuildTool/module"
 	"encoding/json"
 	"fmt"
@@ -12,7 +11,7 @@ import (
 	"os/exec"
 )
 
-func Build(buildConfig *models.BuildConfig) error {
+func Build(buildConfig *config.BuildConfig) error {
 	modules, err := searchDir(config.Dirs.Source, buildConfig, 0)
 	if err != nil {
 		return err
@@ -23,47 +22,94 @@ func Build(buildConfig *models.BuildConfig) error {
 		return err
 	}
 
-	target, ok := modules[buildConfig.Target]
-	if !ok {
-		log.Printf("Target %s does not exist, skipping\n", buildConfig.Target)
-		return nil
-	}
-
-	if cppTarget, ok := target.(*module.CppModule); ok {
-		log.Printf("Resolving dependencies\n")
-		if err := cppTarget.ResolveDependencies(modules, nil); err != nil {
-			return err
-		}
-
-		log.Printf("Generating compile commands\n")
-		compileCommands, err := cppTarget.GenerateCompileCommands()
-		if err != nil {
-			return err
-		}
-
-		data, err := json.Marshal(compileCommands)
-		if err != nil {
-			return err
-		}
-
-		if err := config.SaveFile("compile_commands.json", data, true); err != nil {
-			return err
-		}
-
-		os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.DBTSaved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
-	}
-
-	if err := module.Build(target); err == nil {
-		return nil
-	} else if _, ok := err.(*exec.ExitError); ok {
-		fmt.Printf("An error occured in the build process\n")
-		return nil
-	} else {
+	graph, err := buildDependencyGraph(modules)
+	if err != nil {
 		return err
 	}
+
+	targets := []module.Module{}
+	for _, targetName := range buildConfig.Target.Modules {
+		target, ok := modules[targetName]
+		if !ok {
+			return fmt.Errorf("module %s required by target %s does not exist", targetName, buildConfig.Target.Name)
+		}
+
+		targets = append(targets, target)
+	}
+
+	graph, err = graph.strip(targets)
+	if err != nil {
+		return err
+	}
+
+	buildModules, err := graph.flatten()
+	if err != nil {
+		return err
+	}
+
+	defines := buildConfig.Target.Defines
+	if defines == nil {
+		defines = config.Defines{}
+	}
+
+	for _, mod := range buildModules {
+		if mod.GetDefines() != nil {
+			maps.Copy(defines, mod.GetDefines())
+		}
+	}
+
+	if config.Platform.Defines != nil {
+		maps.Copy(defines, config.Platform.Defines)
+	}
+
+	if buildConfig.Mode.Defines != nil {
+		maps.Copy(defines, buildConfig.Mode.Defines)
+	}
+
+	defines["SAVED_DIR"] = fmt.Sprintf("%s/%s/%s", config.Dirs.Saved, buildConfig.Target.Name, buildConfig.Mode.Name)
+	defines["SHADERS_DIR"] = fmt.Sprintf("%s/Shaders", config.Dirs.Intermediate)
+	defines["ASSETS_DIR"] = config.Dirs.Assets
+
+	log.Printf("Generating compile commands\n")
+	compileCommands := config.CompileCommands{}
+	for _, buildMod := range buildModules {
+		mod, ok := buildMod.(*module.CppModule)
+		if !ok {
+			continue
+		}
+
+		commands, err := mod.GenerateCompileCommands(defines)
+		if err != nil {
+			return err
+		}
+
+		compileCommands = append(compileCommands, commands...)
+	}
+
+	data, err := json.Marshal(compileCommands)
+	if err != nil {
+		return err
+	}
+	if err := config.SaveFile("compile_commands.json", data, true); err != nil {
+		return err
+	}
+	os.Symlink(fmt.Sprintf("%s/compile_commands.json", config.Dirs.DBTSaved), fmt.Sprintf("%s/compile_commands.json", config.Dirs.Work))
+
+	log.Printf("Building target %s with %s configuration\n", buildConfig.Target.Name, buildConfig.Mode.Name)
+	for _, mod := range buildModules {
+		if err := mod.Build(defines); err != nil {
+			if _, ok := err.(*exec.ExitError); ok {
+				fmt.Printf("An error occured in the build process\n")
+				return nil
+			}
+			return err
+		}
+	}
+
+	return nil
 }
 
-func searchDir(path string, buildConfig *models.BuildConfig, count int) (map[string]module.Module, error) {
+func searchDir(path string, buildConfig *config.BuildConfig, count int) (map[string]module.Module, error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err

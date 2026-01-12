@@ -3,11 +3,9 @@ package module
 import (
 	"DirkBuildTool/config"
 	"DirkBuildTool/make"
-	"DirkBuildTool/models"
 	"fmt"
 	"io/fs"
 	"log"
-	"maps"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -19,23 +17,54 @@ type CppModule struct {
 	Path         string
 	Std          string
 	Dependencies []Module
-	Dependants   []Module
 	Config       *moduleConfig
 	External     []string
 	IncludeDirs  []string
-	build        *models.BuildConfig
-	isBuilt      bool
+	build        *config.BuildConfig
+	allDeps      []Module // all the dependencies, detected recursively (populated by getDeps)
 }
 
 func (m *CppModule) GetIncludeDirs() []string   { return m.IncludeDirs }
-func (m *CppModule) GetDefines() models.Defines { return m.Config.Defines }
+func (m *CppModule) GetDefines() config.Defines { return m.Config.Defines }
 func (m *CppModule) GetName() string            { return m.Name }
-func (m *CppModule) GetLibs() []string {
-	return []string{m.Name}
+func (m *CppModule) GetLibs() []string          { return append(m.External, m.Name) }
+
+func (m *CppModule) GetDependencies() []string   { return m.Config.Deps }
+func (m *CppModule) AddDependency(module Module) { m.Dependencies = append(m.Dependencies, module) }
+
+func (m *CppModule) Build(defines config.Defines) error {
+	log.Printf("Generating Makefile for %s\n", m.Name)
+
+	target := m.Name
+	if m.Config.HasEntrypoint {
+		target = m.build.Target.Name
+	}
+
+	libs := m.External
+	for _, dep := range m.getDeps() {
+		libs = append(libs, dep.GetLibs()...)
+	}
+
+	err := make.RunMakefile(&make.CppMakefile{
+		Name:      m.Name,
+		Target:    target,
+		Path:      m.Path,
+		BuildMode: m.build.Mode,
+		IncDirs:   m.getAllIncludeDirs(),
+		Libs:      libs,
+		Defines:   defines,
+		IsLib:     !m.Config.HasEntrypoint,
+		IsStatic:  m.build.Mode.Compact,
+		Optimize:  m.build.Mode.Optimize,
+		CFlags:    m.getCFlags(),
+		LdFlags:   m.build.Mode.LinkerFlags,
+	})
+
+	return err
 }
 
-func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
-	compileCommands := models.CompileCommands{}
+func (m *CppModule) GenerateCompileCommands(defines config.Defines) (config.CompileCommands, error) {
+	compileCommands := config.CompileCommands{}
 
 	if err := filepath.WalkDir(fmt.Sprintf("%s/src", m.Path), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -53,54 +82,10 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		out = strings.Replace(out, "/src/", "/obj/", 1)
 		out = strings.Replace(out, ".cpp", ".o", 1)
 
-		incDirs := m.GetIncludeDirs()
-		defines := m.Config.Defines
-
-		for _, dep := range m.getDeps() {
-			if dep.GetIncludeDirs() != nil {
-				incDirs = append(incDirs, dep.GetIncludeDirs()...)
-			}
-
-			if dep.GetDefines() != nil {
-				maps.Copy(defines, dep.GetDefines())
-			}
-		}
-
-		for _, dep := range m.Dependants {
-			if dep.GetDefines() != nil {
-				maps.Copy(defines, dep.GetDefines())
-			}
-		}
-
 		command := []string{"g++"}
+		command = append(command, m.getCFlags()...)
 
-		var warningFlags []string
-		switch m.build.Mode.WarningLevel {
-		case config.WarningLevelNone:
-			warningFlags = []string{"-w"}
-		case config.WarningLevelLow:
-			warningFlags = []string{"-Wall"}
-		case config.WarningLevelMedium:
-			warningFlags = []string{"-Wall", "-Wextra"}
-		case config.WarningLevelMax:
-			warningFlags = []string{
-				"-Wall",
-				"-Wextra",
-				"-Wpedantic",
-				"-Wshadow",
-				"-Wnon-virtual-dtor",
-				"-Wold-style-cast",
-				"-Woverloaded-virtual",
-				"-Wunused-parameter",
-				"-Wnull-dereference",
-			}
-		}
-
-		cFlags := append(m.build.Mode.CompileFlags, warningFlags...)
-		cFlags = append(cFlags, "-fPIC", fmt.Sprintf("-std=%s", m.Std))
-		command = append(command, cFlags...)
-
-		for _, dir := range incDirs {
+		for _, dir := range m.getAllIncludeDirs() {
 			command = append(command, fmt.Sprintf("-I%s", dir))
 		}
 
@@ -114,7 +99,7 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 
 		command = append(command, "-c", in, "-o", out)
 
-		compileCommands = append(compileCommands, &models.CompileCommand{
+		compileCommands = append(compileCommands, &config.CompileCommand{
 			Directory: m.Path,
 			Arguments: command,
 			File:      in,
@@ -126,44 +111,10 @@ func (m *CppModule) GenerateCompileCommands() (models.CompileCommands, error) {
 		return nil, err
 	}
 
-	for _, dep := range m.Dependencies {
-		if cppModule, ok := dep.(*CppModule); ok {
-			modCommands, err := cppModule.GenerateCompileCommands()
-			if err != nil {
-				return nil, err
-			}
-			compileCommands = append(compileCommands, modCommands...)
-		}
-	}
-
 	return compileCommands, nil
 }
 
-func (m *CppModule) Build() error {
-	log.Printf("Generating Makefile for %s\n", m.Name)
-
-	incDirs := m.GetIncludeDirs()
-	libs := m.External
-	defines := m.Config.Defines
-
-	for _, dep := range m.getDeps() {
-		if dep.GetIncludeDirs() != nil {
-			incDirs = append(incDirs, dep.GetIncludeDirs()...)
-		}
-
-		if dep.GetDefines() != nil {
-			maps.Copy(defines, dep.GetDefines())
-		}
-
-		libs = append(libs, dep.GetLibs()...)
-	}
-
-	for _, dep := range m.Dependants {
-		if dep.GetDefines() != nil {
-			maps.Copy(defines, dep.GetDefines())
-		}
-	}
-
+func (m *CppModule) getCFlags() []string {
 	var warningFlags []string
 	switch m.build.Mode.WarningLevel {
 	case config.WarningLevelNone:
@@ -188,71 +139,38 @@ func (m *CppModule) Build() error {
 
 	cFlags := append(m.build.Mode.CompileFlags, warningFlags...)
 	cFlags = append(cFlags, "-fPIC", fmt.Sprintf("-std=%s", m.Std))
-
-	err := make.RunMakefile(&make.CppMakefile{
-		Name:      m.Name,
-		Path:      m.Path,
-		BuildMode: m.build.Mode,
-		RootDir:   config.Dirs.Work,
-		IncDirs:   incDirs,
-		Libs:      libs,
-		Defines:   defines,
-		IsLib:     !m.Config.HasEntrypoint,
-		IsStatic:  m.build.Mode.Compact,
-		Optimize:  m.build.Mode.Optimize,
-		CFlags:    cFlags,
-		LdFlags:   m.build.Mode.LinkerFlags,
-	})
-
-	m.isBuilt = true
-	return err
+	return cFlags
 }
 
-func (m *CppModule) IsBuilt() bool   { return m.isBuilt }
-func (m *CppModule) getPath() string { return m.Path }
+func (m *CppModule) getAllIncludeDirs() []string {
+	incDirs := m.GetIncludeDirs()
+
+	for _, dep := range m.getDeps() {
+		incDirs = append(incDirs, dep.GetIncludeDirs()...)
+	}
+
+	return incDirs
+}
 
 func (m *CppModule) getDeps() []Module {
-	deps := m.Dependencies
+	if m.allDeps != nil {
+		return m.allDeps
+	}
+
+	m.allDeps = m.Dependencies
 	for _, mod := range m.Dependencies {
-		deps = append(deps, mod)
+		m.allDeps = append(m.allDeps, mod)
 
-		modDeps := mod.getDeps()
-		// cleaning duplicates
-		for _, modDep := range modDeps {
-			if !slices.Contains(deps, modDep) {
-				deps = append(deps, modDep)
-			}
-		}
-	}
-
-	return deps
-}
-
-func (m *CppModule) ResolveDependencies(modules map[string]Module, dependants []Module) error {
-	for _, dep := range dependants {
-		if m == dep {
-			return fmt.Errorf("Circular dependency detected. Module %s has already been included in build\n", dep.GetName())
-		}
-	}
-
-	m.Dependants = dependants
-	for _, dep := range m.Config.Deps {
-		mod, ok := modules[dep]
-		if !ok {
-			log.Printf("Module %s required by module %s does not exist\n", dep, m.Name)
-		}
-
-		if slices.Contains(m.Dependencies, mod) {
-			continue
-		}
-
-		m.Dependencies = append(m.Dependencies, mod)
 		if cppMod, ok := mod.(*CppModule); ok {
-			if err := cppMod.ResolveDependencies(modules, append(dependants, m)); err != nil {
-				return err
+			modDeps := cppMod.getDeps()
+			// cleaning duplicates
+			for _, modDep := range modDeps {
+				if !slices.Contains(m.allDeps, modDep) {
+					m.allDeps = append(m.allDeps, modDep)
+				}
 			}
 		}
 	}
 
-	return nil
+	return m.allDeps
 }
