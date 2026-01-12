@@ -1,27 +1,37 @@
 package setup
 
 import (
+	"fmt"
 	"log"
 	"os/exec"
 )
 
-func check(bin string) error {
-	_, err := exec.LookPath(bin)
-	return err
+type program struct {
+	name, command string
+}
+
+var programs = []program{
+	{name: "GNU Make", command: "make"},
+	{name: "GNU C++ Compiler", command: "g++"},
+}
+
+func check(prog program) error {
+	if _, err := exec.LookPath(prog.command); err != nil {
+		return fmt.Errorf("Could not find %s installed on your system. Please install it.", prog.name)
+	}
+
+	log.Printf("Found %s.", prog.name)
+	return nil
 }
 
 func Setup() error {
 	log.Printf("Running setup...")
 
-	if err := check("g++"); err != nil {
-		return err
+	for _, prog := range programs {
+		if err := check(prog); err != nil {
+			return err
+		}
 	}
-	log.Printf("Found the C++ compiler.")
-
-	if err := check("make"); err != nil {
-		return err
-	}
-	log.Printf("Found GNU Make.")
 
 	return nil
 }
