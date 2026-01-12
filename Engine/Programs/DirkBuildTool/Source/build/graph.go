@@ -51,7 +51,6 @@ func (g *Graph) flatten() ([]module.Module, error) {
 		}
 	}
 
-	// TODO: actually find out which dependencies are circular
 	if len(result) != len(g.nodes) {
 		return nil, g.findCycle()
 	}
