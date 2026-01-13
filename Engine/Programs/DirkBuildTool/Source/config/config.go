@@ -136,13 +136,6 @@ func LoadConfig() error {
 	return nil
 }
 
-func detectPlatform() PlatformConfig {
-	return PlatformConfig{
-		Name:    "Linux",
-		Defines: map[string]string{"PLATFORM_LINUX": ""},
-	}
-}
-
 func setupDirsConfig(wd string) DirsConfig {
 	engineDir := fmt.Sprintf("%s/Engine", wd)
 	savedDir := fmt.Sprintf("%s/Saved", engineDir)
