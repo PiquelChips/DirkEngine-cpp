@@ -7,6 +7,7 @@ import (
 
 	"DirkBuildTool/build"
 	"DirkBuildTool/config"
+	"DirkBuildTool/setup"
 )
 
 func usage() {
@@ -27,6 +28,11 @@ func main() {
 		switch os.Args[1] {
 		case "clean":
 			clean()
+			return
+		case "setup":
+			if err := setup.Setup(); err != nil {
+				panic(err)
+			}
 			return
 		}
 	}
