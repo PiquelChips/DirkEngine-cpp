@@ -14,6 +14,10 @@ type Graph struct {
 	nodes      map[string]module.Module
 }
 
+func (g *Graph) getNodes() map[string]module.Module {
+	return g.nodes
+}
+
 func (g *Graph) addDependency(task, dep module.Module) {
 	g.nodes[task.GetName()] = task
 	g.nodes[dep.GetName()] = dep

@@ -20,11 +20,6 @@ const (
 	WarningLevelMax    = 3
 )
 
-type BuildConfig struct {
-	Target Target
-	Mode   *BuildMode
-}
-
 type Defines map[string]string
 
 type CompileCommands []*CompileCommand
@@ -69,7 +64,7 @@ type Target struct {
 }
 
 var (
-	BuildModes map[string]*BuildMode
+	BuildModes map[string]BuildMode
 	Platform   PlatformConfig
 	Dirs       DirsConfig
 	Settings   BuildToolSettings
@@ -102,7 +97,7 @@ func LoadConfig() error {
 		return err
 	}
 
-	BuildModes = map[string]*BuildMode{
+	BuildModes = map[string]BuildMode{
 		"Development": {
 			Name:     "Development",
 			Optimize: false,

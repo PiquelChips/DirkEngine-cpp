@@ -16,6 +16,6 @@ func (m *HeaderModule) GetIncludeDirs() []string   { return m.IncludeDirs }
 func (m *HeaderModule) GetDefines() config.Defines { return m.Defines }
 func (m *HeaderModule) GetLibs() []string          { return m.External }
 
-func (m *HeaderModule) Build(config.Defines) error { return nil }
-func (m *HeaderModule) GetDependencies() []string  { return nil }
-func (m *HeaderModule) AddDependency(Module)       {}
+func (m *HeaderModule) Build(*config.Target, config.Defines) error { return nil }
+func (m *HeaderModule) GetDependencies() []string                  { return nil }
+func (m *HeaderModule) AddDependency(Module)                       {}

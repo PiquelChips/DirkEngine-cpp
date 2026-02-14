@@ -16,12 +16,12 @@ type Module interface {
 	GetDefines() config.Defines
 	GetLibs() []string
 
-	Build(config.Defines) error
+	Build(*config.Target, config.Defines) error
 	AddDependency(Module)
 	GetDependencies() []string
 }
 
-func Load(path, name string, buildConfig *config.BuildConfig) (Module, error) {
+func Load(path, name string, buildMode *config.BuildMode) (Module, error) {
 	path = fmt.Sprintf("%s/%s", path, name)
 	modFile := fmt.Sprintf("%s/%s.dirkmod", path, name)
 	data, err := os.ReadFile(modFile)
@@ -46,20 +46,20 @@ func Load(path, name string, buildConfig *config.BuildConfig) (Module, error) {
 		return nil, fmt.Errorf("module name does not match folder name. module at %s has name %s but should be %s", path, mod.Name, name)
 	}
 
-	return mod.toModule(buildConfig), nil
+	return mod.toModule(buildMode), nil
 }
 
 type NullModule struct {
 	Name string
 }
 
-func (m *NullModule) GetName() string            { return m.Name }
-func (m *NullModule) GetIncludeDirs() []string   { return nil }
-func (m *NullModule) GetDefines() config.Defines { return nil }
-func (m *NullModule) GetLibs() []string          { return nil }
-func (m *NullModule) Build(config.Defines) error { return nil }
-func (m *NullModule) GetDependencies() []string  { return nil }
-func (m *NullModule) AddDependency(Module)       {}
+func (m *NullModule) GetName() string                            { return m.Name }
+func (m *NullModule) GetIncludeDirs() []string                   { return nil }
+func (m *NullModule) GetDefines() config.Defines                 { return nil }
+func (m *NullModule) GetLibs() []string                          { return nil }
+func (m *NullModule) Build(*config.Target, config.Defines) error { return nil }
+func (m *NullModule) GetDependencies() []string                  { return nil }
+func (m *NullModule) AddDependency(Module)                       {}
 
 // read from .dirkmod files
 type moduleConfig struct {
@@ -75,7 +75,7 @@ type moduleConfig struct {
 	IncludeDirs   []string          `json:"include_dirs"`
 }
 
-func (c *moduleConfig) toModule(buildConfig *config.BuildConfig) Module {
+func (c *moduleConfig) toModule(buildMode *config.BuildMode) Module {
 	if c.Type == "" {
 		c.Type = "cpp"
 	}
@@ -109,7 +109,7 @@ func (c *moduleConfig) toModule(buildConfig *config.BuildConfig) Module {
 			Config:       c,
 			External:     c.External,
 			IncludeDirs:  c.IncludeDirs,
-			build:        buildConfig,
+			buildMode:    buildMode,
 			allDeps:      nil,
 		}
 	case "header-only":
