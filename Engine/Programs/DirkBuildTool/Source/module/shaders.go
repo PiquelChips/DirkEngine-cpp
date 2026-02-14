@@ -15,12 +15,10 @@ func (m *ShaderModule) GetDefines() config.Defines { return nil }
 func (m *ShaderModule) GetLibs() []string          { return nil }
 
 func (m *ShaderModule) Build(*config.Target, config.Defines) error {
-	err := make.RunMakefile(&make.ShaderMakefile{
+	return make.RunMakefile(&make.ShaderMakefile{
 		Name: m.Name,
 		Path: m.Path,
 	})
-
-	return err
 }
 
 // shader modules dont have dependencies
