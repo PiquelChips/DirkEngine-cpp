@@ -1,5 +1,8 @@
 # DirkEngine
 
+> [!IMPORTANT]
+> This repository is archived. The engine is being re-written in [Rust](https://github.com/PiquelChips/DirkEngine).
+
 Welcome to the **DirkEngine** project! an opensource game engine to help me and any contributors learn about
 the fascinating technologies that go into game development. This project is just a hobby so don't expect LTS
 or any kind of production ready system (this could change in the future if this repository gets enough traction).
